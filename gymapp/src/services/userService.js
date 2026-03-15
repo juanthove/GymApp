@@ -1,5 +1,3 @@
-// userService.js
-
 // Crear usuario
 export async function createUser(user) {
   const response = await fetch("/api/users", {

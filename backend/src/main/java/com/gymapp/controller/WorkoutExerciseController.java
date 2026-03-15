@@ -27,7 +27,7 @@ public class WorkoutExerciseController {
 
     @GetMapping("/day/{dayId}")
     public List<WorkoutExercise> getExercisesByDay(@PathVariable Long dayId) {
-        return workoutExerciseRepository.findByWorkoutDayId(dayId);
+        return workoutExerciseRepository.findByWorkoutDayIdOrderByExerciseOrder(dayId);
     }
 
     @PostMapping
@@ -36,13 +36,15 @@ public class WorkoutExerciseController {
     }
 
     @PutMapping("/{id}")
-    public WorkoutExercise updateWorkoutExercise(@PathVariable Long id,
-                                                @RequestBody WorkoutExercise updatedExercise) {
+    public WorkoutExercise updateWorkoutExercise(
+            @PathVariable Long id,
+            @RequestBody WorkoutExercise updatedExercise) {
 
         return workoutExerciseRepository.findById(id).map(exercise -> {
 
             exercise.setWorkoutDay(updatedExercise.getWorkoutDay());
             exercise.setExercise(updatedExercise.getExercise());
+            exercise.setExerciseOrder(updatedExercise.getExerciseOrder());
             exercise.setReps(updatedExercise.getReps());
             exercise.setWeight(updatedExercise.getWeight());
             exercise.setComment(updatedExercise.getComment());

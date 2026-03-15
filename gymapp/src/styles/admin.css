@@ -1,0 +1,31 @@
+.adminContainer{
+  padding:40px;
+  text-align:center;
+}
+
+.adminTitle{
+  margin-bottom:40px;
+}
+
+.adminGrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:25px;
+}
+
+.adminCard{
+  background:white;
+  border-radius:12px;
+  padding:30px;
+  cursor:pointer;
+  box-shadow:0 4px 12px rgba(0,0,0,0.15);
+  transition:transform 0.2s;
+}
+
+.adminCard:hover{
+  transform:scale(1.05);
+}
+
+.adminCard h2{
+  margin-bottom:10px;
+}

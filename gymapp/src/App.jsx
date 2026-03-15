@@ -1,5 +1,8 @@
 import CreateUserScreen from "./screen/CreateUserScreen";
 import CreateExerciseScreen from "./screen/CreateExerciseScreen";
+import CreateWorkoutTemplateScreen from "./screen/CreateWorkoutTemplateScreen";
+import CreateWorkoutScreen from "./screen/CreateWorkoutScreen";
+import AdminScreen from "./screen/AdminScreen";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 
@@ -14,8 +17,11 @@ function App() {
         <Route path="/home" element={<HomeScreen />} />
         <Route path="/workout" element={<WorkoutScreen />} />
 
-        <Route path="/create-user" element={<CreateUserScreen />} />
-        <Route path="/create-exercise" element={<CreateExerciseScreen />} />
+        <Route path="/admin" element={<AdminScreen />} />
+        <Route path="/admin/users" element={<CreateUserScreen />} />
+        <Route path="/admin/exercises" element={<CreateExerciseScreen />} />
+        <Route path="/admin/workout-templates" element={<CreateWorkoutTemplateScreen />} />
+        <Route path="/admin/workouts" element={<CreateWorkoutScreen />} />
       </Routes>
     </BrowserRouter>
   );

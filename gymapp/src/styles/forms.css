@@ -1,0 +1,102 @@
+.container{
+  min-height:100vh;
+  background-color:#0B0F1A;
+  padding:40px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+.title{
+  color:#FF6B00;
+  margin-bottom:30px;
+}
+
+.form{
+  display:flex;
+  flex-direction:column;
+  width:400px;
+  gap:12px;
+  background-color:#1C1F2A;
+  padding:25px;
+  border-radius:15px;
+}
+
+.label{
+  color:white;
+  font-size:14px;
+}
+
+.input,
+.select,
+.textarea{
+  padding:10px;
+  border-radius:8px;
+  border:none;
+}
+
+.textarea{
+  height:80px;
+}
+
+.buttonContainer{
+  margin-top:10px;
+  display:flex;
+  gap:10px;
+}
+
+.primaryButton{
+  flex:1;
+  background-color:#FF6B00;
+  color:white;
+  border:none;
+  padding:12px;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:16px;
+}
+
+.deleteButton{
+  flex:1;
+  background-color:#A00000;
+  color:white;
+  border:none;
+  padding:12px;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:16px;
+}
+
+.checkbox{
+  color:white;
+  font-size:14px;
+}
+
+.previewImage{
+  width:200px;
+  border-radius:10px;
+}
+
+.previewVideo{
+  width:200px;
+  border-radius:10px;
+}
+
+.message{
+  margin-top:20px;
+  color:white;
+}
+
+.dayCard{
+  border:1px solid #ccc;
+  padding:15px;
+  margin-top:20px;
+  border-radius:8px;
+}
+
+.exerciseRow{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:5px 0;
+}

@@ -89,7 +89,7 @@ public class ExerciseController {
         */
         if(Boolean.TRUE.equals(deleteImage) && exercise.getImage()!=null){
 
-            Path file = Paths.get("uploads").resolve(exercise.getImage());
+            Path file = imagePath.resolve(exercise.getImage());
 
             Files.deleteIfExists(file);
 
@@ -101,7 +101,7 @@ public class ExerciseController {
         */
         if(Boolean.TRUE.equals(deleteVideo) && exercise.getVideo()!=null){
 
-            Path file = Paths.get("uploads").resolve(exercise.getVideo());
+            Path file = videoPath.resolve(exercise.getVideo());
 
             Files.deleteIfExists(file);
 
@@ -115,7 +115,7 @@ public class ExerciseController {
 
             if(exercise.getImage()!=null){
 
-                Path old = Paths.get("uploads").resolve(exercise.getImage());
+                Path old = imagePath.resolve(exercise.getImage());
                 Files.deleteIfExists(old);
             }
 
@@ -125,7 +125,8 @@ public class ExerciseController {
 
             Path filePath = imagePath.resolve(fileName);
 
-            Files.write(filePath,image.getBytes());
+            Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
 
             exercise.setImage(fileName);
         }
@@ -137,7 +138,7 @@ public class ExerciseController {
 
             if(exercise.getVideo()!=null){
 
-                Path old = Paths.get("uploads").resolve(exercise.getVideo());
+                Path old = videoPath.resolve(exercise.getVideo());
                 Files.deleteIfExists(old);
             }
 
@@ -147,7 +148,8 @@ public class ExerciseController {
 
             Path filePath = videoPath.resolve(fileName);
 
-            Files.write(filePath,video.getBytes());
+            Files.copy(video.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
 
             exercise.setVideo(fileName);
         }
@@ -197,12 +199,13 @@ public class ExerciseController {
                 .orElseThrow(() -> new RuntimeException("Exercise not found"));
 
         if (exercise.getImage() != null) {
-            Files.deleteIfExists(Paths.get("uploads/" + exercise.getImage()));
+            Files.deleteIfExists(imagePath.resolve(exercise.getImage()));
         }
 
         if (exercise.getVideo() != null) {
-            Files.deleteIfExists(Paths.get("uploads/" + exercise.getVideo()));
+            Files.deleteIfExists(videoPath.resolve(exercise.getVideo()));
         }
+
 
         exerciseRepository.deleteById(id);
     }
@@ -221,7 +224,7 @@ public class ExerciseController {
 
             Path filePath = imagePath.resolve(fileName);
 
-            Files.write(filePath, image.getBytes());
+            Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
             exercise.setImage(fileName);
         }
@@ -233,7 +236,7 @@ public class ExerciseController {
 
             Path filePath = videoPath.resolve(fileName);
 
-            Files.write(filePath, video.getBytes());
+            Files.copy(video.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
             exercise.setVideo(fileName);
         }

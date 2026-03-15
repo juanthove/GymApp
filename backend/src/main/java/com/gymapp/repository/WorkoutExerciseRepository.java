@@ -7,5 +7,9 @@ import java.util.List;
 
 public interface WorkoutExerciseRepository extends JpaRepository<WorkoutExercise, Long> {
 
+    List<WorkoutExercise> findByWorkoutDayIdOrderByExerciseOrder(Long workoutDayId);
+
     List<WorkoutExercise> findByWorkoutDayId(Long workoutDayId);
+
+    void deleteByWorkoutDayId(Long workoutDayId);
 }

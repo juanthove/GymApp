@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+
 import {
   getExercises,
   createExercise,
@@ -8,7 +9,15 @@ import {
   getExerciseVideoUrl
 } from "../services/exerciseService";
 
-export default function CreateExerciseScreen() {
+import FormPage from "../components/FormPage";
+import FormInput from "../components/FormInput";
+import FormSelect from "../components/FormSelect";
+import PrimaryButton from "../components/PrimaryButton";
+import DeleteButton from "../components/DeleteButton";
+
+import "../styles/forms.css";
+
+export default function CreateExerciseScreen(){
 
   const [exercises,setExercises] = useState([]);
   const [selectedId,setSelectedId] = useState("new");
@@ -23,14 +32,13 @@ export default function CreateExerciseScreen() {
   const [deleteVideo,setDeleteVideo] = useState(false);
 
   const [currentExercise,setCurrentExercise] = useState(null);
-
   const [fileKey,setFileKey] = useState(0);
 
   useEffect(()=>{
     loadExercises();
   },[]);
 
-  const loadExercises = async()=>{
+  const loadExercises = async ()=>{
     const data = await getExercises();
     setExercises(data);
   };
@@ -40,13 +48,16 @@ export default function CreateExerciseScreen() {
     setSelectedId(id);
 
     if(id==="new"){
+
       setCurrentExercise(null);
       setName("");
       setDescription("");
       setImage(null);
       setVideo(null);
+
       setDeleteImage(false);
       setDeleteVideo(false);
+
       return;
     }
 
@@ -55,6 +66,7 @@ export default function CreateExerciseScreen() {
     setCurrentExercise(ex);
     setName(ex.name);
     setDescription(ex.description || "");
+
     setDeleteImage(false);
     setDeleteVideo(false);
   };
@@ -92,14 +104,17 @@ export default function CreateExerciseScreen() {
     setDescription("");
     setImage(null);
     setVideo(null);
+
     setDeleteImage(false);
     setDeleteVideo(false);
+
     setCurrentExercise(null);
-    setFileKey(prev => prev + 2);
+    setFileKey(prev=>prev+2);
+
     loadExercises();
   };
 
-  const handleDelete = async()=>{
+  const handleDelete = async ()=>{
 
     if(!window.confirm("Eliminar ejercicio?")) return;
 
@@ -108,24 +123,23 @@ export default function CreateExerciseScreen() {
     setSelectedId("new");
     setName("");
     setDescription("");
+    setCurrentExercise(null);
 
     loadExercises();
   };
 
   return (
-    <div style={styles.container}>
 
-      <h1 style={styles.title}>Ejercicios</h1>
+    <FormPage title="Ejercicios">
 
-      <form style={styles.form} onSubmit={handleSubmit}>
+      <form className="form" onSubmit={handleSubmit}>
 
-        <label style={styles.label}>Seleccionar ejercicio</label>
-
-        <select
-          style={styles.input}
+        <FormSelect
+          label="Seleccionar ejercicio"
           value={selectedId}
           onChange={(e)=>handleSelect(e.target.value)}
         >
+
           <option value="new">Nuevo ejercicio</option>
 
           {exercises.map(ex=>(
@@ -134,25 +148,25 @@ export default function CreateExerciseScreen() {
             </option>
           ))}
 
-        </select>
+        </FormSelect>
 
-        <label style={styles.label}>Nombre</label>
-        <input
-          style={styles.input}
+        <FormInput
+          label="Nombre"
           type="text"
           value={name}
           onChange={(e)=>setName(e.target.value)}
           required
         />
 
-        <label style={styles.label}>Descripción</label>
+        <label className="label">Descripción</label>
+
         <textarea
-          style={styles.textarea}
+          className="textarea"
           value={description}
           onChange={(e)=>setDescription(e.target.value)}
         />
 
-        <label style={styles.label}>Imagen</label>
+        <label className="label">Imagen</label>
 
         <input
           key={fileKey}
@@ -161,8 +175,9 @@ export default function CreateExerciseScreen() {
           onChange={(e)=>setImage(e.target.files[0])}
         />
 
-        {currentExercise?.image && selectedId !== "new" && (
-          <label style={styles.checkbox}>
+        {currentExercise?.image && selectedId!=="new" &&
+
+          <label className="checkbox">
             <input
               type="checkbox"
               checked={deleteImage}
@@ -170,30 +185,28 @@ export default function CreateExerciseScreen() {
             />
             Eliminar imagen
           </label>
-        )}
+        }
 
-        {currentExercise?.image && !deleteImage && (
-            <div>
-                <p>Imagen actual:</p>
-                <img
-                src={getExerciseImageUrl(currentExercise.image)}
-                alt="Ejercicio"
-                style={styles.previewImage}
-                />
-            </div>
-        )}
+        {currentExercise?.image && !deleteImage &&
 
-        <label style={styles.label}>Video</label>
+          <img
+            src={getExerciseImageUrl(currentExercise.image)}
+            className="previewImage"
+          />
+        }
+
+        <label className="label">Video</label>
 
         <input
-          key={fileKey + 1}
+          key={fileKey+1}
           type="file"
           accept="video/*"
           onChange={(e)=>setVideo(e.target.files[0])}
         />
 
-        {currentExercise?.video && selectedId !== "new" && (
-          <label style={styles.checkbox}>
+        {currentExercise?.video && selectedId!=="new" &&
+
+          <label className="checkbox">
             <input
               type="checkbox"
               checked={deleteVideo}
@@ -201,142 +214,35 @@ export default function CreateExerciseScreen() {
             />
             Eliminar video
           </label>
-        )}
+        }
 
-        {currentExercise?.video && !deleteVideo && (
-            <div style={styles.previewContainer}>
-                <label style={styles.label}>Video actual:</label>
-                <video 
-                src={getExerciseVideoUrl(currentExercise.video)} 
-                controls 
-                style={styles.previewVideo}
-                />
-            </div>
-        )}
+        {currentExercise?.video && !deleteVideo &&
 
-        <div style={styles.buttons}>
+          <video
+            src={getExerciseVideoUrl(currentExercise.video)}
+            controls
+            className="previewVideo"
+          />
+        }
 
-          {selectedId!=="new" && (
-            <button
-              type="button"
-              style={styles.deleteButton}
-              onClick={handleDelete}
-            >
+        <div className="buttonContainer">
+
+          {selectedId!=="new" &&
+            <DeleteButton type="button" onClick={handleDelete}>
               Eliminar ejercicio
-            </button>
-          )}
+            </DeleteButton>
+          }
 
-          <button style={styles.button} type="submit">
+          <PrimaryButton type="submit">
             {selectedId==="new"
               ? "Registrar ejercicio"
               : "Actualizar ejercicio"}
-          </button>
+          </PrimaryButton>
 
         </div>
 
       </form>
 
-    </div>
+    </FormPage>
   );
 }
-
-const styles = {
-
-container:{
-  minHeight:"100vh",
-  backgroundColor:"#0B0F1A",
-  padding:"40px",
-  display:"flex",
-  flexDirection:"column",
-  alignItems:"center"
-},
-
-title:{
-  color:"#FF6B00",
-  marginBottom:"30px"
-},
-
-form:{
-  display:"flex",
-  flexDirection:"column",
-  width:"400px",
-  gap:"12px",
-  backgroundColor:"#1C1F2A",
-  padding:"25px",
-  borderRadius:"15px"
-},
-
-label:{
-  color:"white",
-  fontSize:"14px"
-},
-
-input:{
-  padding:"10px",
-  borderRadius:"8px",
-  border:"none"
-},
-
-textarea:{
-  padding:"10px",
-  borderRadius:"8px",
-  border:"none",
-  height:"80px"
-},
-
-checkbox:{
-  color:"white",
-  fontSize:"14px"
-},
-
-previewContainer: {
-  marginTop: "10px",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "flex-start"
-},
-
-previewImage: {
-  width: "200px",
-  height: "auto",
-  borderRadius: "10px",
-  marginTop: "5px"
-},
-
-previewVideo: {
-  width: "200px",
-  height: "auto",
-  borderRadius: "10px",
-  marginTop: "5px"
-},
-
-buttons:{
-  marginTop:"10px",
-  display:"flex",
-  justifyContent:"space-between",
-  gap:"10px"
-},
-
-button:{
-  flex:1,
-  backgroundColor:"#FF6B00",
-  color:"white",
-  border:"none",
-  padding:"12px",
-  borderRadius:"10px",
-  cursor:"pointer",
-  fontSize:"16px"
-},
-
-deleteButton:{
-  flex:1,
-  backgroundColor:"#A00000",
-  color:"white",
-  border:"none",
-  padding:"12px",
-  borderRadius:"10px",
-  cursor:"pointer",
-  fontSize:"16px"
-}
-
-};

@@ -1,5 +1,3 @@
-//Representa la relación entre un día de entrenamiento y un ejercicio, con sus sets, reps, peso y comentarios asociados
-
 package com.gymapp.model;
 
 import jakarta.persistence.*;
@@ -18,6 +16,8 @@ public class WorkoutExercise {
     @ManyToOne
     @JoinColumn(name = "exercise_id")
     private Exercise exercise;
+
+    private Integer exerciseOrder;
 
     private Integer reps;
 
@@ -47,6 +47,14 @@ public class WorkoutExercise {
 
     public void setExercise(Exercise exercise) {
         this.exercise = exercise;
+    }
+
+    public Integer getExerciseOrder() {
+        return exerciseOrder;
+    }
+
+    public void setExerciseOrder(Integer exerciseOrder) {
+        this.exerciseOrder = exerciseOrder;
     }
 
     public Integer getReps() {

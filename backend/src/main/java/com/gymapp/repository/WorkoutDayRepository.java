@@ -9,4 +9,5 @@ public interface WorkoutDayRepository extends JpaRepository<WorkoutDay, Long> {
 
     List<WorkoutDay> findByWorkoutId(Long workoutId);
 
+    void deleteByWorkoutId(Long workoutId);
 }
