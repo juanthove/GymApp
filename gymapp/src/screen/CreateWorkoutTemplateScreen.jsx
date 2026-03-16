@@ -10,338 +10,549 @@ import {
   deleteWorkoutTemplate
 } from "../services/workoutTemplateService";
 
-import FormPage from "../components/FormPage";
-import FormInput from "../components/FormInput";
-import FormSelect from "../components/FormSelect";
-import PrimaryButton from "../components/PrimaryButton";
-import DeleteButton from "../components/DeleteButton";
+import {
+Container,
+Paper,
+Typography,
+TextField,
+MenuItem,
+Button,
+Stack,
+Card,
+CardContent,
+IconButton,
+Accordion,
+AccordionSummary,
+AccordionDetails,
+Divider,
+Alert,
+Autocomplete
+} from "@mui/material";
 
-import "../styles/forms.css";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import FileCopyIcon from "@mui/icons-material/FileCopy";
+
+import BackButton from "../components/BackButton";
 
 export default function CreateWorkoutTemplateScreen(){
 
-  const [exercises,setExercises] = useState([]);
-  const [templates,setTemplates] = useState([]);
+const [templates,setTemplates] = useState([]);
+const [exercises,setExercises] = useState([]);
 
-  const [selectedTemplateId,setSelectedTemplateId] = useState("");
+const [selectedTemplateId,setSelectedTemplateId] = useState("");
 
-  const [name,setName] = useState("");
-  const [description,setDescription] = useState("");
-  const [days,setDays] = useState([]);
+const [name,setName] = useState("");
+const [description,setDescription] = useState("");
+const [days,setDays] = useState([]);
 
-  const [message,setMessage] = useState("");
+const [message,setMessage] = useState("");
+const [messageType,setMessageType] = useState("info");
 
-  useEffect(()=>{
-    loadExercises();
-    loadTemplates();
-  },[]);
+useEffect(()=>{
+ loadTemplates();
+ loadExercises();
+},[]);
 
-  const loadExercises = async ()=>{
-    const data = await getExercises();
-    setExercises(data);
+const loadTemplates = async()=>{
+ const data = await getWorkoutTemplates();
+ setTemplates(data);
+};
+
+const loadExercises = async()=>{
+ const data = await getExercises();
+ setExercises(data);
+};
+
+const resetForm = ()=>{
+ setSelectedTemplateId("");
+ setName("");
+ setDescription("");
+ setDays([]);
+};
+
+const validateTemplate = ()=>{
+
+ if(!name.trim()){
+  setMessage("La plantilla debe tener nombre");
+  setMessageType("warning");
+  return false;
+ }
+
+ if(days.length===0){
+  setMessage("Debes agregar al menos un día");
+  setMessageType("warning");
+  return false;
+ }
+
+ for(let d=0; d<days.length; d++){
+
+  const day=days[d];
+
+  if(!day.name.trim()){
+   setMessage(`El día ${d+1} debe tener nombre`);
+   setMessageType("warning");
+   return false;
+  }
+
+  if(!day.muscles.trim()){
+   setMessage(`El día ${d+1} debe tener músculos trabajados`);
+   setMessageType("warning");
+   return false;
+  }
+
+  if(day.exercises.length===0){
+   setMessage(`El día ${d+1} debe tener al menos un ejercicio`);
+   setMessageType("warning");
+   return false;
+  }
+
+ }
+
+ setMessage("");
+ return true;
+
+};
+
+const loadTemplateData = async(id)=>{
+
+ if(!id){
+  resetForm();
+  return;
+ }
+
+ const template = await getWorkoutTemplateById(id);
+
+ setName(template.name || "");
+ setDescription(template.description || "");
+
+ const loadedDays = template.days.map(day=>({
+
+  name:day.name,
+  muscles:day.muscles,
+
+  exercises:day.exercises.map(ex=>({
+   exerciseId:ex.exerciseId,
+   exerciseName:ex.exerciseName,
+   order:ex.order
+  })),
+
+  selectedExercise:null
+
+ }));
+
+ setDays(loadedDays);
+
+};
+
+const addDay=()=>{
+
+ setDays([
+  ...days,
+  {
+   name:`Día ${days.length+1}`,
+   muscles:"",
+   exercises:[],
+   selectedExercise:null
+  }
+ ]);
+
+};
+
+const removeDay=(index)=>{
+
+ const updated=[...days];
+ updated.splice(index,1);
+
+ setDays(updated);
+
+};
+
+const moveDay=(index,direction)=>{
+
+ const updated=[...days];
+
+ const newIndex=index+direction;
+
+ if(newIndex<0 || newIndex>=updated.length) return;
+
+ [updated[index],updated[newIndex]]=[updated[newIndex],updated[index]];
+
+ setDays(updated);
+
+};
+
+const updateDayField=(index,field,value)=>{
+
+ const updated=[...days];
+ updated[index][field]=value;
+
+ setDays(updated);
+
+};
+
+const addExerciseToDay=(dayIndex)=>{
+
+ const selected = days[dayIndex].selectedExercise;
+ if(!selected) return;
+
+ const updated=[...days];
+
+ updated[dayIndex].exercises.push({
+  exerciseId:selected.id,
+  exerciseName:selected.name,
+  order:updated[dayIndex].exercises.length+1
+ });
+
+ updated[dayIndex].selectedExercise=null;
+
+ setDays(updated);
+
+};
+
+const removeExerciseFromDay=(dayIndex,exIndex)=>{
+
+ const updated=[...days];
+
+ updated[dayIndex].exercises.splice(exIndex,1);
+
+ updated[dayIndex].exercises=
+ updated[dayIndex].exercises.map((ex,i)=>({
+  ...ex,
+  order:i+1
+ }));
+
+ setDays(updated);
+
+};
+
+const moveExercise=(dayIndex,exIndex,direction)=>{
+
+ const updated=[...days];
+
+ const exercises=updated[dayIndex].exercises;
+
+ const newIndex=exIndex+direction;
+
+ if(newIndex<0 || newIndex>=exercises.length) return;
+
+ [exercises[exIndex],exercises[newIndex]]=[exercises[newIndex],exercises[exIndex]];
+
+ exercises.forEach((ex,i)=>ex.order=i+1);
+
+ setDays(updated);
+
+};
+
+const duplicateDay = (index) => {
+
+ const dayToCopy = days[index];
+
+ const newDay = {
+  name: dayToCopy.name + " copia",
+  muscles: dayToCopy.muscles,
+  exercises: dayToCopy.exercises.map(ex => ({
+    ...ex
+  })),
+  selectedExercise: null
+ };
+
+ const updated = [...days];
+
+ updated.splice(index + 1, 0, newDay);
+
+ setDays(updated);
+
+};
+
+const handleSubmit = async()=>{
+
+ if(!validateTemplate()) return;
+
+ try{
+
+  const templateData={
+   name,
+   description,
+   days:days.map(day=>({
+    name:day.name,
+    muscles:day.muscles,
+    exercises:day.exercises
+   }))
   };
 
-  const loadTemplates = async ()=>{
-    const data = await getWorkoutTemplates();
-    setTemplates(data);
-  };
-
-  const loadTemplateData = async (id)=>{
-
-    if(!id){
-      resetForm();
-      return;
-    }
-
-    const template = await getWorkoutTemplateById(id);
-
-    setName(template.name || "");
-    setDescription(template.description || "");
-
-    const loadedDays = template.days?.map(day=>({
-      name:day.name,
-      muscles:day.muscles,
-      exercises:day.exercises.map((ex)=>({
-        exerciseId:ex.exerciseId,
-        exerciseName:ex.exerciseName,
-        order:ex.order
-      })),
-      selectedExercise:""
-    })) || [];
+  if(selectedTemplateId){
 
-    setDays(loadedDays);
-  };
-
-  const resetForm = ()=>{
-    setSelectedTemplateId("");
-    setName("");
-    setDescription("");
-    setDays([]);
-  };
+   await updateWorkoutTemplate(selectedTemplateId,templateData);
 
-  const addDay = ()=>{
-    setDays([
-      ...days,
-      {
-        name:`Día ${days.length+1}`,
-        muscles:"",
-        exercises:[],
-        selectedExercise:""
-      }
-    ]);
-  };
+   setMessage("Template actualizado correctamente");
+   setMessageType("success");
 
-  const removeDay = (index)=>{
-    const updated = [...days];
-    updated.splice(index,1);
-    setDays(updated);
-  };
+  }else{
 
-  const updateDayField = (index,field,value)=>{
-    const updated = [...days];
-    updated[index][field] = value;
-    setDays(updated);
-  };
+   await createWorkoutTemplate(templateData);
 
-  const addExerciseToDay = (dayIndex)=>{
+   setMessage("Template creado correctamente");
+   setMessageType("success");
 
-    const selectedId = days[dayIndex].selectedExercise;
-    if(!selectedId) return;
+  }
 
-    const exercise = exercises.find(e=>e.id===Number(selectedId));
+  resetForm();
+  loadTemplates();
 
-    const updated = [...days];
+ }catch(e){
 
-    updated[dayIndex].exercises.push({
-      exerciseId:exercise.id,
-      exerciseName:exercise.name,
-      order:updated[dayIndex].exercises.length+1
-    });
+  setMessage(e.message);
+  setMessageType("error");
 
-    updated[dayIndex].selectedExercise="";
+ }
 
-    setDays(updated);
-  };
+};
 
-  const removeExerciseFromDay = (dayIndex,exerciseIndex)=>{
+const handleDelete = async()=>{
 
-    const updated = [...days];
+ if(!selectedTemplateId) return;
 
-    updated[dayIndex].exercises.splice(exerciseIndex,1);
+ if(!window.confirm("Eliminar este template?")) return;
 
-    updated[dayIndex].exercises = updated[dayIndex].exercises.map((ex,i)=>({
-      ...ex,
-      order:i+1
-    }));
+ try{
 
-    setDays(updated);
-  };
+  await deleteWorkoutTemplate(selectedTemplateId);
 
-  const handleSubmit = async (e)=>{
-    e.preventDefault();
+  setMessage("Template eliminado");
+  setMessageType("success");
 
-    try{
+  resetForm();
+  loadTemplates();
 
-      const templateData = {
-        name,
-        description,
-        days:days.map(day=>({
-          name:day.name,
-          muscles:day.muscles,
-          exercises:day.exercises
-        }))
-      };
+ }catch(e){
 
-      if(selectedTemplateId){
+  setMessage(e.message);
+  setMessageType("error");
 
-        await updateWorkoutTemplate(selectedTemplateId,templateData);
-        setMessage("Template actualizado");
+ }
 
-      }else{
+};
 
-        await createWorkoutTemplate(templateData);
-        setMessage("Template creado");
+return(
 
-      }
+<Container maxWidth="md" sx={{mt:4,mb:6}}>
 
-      resetForm();
-      loadTemplates();
+<Paper sx={{p:4}}>
 
-    }catch(error){
-      setMessage("Error: "+error.message);
-    }
-  };
 
-  const handleDelete = async ()=>{
 
-    if(!selectedTemplateId) return;
+<Stack direction="row" alignItems="center" spacing={1} sx={{mb:2}}>
+        
+<BackButton to="/admin" />
+          
+<Typography variant="h4" gutterBottom>
+Plantillas
+</Typography>
+        
+</Stack>
 
-    if(!window.confirm("Eliminar este template?")) return;
+<Stack spacing={3}>
 
-    try{
+<TextField
+select
+label="Seleccionar plantilla"
+value={selectedTemplateId}
+onChange={(e)=>{
+ const id=e.target.value;
+ setSelectedTemplateId(id);
+ loadTemplateData(id);
+}}
+>
 
-      await deleteWorkoutTemplate(selectedTemplateId);
+<MenuItem value="">
+Nueva plantilla
+</MenuItem>
 
-      setMessage("Template eliminado");
+{templates.map(t=>(
+<MenuItem key={t.id} value={t.id}>
+{t.name}
+</MenuItem>
+))}
 
-      resetForm();
-      loadTemplates();
+</TextField>
 
-    }catch(error){
-      setMessage("Error: "+error.message);
-    }
-  };
+<TextField
+label="Nombre de la plantilla"
+value={name}
+onChange={(e)=>setName(e.target.value)}
+/>
 
-  return(
+<TextField
+label="Descripción"
+multiline
+minRows={3}
+value={description}
+onChange={(e)=>setDescription(e.target.value)}
+/>
 
-    <FormPage title="Workout Templates">
 
-      <FormSelect
-        label="Buscar template"
-        value={selectedTemplateId}
-        onChange={(e)=>{
-          const id = e.target.value;
-          setSelectedTemplateId(id);
-          loadTemplateData(id);
-        }}
-      >
+{days.map((day,dayIndex)=>(
 
-        <option value="">Nuevo template</option>
+<Accordion key={dayIndex}>
 
-        {templates.map(t=>(
-          <option key={t.id} value={t.id}>
-            {t.name}
-          </option>
-        ))}
+<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
 
-      </FormSelect>
+<Typography>
+Día {dayIndex+1} - {day.name}
+</Typography>
 
-      <form className="form" onSubmit={handleSubmit}>
+</AccordionSummary>
 
-        <FormInput
-          label="Nombre del template"
-          type="text"
-          value={name}
-          onChange={(e)=>setName(e.target.value)}
-          required
-        />
+<AccordionDetails>
 
-        <label className="label">Descripción</label>
+<Stack spacing={2}>
 
-        <textarea
-          className="textarea"
-          value={description}
-          onChange={(e)=>setDescription(e.target.value)}
-        />
+<Stack direction="row" justifyContent="space-between">
 
-        <div style={{marginTop:"20px"}}>
-          <PrimaryButton type="button" onClick={addDay}>
-            Agregar día
-          </PrimaryButton>
-        </div>
+<Typography variant="h6">
+Configuración del día
+</Typography>
 
-        {days.map((day,dayIndex)=>(
+<Stack direction="row">
 
-          <div key={dayIndex} className="dayCard">
+<IconButton onClick={()=>moveDay(dayIndex,-1)}>
+<ArrowUpwardIcon/>
+</IconButton>
 
-            <h3>Día {dayIndex+1}</h3>
+<IconButton onClick={()=>moveDay(dayIndex,1)}>
+<ArrowDownwardIcon/>
+</IconButton>
 
-            <FormInput
-              label="Nombre del día"
-              type="text"
-              value={day.name}
-              onChange={(e)=>updateDayField(dayIndex,"name",e.target.value)}
-            />
+<IconButton onClick={()=>duplicateDay(dayIndex)}>
+<FileCopyIcon/>
+</IconButton>
 
-            <FormInput
-              label="Músculos trabajados"
-              type="text"
-              value={day.muscles}
-              onChange={(e)=>updateDayField(dayIndex,"muscles",e.target.value)}
-            />
+<IconButton onClick={()=>removeDay(dayIndex)}>
+<DeleteIcon color="error"/>
+</IconButton>
 
-            <FormSelect
-              label="Agregar ejercicio"
-              value={day.selectedExercise}
-              onChange={(e)=>updateDayField(dayIndex,"selectedExercise",e.target.value)}
-            >
+</Stack>
 
-              <option value="">Seleccionar ejercicio</option>
+</Stack>
 
-              {exercises.map(ex=>(
-                <option key={ex.id} value={ex.id}>
-                  {ex.name}
-                </option>
-              ))}
+<TextField
+label="Nombre del día"
+value={day.name}
+onChange={(e)=>updateDayField(dayIndex,"name",e.target.value)}
+/>
 
-            </FormSelect>
+<TextField
+label="Músculos trabajados"
+value={day.muscles}
+onChange={(e)=>updateDayField(dayIndex,"muscles",e.target.value)}
+/>
 
-            <PrimaryButton
-              type="button"
-              onClick={()=>addExerciseToDay(dayIndex)}
-            >
-              Agregar ejercicio
-            </PrimaryButton>
+<Autocomplete
+options={exercises}
+getOptionLabel={(option)=>option.name}
+value={day.selectedExercise}
+onChange={(event,value)=>updateDayField(dayIndex,"selectedExercise",value)}
+renderInput={(params)=>
+<TextField {...params} label="Seleccionar ejercicio"/>
+}
+/>
 
-            <div style={{marginTop:"10px"}}>
+<Button
+variant="contained"
+color="success"
+onClick={()=>addExerciseToDay(dayIndex)}
+>
+Agregar ejercicio
+</Button>
 
-              {day.exercises.map((ex,i)=>(
+<Divider/>
 
-                <div key={i} className="exerciseRow">
+{day.exercises.map((ex,i)=>(
 
-                  <span>
-                    {ex.order}. {ex.exerciseName}
-                  </span>
+<Card key={i}>
 
-                  <DeleteButton
-                    type="button"
-                    onClick={()=>removeExerciseFromDay(dayIndex,i)}
-                  >
-                    X
-                  </DeleteButton>
+<CardContent>
 
-                </div>
+<Stack direction="row" spacing={2} alignItems="center">
 
-              ))}
+<Typography sx={{width:220}}>
+{ex.order}. {ex.exerciseName}
+</Typography>
 
-            </div>
+<IconButton onClick={()=>moveExercise(dayIndex,i,-1)}>
+<ArrowUpwardIcon/>
+</IconButton>
 
-            <div style={{marginTop:"10px"}}>
+<IconButton onClick={()=>moveExercise(dayIndex,i,1)}>
+<ArrowDownwardIcon/>
+</IconButton>
 
-              <DeleteButton
-                type="button"
-                onClick={()=>removeDay(dayIndex)}
-              >
-                Eliminar día
-              </DeleteButton>
+<IconButton onClick={()=>removeExerciseFromDay(dayIndex,i)}>
+<DeleteIcon color="error"/>
+</IconButton>
 
-            </div>
+</Stack>
 
-          </div>
+</CardContent>
 
-        ))}
+</Card>
 
-        <div className="buttonContainer">
+))}
 
-          {selectedTemplateId && (
-            <DeleteButton
-              type="button"
-              onClick={handleDelete}
-            >
-              Eliminar Template
-            </DeleteButton>
-          )}
+</Stack>
 
-          <PrimaryButton type="submit">
-            {selectedTemplateId ? "Actualizar Template" : "Guardar Template"}
-          </PrimaryButton>
+</AccordionDetails>
 
-        </div>
+</Accordion>
 
-      </form>
+))}
 
-      {message && <div className="message">{message}</div>}
+<Button
+variant="contained"
+color="success"
+onClick={addDay}
+>
+Agregar día
+</Button>
 
-    </FormPage>
-  );
+{message && (
+<Alert severity={messageType}>
+{message}
+</Alert>
+)}
+
+<Stack direction="row" spacing={2}>
+
+{selectedTemplateId && (
+
+<Button
+variant="contained"
+color="error"
+onClick={handleDelete}
+>
+Eliminar Plantilla
+</Button>
+
+)}
+
+<Button
+variant="contained"
+color="success"
+onClick={handleSubmit}
+>
+{selectedTemplateId ? "Actualizar Plantilla" : "Guardar Plantilla"}
+</Button>
+
+</Stack>
+
+</Stack>
+
+</Paper>
+
+</Container>
+
+);
 }

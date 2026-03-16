@@ -83,7 +83,7 @@ public class UserController {
     }
 
     // Login
-    @PutMapping("/{id}/login")
+    @PatchMapping("/{id}/login")
     public User loginUser(@PathVariable Long id) {
 
         User user = userRepository.findById(id)
@@ -95,7 +95,7 @@ public class UserController {
     }
 
     // Logout
-    @PutMapping("/{id}/logout")
+    @PatchMapping("/{id}/logout")
     public User logoutUser(@PathVariable Long id) {
 
         User user = userRepository.findById(id)

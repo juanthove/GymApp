@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-import { getUsers, getCurrentWorkout, setCurrentWorkout } from "../services/userService";
+import { getUsers, getCurrentWorkout, setCurrentWorkout, getUserById } from "../services/userService";
 import { getExercises } from "../services/exerciseService";
 import { getWorkoutTemplates, getWorkoutTemplateById } from "../services/workoutTemplateService";
 import { createWorkout, updateWorkout, getWorkoutById } from "../services/workoutService";
@@ -21,13 +21,18 @@ AccordionSummary,
 AccordionDetails,
 Divider,
 Alert,
-Autocomplete
+Autocomplete,
+LinearProgress
 } from "@mui/material";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import FileCopyIcon from "@mui/icons-material/FileCopy";
+
+import BackButton from "../components/BackButton";
+
 
 export default function CreateWorkoutScreen(){
 
@@ -40,6 +45,7 @@ const [source,setSource] = useState("empty");
 
 const [workoutName,setWorkoutName] = useState("");
 const [days,setDays] = useState([]);
+const [gymDaysPerWeek,setGymDaysPerWeek] = useState(0);
 
 const [startDate,setStartDate] = useState("");
 const [endDate,setEndDate] = useState("");
@@ -49,12 +55,86 @@ const [hasCurrentWorkout,setHasCurrentWorkout] = useState(false);
 const [isLastWorkout,setIsLastWorkout] = useState(false);
 
 const [message,setMessage] = useState("");
+const [messageType,setMessageType] = useState("info");
 
 useEffect(()=>{
  loadUsers();
  loadTemplates();
  loadExercises();
 },[]);
+
+const validateWorkout = () => {
+
+ if(!workoutName.trim()){
+  setMessage("El nombre de la plantilla es obligatorio");
+  setMessageType("warning");
+  return false;
+ }
+
+ if(!startDate || !endDate){
+  setMessage("Debes seleccionar fecha de inicio y fin");
+  setMessageType("warning");
+  return false;
+ }
+
+ if(days.length === 0){
+  setMessage("Debes agregar al menos un día");
+  setMessageType("warning");
+  return false;
+ }
+
+ if(gymDaysPerWeek && days.length > gymDaysPerWeek){
+    setMessage(`La planilla tiene ${days.length} días pero el usuario solo entrena ${gymDaysPerWeek}`);
+    setMessageType("warning");
+    return false;
+ }
+
+ for(let d=0; d<days.length; d++){
+
+  const day = days[d];
+
+  if(!day.name.trim()){
+   setMessage(`El día ${d+1} debe tener nombre`);
+   setMessageType("warning");
+   return false;
+  }
+
+  if(!day.muscles.trim()){
+   setMessage(`El día ${d+1} debe tener músculos trabajados`);
+   setMessageType("warning");
+   return false;
+  }
+
+  if(day.exercises.length === 0){
+   setMessage(`El día ${d+1} debe tener al menos un ejercicio`);
+   setMessageType("warning");
+   return false;
+  }
+
+  for(let e=0; e<day.exercises.length; e++){
+
+   const ex = day.exercises[e];
+
+   if(ex.reps === null || ex.reps === "" || ex.reps === undefined){
+    setMessage(`El ejercicio ${ex.exerciseName} del día ${d+1} necesita repeticiones`);
+    setMessageType("warning");
+    return false;
+   }
+
+   if(ex.weight === null || ex.weight === "" || ex.weight === undefined){
+    setMessage(`El ejercicio ${ex.exerciseName} del día ${d+1} necesita peso`);
+    setMessageType("warning");
+    return false;
+   }
+
+  }
+
+ }
+
+ setMessage("");
+ return true;
+
+};
 
 const resetForm = () => {
  setSource("empty");
@@ -287,7 +367,30 @@ const updateExerciseField=(dayIndex,exIndex,field,value)=>{
 
 };
 
+const duplicateDay = (index) => {
+
+ const dayToCopy = days[index];
+
+ const newDay = {
+  name: dayToCopy.name + " copia",
+  muscles: dayToCopy.muscles,
+  exercises: dayToCopy.exercises.map(ex => ({
+    ...ex
+  })),
+  selectedExercise: null
+ };
+
+ const updated = [...days];
+
+ updated.splice(index + 1, 0, newDay);
+
+ setDays(updated);
+
+};
+
 const handleCreateWorkout = async()=>{
+
+    if(!validateWorkout()) return;
 
  try{
 
@@ -309,15 +412,19 @@ const handleCreateWorkout = async()=>{
 
   resetForm();
 
-  setMessage("Workout creado");
+  setMessage("Planilla creada");
+  setMessageType("success");
 
  }catch(e){
   setMessage(e.message);
+  setMessageType("error");
  }
 
 };
 
 const handleUpdateWorkout = async()=>{
+
+    if(!validateWorkout()) return;
 
  try{
 
@@ -336,10 +443,12 @@ const handleUpdateWorkout = async()=>{
 
   resetForm();
 
-  setMessage("Workout actualizado");
+  setMessage("Planilla actualizada");
+  setMessageType("success");
 
  }catch(e){
   setMessage(e.message);
+  setMessageType("error");
  }
 
 };
@@ -350,11 +459,18 @@ return(
 
 <Paper sx={{p:4}}>
 
-<Typography variant="h4" gutterBottom>
-Crear Workout
+<Stack direction="row" alignItems="center" spacing={1} sx={{mb:2}}>
+
+<BackButton to="/admin" />
+
+<Typography variant="h4">
+Crear Planilla
 </Typography>
 
+</Stack>
+
 <Stack spacing={3}>
+
 
 <TextField
 select
@@ -366,13 +482,18 @@ onChange={async(e)=>{
  setSelectedUser(userId);
 
  if(userId){
+
   await checkCurrentWorkout(userId);
+
+  const user = await getUserById(userId);
+  setGymDaysPerWeek(user.gymDaysPerWeek || 0);
+
  }
 
 }}
 >
 
-<MenuItem value="">Seleccionar usuario</MenuItem>
+<MenuItem value="" disabled>Seleccionar usuario</MenuItem>
 
 {users.map(u=>(
 <MenuItem key={u.id} value={u.id}>
@@ -394,7 +515,7 @@ onChange={(e)=>handleSourceChange(e.target.value)}
 <MenuItem value="empty">Planilla vacía</MenuItem>
 
 {hasCurrentWorkout && (
-<MenuItem value="last">Último workout</MenuItem>
+<MenuItem value="last">Última planilla</MenuItem>
 )}
 
 {templates.map(t=>(
@@ -407,8 +528,30 @@ onChange={(e)=>handleSourceChange(e.target.value)}
 
 )}
 
+{gymDaysPerWeek > 0 && (
+
+<Stack spacing={1}>
+
+<Typography
+variant="body2"
+color={days.length > gymDaysPerWeek ? "error" : "textPrimary"}
+>
+Días de la planilla: {days.length} / {gymDaysPerWeek}
+</Typography>
+
+<LinearProgress
+variant="determinate"
+color={days.length > gymDaysPerWeek ? "error" : "primary"}
+value={Math.min((days.length / gymDaysPerWeek) * 100, 100)}
+/>
+
+
+</Stack>
+
+)}
+
 <TextField
-label="Nombre del workout"
+label="Nombre de la planilla"
 value={workoutName}
 onChange={(e)=>setWorkoutName(e.target.value)}
 />
@@ -433,13 +576,6 @@ onChange={(e)=>setEndDate(e.target.value)}
 
 </Stack>
 
-<Button
-variant="contained"
-color="success"
-onClick={addDay}
->
-Agregar día
-</Button>
 
 {days.map((day,dayIndex)=>(
 
@@ -471,6 +607,10 @@ Configuración del día
 
 <IconButton onClick={()=>moveDay(dayIndex,1)}>
 <ArrowDownwardIcon/>
+</IconButton>
+
+<IconButton onClick={()=>duplicateDay(dayIndex)}>
+<FileCopyIcon/>
 </IconButton>
 
 <IconButton onClick={()=>removeDay(dayIndex)}>
@@ -569,6 +709,17 @@ onChange={(e)=>updateExerciseField(dayIndex,i,"weight",e.target.value)}
 
 ))}
 
+<Button
+variant="contained"
+color="success"
+onClick={addDay}
+disabled={!selectedUser || (gymDaysPerWeek && days.length >= gymDaysPerWeek)}
+>
+Agregar día
+</Button>
+
+{message && (<Alert severity={messageType}>{message}</Alert>)}
+
 <Stack direction="row" spacing={2}>
 
 {isLastWorkout && (
@@ -578,7 +729,7 @@ variant="contained"
 color="success"
 onClick={handleUpdateWorkout}
 >
-Actualizar último workout
+Actualizar última planilla
 </Button>
 
 )}
@@ -588,12 +739,11 @@ variant="contained"
 color="success"
 onClick={handleCreateWorkout}
 >
-Crear nuevo workout
+Crear nueva planilla
 </Button>
 
 </Stack>
 
-{message && <Alert severity="info">{message}</Alert>}
 
 </Stack>
 

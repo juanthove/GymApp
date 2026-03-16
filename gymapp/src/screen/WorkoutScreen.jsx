@@ -1,105 +1,167 @@
-import React, { useEffect, useState } from "react";
-import { getCurrentWorkout } from "../services/userService";
-import { getWorkoutDays } from "../services/workoutDayService";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
-export default function WorkoutScreen() {
-  const { userId } = useParams();
-  const navigate = useNavigate();
+import { getUserById, getCurrentWorkout } from "../services/userService";
+import { getWorkoutById } from "../services/workoutService";
+import { getRandomPhrase } from "../services/phraseService";
 
-  const [workout, setWorkout] = useState(null);
-  const [days, setDays] = useState([]);
+import GymCard from "../components/GymCard";
 
-  useEffect(() => {
-    loadWorkout();
-  }, []);
+import {
+Container,
+Typography,
+Stack,
+Button,
+Dialog,
+DialogTitle,
+DialogContent,
+DialogActions
+} from "@mui/material";
 
-  const loadWorkout = async () => {
-    try {
-      const workoutData = await getCurrentWorkout(userId);
-      setWorkout(workoutData);
+import BackButton from "../components/BackButton";
 
-      const daysData = await getWorkoutDays(workoutData.id);
-      setDays(daysData);
-    } catch (error) {
-      console.error("Error cargando workout:", error);
-    }
-  };
+export default function WorkoutScreen(){
 
-  const goToDay = (dayId) => {
-    navigate(`/day/${dayId}`);
-  };
+const { userId } = useParams();
+const navigate = useNavigate();
 
-  if (!workout) return <div>Cargando...</div>;
+const [user,setUser] = useState(null);
+const [workout,setWorkout] = useState(null);
+const [selectedDay,setSelectedDay] = useState(null);
+const [phrase,setPhrase] = useState("");
 
-  return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>{workout.name}</h1>
+useEffect(()=>{
+ loadData();
+},[]);
 
-      <div style={styles.dates}>
-        <p>Inicio: {workout.startDate}</p>
-        <p>Fin: {workout.endDate ?? "Activo"}</p>
-      </div>
+const loadData = async()=>{
 
-      <div style={styles.cardsContainer}>
-        {days.map((day) => (
-          <div
-            key={day.id}
-            style={styles.card}
-            onClick={() => goToDay(day.id)}
-          >
-            <h2 style={styles.dayName}>{day.name}</h2>
+ const u = await getUserById(userId);
+ setUser(u);
 
-            <p style={styles.muscles}>
-              {day.muscles}
-            </p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+ const current = await getCurrentWorkout(userId);
+
+ if(current){
+  const w = await getWorkoutById(current.id);
+  setWorkout(w);
+ }
+
+ try{
+  const phraseData = await getRandomPhrase();
+  setPhrase(phraseData.text);
+ }catch{
+  setPhrase("Hoy es un buen día para mejorar.");
+ }
+
+};
+
+const openDay=(day)=>{
+ setSelectedDay(day);
+};
+
+const startWorkout=()=>{
+ navigate(`/exercise/${userId}/${selectedDay.id}`);
+};
+
+if(!user) return null;
+
+return(
+
+<Container maxWidth="sm" sx={{mt:6}}>
+
+<Stack spacing={4}>
+
+<Stack direction="row" alignItems="center" spacing={1} sx={{position:"relative"}}>
+ <BackButton to="/home" sx={{ position:"absolute", left:0, top:"50%", transform:"translateY(-50%)" }} />
+ <Typography variant="h4" textAlign="center" sx={{width:"100%"}}>
+  Hola {user.name}
+ </Typography>
+</Stack>
+
+<Typography textAlign="center" sx={{fontStyle:"italic"}}>
+{phrase}
+</Typography>
+
+{workout && workout.days.map(day => (
+
+<GymCard
+ key={day.order}
+ title={day.name}
+ subtitle={day.muscles}
+ onClick={()=>openDay(day)}
+ sx={{
+  opacity: day.completed ? 0.6 : 1
+ }}
+>
+
+{day.completed &&
+
+<Typography color="success.main" fontWeight={700}>
+ ✔ Completado
+</Typography>
+
 }
 
-const styles = {
-  container: {
-    minHeight: "100vh",
-    backgroundColor: "#0B0F1A",
-    padding: "40px",
-  },
+</GymCard>
 
-  title: {
-    color: "#FF6B00",
-    fontSize: "32px",
-    marginBottom: "10px",
-  },
+))}
 
-  dates: {
-    color: "white",
-    marginBottom: "30px",
-  },
+<Button variant="contained">
+📊 Estadísticas
+</Button>
 
-  cardsContainer: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "20px",
-  },
+<Button variant="contained">
+🏆 Logros
+</Button>
 
-  card: {
-    width: "220px",
-    height: "130px",
-    backgroundColor: "#1C1F2A",
-    borderRadius: "20px",
-    padding: "20px",
-    cursor: "pointer",
-    boxShadow: "0px 5px 15px rgba(0,0,0,0.4)",
-  },
+</Stack>
 
-  dayName: {
-    color: "#FF6B00",
-    marginBottom: "10px",
-  },
 
-  muscles: {
-    color: "white",
-  },
-};
+<Dialog
+ open={!!selectedDay}
+ onClose={()=>setSelectedDay(null)}
+ fullWidth
+>
+
+<DialogTitle>
+Músculos que vas a trabajar hoy
+</DialogTitle>
+
+<DialogContent>
+
+<Typography sx={{mb:2}}>
+{selectedDay?.muscles}
+</Typography>
+
+<img
+ src="/body-placeholder.png"
+ style={{width:"100%"}}
+/>
+
+</DialogContent>
+
+<DialogActions>
+
+<Button onClick={()=>setSelectedDay(null)}>
+Cancelar
+</Button>
+
+<Button
+ variant="contained"
+ onClick={startWorkout}
+ disabled={selectedDay?.completed}
+>
+{selectedDay?.completed
+ ? "Entrenamiento completado"
+ : "Comenzar entrenamiento"}
+</Button>
+
+</DialogActions>
+
+</Dialog>
+
+</Container>
+
+);
+
+}

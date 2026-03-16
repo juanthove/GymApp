@@ -54,4 +54,30 @@ public class WorkoutDayController {
         workoutDayRepository.deleteById(id);
     }
 
+
+    //Completar un dia de entrenamiento
+    @PatchMapping("/{id}/complete")
+    public WorkoutDay completeWorkoutDay(@PathVariable Long id){
+
+        WorkoutDay day = workoutDayRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Workout day not found"));
+
+        day.setCompleted(true);
+
+        return workoutDayRepository.save(day);
+    }
+
+
+    //Marcar un dia de entrenamiento como no completado
+    @PatchMapping("/{id}/uncomplete")
+    public WorkoutDay uncompleteWorkoutDay(@PathVariable Long id){
+
+        WorkoutDay day = workoutDayRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Workout day not found"));
+
+        day.setCompleted(false);
+
+        return workoutDayRepository.save(day);
+    }
+
 }

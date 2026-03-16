@@ -23,6 +23,8 @@ public class WorkoutExercise {
 
     private Double weight;
 
+    private boolean completed = false;
+
     private String comment;
 
     public Long getId() {
@@ -71,6 +73,14 @@ public class WorkoutExercise {
 
     public void setWeight(Double weight) {
         this.weight = weight;
+    }
+
+    public boolean getCompleted() {
+        return completed;
+    }
+
+    public void setCompleted(boolean completed) {
+        this.completed = completed;
     }
 
     public String getComment() {

@@ -8,6 +8,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import HomeScreen from "./screen/HomeScreen";
 import WorkoutScreen from "./screen/WorkoutScreen";
+import ExerciseScreen from "./screen/ExerciseScreen";
+import FinalResumeScreen from "./screen/FinalResumeScreen";
 
 
 function App() {
@@ -15,7 +17,9 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/home" element={<HomeScreen />} />
-        <Route path="/workout" element={<WorkoutScreen />} />
+        <Route path="/workout/:userId" element={<WorkoutScreen />} />
+        <Route path="/exercise/:userId/:workoutDayId" element={<ExerciseScreen />} />
+        <Route path="/final/:userId/:workoutDayId" element={<FinalResumeScreen />} />
 
         <Route path="/admin" element={<AdminScreen />} />
         <Route path="/admin/users" element={<CreateUserScreen />} />

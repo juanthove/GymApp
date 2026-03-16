@@ -15,6 +15,8 @@ public class WorkoutDay {
 
     private String muscles;
 
+    private boolean completed = false;
+
     @ManyToOne
     @JoinColumn(name = "workout_id")
     private Workout workout;
@@ -41,6 +43,14 @@ public class WorkoutDay {
 
     public void setMuscles(String muscles) {
         this.muscles = muscles;
+    }
+
+    public boolean getCompleted() {
+        return completed;
+    }
+
+    public void setCompleted(boolean completed) {
+        this.completed = completed;
     }
 
     public Workout getWorkout() {

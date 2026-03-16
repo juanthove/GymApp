@@ -18,6 +18,9 @@ public class Exercise {
 
     private String video;
 
+    @Enumerated(EnumType.STRING)
+    private ExerciseType type;
+
 
     public Long getId() {
         return id;
@@ -57,5 +60,13 @@ public class Exercise {
 
     public void setVideo(String video) {
         this.video = video;
+    }
+
+    public ExerciseType getType() {
+        return type;
+    }
+
+    public void setType(ExerciseType type) {
+        this.type = type;
     }
 }

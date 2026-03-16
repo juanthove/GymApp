@@ -1,180 +1,266 @@
 import { useState, useEffect } from "react";
+
 import { createUser, updateUser, deleteUser, getUsers } from "../services/userService";
 
-import FormPage from "../components/FormPage";
-import FormInput from "../components/FormInput";
-import FormSelect from "../components/FormSelect";
-import PrimaryButton from "../components/PrimaryButton";
-import DeleteButton from "../components/DeleteButton";
+import {
+Container,
+Paper,
+Typography,
+TextField,
+MenuItem,
+Button,
+Stack,
+Alert
+} from "@mui/material";
 
-import "../styles/forms.css";
+import BackButton from "../components/BackButton";
 
 export default function CreateUserScreen() {
 
-  const [users,setUsers] = useState([]);
-  const [selectedId,setSelectedId] = useState("new");
-  const [currentUser,setCurrentUser] = useState(null);
+const [users,setUsers] = useState([]);
+const [selectedId,setSelectedId] = useState("new");
+const [currentUser,setCurrentUser] = useState(null);
 
-  const [name,setName] = useState("");
-  const [surname,setSurname] = useState("");
-  const [gymDays,setGymDays] = useState("");
+const [name,setName] = useState("");
+const [surname,setSurname] = useState("");
+const [gymDays,setGymDays] = useState("");
 
-  const [message,setMessage] = useState("");
+const [message,setMessage] = useState("");
+const [messageType,setMessageType] = useState("info");
 
-  useEffect(()=>{
-    loadUsers();
-  },[]);
+useEffect(()=>{
+ loadUsers();
+},[]);
 
-  const loadUsers = async ()=>{
-    const data = await getUsers();
-    setUsers(data);
-  };
+const loadUsers = async ()=>{
+ const data = await getUsers();
+ setUsers(data);
+};
 
-  const handleSelect = (id)=>{
-    setSelectedId(id);
+const resetForm = ()=>{
+ setSelectedId("new");
+ setCurrentUser(null);
+ setName("");
+ setSurname("");
+ setGymDays("");
+};
 
-    if(id==="new"){
-      setCurrentUser(null);
-      setName("");
-      setSurname("");
-      setGymDays("");
-      return;
-    }
+const handleSelect = (id)=>{
 
-    const user = users.find(u=>u.id===Number(id));
+ setSelectedId(id);
 
-    setCurrentUser(user);
-    setName(user.name);
-    setSurname(user.surname);
-    setGymDays(user.gymDaysPerWeek || "");
-  };
+ if(id==="new"){
+  resetForm();
+  return;
+ }
 
-  const handleSubmit = async (e)=>{
-    e.preventDefault();
+ const user = users.find(u=>u.id===Number(id));
 
-    try{
+ setCurrentUser(user);
+ setName(user.name);
+ setSurname(user.surname);
+ setGymDays(user.gymDaysPerWeek || "");
 
-      if(selectedId==="new"){
+};
 
-        await createUser({
-          name,
-          surname,
-          gymDaysPerWeek:parseInt(gymDays),
-          isLoggedIn:false,
-          currentWorkoutId:null
-        });
+const validateForm = ()=>{
 
-        setMessage("Usuario creado correctamente");
+ if(!name.trim()){
+  setMessage("El nombre es obligatorio");
+  setMessageType("warning");
+  return false;
+ }
 
-      }else{
+ if(!surname.trim()){
+  setMessage("El apellido es obligatorio");
+  setMessageType("warning");
+  return false;
+ }
 
-        await updateUser(selectedId,{
-          name,
-          surname,
-          gymDaysPerWeek:parseInt(gymDays)
-        });
+ if(!gymDays){
+  setMessage("Debes indicar los días de gimnasio por semana");
+  setMessageType("warning");
+  return false;
+ }
 
-        setMessage("Usuario actualizado correctamente");
-      }
+ if(gymDays < 1 || gymDays > 7){
+  setMessage("Los días de gimnasio deben ser entre 1 y 7");
+  setMessageType("warning");
+  return false;
+ }
 
-      setSelectedId("new");
-      setCurrentUser(null);
-      setName("");
-      setSurname("");
-      setGymDays("");
+ return true;
 
-      loadUsers();
+};
 
-    }catch(error){
-      setMessage("Error: "+error.message);
-    }
-  };
+const handleSubmit = async (e)=>{
 
-  const handleDelete = async ()=>{
+ e.preventDefault();
 
-    if(!currentUser) return;
+ if(!validateForm()) return;
 
-    if(window.confirm("¿Seguro que deseas eliminar este usuario?")){
+ try{
 
-      await deleteUser(currentUser.id);
+  if(selectedId==="new"){
 
-      setMessage("Usuario eliminado");
+   await createUser({
+    name,
+    surname,
+    gymDaysPerWeek:parseInt(gymDays),
+    isLoggedIn:false,
+    currentWorkoutId:null
+   });
 
-      setSelectedId("new");
-      setCurrentUser(null);
-      setName("");
-      setSurname("");
-      setGymDays("");
+   setMessage("Usuario creado correctamente");
+   setMessageType("success");
 
-      loadUsers();
-    }
-  };
+  }else{
 
-  return (
+   await updateUser(selectedId,{
+    name,
+    surname,
+    gymDaysPerWeek:parseInt(gymDays)
+   });
 
-    <FormPage title="Usuarios">
+   setMessage("Usuario actualizado correctamente");
+   setMessageType("success");
 
-      <form className="form" onSubmit={handleSubmit}>
+  }
 
-        <FormSelect
-          label="Seleccionar usuario"
-          value={selectedId}
-          onChange={(e)=>handleSelect(e.target.value)}
-        >
-          <option value="new">Nuevo Usuario</option>
+  resetForm();
 
-          {users.map(u=>(
-            <option key={u.id} value={u.id}>
-              {u.name} {u.surname}
-            </option>
-          ))}
+  loadUsers();
 
-        </FormSelect>
+ }catch(error){
 
-        <FormInput
-          label="Nombre"
-          type="text"
-          value={name}
-          onChange={(e)=>setName(e.target.value)}
-          required
-        />
+  setMessage("Error: "+error.message);
+  setMessageType("error");
 
-        <FormInput
-          label="Apellido"
-          type="text"
-          value={surname}
-          onChange={(e)=>setSurname(e.target.value)}
-          required
-        />
+ }
 
-        <FormInput
-          label="Días por semana en el gimnasio"
-          type="number"
-          min="1"
-          max="5"
-          value={gymDays}
-          onChange={(e)=>setGymDays(e.target.value)}
-          required
-        />
+};
 
-        <div className="buttonContainer">
+const handleDelete = async ()=>{
 
-          {currentUser &&
-            <DeleteButton type="button" onClick={handleDelete}>
-              Eliminar Usuario
-            </DeleteButton>
-          }
+ if(!currentUser) return;
 
-          <PrimaryButton type="submit">
-            {currentUser ? "Actualizar Usuario" : "Crear Usuario"}
-          </PrimaryButton>
+ if(window.confirm("¿Seguro que deseas eliminar este usuario?")){
 
-        </div>
+  try{
 
-      </form>
+   await deleteUser(currentUser.id);
 
-      {message && <div className="message">{message}</div>}
+   setMessage("Usuario eliminado correctamente");
+   setMessageType("success");
 
-    </FormPage>
-  );
+   resetForm();
+
+   loadUsers();
+
+  }catch(error){
+
+   setMessage("Error al eliminar usuario");
+   setMessageType("error");
+
+  }
+
+ }
+
+};
+
+return(
+
+<Container maxWidth="sm" sx={{mt:4,mb:6}}>
+
+<Paper sx={{p:4}}>
+
+<Stack direction="row" alignItems="center" spacing={1} sx={{mb:2}}>
+
+<BackButton to="/admin" />
+
+<Typography variant="h4" gutterBottom>
+Usuarios
+</Typography>
+
+</Stack>
+
+<Stack spacing={3}>
+
+
+
+<TextField
+select
+label="Seleccionar usuario"
+value={selectedId}
+onChange={(e)=>handleSelect(e.target.value)}
+>
+
+<MenuItem value="new">Nuevo Usuario</MenuItem>
+
+{users.map(u=>(
+<MenuItem key={u.id} value={u.id}>
+{u.name} {u.surname}
+</MenuItem>
+))}
+
+</TextField>
+
+<TextField
+label="Nombre"
+value={name}
+onChange={(e)=>setName(e.target.value)}
+/>
+
+<TextField
+label="Apellido"
+value={surname}
+onChange={(e)=>setSurname(e.target.value)}
+/>
+
+<TextField
+label="Días por semana en el gimnasio"
+type="number"
+inputProps={{min:1,max:7}}
+value={gymDays}
+onChange={(e)=>setGymDays(e.target.value)}
+/>
+
+{message && (
+<Alert severity={messageType}>
+{message}
+</Alert>
+)}
+
+
+<Stack direction="row" spacing={2}>
+
+{currentUser && (
+
+<Button
+variant="contained"
+color="error"
+onClick={handleDelete}
+>
+Eliminar Usuario
+</Button>
+
+)}
+
+<Button
+variant="contained"
+color="success"
+onClick={handleSubmit}
+>
+{currentUser ? "Actualizar Usuario" : "Crear Usuario"}
+</Button>
+
+</Stack>
+
+</Stack>
+
+</Paper>
+
+</Container>
+
+);
 }

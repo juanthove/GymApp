@@ -107,6 +107,7 @@ public class WorkoutController {
             dayData.put("id",day.getId());
             dayData.put("name",day.getName());
             dayData.put("muscles",day.getMuscles());
+            dayData.put("completed",day.getCompleted());
 
             List<WorkoutExercise> exercises =
                     workoutExerciseRepository.findByWorkoutDayId(day.getId());

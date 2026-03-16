@@ -1,6 +1,7 @@
 package com.gymapp.controller;
 
 import com.gymapp.model.Exercise;
+import com.gymapp.model.ExerciseType;
 import com.gymapp.repository.ExerciseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.UrlResource;
@@ -42,6 +43,7 @@ public class ExerciseController {
     public Exercise createExercise(
             @RequestParam("name") String name,
             @RequestParam(value = "description", required = false) String description,
+            @RequestParam("type") ExerciseType type,
             @RequestParam(value = "image", required = false) MultipartFile image,
             @RequestParam(value = "video", required = false) MultipartFile video
     ) throws IOException {
@@ -49,6 +51,7 @@ public class ExerciseController {
         Exercise exercise = new Exercise();
         exercise.setName(name);
         exercise.setDescription(description);
+        exercise.setType(type);
 
         saveFiles(exercise, name, image, video);
 
@@ -63,6 +66,7 @@ public class ExerciseController {
 
             @RequestParam("name") String name,
             @RequestParam(value = "description", required = false) String description,
+            @RequestParam("type") ExerciseType type,
 
             @RequestParam(value = "image", required = false) MultipartFile image,
             @RequestParam(value = "video", required = false) MultipartFile video,
@@ -80,6 +84,7 @@ public class ExerciseController {
 
         exercise.setName(name);
         exercise.setDescription(description);
+        exercise.setType(type);
 
         Files.createDirectories(imagePath);
         Files.createDirectories(videoPath);

@@ -1,5 +1,6 @@
 package com.gymapp.controller;
 
+import com.gymapp.model.ExerciseType;
 import com.gymapp.model.WorkoutExercise;
 import com.gymapp.repository.WorkoutExerciseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,4 +59,51 @@ public class WorkoutExerciseController {
     public void deleteWorkoutExercise(@PathVariable Long id) {
         workoutExerciseRepository.deleteById(id);
     }
+
+    //Marcar un ejercicio como completado
+    @PatchMapping("/{id}/complete")
+    public WorkoutExercise completeWorkoutExercise(@PathVariable Long id){
+
+        WorkoutExercise exercise = workoutExerciseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Exercise not found"));
+
+        exercise.setCompleted(true);
+
+        return workoutExerciseRepository.save(exercise);
+    }
+
+    //Marcar un ejercicio como no completado
+    @PatchMapping("/{id}/uncomplete")
+    public WorkoutExercise uncompleteWorkoutExercise(@PathVariable Long id){
+
+        WorkoutExercise exercise = workoutExerciseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Exercise not found"));
+
+        exercise.setCompleted(false);
+
+        return workoutExerciseRepository.save(exercise);
+    }
+
+    // Obtener los ejercicios del día excepto abdominales
+    @GetMapping("/day/{dayId}/no-abdominals")
+    public List<WorkoutExercise> getExercisesWithoutAbdominals(@PathVariable Long dayId) {
+
+        return workoutExerciseRepository
+                .findByWorkoutDayIdAndExercise_TypeNotOrderByExerciseOrder(
+                        dayId,
+                        ExerciseType.ABDOMINAL
+                );
+    }
+
+    //Obtener los ejercicios del dia que sean abdominales
+    @GetMapping("/day/{dayId}/abdominals")
+    public List<WorkoutExercise> getAbdominalExercisesByDay(@PathVariable Long dayId) {
+
+        return workoutExerciseRepository
+                .findByWorkoutDayIdAndExercise_TypeOrderByExerciseOrder(
+                        dayId,
+                        ExerciseType.ABDOMINAL
+                );
+    }
+
 }
