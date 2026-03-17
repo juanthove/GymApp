@@ -1,12 +1,12 @@
 ﻿package com.gymapp.controller;
 
-import com.gymapp.model.WorkoutExercise;
+import com.gymapp.dto.request.WorkoutExerciseRequest;
+import com.gymapp.dto.response.WorkoutExerciseResponse;
 import com.gymapp.service.WorkoutExerciseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/workout-exercises")
@@ -16,30 +16,30 @@ public class WorkoutExerciseController {
     private WorkoutExerciseService workoutExerciseService;
 
     @GetMapping
-    public List<WorkoutExercise> getAllWorkoutExercises() {
+    public List<WorkoutExerciseResponse> getAllWorkoutExercises() {
         return workoutExerciseService.getAllWorkoutExercises();
     }
 
     @GetMapping("/{id}")
-    public Optional<WorkoutExercise> getWorkoutExerciseById(@PathVariable Long id) {
+    public WorkoutExerciseResponse getWorkoutExerciseById(@PathVariable Long id) {
         return workoutExerciseService.getWorkoutExerciseById(id);
     }
 
     @GetMapping("/day/{dayId}")
-    public List<WorkoutExercise> getExercisesByDay(@PathVariable Long dayId) {
+    public List<WorkoutExerciseResponse> getExercisesByDay(@PathVariable Long dayId) {
         return workoutExerciseService.getExercisesByDay(dayId);
     }
 
     @PostMapping
-    public WorkoutExercise createWorkoutExercise(@RequestBody WorkoutExercise workoutExercise) {
-        return workoutExerciseService.createWorkoutExercise(workoutExercise);
+    public WorkoutExerciseResponse createWorkoutExercise(@RequestBody WorkoutExerciseRequest request) {
+        return workoutExerciseService.createWorkoutExercise(request);
     }
 
     @PutMapping("/{id}")
-    public WorkoutExercise updateWorkoutExercise(
+    public WorkoutExerciseResponse updateWorkoutExercise(
             @PathVariable Long id,
-            @RequestBody WorkoutExercise updatedExercise) {
-        return workoutExerciseService.updateWorkoutExercise(id, updatedExercise);
+            @RequestBody WorkoutExerciseRequest request) {
+        return workoutExerciseService.updateWorkoutExercise(id, request);
     }
 
     @DeleteMapping("/{id}")
@@ -48,12 +48,12 @@ public class WorkoutExerciseController {
     }
 
     @PatchMapping("/{id}/complete")
-    public WorkoutExercise completeWorkoutExercise(@PathVariable Long id) {
+    public WorkoutExerciseResponse completeWorkoutExercise(@PathVariable Long id) {
         return workoutExerciseService.completeWorkoutExercise(id);
     }
 
     @PatchMapping("/{id}/uncomplete")
-    public WorkoutExercise uncompleteWorkoutExercise(@PathVariable Long id) {
+    public WorkoutExerciseResponse uncompleteWorkoutExercise(@PathVariable Long id) {
         return workoutExerciseService.uncompleteWorkoutExercise(id);
     }
 }

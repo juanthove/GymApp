@@ -1,13 +1,13 @@
 ﻿package com.gymapp.controller.templates;
 
-import com.gymapp.model.templates.WorkoutTemplateExercise;
+import com.gymapp.dto.request.templates.WorkoutTemplateExerciseRequest;
+import com.gymapp.dto.response.templates.WorkoutTemplateExerciseResponse;
 import com.gymapp.service.templates.WorkoutTemplateExerciseService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/workout-template-exercises")
@@ -17,30 +17,30 @@ public class WorkoutTemplateExerciseController {
     private WorkoutTemplateExerciseService workoutTemplateExerciseService;
 
     @GetMapping
-    public List<WorkoutTemplateExercise> getAllTemplateExercises() {
+    public List<WorkoutTemplateExerciseResponse> getAllTemplateExercises() {
         return workoutTemplateExerciseService.getAllTemplateExercises();
     }
 
     @GetMapping("/{id}")
-    public Optional<WorkoutTemplateExercise> getTemplateExerciseById(@PathVariable Long id) {
+    public WorkoutTemplateExerciseResponse getTemplateExerciseById(@PathVariable Long id) {
         return workoutTemplateExerciseService.getTemplateExerciseById(id);
     }
 
     @GetMapping("/day/{dayId}")
-    public List<WorkoutTemplateExercise> getExercisesByTemplateDay(@PathVariable Long dayId) {
+    public List<WorkoutTemplateExerciseResponse> getExercisesByTemplateDay(@PathVariable Long dayId) {
         return workoutTemplateExerciseService.getExercisesByTemplateDay(dayId);
     }
 
     @PostMapping
-    public WorkoutTemplateExercise createTemplateExercise(@RequestBody WorkoutTemplateExercise exercise) {
-        return workoutTemplateExerciseService.createTemplateExercise(exercise);
+    public WorkoutTemplateExerciseResponse createTemplateExercise(@RequestBody WorkoutTemplateExerciseRequest request) {
+        return workoutTemplateExerciseService.createTemplateExercise(request);
     }
 
     @PutMapping("/{id}")
-    public WorkoutTemplateExercise updateTemplateExercise(
+    public WorkoutTemplateExerciseResponse updateTemplateExercise(
             @PathVariable Long id,
-            @RequestBody WorkoutTemplateExercise updatedExercise) {
-        return workoutTemplateExerciseService.updateTemplateExercise(id, updatedExercise);
+            @RequestBody WorkoutTemplateExerciseRequest request) {
+        return workoutTemplateExerciseService.updateTemplateExercise(id, request);
     }
 
     @DeleteMapping("/{id}")

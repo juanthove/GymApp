@@ -1,6 +1,6 @@
 ﻿package com.gymapp.controller;
 
-import com.gymapp.model.Exercise;
+import com.gymapp.dto.response.ExerciseResponse;
 import com.gymapp.model.ExerciseType;
 import com.gymapp.service.ExerciseService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,17 +20,17 @@ public class ExerciseController {
     private ExerciseService exerciseService;
 
     @GetMapping
-    public List<Exercise> getAllExercises() {
+    public List<ExerciseResponse> getAllExercises() {
         return exerciseService.getAllExercises();
     }
 
     @GetMapping("/{id}")
-    public Exercise getExerciseById(@PathVariable Long id) {
+    public ExerciseResponse getExerciseById(@PathVariable Long id) {
         return exerciseService.getExerciseById(id);
     }
 
     @PostMapping
-    public Exercise createExercise(
+    public ExerciseResponse createExercise(
             @RequestParam("name") String name,
             @RequestParam(value = "description", required = false) String description,
             @RequestParam("type") ExerciseType type,
@@ -41,7 +41,7 @@ public class ExerciseController {
     }
 
     @PutMapping("/{id}")
-    public Exercise updateExercise(
+    public ExerciseResponse updateExercise(
             @PathVariable Long id,
             @RequestParam("name") String name,
             @RequestParam(value = "description", required = false) String description,

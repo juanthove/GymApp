@@ -1,12 +1,12 @@
 ﻿package com.gymapp.controller;
 
-import com.gymapp.model.WorkoutDay;
+import com.gymapp.dto.request.WorkoutDayRequest;
+import com.gymapp.dto.response.WorkoutDayResponse;
 import com.gymapp.service.WorkoutDayService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/workout-days")
@@ -16,28 +16,28 @@ public class WorkoutDayController {
     private WorkoutDayService workoutDayService;
 
     @GetMapping
-    public List<WorkoutDay> getAllWorkoutDays() {
+    public List<WorkoutDayResponse> getAllWorkoutDays() {
         return workoutDayService.getAllWorkoutDays();
     }
 
     @GetMapping("/{id}")
-    public Optional<WorkoutDay> getWorkoutDayById(@PathVariable Long id) {
+    public WorkoutDayResponse getWorkoutDayById(@PathVariable Long id) {
         return workoutDayService.getWorkoutDayById(id);
     }
 
     @GetMapping("/workout/{workoutId}")
-    public List<WorkoutDay> getDaysByWorkout(@PathVariable Long workoutId) {
+    public List<WorkoutDayResponse> getDaysByWorkout(@PathVariable Long workoutId) {
         return workoutDayService.getDaysByWorkout(workoutId);
     }
 
     @PostMapping
-    public WorkoutDay createWorkoutDay(@RequestBody WorkoutDay workoutDay) {
-        return workoutDayService.createWorkoutDay(workoutDay);
+    public WorkoutDayResponse createWorkoutDay(@RequestBody WorkoutDayRequest request) {
+        return workoutDayService.createWorkoutDay(request);
     }
 
     @PutMapping("/{id}")
-    public WorkoutDay updateWorkoutDay(@PathVariable Long id, @RequestBody WorkoutDay updatedDay) {
-        return workoutDayService.updateWorkoutDay(id, updatedDay);
+    public WorkoutDayResponse updateWorkoutDay(@PathVariable Long id, @RequestBody WorkoutDayRequest request) {
+        return workoutDayService.updateWorkoutDay(id, request);
     }
 
     @DeleteMapping("/{id}")
@@ -46,17 +46,17 @@ public class WorkoutDayController {
     }
 
     @PatchMapping("/{id}/start")
-    public WorkoutDay startWorkoutDay(@PathVariable Long id) {
+    public WorkoutDayResponse startWorkoutDay(@PathVariable Long id) {
         return workoutDayService.startWorkoutDay(id);
     }
 
     @PatchMapping("/{id}/complete")
-    public WorkoutDay completeWorkoutDay(@PathVariable Long id) {
+    public WorkoutDayResponse completeWorkoutDay(@PathVariable Long id) {
         return workoutDayService.completeWorkoutDay(id);
     }
 
     @PatchMapping("/{id}/abdominal")
-    public WorkoutDay markAbdominalWorkoutDay(@PathVariable Long id) {
+    public WorkoutDayResponse markAbdominalWorkoutDay(@PathVariable Long id) {
         return workoutDayService.markAbdominalWorkoutDay(id);
     }
 

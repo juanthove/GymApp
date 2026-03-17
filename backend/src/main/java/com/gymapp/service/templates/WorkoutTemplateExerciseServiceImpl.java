@@ -1,12 +1,17 @@
 package com.gymapp.service.templates;
 
+import com.gymapp.dto.request.templates.WorkoutTemplateExerciseRequest;
+import com.gymapp.dto.response.templates.WorkoutTemplateExerciseResponse;
+import com.gymapp.model.Exercise;
+import com.gymapp.model.templates.WorkoutTemplateDay;
 import com.gymapp.model.templates.WorkoutTemplateExercise;
+import com.gymapp.repository.ExerciseRepository;
+import com.gymapp.repository.templates.WorkoutTemplateDayRepository;
 import com.gymapp.repository.templates.WorkoutTemplateExerciseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class WorkoutTemplateExerciseServiceImpl implements WorkoutTemplateExerciseService {
@@ -14,38 +19,66 @@ public class WorkoutTemplateExerciseServiceImpl implements WorkoutTemplateExerci
     @Autowired
     private WorkoutTemplateExerciseRepository workoutTemplateExerciseRepository;
 
+    @Autowired
+    private WorkoutTemplateDayRepository workoutTemplateDayRepository;
+
+    @Autowired
+    private ExerciseRepository exerciseRepository;
+
     @Override
-    public List<WorkoutTemplateExercise> getAllTemplateExercises() {
-        return workoutTemplateExerciseRepository.findAll();
+    public List<WorkoutTemplateExerciseResponse> getAllTemplateExercises() {
+        return workoutTemplateExerciseRepository.findAll().stream().map(this::toResponse).toList();
     }
 
     @Override
-    public Optional<WorkoutTemplateExercise> getTemplateExerciseById(Long id) {
-        return workoutTemplateExerciseRepository.findById(id);
+    public WorkoutTemplateExerciseResponse getTemplateExerciseById(Long id) {
+        return toResponse(workoutTemplateExerciseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("WorkoutTemplateExercise not found")));
     }
 
     @Override
-    public List<WorkoutTemplateExercise> getExercisesByTemplateDay(Long dayId) {
-        return workoutTemplateExerciseRepository.findByTemplateDayId(dayId);
+    public List<WorkoutTemplateExerciseResponse> getExercisesByTemplateDay(Long dayId) {
+        return workoutTemplateExerciseRepository.findByTemplateDayId(dayId)
+                .stream().map(this::toResponse).toList();
     }
 
     @Override
-    public WorkoutTemplateExercise createTemplateExercise(WorkoutTemplateExercise exercise) {
-        return workoutTemplateExerciseRepository.save(exercise);
+    public WorkoutTemplateExerciseResponse createTemplateExercise(WorkoutTemplateExerciseRequest request) {
+        WorkoutTemplateDay day = workoutTemplateDayRepository.findById(request.templateDayId())
+                .orElseThrow(() -> new RuntimeException("Template day not found"));
+        Exercise exercise = exerciseRepository.findById(request.exerciseId())
+                .orElseThrow(() -> new RuntimeException("Exercise not found"));
+        WorkoutTemplateExercise templateExercise = new WorkoutTemplateExercise();
+        templateExercise.setTemplateDay(day);
+        templateExercise.setExercise(exercise);
+        templateExercise.setExerciseOrder(request.exerciseOrder());
+        return toResponse(workoutTemplateExerciseRepository.save(templateExercise));
     }
 
     @Override
-    public WorkoutTemplateExercise updateTemplateExercise(Long id, WorkoutTemplateExercise updatedExercise) {
-        return workoutTemplateExerciseRepository.findById(id).map(exercise -> {
-            exercise.setTemplateDay(updatedExercise.getTemplateDay());
-            exercise.setExercise(updatedExercise.getExercise());
-            exercise.setExerciseOrder(updatedExercise.getExerciseOrder());
-            return workoutTemplateExerciseRepository.save(exercise);
-        }).orElseThrow(() -> new RuntimeException("WorkoutTemplateExercise not found"));
+    public WorkoutTemplateExerciseResponse updateTemplateExercise(Long id, WorkoutTemplateExerciseRequest request) {
+        WorkoutTemplateExercise templateExercise = workoutTemplateExerciseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("WorkoutTemplateExercise not found"));
+        WorkoutTemplateDay day = workoutTemplateDayRepository.findById(request.templateDayId())
+                .orElseThrow(() -> new RuntimeException("Template day not found"));
+        Exercise exercise = exerciseRepository.findById(request.exerciseId())
+                .orElseThrow(() -> new RuntimeException("Exercise not found"));
+        templateExercise.setTemplateDay(day);
+        templateExercise.setExercise(exercise);
+        templateExercise.setExerciseOrder(request.exerciseOrder());
+        return toResponse(workoutTemplateExerciseRepository.save(templateExercise));
     }
 
     @Override
     public void deleteTemplateExercise(Long id) {
         workoutTemplateExerciseRepository.deleteById(id);
+    }
+
+    private WorkoutTemplateExerciseResponse toResponse(WorkoutTemplateExercise exercise) {
+        Long dayId = exercise.getTemplateDay() != null ? exercise.getTemplateDay().getId() : null;
+        Long exerciseId = exercise.getExercise() != null ? exercise.getExercise().getId() : null;
+        String exerciseName = exercise.getExercise() != null ? exercise.getExercise().getName() : null;
+        return new WorkoutTemplateExerciseResponse(exercise.getId(), dayId, exerciseId,
+                exerciseName, exercise.getExerciseOrder());
     }
 }

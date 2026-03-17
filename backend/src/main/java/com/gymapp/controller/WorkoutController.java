@@ -1,14 +1,15 @@
 ﻿package com.gymapp.controller;
 
-import com.gymapp.model.Workout;
+import com.gymapp.dto.request.WorkoutFullRequest;
+import com.gymapp.dto.request.WorkoutRequest;
+import com.gymapp.dto.response.WorkoutFullResponse;
+import com.gymapp.dto.response.WorkoutResponse;
 import com.gymapp.service.WorkoutService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/workouts")
@@ -18,28 +19,28 @@ public class WorkoutController {
     private WorkoutService workoutService;
 
     @GetMapping
-    public List<Workout> getAllWorkouts() {
+    public List<WorkoutResponse> getAllWorkouts() {
         return workoutService.getAllWorkouts();
     }
 
     @GetMapping("/{id}")
-    public Optional<Workout> getWorkoutById(@PathVariable Long id) {
+    public WorkoutResponse getWorkoutById(@PathVariable Long id) {
         return workoutService.getWorkoutById(id);
     }
 
     @GetMapping("/user/{userId}")
-    public List<Workout> getWorkoutsByUser(@PathVariable Long userId) {
+    public List<WorkoutResponse> getWorkoutsByUser(@PathVariable Long userId) {
         return workoutService.getWorkoutsByUser(userId);
     }
 
     @PostMapping
-    public Workout createWorkout(@RequestBody Workout workout) {
-        return workoutService.createWorkout(workout);
+    public WorkoutResponse createWorkout(@RequestBody WorkoutRequest request) {
+        return workoutService.createWorkout(request);
     }
 
     @PutMapping("/{id}")
-    public Workout updateWorkout(@PathVariable Long id, @RequestBody Workout updatedWorkout) {
-        return workoutService.updateWorkout(id, updatedWorkout);
+    public WorkoutResponse updateWorkout(@PathVariable Long id, @RequestBody WorkoutRequest request) {
+        return workoutService.updateWorkout(id, request);
     }
 
     @DeleteMapping("/{id}")
@@ -48,18 +49,18 @@ public class WorkoutController {
     }
 
     @GetMapping("/full/{id}")
-    public Map<String, Object> getFullWorkout(@PathVariable Long id) {
+    public WorkoutFullResponse getFullWorkout(@PathVariable Long id) {
         return workoutService.getFullWorkout(id);
     }
 
     @PostMapping("/full")
-    public Workout createFullWorkout(@RequestBody Map<String, Object> body) {
-        return workoutService.createFullWorkout(body);
+    public WorkoutResponse createFullWorkout(@RequestBody WorkoutFullRequest request) {
+        return workoutService.createFullWorkout(request);
     }
 
     @PutMapping("/full/{id}")
-    public Workout updateFullWorkout(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        return workoutService.updateFullWorkout(id, body);
+    public WorkoutResponse updateFullWorkout(@PathVariable Long id, @RequestBody WorkoutFullRequest request) {
+        return workoutService.updateFullWorkout(id, request);
     }
 
     @DeleteMapping("/full/{id}")

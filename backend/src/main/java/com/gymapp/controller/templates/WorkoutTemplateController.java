@@ -1,14 +1,15 @@
 ﻿package com.gymapp.controller.templates;
 
-import com.gymapp.model.templates.WorkoutTemplate;
+import com.gymapp.dto.request.templates.WorkoutTemplateFullRequest;
+import com.gymapp.dto.request.templates.WorkoutTemplateRequest;
+import com.gymapp.dto.response.templates.WorkoutTemplateFullResponse;
+import com.gymapp.dto.response.templates.WorkoutTemplateResponse;
 import com.gymapp.service.templates.WorkoutTemplateService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/workout-template")
@@ -18,25 +19,25 @@ public class WorkoutTemplateController {
     private WorkoutTemplateService workoutTemplateService;
 
     @GetMapping
-    public List<WorkoutTemplate> getAllTemplates() {
+    public List<WorkoutTemplateResponse> getAllTemplates() {
         return workoutTemplateService.getAllTemplates();
     }
 
     @GetMapping("/{id}")
-    public Optional<WorkoutTemplate> getTemplateById(@PathVariable Long id) {
+    public WorkoutTemplateResponse getTemplateById(@PathVariable Long id) {
         return workoutTemplateService.getTemplateById(id);
     }
 
     @PostMapping
-    public WorkoutTemplate createTemplate(@RequestBody WorkoutTemplate template) {
-        return workoutTemplateService.createTemplate(template);
+    public WorkoutTemplateResponse createTemplate(@RequestBody WorkoutTemplateRequest request) {
+        return workoutTemplateService.createTemplate(request);
     }
 
     @PutMapping("/{id}")
-    public WorkoutTemplate updateTemplate(
+    public WorkoutTemplateResponse updateTemplate(
             @PathVariable Long id,
-            @RequestBody WorkoutTemplate updatedTemplate) {
-        return workoutTemplateService.updateTemplate(id, updatedTemplate);
+            @RequestBody WorkoutTemplateRequest request) {
+        return workoutTemplateService.updateTemplate(id, request);
     }
 
     @DeleteMapping("/{id}")
@@ -45,20 +46,20 @@ public class WorkoutTemplateController {
     }
 
     @PostMapping("/full")
-    public WorkoutTemplate createFullTemplate(@RequestBody Map<String, Object> body) {
-        return workoutTemplateService.createFullTemplate(body);
+    public WorkoutTemplateResponse createFullTemplate(@RequestBody WorkoutTemplateFullRequest request) {
+        return workoutTemplateService.createFullTemplate(request);
     }
 
     @GetMapping("/full/{id}")
-    public Map<String, Object> getFullTemplate(@PathVariable Long id) {
+    public WorkoutTemplateFullResponse getFullTemplate(@PathVariable Long id) {
         return workoutTemplateService.getFullTemplate(id);
     }
 
     @PutMapping("/full/{id}")
-    public WorkoutTemplate updateFullTemplate(
+    public WorkoutTemplateResponse updateFullTemplate(
             @PathVariable Long id,
-            @RequestBody Map<String, Object> body) {
-        return workoutTemplateService.updateFullTemplate(id, body);
+            @RequestBody WorkoutTemplateFullRequest request) {
+        return workoutTemplateService.updateFullTemplate(id, request);
     }
 
     @DeleteMapping("/full/{id}")

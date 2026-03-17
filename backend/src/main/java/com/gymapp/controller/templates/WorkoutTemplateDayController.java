@@ -1,13 +1,13 @@
 ﻿package com.gymapp.controller.templates;
 
-import com.gymapp.model.templates.WorkoutTemplateDay;
+import com.gymapp.dto.request.templates.WorkoutTemplateDayRequest;
+import com.gymapp.dto.response.templates.WorkoutTemplateDayResponse;
 import com.gymapp.service.templates.WorkoutTemplateDayService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/workout-template-days")
@@ -17,30 +17,30 @@ public class WorkoutTemplateDayController {
     private WorkoutTemplateDayService workoutTemplateDayService;
 
     @GetMapping
-    public List<WorkoutTemplateDay> getAllTemplateDays() {
+    public List<WorkoutTemplateDayResponse> getAllTemplateDays() {
         return workoutTemplateDayService.getAllTemplateDays();
     }
 
     @GetMapping("/{id}")
-    public Optional<WorkoutTemplateDay> getTemplateDayById(@PathVariable Long id) {
+    public WorkoutTemplateDayResponse getTemplateDayById(@PathVariable Long id) {
         return workoutTemplateDayService.getTemplateDayById(id);
     }
 
     @GetMapping("/template/{templateId}")
-    public List<WorkoutTemplateDay> getDaysByTemplate(@PathVariable Long templateId) {
+    public List<WorkoutTemplateDayResponse> getDaysByTemplate(@PathVariable Long templateId) {
         return workoutTemplateDayService.getDaysByTemplate(templateId);
     }
 
     @PostMapping
-    public WorkoutTemplateDay createTemplateDay(@RequestBody WorkoutTemplateDay day) {
-        return workoutTemplateDayService.createTemplateDay(day);
+    public WorkoutTemplateDayResponse createTemplateDay(@RequestBody WorkoutTemplateDayRequest request) {
+        return workoutTemplateDayService.createTemplateDay(request);
     }
 
     @PutMapping("/{id}")
-    public WorkoutTemplateDay updateTemplateDay(
+    public WorkoutTemplateDayResponse updateTemplateDay(
             @PathVariable Long id,
-            @RequestBody WorkoutTemplateDay updatedDay) {
-        return workoutTemplateDayService.updateTemplateDay(id, updatedDay);
+            @RequestBody WorkoutTemplateDayRequest request) {
+        return workoutTemplateDayService.updateTemplateDay(id, request);
     }
 
     @DeleteMapping("/{id}")

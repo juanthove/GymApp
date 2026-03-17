@@ -2,8 +2,6 @@ package com.gymapp.service;
 
 import com.gymapp.dto.request.WorkoutFullRequest;
 import com.gymapp.dto.request.WorkoutRequest;
-import com.gymapp.dto.response.WorkoutDayResponse;
-import com.gymapp.dto.response.WorkoutExerciseResponse;
 import com.gymapp.dto.response.WorkoutFullResponse;
 import com.gymapp.dto.response.WorkoutResponse;
 import com.gymapp.model.Exercise;
