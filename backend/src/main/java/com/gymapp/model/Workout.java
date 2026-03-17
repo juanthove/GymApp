@@ -13,6 +13,8 @@ public class Workout {
 
     private String name;
 
+    private Integer reps;
+
     private LocalDate startDate;
 
     private LocalDate endDate;
@@ -36,6 +38,14 @@ public class Workout {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Integer getReps() {
+        return reps;
+    }
+
+    public void setReps(Integer reps) {
+        this.reps = reps;
     }
 
     public LocalDate getStartDate() {

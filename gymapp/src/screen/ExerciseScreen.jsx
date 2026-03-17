@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import {
-  getExercisesWithoutAbdominals,
-  getAbdominalExercises,
+  getWorkoutExercises,
   completeWorkoutExercise,
   uncompleteWorkoutExercise
 } from "../services/workoutExerciseService";
@@ -14,10 +13,13 @@ import {
 } from "../services/exerciseService";
 
 import {
-  completeWorkoutDay
+  completeWorkoutDay,
+  markAbdominalWorkoutDay,
+  isAbdominalWorkoutDay
 } from "../services/workoutDayService";
 
 import GymCard from "../components/GymCard";
+import BackButton from "../components/BackButton";
 
 import {
   Container,
@@ -31,8 +33,6 @@ import {
   Box
 } from "@mui/material";
 
-import BackButton from "../components/BackButton";
-
 export default function ExerciseScreen(){
 
 const { userId, workoutDayId } = useParams();
@@ -43,15 +43,18 @@ const [selectedExercise,setSelectedExercise] = useState(null);
 const navigate = useNavigate();
 
 const [confirmFinish,setConfirmFinish] = useState(false);
-const [showingAbs,setShowingAbs] = useState(false);
+const [isAbdominal,setIsAbdominal] = useState(false);
 
 useEffect(()=>{
- loadExercises();
+ loadData();
 },[]);
 
-const loadExercises = async()=>{
+const loadData = async ()=>{
 
- const data = await getExercisesWithoutAbdominals(workoutDayId);
+ const abs = await isAbdominalWorkoutDay(workoutDayId);
+ setIsAbdominal(abs);
+
+ const data = await getWorkoutExercises(workoutDayId);
  setExercises(data);
 
 };
@@ -77,7 +80,7 @@ const toggleCompleteExercise = async(ex)=>{
 
 const handleFinishClick = ()=>{
 
- if(showingAbs){
+ if(isAbdominal){
   finishDay();
  }else{
   setConfirmFinish(true);
@@ -88,35 +91,20 @@ const handleFinishClick = ()=>{
 const finishDay = async()=>{
 
  await completeWorkoutDay(workoutDayId);
+
  setConfirmFinish(false);
+
  navigate(`/final/${userId}/${workoutDayId}`);
 
 };
 
-const finishDayWithoutAbs = async()=>{
+const finishDayWithAbs = async () => {
 
- await completeWorkoutDay(workoutDayId);
+ await markAbdominalWorkoutDay(workoutDayId);
+
  setConfirmFinish(false);
- navigate(`/final/${userId}/${workoutDayId}`);
 
-};
-
-const finishDayWithAbs = async()=>{
-
- const absExercises = await getAbdominalExercises(workoutDayId);
-
- const formatted = absExercises.map((ex)=>({
-  id:ex.id,
-  exercise:ex.exercise,
-  reps:ex.reps ?? 15,
-  weight:ex.weight ?? 0,
-  comment:ex.comment,
-  completed:false
- }));
-
- setExercises(formatted);
- setShowingAbs(true);
- setConfirmFinish(false);
+ await loadExercises();
 
 };
 
@@ -127,10 +115,9 @@ return(
 <Stack direction="row" alignItems="center" spacing={1} sx={{position:"relative", mb:2}}>
  <BackButton to={`/workout/${userId}`} sx={{ position:"absolute", left:0, top:"50%", transform:"translateY(-50%)" }} />
  <Typography variant="h5" textAlign="center" sx={{width:"100%"}}>
-  {showingAbs ? "Abdominales" : "Ejercicios del día"}
+  Ejercicios del día
  </Typography>
 </Stack>
-
 
 <Stack spacing={2}>
 
@@ -154,7 +141,6 @@ return(
 ))}
 
 </Stack>
-
 
 {/* BOTON FINALIZAR */}
 
@@ -182,7 +168,6 @@ Finalizar día
 </Button>
 
 </Box>
-
 
 {/* MODAL EJERCICIO */}
 
@@ -296,7 +281,6 @@ Cerrar
 
 </Dialog>
 
-
 {/* MODAL ABDOMINALES */}
 
 <Dialog
@@ -319,7 +303,7 @@ Finalizar día
 <DialogActions>
 
 <Button
- onClick={finishDayWithoutAbs}
+ onClick={finishDay}
 >
 No
 </Button>

@@ -1,8 +1,10 @@
 package com.gymapp.controller;
 
 import com.gymapp.model.ExerciseType;
+import com.gymapp.model.WorkoutDay;
 import com.gymapp.model.WorkoutExercise;
 import com.gymapp.repository.WorkoutExerciseRepository;
+import com.gymapp.repository.WorkoutDayRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +18,9 @@ public class WorkoutExerciseController {
     @Autowired
     private WorkoutExerciseRepository workoutExerciseRepository;
 
+    @Autowired
+    private WorkoutDayRepository workoutDayRepository;
+
     @GetMapping
     public List<WorkoutExercise> getAllWorkoutExercises() {
         return workoutExerciseRepository.findAll();
@@ -26,9 +31,25 @@ public class WorkoutExerciseController {
         return workoutExerciseRepository.findById(id);
     }
 
+    //Obtener todos los ejercicios si el dia es no abdominal o solo abdominales si el dia es abdominal
     @GetMapping("/day/{dayId}")
     public List<WorkoutExercise> getExercisesByDay(@PathVariable Long dayId) {
-        return workoutExerciseRepository.findByWorkoutDayIdOrderByExerciseOrder(dayId);
+
+        WorkoutDay day = workoutDayRepository.findById(dayId)
+                .orElseThrow(() -> new RuntimeException("WorkoutDay not found"));
+
+        // Si el día es abdominal → solo abdominales
+        if (day.getAbdominal()) {
+            return workoutExerciseRepository
+                    .findByWorkoutDayIdAndExercise_TypeOrderByExerciseOrder(
+                            dayId,
+                            ExerciseType.ABDOMINAL
+                    );
+        }
+
+        // Si no es abdominal → todos los ejercicios
+        return workoutExerciseRepository
+                .findByWorkoutDayIdOrderByExerciseOrder(dayId);
     }
 
     @PostMapping
@@ -46,7 +67,6 @@ public class WorkoutExerciseController {
             exercise.setWorkoutDay(updatedExercise.getWorkoutDay());
             exercise.setExercise(updatedExercise.getExercise());
             exercise.setExerciseOrder(updatedExercise.getExerciseOrder());
-            exercise.setReps(updatedExercise.getReps());
             exercise.setWeight(updatedExercise.getWeight());
             exercise.setComment(updatedExercise.getComment());
 
@@ -82,28 +102,6 @@ public class WorkoutExerciseController {
         exercise.setCompleted(false);
 
         return workoutExerciseRepository.save(exercise);
-    }
-
-    // Obtener los ejercicios del día excepto abdominales
-    @GetMapping("/day/{dayId}/no-abdominals")
-    public List<WorkoutExercise> getExercisesWithoutAbdominals(@PathVariable Long dayId) {
-
-        return workoutExerciseRepository
-                .findByWorkoutDayIdAndExercise_TypeNotOrderByExerciseOrder(
-                        dayId,
-                        ExerciseType.ABDOMINAL
-                );
-    }
-
-    //Obtener los ejercicios del dia que sean abdominales
-    @GetMapping("/day/{dayId}/abdominals")
-    public List<WorkoutExercise> getAbdominalExercisesByDay(@PathVariable Long dayId) {
-
-        return workoutExerciseRepository
-                .findByWorkoutDayIdAndExercise_TypeOrderByExerciseOrder(
-                        dayId,
-                        ExerciseType.ABDOMINAL
-                );
     }
 
 }

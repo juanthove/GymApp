@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/workout-days")
@@ -27,7 +28,7 @@ public class WorkoutDayController {
 
     @GetMapping("/workout/{workoutId}")
     public List<WorkoutDay> getDaysByWorkout(@PathVariable Long workoutId) {
-        return workoutDayRepository.findByWorkoutId(workoutId);
+        return workoutDayRepository.findByWorkoutIdOrderByDayOrder(workoutId);
     }
 
     @PostMapping
@@ -53,7 +54,18 @@ public class WorkoutDayController {
     public void deleteWorkoutDay(@PathVariable Long id) {
         workoutDayRepository.deleteById(id);
     }
+    
+    //Iniciar un dia de entrenamiento
+    @PatchMapping("/{id}/start")
+    public WorkoutDay startWorkoutDay(@PathVariable Long id){
 
+        WorkoutDay day = workoutDayRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Workout day not found"));
+
+        day.setStartedAt(LocalDateTime.now());
+
+        return workoutDayRepository.save(day);
+    }
 
     //Completar un dia de entrenamiento
     @PatchMapping("/{id}/complete")
@@ -62,22 +74,50 @@ public class WorkoutDayController {
         WorkoutDay day = workoutDayRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Workout day not found"));
 
-        day.setCompleted(true);
+        day.setFinishedAt(LocalDateTime.now());
 
         return workoutDayRepository.save(day);
     }
 
 
-    //Marcar un dia de entrenamiento como no completado
-    @PatchMapping("/{id}/uncomplete")
-    public WorkoutDay uncompleteWorkoutDay(@PathVariable Long id){
+    //Poner un dia como que se hizo abdominales
+    @PatchMapping("/{id}/abdominal")
+    public WorkoutDay markAbdominalWorkoutDay(@PathVariable Long id){
 
         WorkoutDay day = workoutDayRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Workout day not found"));
 
-        day.setCompleted(false);
+        day.setAbdominal(true);
 
         return workoutDayRepository.save(day);
+    }
+
+    //Saber si un dia es de adbominales
+    @GetMapping("/{id}/is-abdominal")
+    public boolean isAbdominalDay(@PathVariable Long id) {
+
+        WorkoutDay day = workoutDayRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("WorkoutDay not found"));
+
+        return day.getAbdominal();
+    }
+
+    // Obtener el estado del día de entrenamiento
+    @GetMapping("/{id}/status")
+    public String getWorkoutDayStatus(@PathVariable Long id) {
+
+        WorkoutDay day = workoutDayRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("WorkoutDay not found"));
+
+        if (day.getStartedAt() == null) {
+            return "NOT_STARTED";
+        }
+
+        if (day.getFinishedAt() == null) {
+            return "IN_PROGRESS";
+        }
+
+        return "COMPLETED";
     }
 
 }

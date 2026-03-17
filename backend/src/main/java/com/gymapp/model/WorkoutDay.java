@@ -3,6 +3,7 @@
 package com.gymapp.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 public class WorkoutDay {
@@ -15,7 +16,13 @@ public class WorkoutDay {
 
     private String muscles;
 
-    private boolean completed = false;
+    private int dayOrder;
+
+    private boolean abdominal = false;
+
+    private LocalDateTime startedAt;
+
+    private LocalDateTime finishedAt;
 
     @ManyToOne
     @JoinColumn(name = "workout_id")
@@ -45,12 +52,36 @@ public class WorkoutDay {
         this.muscles = muscles;
     }
 
-    public boolean getCompleted() {
-        return completed;
+    public int getDayOrder() {
+        return dayOrder;
     }
 
-    public void setCompleted(boolean completed) {
-        this.completed = completed;
+    public void setDayOrder(int dayOrder) {
+        this.dayOrder = dayOrder;
+    }
+
+    public boolean getAbdominal() {
+        return abdominal;
+    }
+
+    public void setAbdominal(boolean abdominal) {
+        this.abdominal = abdominal;
+    }
+
+    public LocalDateTime getStartedAt() {
+        return startedAt;
+    }
+
+    public void setStartedAt(LocalDateTime startedAt) {
+        this.startedAt = startedAt;
+    }
+
+    public LocalDateTime getFinishedAt() {
+        return finishedAt;
+    }
+
+    public void setFinishedAt(LocalDateTime finishedAt) {
+        this.finishedAt = finishedAt;
     }
 
     public Workout getWorkout() {
@@ -59,5 +90,19 @@ public class WorkoutDay {
 
     public void setWorkout(Workout workout) {
         this.workout = workout;
+    }
+
+    @Transient
+    public String getStatus() {
+
+        if(startedAt == null){
+            return "NOT_STARTED";
+        }
+
+        if(finishedAt == null){
+            return "IN_PROGRESS";
+        }
+
+        return "COMPLETED";
     }
 }

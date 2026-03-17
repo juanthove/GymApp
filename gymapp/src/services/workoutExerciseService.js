@@ -1,33 +1,8 @@
-export async function getExercisesByWorkoutDay(dayId) {
-
-  const response = await fetch(`/api/workout-exercises/day/${dayId}`);
-
-  if (!response.ok) {
-    throw new Error("Error obteniendo ejercicios del día");
-  }
-
-  return response.json();
-}
-
-export async function getExercisesWithoutAbdominals(dayId) {
-
-  const response = await fetch(
-    `/api/workout-exercises/day/${dayId}/no-abdominals`
-  );
+export async function getWorkoutExercises(workoutDayId) {
+  const response = await fetch(`/api/workout-exercises/day/${workoutDayId}`);
 
   if (!response.ok) {
-    throw new Error("Error obteniendo ejercicios del día");
-  }
-
-  return response.json();
-}
-
-export async function getAbdominalExercises(dayId) {
-
-  const response = await fetch(`/api/workout-exercises/day/${dayId}/abdominals`);
-
-  if (!response.ok) {
-    throw new Error("Error obteniendo abdominales");
+    throw new Error("Error obteniendo los ejercicios del día");
   }
 
   return response.json();

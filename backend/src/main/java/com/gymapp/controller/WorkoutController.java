@@ -96,18 +96,22 @@ public class WorkoutController {
         Workout workout = workoutRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Workout not found"));
 
-        List<WorkoutDay> days = workoutDayRepository.findByWorkoutId(id);
+        List<WorkoutDay> days = workoutDayRepository.findByWorkoutIdOrderByDayOrder(id);
 
         List<Map<String,Object>> dayList = new ArrayList<>();
 
         for(WorkoutDay day : days){
 
             Map<String,Object> dayData = new HashMap<>();
-
+            
             dayData.put("id",day.getId());
             dayData.put("name",day.getName());
             dayData.put("muscles",day.getMuscles());
-            dayData.put("completed",day.getCompleted());
+            dayData.put("abdominal",day.getAbdominal());
+            dayData.put("startedAt",day.getStartedAt());
+            dayData.put("finishedAt",day.getFinishedAt());
+            dayData.put("dayOrder",day.getDayOrder());
+            dayData.put("status",day.getStatus());
 
             List<WorkoutExercise> exercises =
                     workoutExerciseRepository.findByWorkoutDayId(day.getId());
@@ -121,7 +125,6 @@ public class WorkoutController {
                 exData.put("exerciseId", ex.getExercise().getId());
                 exData.put("exerciseName", ex.getExercise().getName());
                 exData.put("order", ex.getExerciseOrder());
-                exData.put("reps", ex.getReps());
                 exData.put("weight", ex.getWeight());
                 exData.put("comment", ex.getComment());
 
@@ -136,6 +139,7 @@ public class WorkoutController {
 
         result.put("id",workout.getId());
         result.put("name",workout.getName());
+        result.put("reps", workout.getReps());
         result.put("startDate",workout.getStartDate());
         result.put("endDate",workout.getEndDate());
         result.put("days",dayList);
@@ -157,6 +161,7 @@ public class WorkoutController {
 
         Workout workout = new Workout();
         workout.setName((String) body.get("name"));
+        workout.setReps(Integer.valueOf(body.get("reps").toString()));
 
         workout.setStartDate(LocalDate.parse(body.get("startDate").toString()));
         workout.setEndDate(LocalDate.parse(body.get("endDate").toString()));
@@ -174,6 +179,7 @@ public class WorkoutController {
 
             day.setName((String) dayData.get("name"));
             day.setMuscles((String) dayData.get("muscles"));
+            day.setDayOrder(Integer.valueOf(dayData.get("dayOrder").toString()));
             day.setWorkout(workout);
 
             day = workoutDayRepository.save(day);
@@ -199,10 +205,6 @@ public class WorkoutController {
                         Integer.valueOf(exData.get("order").toString())
                 );
 
-                workoutExercise.setReps(
-                        Integer.valueOf(exData.get("reps").toString())
-                );
-
                 workoutExercise.setWeight(
                         Double.valueOf(exData.get("weight").toString())
                 );
@@ -226,7 +228,8 @@ public class WorkoutController {
                 .orElseThrow(() -> new RuntimeException("Workout not found"));
 
         workout.setName((String) body.get("name"));
-
+        workout.setReps(Integer.valueOf(body.get("reps").toString()));
+        
         workout.setStartDate(LocalDate.parse(body.get("startDate").toString()));
         workout.setEndDate(LocalDate.parse(body.get("endDate").toString()));
 
@@ -234,7 +237,7 @@ public class WorkoutController {
 
         // eliminar dias existentes
         List<WorkoutDay> existingDays =
-                workoutDayRepository.findByWorkoutId(id);
+                workoutDayRepository.findByWorkoutIdOrderByDayOrder(id);
 
         for(WorkoutDay day : existingDays){
             workoutExerciseRepository.deleteByWorkoutDayId(day.getId());
@@ -252,6 +255,7 @@ public class WorkoutController {
 
             day.setName((String) dayData.get("name"));
             day.setMuscles((String) dayData.get("muscles"));
+            day.setDayOrder(Integer.valueOf(dayData.get("dayOrder").toString()));
             day.setWorkout(workout);
 
             day = workoutDayRepository.save(day);
@@ -277,10 +281,6 @@ public class WorkoutController {
                         Integer.valueOf(exData.get("order").toString())
                 );
 
-                workoutExercise.setReps(
-                        Integer.valueOf(exData.get("reps").toString())
-                );
-
                 workoutExercise.setWeight(
                         Double.valueOf(exData.get("weight").toString())
                 );
@@ -298,7 +298,7 @@ public class WorkoutController {
     public void deleteFullWorkout(@PathVariable Long id){
 
         List<WorkoutDay> days =
-                workoutDayRepository.findByWorkoutId(id);
+                workoutDayRepository.findByWorkoutIdOrderByDayOrder(id);
 
         for(WorkoutDay day : days){
             workoutExerciseRepository.deleteByWorkoutDayId(day.getId());

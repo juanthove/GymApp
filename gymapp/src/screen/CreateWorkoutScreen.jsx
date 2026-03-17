@@ -47,6 +47,8 @@ const [workoutName,setWorkoutName] = useState("");
 const [days,setDays] = useState([]);
 const [gymDaysPerWeek,setGymDaysPerWeek] = useState(0);
 
+const [selectedExercises,setSelectedExercises] = useState({});
+
 const [startDate,setStartDate] = useState("");
 const [endDate,setEndDate] = useState("");
 
@@ -56,6 +58,19 @@ const [isLastWorkout,setIsLastWorkout] = useState(false);
 
 const [message,setMessage] = useState("");
 const [messageType,setMessageType] = useState("info");
+
+const [globalReps,setGlobalReps] = useState("");
+
+const repOptions = [
+ { label:"8", value:8 },
+ { label:"12", value:12 },
+ { label:"15", value:15 },
+ { label:"12 o 15", value:-1 }
+];
+
+const exercisesById = Object.fromEntries(
+ exercises.map(ex => [ex.id, ex])
+);
 
 useEffect(()=>{
  loadUsers();
@@ -77,6 +92,12 @@ const validateWorkout = () => {
   return false;
  }
 
+ if(!globalReps){
+  setMessage("Debes seleccionar las repeticiones del workout");
+  setMessageType("warning");
+  return false;
+ }
+
  if(days.length === 0){
   setMessage("Debes agregar al menos un día");
   setMessageType("warning");
@@ -84,9 +105,9 @@ const validateWorkout = () => {
  }
 
  if(gymDaysPerWeek && days.length > gymDaysPerWeek){
-    setMessage(`La planilla tiene ${days.length} días pero el usuario solo entrena ${gymDaysPerWeek}`);
-    setMessageType("warning");
-    return false;
+  setMessage(`La planilla tiene ${days.length} días pero el usuario solo entrena ${gymDaysPerWeek}`);
+  setMessageType("warning");
+  return false;
  }
 
  for(let d=0; d<days.length; d++){
@@ -115,14 +136,8 @@ const validateWorkout = () => {
 
    const ex = day.exercises[e];
 
-   if(ex.reps === null || ex.reps === "" || ex.reps === undefined){
-    setMessage(`El ejercicio ${ex.exerciseName} del día ${d+1} necesita repeticiones`);
-    setMessageType("warning");
-    return false;
-   }
-
-   if(ex.weight === null || ex.weight === "" || ex.weight === undefined){
-    setMessage(`El ejercicio ${ex.exerciseName} del día ${d+1} necesita peso`);
+   if(ex.weight === "" || ex.weight === null){
+    setMessage(`Un ejercicio del día ${d+1} necesita peso`);
     setMessageType("warning");
     return false;
    }
@@ -133,7 +148,6 @@ const validateWorkout = () => {
 
  setMessage("");
  return true;
-
 };
 
 const resetForm = () => {
@@ -144,6 +158,8 @@ const resetForm = () => {
  setEndDate("");
  setWorkoutId(null);
  setIsLastWorkout(false);
+ setGlobalReps("");
+ setSelectedExercises({});
 };
 
 const loadUsers = async()=>{
@@ -176,63 +192,48 @@ const loadTemplate = async(id)=>{
 
  const loadedDays = template.days.map(day=>({
 
+  id:crypto.randomUUID(),
   name:day.name,
   muscles:day.muscles,
 
   exercises:day.exercises.map(ex=>({
+   id:crypto.randomUUID(),
    exerciseId:ex.exerciseId,
-   exerciseName:ex.exerciseName,
    order:ex.order,
-   reps:"",
    weight:""
-  })),
-
-  selectedExercise:null
+  }))
 
  }));
 
  setDays(loadedDays);
-
- setWorkoutName(template.name || "");
- setStartDate("");
- setEndDate("");
-
- setIsLastWorkout(false);
- setWorkoutId(null);
 };
 
 const loadLastWorkout = async()=>{
 
  const workoutBasic = await getCurrentWorkout(selectedUser);
-
- if(!workoutBasic){
-  setHasCurrentWorkout(false);
-  return;
- }
+ if(!workoutBasic) return;
 
  const workout = await getWorkoutById(workoutBasic.id);
 
  setWorkoutId(workout.id);
-
  setWorkoutName(workout.name || "");
+ setGlobalReps(workout.reps || "");
 
  setStartDate(workout.startDate?.split("T")[0] || "");
  setEndDate(workout.endDate?.split("T")[0] || "");
 
  const loadedDays = workout.days.map(day=>({
 
+  id:crypto.randomUUID(),
   name:day.name,
   muscles:day.muscles,
 
   exercises:day.exercises.map(ex=>({
+   id:crypto.randomUUID(),
    exerciseId:ex.exerciseId,
-   exerciseName:ex.exerciseName,
    order:ex.order,
-   reps:ex.reps,
    weight:ex.weight
-  })),
-
-  selectedExercise:null
+  }))
 
  }));
 
@@ -265,10 +266,10 @@ const addDay = ()=>{
  setDays([
   ...days,
   {
+   id:crypto.randomUUID(),
    name:`Día ${days.length+1}`,
    muscles:"",
-   exercises:[],
-   selectedExercise:null
+   exercises:[]
   }
  ]);
 
@@ -305,22 +306,24 @@ const updateDayField=(index,field,value)=>{
 
 const addExerciseToDay=(dayIndex)=>{
 
- const selected = days[dayIndex].selectedExercise;
+ const selected = selectedExercises[dayIndex];
  if(!selected) return;
 
  const updated=[...days];
 
  updated[dayIndex].exercises.push({
+  id:crypto.randomUUID(),
   exerciseId:selected.id,
-  exerciseName:selected.name,
   order:updated[dayIndex].exercises.length+1,
-  reps:"",
   weight:""
  });
 
- updated[dayIndex].selectedExercise=null;
-
  setDays(updated);
+
+ setSelectedExercises(prev=>({
+  ...prev,
+  [dayIndex]:null
+ }));
 
 };
 
@@ -372,12 +375,13 @@ const duplicateDay = (index) => {
  const dayToCopy = days[index];
 
  const newDay = {
+  id:crypto.randomUUID(),
   name: dayToCopy.name + " copia",
   muscles: dayToCopy.muscles,
   exercises: dayToCopy.exercises.map(ex => ({
-    ...ex
-  })),
-  selectedExercise: null
+    ...ex,
+    id:crypto.randomUUID()
+  }))
  };
 
  const updated = [...days];
@@ -390,19 +394,25 @@ const duplicateDay = (index) => {
 
 const handleCreateWorkout = async()=>{
 
-    if(!validateWorkout()) return;
+ if(!validateWorkout()) return;
 
  try{
 
   const workoutData={
    name:workoutName,
+   reps:globalReps,
    userId:selectedUser,
    startDate,
    endDate,
-   days:days.map(day=>({
+   days:days.map((day, index)=>({
     name:day.name,
     muscles:day.muscles,
-    exercises:day.exercises
+    exercises:day.exercises.map(ex=>({
+     exerciseId:ex.exerciseId,
+     weight:ex.weight,
+     order:ex.order
+    })),
+    dayOrder:index+1
    }))
   };
 
@@ -424,18 +434,24 @@ const handleCreateWorkout = async()=>{
 
 const handleUpdateWorkout = async()=>{
 
-    if(!validateWorkout()) return;
+ if(!validateWorkout()) return;
 
  try{
 
   const workoutData={
    name:workoutName,
+   reps:globalReps,
    startDate,
    endDate,
-   days:days.map(day=>({
+   days:days.map((day, index)=>({
     name:day.name,
     muscles:day.muscles,
-    exercises:day.exercises
+    exercises:day.exercises.map(ex=>({
+     exerciseId:ex.exerciseId,
+     weight:ex.weight,
+     order:ex.order
+    })),
+    dayOrder:index+1
    }))
   };
 
@@ -574,6 +590,22 @@ value={endDate}
 onChange={(e)=>setEndDate(e.target.value)}
 />
 
+<TextField
+ select
+ label="Repeticiones globales"
+ value={globalReps}
+ onChange={(e)=>setGlobalReps(e.target.value)}
+ sx={{width:202}}
+>
+
+{repOptions.map(opt=>(
+<MenuItem key={opt.value} value={opt.value}>
+{opt.label}
+</MenuItem>
+))}
+
+</TextField>
+
 </Stack>
 
 
@@ -636,8 +668,11 @@ onChange={(e)=>updateDayField(dayIndex,"muscles",e.target.value)}
 <Autocomplete
 options={exercises}
 getOptionLabel={(option)=>option.name}
-value={day.selectedExercise}
-onChange={(event,value)=>updateDayField(dayIndex,"selectedExercise",value)}
+value={selectedExercises[dayIndex] || null}
+onChange={(event,value)=>setSelectedExercises(prev=>({
+ ...prev,
+ [dayIndex]:value
+}))}
 renderInput={(params)=>
 <TextField {...params} label="Seleccionar ejercicio"/>
 }
@@ -653,25 +688,21 @@ Agregar ejercicio
 
 <Divider/>
 
-{day.exercises.map((ex,i)=>(
+{day.exercises.map((ex,i)=>{
 
-<Card key={i}>
+const exercise = exercisesById[ex.exerciseId];
+
+return(
+
+<Card key={ex.id}>
 
 <CardContent>
 
 <Stack direction="row" spacing={2} alignItems="center">
 
 <Typography sx={{width:200}}>
-{ex.order}. {ex.exerciseName}
+{ex.order}. {exercise?.name}
 </Typography>
-
-<TextField
-type="number"
-label="Reps"
-size="small"
-value={ex.reps}
-onChange={(e)=>updateExerciseField(dayIndex,i,"reps",e.target.value)}
-/>
 
 <TextField
 type="number"
@@ -699,7 +730,7 @@ onChange={(e)=>updateExerciseField(dayIndex,i,"weight",e.target.value)}
 
 </Card>
 
-))}
+);})}
 
 </Stack>
 

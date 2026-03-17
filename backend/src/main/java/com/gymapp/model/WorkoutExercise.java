@@ -19,8 +19,6 @@ public class WorkoutExercise {
 
     private Integer exerciseOrder;
 
-    private Integer reps;
-
     private Double weight;
 
     private boolean completed = false;
@@ -57,14 +55,6 @@ public class WorkoutExercise {
 
     public void setExerciseOrder(Integer exerciseOrder) {
         this.exerciseOrder = exerciseOrder;
-    }
-
-    public Integer getReps() {
-        return reps;
-    }
-
-    public void setReps(Integer reps) {
-        this.reps = reps;
     }
 
     public Double getWeight() {
