@@ -1,59 +1,51 @@
-package com.gymapp.controller.templates;
+﻿package com.gymapp.controller.templates;
 
-import com.gymapp.model.templates.WorkoutTemplateDay;
-import com.gymapp.repository.templates.WorkoutTemplateDayRepository;
+import com.gymapp.dto.request.templates.WorkoutTemplateDayRequest;
+import com.gymapp.dto.response.templates.WorkoutTemplateDayResponse;
+import com.gymapp.service.templates.WorkoutTemplateDayService;
+import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/workout-template-days")
 public class WorkoutTemplateDayController {
 
     @Autowired
-    private WorkoutTemplateDayRepository repository;
+    private WorkoutTemplateDayService workoutTemplateDayService;
 
     @GetMapping
-    public List<WorkoutTemplateDay> getAllTemplateDays() {
-        return repository.findAll();
+    public List<WorkoutTemplateDayResponse> getAllTemplateDays() {
+        return workoutTemplateDayService.getAllTemplateDays();
     }
 
     @GetMapping("/{id}")
-    public Optional<WorkoutTemplateDay> getTemplateDayById(@PathVariable Long id) {
-        return repository.findById(id);
+    public WorkoutTemplateDayResponse getTemplateDayById(@PathVariable Long id) {
+        return workoutTemplateDayService.getTemplateDayById(id);
     }
 
     @GetMapping("/template/{templateId}")
-    public List<WorkoutTemplateDay> getDaysByTemplate(@PathVariable Long templateId) {
-        return repository.findByTemplateId(templateId);
+    public List<WorkoutTemplateDayResponse> getDaysByTemplate(@PathVariable Long templateId) {
+        return workoutTemplateDayService.getDaysByTemplate(templateId);
     }
 
     @PostMapping
-    public WorkoutTemplateDay createTemplateDay(@RequestBody WorkoutTemplateDay day) {
-        return repository.save(day);
+    public WorkoutTemplateDayResponse createTemplateDay(@Valid @RequestBody WorkoutTemplateDayRequest request) {
+        return workoutTemplateDayService.createTemplateDay(request);
     }
 
     @PutMapping("/{id}")
-    public WorkoutTemplateDay updateTemplateDay(
+    public WorkoutTemplateDayResponse updateTemplateDay(
             @PathVariable Long id,
-            @RequestBody WorkoutTemplateDay updatedDay) {
-
-        return repository.findById(id).map(day -> {
-
-            day.setName(updatedDay.getName());
-            day.setMuscles(updatedDay.getMuscles());
-            day.setTemplate(updatedDay.getTemplate());
-
-            return repository.save(day);
-
-        }).orElseThrow(() -> new RuntimeException("WorkoutTemplateDay not found"));
+            @Valid @RequestBody WorkoutTemplateDayRequest request) {
+        return workoutTemplateDayService.updateTemplateDay(id, request);
     }
 
     @DeleteMapping("/{id}")
     public void deleteTemplateDay(@PathVariable Long id) {
-        repository.deleteById(id);
+        workoutTemplateDayService.deleteTemplateDay(id);
     }
 }

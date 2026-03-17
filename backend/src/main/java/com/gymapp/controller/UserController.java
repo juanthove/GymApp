@@ -1,8 +1,10 @@
 package com.gymapp.controller;
 
-import com.gymapp.model.User;
-import com.gymapp.model.Workout;
+import com.gymapp.dto.request.UserRequest;
+import com.gymapp.dto.response.UserResponse;
+import com.gymapp.dto.response.WorkoutResponse;
 import com.gymapp.service.UserService;
+import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -17,54 +19,54 @@ public class UserController {
     private UserService userService;
 
     @GetMapping
-    public List<User> getAllUsers() {
+    public List<UserResponse> getAllUsers() {
         return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
-    public User getUserById(@PathVariable Long id) {
+    public UserResponse getUserById(@PathVariable Long id) {
         return userService.getUserById(id);
     }
 
     @GetMapping("/logged")
-    public List<User> getLoggedUsers() {
+    public List<UserResponse> getLoggedUsers() {
         return userService.getLoggedUsers();
     }
 
     @GetMapping("/not-logged")
-    public List<User> getNotLoggedUsers() {
+    public List<UserResponse> getNotLoggedUsers() {
         return userService.getNotLoggedUsers();
     }
 
     @GetMapping("/search")
-    public List<User> searchUsers(@RequestParam String query) {
+    public List<UserResponse> searchUsers(@RequestParam String query) {
         return userService.searchUsers(query);
     }
 
     @PostMapping
-    public User createUser(@RequestBody User user) {
-        return userService.createUser(user);
+    public UserResponse createUser(@Valid @RequestBody UserRequest request) {
+        return userService.createUser(request);
     }
 
     @PutMapping("/{id}")
-    public User updateUser(@PathVariable Long id,
-                           @RequestBody User updatedUser) {
+    public UserResponse updateUser(@PathVariable Long id,
+                           @Valid @RequestBody UserRequest request) {
 
-        return userService.updateUser(id, updatedUser);
+        return userService.updateUser(id, request);
     }
 
     @PatchMapping("/{id}/login")
-    public User loginUser(@PathVariable Long id) {
+    public UserResponse loginUser(@PathVariable Long id) {
         return userService.loginUser(id);
     }
 
     @PatchMapping("/{id}/logout")
-    public User logoutUser(@PathVariable Long id) {
+    public UserResponse logoutUser(@PathVariable Long id) {
         return userService.logoutUser(id);
     }
 
     @PutMapping("/{userId}/current-workout/{workoutId}")
-    public User setCurrentWorkout(@PathVariable Long userId,
+    public UserResponse setCurrentWorkout(@PathVariable Long userId,
                                   @PathVariable Long workoutId) {
 
         return userService.setCurrentWorkout(userId, workoutId);
@@ -76,7 +78,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}/current-workout")
-    public Workout getCurrentWorkout(@PathVariable Long id) {
+    public WorkoutResponse getCurrentWorkout(@PathVariable Long id) {
         return userService.getCurrentWorkout(id);
     }
 

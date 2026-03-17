@@ -1,34 +1,35 @@
 package com.gymapp.service;
 
-import com.gymapp.model.User;
-import com.gymapp.model.Workout;
+import com.gymapp.dto.request.UserRequest;
+import com.gymapp.dto.response.UserResponse;
+import com.gymapp.dto.response.WorkoutResponse;
 
 import java.util.List;
 
 public interface UserService {
 
-    List<User> getAllUsers();
+    List<UserResponse> getAllUsers();
 
-    User getUserById(Long id);
+    UserResponse getUserById(Long id);
 
-    List<User> getLoggedUsers();
+    List<UserResponse> getLoggedUsers();
 
-    List<User> getNotLoggedUsers();
+    List<UserResponse> getNotLoggedUsers();
 
-    List<User> searchUsers(String query);
+    List<UserResponse> searchUsers(String query);
 
-    User createUser(User user);
+    UserResponse createUser(UserRequest request);
 
-    User updateUser(Long id, User updatedUser);
+    UserResponse updateUser(Long id, UserRequest request);
 
-    User loginUser(Long id);
+    UserResponse loginUser(Long id);
 
-    User logoutUser(Long id);
+    UserResponse logoutUser(Long id);
 
-    User setCurrentWorkout(Long userId, Long workoutId);
+    UserResponse setCurrentWorkout(Long userId, Long workoutId);
 
     void deleteUser(Long id);
 
-    Workout getCurrentWorkout(Long id);
+    WorkoutResponse getCurrentWorkout(Long id);
 
 }
