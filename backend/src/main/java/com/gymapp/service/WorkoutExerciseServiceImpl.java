@@ -2,6 +2,7 @@ package com.gymapp.service;
 
 import com.gymapp.dto.request.WorkoutExerciseRequest;
 import com.gymapp.dto.response.WorkoutExerciseResponse;
+import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.Exercise;
 import com.gymapp.model.ExerciseType;
 import com.gymapp.model.WorkoutDay;
@@ -34,13 +35,13 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
     @Override
     public WorkoutExerciseResponse getWorkoutExerciseById(Long id) {
         return toResponse(workoutExerciseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("WorkoutExercise not found")));
+                .orElseThrow(() -> new ResourceNotFoundException("WorkoutExercise not found")));
     }
 
     @Override
     public List<WorkoutExerciseResponse> getExercisesByDay(Long dayId) {
         WorkoutDay day = workoutDayRepository.findById(dayId)
-                .orElseThrow(() -> new RuntimeException("WorkoutDay not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found"));
 
         if (day.getAbdominal()) {
             return workoutExerciseRepository
@@ -54,9 +55,9 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
     @Override
     public WorkoutExerciseResponse createWorkoutExercise(WorkoutExerciseRequest request) {
         WorkoutDay day = workoutDayRepository.findById(request.workoutDayId())
-                .orElseThrow(() -> new RuntimeException("WorkoutDay not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found"));
         Exercise exercise = exerciseRepository.findById(request.exerciseId())
-                .orElseThrow(() -> new RuntimeException("Exercise not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
         WorkoutExercise workoutExercise = new WorkoutExercise();
         workoutExercise.setWorkoutDay(day);
         workoutExercise.setExercise(exercise);
@@ -69,11 +70,11 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
     @Override
     public WorkoutExerciseResponse updateWorkoutExercise(Long id, WorkoutExerciseRequest request) {
         WorkoutExercise workoutExercise = workoutExerciseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("WorkoutExercise not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("WorkoutExercise not found"));
         WorkoutDay day = workoutDayRepository.findById(request.workoutDayId())
-                .orElseThrow(() -> new RuntimeException("WorkoutDay not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found"));
         Exercise exercise = exerciseRepository.findById(request.exerciseId())
-                .orElseThrow(() -> new RuntimeException("Exercise not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
         workoutExercise.setWorkoutDay(day);
         workoutExercise.setExercise(exercise);
         workoutExercise.setExerciseOrder(request.exerciseOrder());
@@ -90,7 +91,7 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
     @Override
     public WorkoutExerciseResponse completeWorkoutExercise(Long id) {
         WorkoutExercise exercise = workoutExerciseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Exercise not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
         exercise.setCompleted(true);
         return toResponse(workoutExerciseRepository.save(exercise));
     }
@@ -98,7 +99,7 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
     @Override
     public WorkoutExerciseResponse uncompleteWorkoutExercise(Long id) {
         WorkoutExercise exercise = workoutExerciseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Exercise not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
         exercise.setCompleted(false);
         return toResponse(workoutExerciseRepository.save(exercise));
     }

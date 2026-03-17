@@ -3,6 +3,7 @@
 import com.gymapp.dto.request.templates.WorkoutTemplateDayRequest;
 import com.gymapp.dto.response.templates.WorkoutTemplateDayResponse;
 import com.gymapp.service.templates.WorkoutTemplateDayService;
+import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -32,14 +33,14 @@ public class WorkoutTemplateDayController {
     }
 
     @PostMapping
-    public WorkoutTemplateDayResponse createTemplateDay(@RequestBody WorkoutTemplateDayRequest request) {
+    public WorkoutTemplateDayResponse createTemplateDay(@Valid @RequestBody WorkoutTemplateDayRequest request) {
         return workoutTemplateDayService.createTemplateDay(request);
     }
 
     @PutMapping("/{id}")
     public WorkoutTemplateDayResponse updateTemplateDay(
             @PathVariable Long id,
-            @RequestBody WorkoutTemplateDayRequest request) {
+            @Valid @RequestBody WorkoutTemplateDayRequest request) {
         return workoutTemplateDayService.updateTemplateDay(id, request);
     }
 

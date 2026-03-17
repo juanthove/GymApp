@@ -2,6 +2,7 @@ package com.gymapp.service;
 
 import com.gymapp.dto.request.WorkoutDayRequest;
 import com.gymapp.dto.response.WorkoutDayResponse;
+import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.Workout;
 import com.gymapp.model.WorkoutDay;
 import com.gymapp.repository.WorkoutDayRepository;
@@ -29,7 +30,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
     @Override
     public WorkoutDayResponse getWorkoutDayById(Long id) {
         return toResponse(workoutDayRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("WorkoutDay not found")));
+                .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found")));
     }
 
     @Override
@@ -41,7 +42,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
     @Override
     public WorkoutDayResponse createWorkoutDay(WorkoutDayRequest request) {
         Workout workout = workoutRepository.findById(request.workoutId())
-                .orElseThrow(() -> new RuntimeException("Workout not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Workout not found"));
         WorkoutDay workoutDay = new WorkoutDay();
         workoutDay.setName(request.name());
         workoutDay.setMuscles(request.muscles());
@@ -53,7 +54,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
     @Override
     public WorkoutDayResponse updateWorkoutDay(Long id, WorkoutDayRequest request) {
         WorkoutDay day = workoutDayRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("WorkoutDay not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found"));
         day.setName(request.name());
         day.setMuscles(request.muscles());
         day.setDayOrder(request.dayOrder());
@@ -68,7 +69,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
     @Override
     public WorkoutDayResponse startWorkoutDay(Long id) {
         WorkoutDay day = workoutDayRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Workout day not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Workout day not found"));
         day.setStartedAt(LocalDateTime.now());
         return toResponse(workoutDayRepository.save(day));
     }
@@ -76,7 +77,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
     @Override
     public WorkoutDayResponse completeWorkoutDay(Long id) {
         WorkoutDay day = workoutDayRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Workout day not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Workout day not found"));
         day.setFinishedAt(LocalDateTime.now());
         return toResponse(workoutDayRepository.save(day));
     }
@@ -84,7 +85,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
     @Override
     public WorkoutDayResponse markAbdominalWorkoutDay(Long id) {
         WorkoutDay day = workoutDayRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Workout day not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Workout day not found"));
         day.setAbdominal(true);
         return toResponse(workoutDayRepository.save(day));
     }
@@ -92,14 +93,14 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
     @Override
     public boolean isAbdominalDay(Long id) {
         WorkoutDay day = workoutDayRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("WorkoutDay not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found"));
         return day.getAbdominal();
     }
 
     @Override
     public String getWorkoutDayStatus(Long id) {
         WorkoutDay day = workoutDayRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("WorkoutDay not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found"));
         if (day.getStartedAt() == null) return "NOT_STARTED";
         if (day.getFinishedAt() == null) return "IN_PROGRESS";
         return "COMPLETED";

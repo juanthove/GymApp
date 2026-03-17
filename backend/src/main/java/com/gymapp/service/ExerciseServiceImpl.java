@@ -1,6 +1,7 @@
 package com.gymapp.service;
 
 import com.gymapp.dto.response.ExerciseResponse;
+import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.Exercise;
 import com.gymapp.model.ExerciseType;
 import com.gymapp.repository.ExerciseRepository;
@@ -33,7 +34,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     @Override
     public ExerciseResponse getExerciseById(Long id) {
         return toResponse(exerciseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Exercise not found")));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise not found")));
     }
 
     @Override
@@ -53,7 +54,7 @@ public class ExerciseServiceImpl implements ExerciseService {
                                    Boolean deleteImage, Boolean deleteVideo) throws IOException {
 
         Exercise exercise = exerciseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Ejercicio no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Ejercicio no encontrado"));
 
         String oldName = exercise.getName();
         String newSafeName = name.toLowerCase().replace(" ", "_");

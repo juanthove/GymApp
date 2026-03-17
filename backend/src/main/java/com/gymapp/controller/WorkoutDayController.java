@@ -3,6 +3,7 @@
 import com.gymapp.dto.request.WorkoutDayRequest;
 import com.gymapp.dto.response.WorkoutDayResponse;
 import com.gymapp.service.WorkoutDayService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,12 +32,12 @@ public class WorkoutDayController {
     }
 
     @PostMapping
-    public WorkoutDayResponse createWorkoutDay(@RequestBody WorkoutDayRequest request) {
+    public WorkoutDayResponse createWorkoutDay(@Valid @RequestBody WorkoutDayRequest request) {
         return workoutDayService.createWorkoutDay(request);
     }
 
     @PutMapping("/{id}")
-    public WorkoutDayResponse updateWorkoutDay(@PathVariable Long id, @RequestBody WorkoutDayRequest request) {
+    public WorkoutDayResponse updateWorkoutDay(@PathVariable Long id, @Valid @RequestBody WorkoutDayRequest request) {
         return workoutDayService.updateWorkoutDay(id, request);
     }
 

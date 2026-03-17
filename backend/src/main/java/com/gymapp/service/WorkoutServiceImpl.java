@@ -4,6 +4,7 @@ import com.gymapp.dto.request.WorkoutFullRequest;
 import com.gymapp.dto.request.WorkoutRequest;
 import com.gymapp.dto.response.WorkoutFullResponse;
 import com.gymapp.dto.response.WorkoutResponse;
+import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.Exercise;
 import com.gymapp.model.User;
 import com.gymapp.model.Workout;
@@ -46,7 +47,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     @Override
     public WorkoutResponse getWorkoutById(Long id) {
         return toResponse(workoutRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Workout not found")));
+                .orElseThrow(() -> new ResourceNotFoundException("Workout not found")));
     }
 
     @Override
@@ -57,7 +58,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     @Override
     public WorkoutResponse createWorkout(WorkoutRequest request) {
         User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Workout workout = new Workout();
         workout.setName(request.name());
         workout.setReps(request.reps());
@@ -70,7 +71,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     @Override
     public WorkoutResponse updateWorkout(Long id, WorkoutRequest request) {
         Workout workout = workoutRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Workout not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Workout not found"));
         workout.setName(request.name());
         workout.setReps(request.reps());
         workout.setStartDate(request.startDate());
@@ -86,7 +87,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     @Override
     public WorkoutFullResponse getFullWorkout(Long id) {
         Workout workout = workoutRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Workout not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Workout not found"));
 
         List<WorkoutDay> days = workoutDayRepository.findByWorkoutIdOrderByDayOrder(id);
         List<WorkoutFullResponse.DayItem> dayList = new ArrayList<>();
@@ -112,7 +113,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     @Transactional
     public WorkoutResponse createFullWorkout(WorkoutFullRequest request) {
         User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Workout workout = new Workout();
         workout.setName(request.name());
         workout.setReps(request.reps());
@@ -129,7 +130,8 @@ public class WorkoutServiceImpl implements WorkoutService {
             day.setWorkout(workout);
             day = workoutDayRepository.save(day);
             for (WorkoutFullRequest.ExerciseItem exData : dayData.exercises()) {
-                Exercise exercise = exerciseRepository.findById(exData.exerciseId()).orElseThrow();
+                Exercise exercise = exerciseRepository.findById(exData.exerciseId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
                 WorkoutExercise workoutExercise = new WorkoutExercise();
                 workoutExercise.setWorkoutDay(day);
                 workoutExercise.setExercise(exercise);
@@ -145,7 +147,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     @Transactional
     public WorkoutResponse updateFullWorkout(Long id, WorkoutFullRequest request) {
         Workout workout = workoutRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Workout not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Workout not found"));
         workout.setName(request.name());
         workout.setReps(request.reps());
         workout.setStartDate(request.startDate());
@@ -167,7 +169,7 @@ public class WorkoutServiceImpl implements WorkoutService {
             day = workoutDayRepository.save(day);
             for (WorkoutFullRequest.ExerciseItem exData : dayData.exercises()) {
                 Exercise exercise = exerciseRepository.findById(exData.exerciseId())
-                        .orElseThrow(() -> new RuntimeException("Exercise not found"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
                 WorkoutExercise workoutExercise = new WorkoutExercise();
                 workoutExercise.setWorkoutDay(day);
                 workoutExercise.setExercise(exercise);

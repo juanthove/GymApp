@@ -3,6 +3,8 @@ package com.gymapp.service;
 import com.gymapp.dto.request.UserRequest;
 import com.gymapp.dto.response.UserResponse;
 import com.gymapp.dto.response.WorkoutResponse;
+import com.gymapp.exception.ConflictException;
+import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.User;
 import com.gymapp.model.Workout;
 import com.gymapp.repository.UserRepository;
@@ -32,7 +34,7 @@ public class UserServiceImpl implements UserService {
     public UserResponse getUserById(Long id) {
 
         return toResponse(userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado")));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado")));
     }
 
     @Override
@@ -63,7 +65,7 @@ public class UserServiceImpl implements UserService {
             user.setGymDaysPerWeek(request.gymDaysPerWeek());
             return toResponse(userRepository.save(user));
         } catch (DataIntegrityViolationException e) {
-            throw new RuntimeException("Ya existe un usuario con ese nombre y apellido");
+            throw new ConflictException("Ya existe un usuario con ese nombre y apellido");
         }
     }
 
@@ -71,7 +73,7 @@ public class UserServiceImpl implements UserService {
     public UserResponse updateUser(Long id, UserRequest request) {
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
         user.setName(request.name());
         user.setSurname(request.surname());
@@ -84,7 +86,7 @@ public class UserServiceImpl implements UserService {
     public UserResponse loginUser(Long id) {
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
         user.setLogged(true);
 
@@ -95,7 +97,7 @@ public class UserServiceImpl implements UserService {
     public UserResponse logoutUser(Long id) {
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
         user.setLogged(false);
 
@@ -106,10 +108,10 @@ public class UserServiceImpl implements UserService {
     public UserResponse setCurrentWorkout(Long userId, Long workoutId) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
         Workout workout = workoutRepository.findById(workoutId)
-                .orElseThrow(() -> new RuntimeException("Workout no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Workout no encontrado"));
 
         user.setCurrentWorkout(workout);
 
@@ -125,10 +127,10 @@ public class UserServiceImpl implements UserService {
     public WorkoutResponse getCurrentWorkout(Long id) {
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
         if (user.getCurrentWorkout() == null) {
-            throw new RuntimeException("El usuario no tiene workout actual");
+            throw new ResourceNotFoundException("El usuario no tiene workout actual");
         }
 
         return toWorkoutResponse(user.getCurrentWorkout());

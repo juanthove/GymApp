@@ -4,6 +4,7 @@ import com.gymapp.dto.request.templates.WorkoutTemplateFullRequest;
 import com.gymapp.dto.request.templates.WorkoutTemplateRequest;
 import com.gymapp.dto.response.templates.WorkoutTemplateFullResponse;
 import com.gymapp.dto.response.templates.WorkoutTemplateResponse;
+import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.Exercise;
 import com.gymapp.model.templates.WorkoutTemplate;
 import com.gymapp.model.templates.WorkoutTemplateDay;
@@ -42,7 +43,7 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
     @Override
     public WorkoutTemplateResponse getTemplateById(Long id) {
         return toResponse(workoutTemplateRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Template not found")));
+                .orElseThrow(() -> new ResourceNotFoundException("Template not found")));
     }
 
     @Override
@@ -56,7 +57,7 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
     @Override
     public WorkoutTemplateResponse updateTemplate(Long id, WorkoutTemplateRequest request) {
         WorkoutTemplate template = workoutTemplateRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Template not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Template not found"));
         template.setName(request.name());
         template.setDescription(request.description());
         return toResponse(workoutTemplateRepository.save(template));
@@ -84,7 +85,7 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
 
             for (WorkoutTemplateFullRequest.ExerciseItem exData : dayData.exercises()) {
                 Exercise exercise = exerciseRepository.findById(exData.exerciseId())
-                        .orElseThrow(() -> new RuntimeException("Exercise not found"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
                 WorkoutTemplateExercise templateExercise = new WorkoutTemplateExercise();
                 templateExercise.setTemplateDay(day);
                 templateExercise.setExercise(exercise);
@@ -99,7 +100,7 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
     @Override
     public WorkoutTemplateFullResponse getFullTemplate(Long id) {
         WorkoutTemplate template = workoutTemplateRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Template not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Template not found"));
 
         List<WorkoutTemplateDay> days = workoutTemplateDayRepository.findByTemplateId(id);
         List<WorkoutTemplateFullResponse.DayItem> dayList = new ArrayList<>();
@@ -122,7 +123,7 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
     @Transactional
     public WorkoutTemplateResponse updateFullTemplate(Long id, WorkoutTemplateFullRequest request) {
         WorkoutTemplate template = workoutTemplateRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Template not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Template not found"));
 
         template.setName(request.name());
         template.setDescription(request.description());
@@ -143,7 +144,7 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
 
             for (WorkoutTemplateFullRequest.ExerciseItem exData : dayData.exercises()) {
                 Exercise exercise = exerciseRepository.findById(exData.exerciseId())
-                        .orElseThrow(() -> new RuntimeException("Exercise not found"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
                 WorkoutTemplateExercise templateExercise = new WorkoutTemplateExercise();
                 templateExercise.setTemplateDay(day);
                 templateExercise.setExercise(exercise);

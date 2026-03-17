@@ -5,6 +5,7 @@ import com.gymapp.dto.request.templates.WorkoutTemplateRequest;
 import com.gymapp.dto.response.templates.WorkoutTemplateFullResponse;
 import com.gymapp.dto.response.templates.WorkoutTemplateResponse;
 import com.gymapp.service.templates.WorkoutTemplateService;
+import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -29,14 +30,14 @@ public class WorkoutTemplateController {
     }
 
     @PostMapping
-    public WorkoutTemplateResponse createTemplate(@RequestBody WorkoutTemplateRequest request) {
+    public WorkoutTemplateResponse createTemplate(@Valid @RequestBody WorkoutTemplateRequest request) {
         return workoutTemplateService.createTemplate(request);
     }
 
     @PutMapping("/{id}")
     public WorkoutTemplateResponse updateTemplate(
             @PathVariable Long id,
-            @RequestBody WorkoutTemplateRequest request) {
+            @Valid @RequestBody WorkoutTemplateRequest request) {
         return workoutTemplateService.updateTemplate(id, request);
     }
 
@@ -46,7 +47,7 @@ public class WorkoutTemplateController {
     }
 
     @PostMapping("/full")
-    public WorkoutTemplateResponse createFullTemplate(@RequestBody WorkoutTemplateFullRequest request) {
+    public WorkoutTemplateResponse createFullTemplate(@Valid @RequestBody WorkoutTemplateFullRequest request) {
         return workoutTemplateService.createFullTemplate(request);
     }
 
@@ -58,7 +59,7 @@ public class WorkoutTemplateController {
     @PutMapping("/full/{id}")
     public WorkoutTemplateResponse updateFullTemplate(
             @PathVariable Long id,
-            @RequestBody WorkoutTemplateFullRequest request) {
+            @Valid @RequestBody WorkoutTemplateFullRequest request) {
         return workoutTemplateService.updateFullTemplate(id, request);
     }
 

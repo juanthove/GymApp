@@ -4,6 +4,7 @@ import com.gymapp.dto.request.UserRequest;
 import com.gymapp.dto.response.UserResponse;
 import com.gymapp.dto.response.WorkoutResponse;
 import com.gymapp.service.UserService;
+import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -43,13 +44,13 @@ public class UserController {
     }
 
     @PostMapping
-    public UserResponse createUser(@RequestBody UserRequest request) {
+    public UserResponse createUser(@Valid @RequestBody UserRequest request) {
         return userService.createUser(request);
     }
 
     @PutMapping("/{id}")
     public UserResponse updateUser(@PathVariable Long id,
-                           @RequestBody UserRequest request) {
+                           @Valid @RequestBody UserRequest request) {
 
         return userService.updateUser(id, request);
     }

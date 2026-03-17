@@ -3,6 +3,7 @@
 import com.gymapp.dto.request.templates.WorkoutTemplateExerciseRequest;
 import com.gymapp.dto.response.templates.WorkoutTemplateExerciseResponse;
 import com.gymapp.service.templates.WorkoutTemplateExerciseService;
+import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -32,14 +33,14 @@ public class WorkoutTemplateExerciseController {
     }
 
     @PostMapping
-    public WorkoutTemplateExerciseResponse createTemplateExercise(@RequestBody WorkoutTemplateExerciseRequest request) {
+    public WorkoutTemplateExerciseResponse createTemplateExercise(@Valid @RequestBody WorkoutTemplateExerciseRequest request) {
         return workoutTemplateExerciseService.createTemplateExercise(request);
     }
 
     @PutMapping("/{id}")
     public WorkoutTemplateExerciseResponse updateTemplateExercise(
             @PathVariable Long id,
-            @RequestBody WorkoutTemplateExerciseRequest request) {
+            @Valid @RequestBody WorkoutTemplateExerciseRequest request) {
         return workoutTemplateExerciseService.updateTemplateExercise(id, request);
     }
 

@@ -1,7 +1,10 @@
 package com.gymapp.dto.request.templates;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+
 public record WorkoutTemplateExerciseRequest(
-        Long templateDayId,
-        Long exerciseId,
-        Integer exerciseOrder
+        @NotNull Long templateDayId,
+        @NotNull Long exerciseId,
+        @NotNull @PositiveOrZero Integer exerciseOrder
 ) {}

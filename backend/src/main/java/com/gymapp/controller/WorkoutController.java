@@ -5,6 +5,7 @@ import com.gymapp.dto.request.WorkoutRequest;
 import com.gymapp.dto.response.WorkoutFullResponse;
 import com.gymapp.dto.response.WorkoutResponse;
 import com.gymapp.service.WorkoutService;
+import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -34,12 +35,12 @@ public class WorkoutController {
     }
 
     @PostMapping
-    public WorkoutResponse createWorkout(@RequestBody WorkoutRequest request) {
+    public WorkoutResponse createWorkout(@Valid @RequestBody WorkoutRequest request) {
         return workoutService.createWorkout(request);
     }
 
     @PutMapping("/{id}")
-    public WorkoutResponse updateWorkout(@PathVariable Long id, @RequestBody WorkoutRequest request) {
+    public WorkoutResponse updateWorkout(@PathVariable Long id, @Valid @RequestBody WorkoutRequest request) {
         return workoutService.updateWorkout(id, request);
     }
 
@@ -54,12 +55,12 @@ public class WorkoutController {
     }
 
     @PostMapping("/full")
-    public WorkoutResponse createFullWorkout(@RequestBody WorkoutFullRequest request) {
+    public WorkoutResponse createFullWorkout(@Valid @RequestBody WorkoutFullRequest request) {
         return workoutService.createFullWorkout(request);
     }
 
     @PutMapping("/full/{id}")
-    public WorkoutResponse updateFullWorkout(@PathVariable Long id, @RequestBody WorkoutFullRequest request) {
+    public WorkoutResponse updateFullWorkout(@PathVariable Long id, @Valid @RequestBody WorkoutFullRequest request) {
         return workoutService.updateFullWorkout(id, request);
     }
 

@@ -1,20 +1,22 @@
 package com.gymapp.dto.request.templates;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import java.util.List;
 
 public record WorkoutTemplateFullRequest(
-        String name,
-        String description,
-        List<DayItem> days
+        @NotBlank @Size(max = 100) String name,
+        @Size(max = 500) String description,
+        @NotNull @NotEmpty List<@Valid DayItem> days
 ) {
     public record DayItem(
-            String name,
-            String muscles,
-            List<ExerciseItem> exercises
+            @NotBlank @Size(max = 100) String name,
+            @NotBlank String muscles,
+            @NotNull List<@Valid ExerciseItem> exercises
     ) {}
 
     public record ExerciseItem(
-            Long exerciseId,
-            Integer order
+            @NotNull Long exerciseId,
+            @NotNull @PositiveOrZero Integer order
     ) {}
 }
