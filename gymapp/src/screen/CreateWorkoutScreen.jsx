@@ -64,8 +64,7 @@ const [globalReps,setGlobalReps] = useState("");
 const repOptions = [
  { label:"8", value:8 },
  { label:"12", value:12 },
- { label:"15", value:15 },
- { label:"12 o 15", value:-1 }
+ { label:"15", value:15 }
 ];
 
 const exercisesById = Object.fromEntries(
@@ -400,8 +399,8 @@ const handleCreateWorkout = async()=>{
 
   const workoutData={
    name:workoutName,
-   reps:globalReps,
-   userId:selectedUser,
+    reps:Number(globalReps),
+    userId:Number(selectedUser),
    startDate,
    endDate,
    days:days.map((day, index)=>({
@@ -418,7 +417,7 @@ const handleCreateWorkout = async()=>{
 
   const newWorkout = await createWorkout(workoutData);
 
-  await setCurrentWorkout(selectedUser,newWorkout.id);
+  await setCurrentWorkout(Number(selectedUser), newWorkout.id);
 
   resetForm();
 
@@ -440,7 +439,7 @@ const handleUpdateWorkout = async()=>{
 
   const workoutData={
    name:workoutName,
-   reps:globalReps,
+    reps:Number(globalReps),
    startDate,
    endDate,
    days:days.map((day, index)=>({
