@@ -1,5 +1,6 @@
 package com.gymapp.service;
 
+import com.gymapp.dto.response.ExerciseResponse;
 import com.gymapp.model.Exercise;
 import com.gymapp.model.ExerciseType;
 import com.gymapp.repository.ExerciseRepository;
@@ -25,29 +26,29 @@ public class ExerciseServiceImpl implements ExerciseService {
     private final Path videoPath = Paths.get("uploads/videos");
 
     @Override
-    public List<Exercise> getAllExercises() {
-        return exerciseRepository.findAll();
+    public List<ExerciseResponse> getAllExercises() {
+        return exerciseRepository.findAll().stream().map(this::toResponse).toList();
     }
 
     @Override
-    public Exercise getExerciseById(Long id) {
-        return exerciseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Exercise not found"));
+    public ExerciseResponse getExerciseById(Long id) {
+        return toResponse(exerciseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Exercise not found")));
     }
 
     @Override
-    public Exercise createExercise(String name, String description, ExerciseType type,
+    public ExerciseResponse createExercise(String name, String description, ExerciseType type,
                                    MultipartFile image, MultipartFile video) throws IOException {
         Exercise exercise = new Exercise();
         exercise.setName(name);
         exercise.setDescription(description);
         exercise.setType(type);
         saveFiles(exercise, name, image, video);
-        return exerciseRepository.save(exercise);
+        return toResponse(exerciseRepository.save(exercise));
     }
 
     @Override
-    public Exercise updateExercise(Long id, String name, String description, ExerciseType type,
+    public ExerciseResponse updateExercise(Long id, String name, String description, ExerciseType type,
                                    MultipartFile image, MultipartFile video,
                                    Boolean deleteImage, Boolean deleteVideo) throws IOException {
 
@@ -112,7 +113,7 @@ public class ExerciseServiceImpl implements ExerciseService {
             }
         }
 
-        return exerciseRepository.save(exercise);
+        return toResponse(exerciseRepository.save(exercise));
     }
 
     @Override
@@ -164,5 +165,9 @@ public class ExerciseServiceImpl implements ExerciseService {
 
     private String getExtension(String fileName) {
         return fileName.substring(fileName.lastIndexOf(".") + 1);
+    }
+
+    private ExerciseResponse toResponse(Exercise e) {
+        return new ExerciseResponse(e.getId(), e.getName(), e.getDescription(), e.getType(), e.getImage(), e.getVideo());
     }
 }

@@ -1,28 +1,29 @@
 package com.gymapp.service.templates;
 
-import com.gymapp.model.templates.WorkoutTemplate;
+import com.gymapp.dto.request.templates.WorkoutTemplateFullRequest;
+import com.gymapp.dto.request.templates.WorkoutTemplateRequest;
+import com.gymapp.dto.response.templates.WorkoutTemplateFullResponse;
+import com.gymapp.dto.response.templates.WorkoutTemplateResponse;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 public interface WorkoutTemplateService {
 
-    List<WorkoutTemplate> getAllTemplates();
+    List<WorkoutTemplateResponse> getAllTemplates();
 
-    Optional<WorkoutTemplate> getTemplateById(Long id);
+    WorkoutTemplateResponse getTemplateById(Long id);
 
-    WorkoutTemplate createTemplate(WorkoutTemplate template);
+    WorkoutTemplateResponse createTemplate(WorkoutTemplateRequest request);
 
-    WorkoutTemplate updateTemplate(Long id, WorkoutTemplate updatedTemplate);
+    WorkoutTemplateResponse updateTemplate(Long id, WorkoutTemplateRequest request);
 
     void deleteTemplate(Long id);
 
-    WorkoutTemplate createFullTemplate(Map<String, Object> body);
+    WorkoutTemplateResponse createFullTemplate(WorkoutTemplateFullRequest request);
 
-    Map<String, Object> getFullTemplate(Long id);
+    WorkoutTemplateFullResponse getFullTemplate(Long id);
 
-    WorkoutTemplate updateFullTemplate(Long id, Map<String, Object> body);
+    WorkoutTemplateResponse updateFullTemplate(Long id, WorkoutTemplateFullRequest request);
 
     void deleteFullTemplate(Long id);
 }

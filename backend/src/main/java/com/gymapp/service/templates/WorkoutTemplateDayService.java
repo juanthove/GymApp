@@ -1,21 +1,21 @@
 package com.gymapp.service.templates;
 
-import com.gymapp.model.templates.WorkoutTemplateDay;
+import com.gymapp.dto.request.templates.WorkoutTemplateDayRequest;
+import com.gymapp.dto.response.templates.WorkoutTemplateDayResponse;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface WorkoutTemplateDayService {
 
-    List<WorkoutTemplateDay> getAllTemplateDays();
+    List<WorkoutTemplateDayResponse> getAllTemplateDays();
 
-    Optional<WorkoutTemplateDay> getTemplateDayById(Long id);
+    WorkoutTemplateDayResponse getTemplateDayById(Long id);
 
-    List<WorkoutTemplateDay> getDaysByTemplate(Long templateId);
+    List<WorkoutTemplateDayResponse> getDaysByTemplate(Long templateId);
 
-    WorkoutTemplateDay createTemplateDay(WorkoutTemplateDay day);
+    WorkoutTemplateDayResponse createTemplateDay(WorkoutTemplateDayRequest request);
 
-    WorkoutTemplateDay updateTemplateDay(Long id, WorkoutTemplateDay updatedDay);
+    WorkoutTemplateDayResponse updateTemplateDay(Long id, WorkoutTemplateDayRequest request);
 
     void deleteTemplateDay(Long id);
 }

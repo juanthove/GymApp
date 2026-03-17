@@ -1,5 +1,11 @@
 package com.gymapp.service;
 
+import com.gymapp.dto.request.WorkoutFullRequest;
+import com.gymapp.dto.request.WorkoutRequest;
+import com.gymapp.dto.response.WorkoutDayResponse;
+import com.gymapp.dto.response.WorkoutExerciseResponse;
+import com.gymapp.dto.response.WorkoutFullResponse;
+import com.gymapp.dto.response.WorkoutResponse;
 import com.gymapp.model.Exercise;
 import com.gymapp.model.User;
 import com.gymapp.model.Workout;
@@ -14,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -36,34 +41,43 @@ public class WorkoutServiceImpl implements WorkoutService {
     private UserRepository userRepository;
 
     @Override
-    public List<Workout> getAllWorkouts() {
-        return workoutRepository.findAll();
+    public List<WorkoutResponse> getAllWorkouts() {
+        return workoutRepository.findAll().stream().map(this::toResponse).toList();
     }
 
     @Override
-    public Optional<Workout> getWorkoutById(Long id) {
-        return workoutRepository.findById(id);
+    public WorkoutResponse getWorkoutById(Long id) {
+        return toResponse(workoutRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Workout not found")));
     }
 
     @Override
-    public List<Workout> getWorkoutsByUser(Long userId) {
-        return workoutRepository.findByUserId(userId);
+    public List<WorkoutResponse> getWorkoutsByUser(Long userId) {
+        return workoutRepository.findByUserId(userId).stream().map(this::toResponse).toList();
     }
 
     @Override
-    public Workout createWorkout(Workout workout) {
-        return workoutRepository.save(workout);
+    public WorkoutResponse createWorkout(WorkoutRequest request) {
+        User user = userRepository.findById(request.userId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Workout workout = new Workout();
+        workout.setName(request.name());
+        workout.setReps(request.reps());
+        workout.setStartDate(request.startDate());
+        workout.setEndDate(request.endDate());
+        workout.setUser(user);
+        return toResponse(workoutRepository.save(workout));
     }
 
     @Override
-    public Workout updateWorkout(Long id, Workout updatedWorkout) {
-        return workoutRepository.findById(id).map(workout -> {
-            workout.setName(updatedWorkout.getName());
-            workout.setStartDate(updatedWorkout.getStartDate());
-            workout.setEndDate(updatedWorkout.getEndDate());
-            workout.setUser(updatedWorkout.getUser());
-            return workoutRepository.save(workout);
-        }).orElseThrow(() -> new RuntimeException("Workout not found"));
+    public WorkoutResponse updateWorkout(Long id, WorkoutRequest request) {
+        Workout workout = workoutRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Workout not found"));
+        workout.setName(request.name());
+        workout.setReps(request.reps());
+        workout.setStartDate(request.startDate());
+        workout.setEndDate(request.endDate());
+        return toResponse(workoutRepository.save(workout));
     }
 
     @Override
@@ -72,106 +86,72 @@ public class WorkoutServiceImpl implements WorkoutService {
     }
 
     @Override
-    public Map<String, Object> getFullWorkout(Long id) {
+    public WorkoutFullResponse getFullWorkout(Long id) {
         Workout workout = workoutRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Workout not found"));
 
         List<WorkoutDay> days = workoutDayRepository.findByWorkoutIdOrderByDayOrder(id);
-        List<Map<String, Object>> dayList = new ArrayList<>();
+        List<WorkoutFullResponse.DayItem> dayList = new ArrayList<>();
 
         for (WorkoutDay day : days) {
-            Map<String, Object> dayData = new HashMap<>();
-            dayData.put("id", day.getId());
-            dayData.put("name", day.getName());
-            dayData.put("muscles", day.getMuscles());
-            dayData.put("abdominal", day.getAbdominal());
-            dayData.put("startedAt", day.getStartedAt());
-            dayData.put("finishedAt", day.getFinishedAt());
-            dayData.put("dayOrder", day.getDayOrder());
-            dayData.put("status", day.getStatus());
-
             List<WorkoutExercise> exercises = workoutExerciseRepository.findByWorkoutDayId(day.getId());
-            List<Map<String, Object>> exerciseList = new ArrayList<>();
-
-            for (WorkoutExercise ex : exercises) {
-                Map<String, Object> exData = new HashMap<>();
-                exData.put("exerciseId", ex.getExercise().getId());
-                exData.put("exerciseName", ex.getExercise().getName());
-                exData.put("order", ex.getExerciseOrder());
-                exData.put("weight", ex.getWeight());
-                exData.put("comment", ex.getComment());
-                exerciseList.add(exData);
-            }
-
-            dayData.put("exercises", exerciseList);
-            dayList.add(dayData);
+            List<WorkoutFullResponse.ExerciseItem> exerciseList = exercises.stream()
+                    .map(ex -> new WorkoutFullResponse.ExerciseItem(
+                            ex.getId(), ex.getExercise().getId(), ex.getExercise().getName(),
+                            ex.getExerciseOrder(), ex.getWeight(), ex.getComment(), ex.getCompleted()))
+                    .toList();
+            dayList.add(new WorkoutFullResponse.DayItem(
+                    day.getId(), day.getName(), day.getMuscles(), day.getDayOrder(),
+                    day.getAbdominal(), day.getStartedAt(), day.getFinishedAt(), day.getStatus(), exerciseList));
         }
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("id", workout.getId());
-        result.put("name", workout.getName());
-        result.put("reps", workout.getReps());
-        result.put("startDate", workout.getStartDate());
-        result.put("endDate", workout.getEndDate());
-        result.put("days", dayList);
-
-        return result;
+        Long userId = workout.getUser() != null ? workout.getUser().getId() : null;
+        return new WorkoutFullResponse(workout.getId(), workout.getName(), workout.getReps(),
+                workout.getStartDate(), workout.getEndDate(), userId, dayList);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     @Transactional
-    public Workout createFullWorkout(Map<String, Object> body) {
-        Long userId = Long.valueOf(body.get("userId").toString());
-        User user = userRepository.findById(userId)
+    public WorkoutResponse createFullWorkout(WorkoutFullRequest request) {
+        User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         Workout workout = new Workout();
-        workout.setName((String) body.get("name"));
-        workout.setReps(Integer.valueOf(body.get("reps").toString()));
-        workout.setStartDate(LocalDate.parse(body.get("startDate").toString()));
-        workout.setEndDate(LocalDate.parse(body.get("endDate").toString()));
+        workout.setName(request.name());
+        workout.setReps(request.reps());
+        workout.setStartDate(request.startDate());
+        workout.setEndDate(request.endDate());
         workout.setUser(user);
         workout = workoutRepository.save(workout);
 
-        List<Map<String, Object>> days = (List<Map<String, Object>>) body.get("days");
-
-        for (Map<String, Object> dayData : days) {
+        for (WorkoutFullRequest.DayItem dayData : request.days()) {
             WorkoutDay day = new WorkoutDay();
-            day.setName((String) dayData.get("name"));
-            day.setMuscles((String) dayData.get("muscles"));
-            day.setDayOrder(Integer.valueOf(dayData.get("dayOrder").toString()));
+            day.setName(dayData.name());
+            day.setMuscles(dayData.muscles());
+            day.setDayOrder(dayData.dayOrder());
             day.setWorkout(workout);
             day = workoutDayRepository.save(day);
-
-            List<Map<String, Object>> exercises = (List<Map<String, Object>>) dayData.get("exercises");
-
-            for (Map<String, Object> exData : exercises) {
-                Long exerciseId = Long.valueOf(exData.get("exerciseId").toString());
-                Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow();
+            for (WorkoutFullRequest.ExerciseItem exData : dayData.exercises()) {
+                Exercise exercise = exerciseRepository.findById(exData.exerciseId()).orElseThrow();
                 WorkoutExercise workoutExercise = new WorkoutExercise();
                 workoutExercise.setWorkoutDay(day);
                 workoutExercise.setExercise(exercise);
-                workoutExercise.setExerciseOrder(Integer.valueOf(exData.get("order").toString()));
-                workoutExercise.setWeight(Double.valueOf(exData.get("weight").toString()));
+                workoutExercise.setExerciseOrder(exData.order());
+                workoutExercise.setWeight(exData.weight());
                 workoutExerciseRepository.save(workoutExercise);
             }
         }
-
-        return workout;
+        return toResponse(workout);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     @Transactional
-    public Workout updateFullWorkout(Long id, Map<String, Object> body) {
+    public WorkoutResponse updateFullWorkout(Long id, WorkoutFullRequest request) {
         Workout workout = workoutRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Workout not found"));
-
-        workout.setName((String) body.get("name"));
-        workout.setReps(Integer.valueOf(body.get("reps").toString()));
-        workout.setStartDate(LocalDate.parse(body.get("startDate").toString()));
-        workout.setEndDate(LocalDate.parse(body.get("endDate").toString()));
+        workout.setName(request.name());
+        workout.setReps(request.reps());
+        workout.setStartDate(request.startDate());
+        workout.setEndDate(request.endDate());
         workoutRepository.save(workout);
 
         List<WorkoutDay> existingDays = workoutDayRepository.findByWorkoutIdOrderByDayOrder(id);
@@ -180,32 +160,25 @@ public class WorkoutServiceImpl implements WorkoutService {
         }
         workoutDayRepository.deleteByWorkoutId(id);
 
-        List<Map<String, Object>> days = (List<Map<String, Object>>) body.get("days");
-
-        for (Map<String, Object> dayData : days) {
+        for (WorkoutFullRequest.DayItem dayData : request.days()) {
             WorkoutDay day = new WorkoutDay();
-            day.setName((String) dayData.get("name"));
-            day.setMuscles((String) dayData.get("muscles"));
-            day.setDayOrder(Integer.valueOf(dayData.get("dayOrder").toString()));
+            day.setName(dayData.name());
+            day.setMuscles(dayData.muscles());
+            day.setDayOrder(dayData.dayOrder());
             day.setWorkout(workout);
             day = workoutDayRepository.save(day);
-
-            List<Map<String, Object>> exercises = (List<Map<String, Object>>) dayData.get("exercises");
-
-            for (Map<String, Object> exData : exercises) {
-                Long exerciseId = Long.valueOf(exData.get("exerciseId").toString());
-                Exercise exercise = exerciseRepository.findById(exerciseId)
+            for (WorkoutFullRequest.ExerciseItem exData : dayData.exercises()) {
+                Exercise exercise = exerciseRepository.findById(exData.exerciseId())
                         .orElseThrow(() -> new RuntimeException("Exercise not found"));
                 WorkoutExercise workoutExercise = new WorkoutExercise();
                 workoutExercise.setWorkoutDay(day);
                 workoutExercise.setExercise(exercise);
-                workoutExercise.setExerciseOrder(Integer.valueOf(exData.get("order").toString()));
-                workoutExercise.setWeight(Double.valueOf(exData.get("weight").toString()));
+                workoutExercise.setExerciseOrder(exData.order());
+                workoutExercise.setWeight(exData.weight());
                 workoutExerciseRepository.save(workoutExercise);
             }
         }
-
-        return workout;
+        return toResponse(workout);
     }
 
     @Override
@@ -217,5 +190,10 @@ public class WorkoutServiceImpl implements WorkoutService {
         }
         workoutDayRepository.deleteByWorkoutId(id);
         workoutRepository.deleteById(id);
+    }
+
+    private WorkoutResponse toResponse(Workout w) {
+        Long userId = w.getUser() != null ? w.getUser().getId() : null;
+        return new WorkoutResponse(w.getId(), w.getName(), w.getReps(), w.getStartDate(), w.getEndDate(), userId);
     }
 }

@@ -1,29 +1,29 @@
 package com.gymapp.service;
 
-import com.gymapp.model.WorkoutDay;
+import com.gymapp.dto.request.WorkoutDayRequest;
+import com.gymapp.dto.response.WorkoutDayResponse;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface WorkoutDayService {
 
-    List<WorkoutDay> getAllWorkoutDays();
+    List<WorkoutDayResponse> getAllWorkoutDays();
 
-    Optional<WorkoutDay> getWorkoutDayById(Long id);
+    WorkoutDayResponse getWorkoutDayById(Long id);
 
-    List<WorkoutDay> getDaysByWorkout(Long workoutId);
+    List<WorkoutDayResponse> getDaysByWorkout(Long workoutId);
 
-    WorkoutDay createWorkoutDay(WorkoutDay workoutDay);
+    WorkoutDayResponse createWorkoutDay(WorkoutDayRequest request);
 
-    WorkoutDay updateWorkoutDay(Long id, WorkoutDay updatedDay);
+    WorkoutDayResponse updateWorkoutDay(Long id, WorkoutDayRequest request);
 
     void deleteWorkoutDay(Long id);
 
-    WorkoutDay startWorkoutDay(Long id);
+    WorkoutDayResponse startWorkoutDay(Long id);
 
-    WorkoutDay completeWorkoutDay(Long id);
+    WorkoutDayResponse completeWorkoutDay(Long id);
 
-    WorkoutDay markAbdominalWorkoutDay(Long id);
+    WorkoutDayResponse markAbdominalWorkoutDay(Long id);
 
     boolean isAbdominalDay(Long id);
 

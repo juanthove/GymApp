@@ -1,25 +1,25 @@
 package com.gymapp.service;
 
-import com.gymapp.model.WorkoutExercise;
+import com.gymapp.dto.request.WorkoutExerciseRequest;
+import com.gymapp.dto.response.WorkoutExerciseResponse;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface WorkoutExerciseService {
 
-    List<WorkoutExercise> getAllWorkoutExercises();
+    List<WorkoutExerciseResponse> getAllWorkoutExercises();
 
-    Optional<WorkoutExercise> getWorkoutExerciseById(Long id);
+    WorkoutExerciseResponse getWorkoutExerciseById(Long id);
 
-    List<WorkoutExercise> getExercisesByDay(Long dayId);
+    List<WorkoutExerciseResponse> getExercisesByDay(Long dayId);
 
-    WorkoutExercise createWorkoutExercise(WorkoutExercise workoutExercise);
+    WorkoutExerciseResponse createWorkoutExercise(WorkoutExerciseRequest request);
 
-    WorkoutExercise updateWorkoutExercise(Long id, WorkoutExercise updatedExercise);
+    WorkoutExerciseResponse updateWorkoutExercise(Long id, WorkoutExerciseRequest request);
 
     void deleteWorkoutExercise(Long id);
 
-    WorkoutExercise completeWorkoutExercise(Long id);
+    WorkoutExerciseResponse completeWorkoutExercise(Long id);
 
-    WorkoutExercise uncompleteWorkoutExercise(Long id);
+    WorkoutExerciseResponse uncompleteWorkoutExercise(Long id);
 }

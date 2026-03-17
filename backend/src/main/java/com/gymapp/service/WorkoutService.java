@@ -1,30 +1,31 @@
 package com.gymapp.service;
 
-import com.gymapp.model.Workout;
+import com.gymapp.dto.request.WorkoutFullRequest;
+import com.gymapp.dto.request.WorkoutRequest;
+import com.gymapp.dto.response.WorkoutFullResponse;
+import com.gymapp.dto.response.WorkoutResponse;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 public interface WorkoutService {
 
-    List<Workout> getAllWorkouts();
+    List<WorkoutResponse> getAllWorkouts();
 
-    Optional<Workout> getWorkoutById(Long id);
+    WorkoutResponse getWorkoutById(Long id);
 
-    List<Workout> getWorkoutsByUser(Long userId);
+    List<WorkoutResponse> getWorkoutsByUser(Long userId);
 
-    Workout createWorkout(Workout workout);
+    WorkoutResponse createWorkout(WorkoutRequest request);
 
-    Workout updateWorkout(Long id, Workout updatedWorkout);
+    WorkoutResponse updateWorkout(Long id, WorkoutRequest request);
 
     void deleteWorkout(Long id);
 
-    Map<String, Object> getFullWorkout(Long id);
+    WorkoutFullResponse getFullWorkout(Long id);
 
-    Workout createFullWorkout(Map<String, Object> body);
+    WorkoutResponse createFullWorkout(WorkoutFullRequest request);
 
-    Workout updateFullWorkout(Long id, Map<String, Object> body);
+    WorkoutResponse updateFullWorkout(Long id, WorkoutFullRequest request);
 
     void deleteFullWorkout(Long id);
 }
