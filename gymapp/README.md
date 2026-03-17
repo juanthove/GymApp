@@ -1,16 +1,146 @@
-# React + Vite
+# GymApp
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicacion para gestion y ejecucion de rutinas de gimnasio, con frontend en React + Vite y backend en Spring Boot.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Frontend: React 19, Vite 8, Material UI, React Router.
+- Backend: Spring Boot 3.1, Java 17, Spring Web, Spring Data JPA, Bean Validation.
+- Base de datos: PostgreSQL.
 
-## React Compiler
+## Estructura del proyecto
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- `backend/`: API REST, logica de negocio, persistencia y validaciones.
+- `gymapp/`: interfaz de usuario y consumo de API.
+- `backend/uploads/images` y `backend/uploads/videos`: archivos multimedia de ejercicios.
 
-## Expanding the ESLint configuration
+## Como funciona (resumen funcional)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+La app tiene dos flujos principales:
+
+1. Flujo de uso diario:
+- Seleccion de usuario activo en Home.
+- Visualizacion del workout actual del usuario.
+- Navegacion por dias y ejercicios.
+- Pantalla de cierre/resumen final.
+
+2. Flujo administrativo:
+- Alta/edicion de usuarios.
+- Alta/edicion de ejercicios (incluye imagen y video).
+- Creacion de plantillas de entrenamiento.
+- Creacion de workouts completos para usuarios.
+
+## Arquitectura backend
+
+Capas implementadas:
+
+- `controller`: endpoints REST.
+- `service`: logica de negocio (interfaces + implementaciones).
+- `repository`: acceso a datos con Spring Data JPA.
+- `dto/request` y `dto/response`: contratos de entrada/salida.
+- `exception` + `config/GlobalExceptionHandler`: manejo centralizado de errores.
+
+### Validaciones
+
+Los Request DTOs usan `jakarta.validation` (`@NotNull`, `@NotBlank`, `@Size`, `@Positive`, etc.) y los controllers validan con `@Valid` en `@RequestBody`.
+
+### Manejo de errores
+
+Se definio un manejo consistente de errores con:
+
+- `ResourceNotFoundException` -> HTTP 404
+- `ConflictException` -> HTTP 409
+- Errores de validacion -> HTTP 400
+- Fallback runtime -> HTTP 500
+
+Formato de respuesta de error:
+
+```json
+{
+	"status": 400,
+	"error": "Bad Request",
+	"message": "Validation failed",
+	"fields": {
+		"name": "must not be blank"
+	}
+}
+```
+
+En errores no de validacion, `fields` puede no aparecer.
+
+## Endpoints principales
+
+Base URL backend: `http://localhost:8080`
+
+- `/api/users`
+- `/api/exercises`
+- `/api/workouts`
+- `/api/workout-days`
+- `/api/workout-exercises`
+- `/api/workout-template`
+- `/api/workout-template-days`
+- `/api/workout-template-exercises`
+
+## Frontend
+
+Rutas principales:
+
+- `/home`
+- `/workout/:userId`
+- `/exercise/:userId/:workoutDayId`
+- `/final/:userId/:workoutDayId`
+- `/admin`
+- `/admin/users`
+- `/admin/exercises`
+- `/admin/workout-templates`
+- `/admin/workouts`
+
+El frontend consume la API mediante `fetch` a rutas `/api/...` y Vite redirige al backend usando proxy:
+
+- `vite.config.js`: `"/api" -> "http://localhost:8080"`
+
+## CORS
+
+El backend permite origen `http://localhost:5173` (configurado en `CorsConfig`).
+
+## Como levantar el proyecto
+
+## 1. Backend
+
+Desde `backend/`:
+
+```bash
+mvn spring-boot:run
+```
+
+Requisitos:
+
+- Java 17+
+- Maven 3.9+
+- PostgreSQL corriendo
+- Configurar credenciales/URL de DB en `application.properties` si corresponde
+
+## 2. Frontend
+
+Desde `gymapp/`:
+
+```bash
+npm install
+npm run dev
+```
+
+Frontend disponible en `http://localhost:5173`.
+
+## Estado actual del backend
+
+- Service layer completa para todos los modulos.
+- DTOs Request/Response aplicados en toda la API.
+- Validaciones con Bean Validation en todos los Request DTOs.
+- `@ControllerAdvice` global para 404/409/400/500.
+
+## Nota
+
+Si cambias puertos de frontend o backend, actualiza:
+
+- `backend/src/main/java/com/gymapp/config/CorsConfig.java`
+- `gymapp/vite.config.js`
