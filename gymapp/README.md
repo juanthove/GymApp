@@ -30,6 +30,48 @@ La app tiene dos flujos principales:
 - Creacion de plantillas de entrenamiento.
 - Creacion de workouts completos para usuarios.
 
+## Organizacion de datos de entrenamiento
+
+La app esta pensada para guardar el entrenamiento en niveles, desde lo general a lo puntual:
+
+1. Usuario (`User`)
+- Representa la persona que entrena.
+- Puede tener un workout actual asignado.
+
+2. Plan de entrenamiento (`Workout`)
+- Datos principales: `name`, `startDate`, `endDate`, `userId`.
+- Campo clave: `reps`.
+- En este proyecto, `reps` se usa como referencia global de series/repeticiones objetivo del plan.
+
+3. Dia de entrenamiento (`WorkoutDay`)
+- Pertenece a un `Workout`.
+- Datos: `name`, `muscles`, `dayOrder`.
+- Seguimiento temporal: `startedAt`, `finishedAt`.
+- Estado calculado: `NOT_STARTED`, `IN_PROGRESS`, `COMPLETED`.
+
+4. Ejercicio dentro del dia (`WorkoutExercise`)
+- Relaciona un ejercicio base (`Exercise`) con un dia (`WorkoutDay`).
+- Datos operativos para entrenar: `exerciseOrder` (orden del ejercicio), `weight` (peso usado), `comment` (observaciones) y `completed` (si fue completado o no).
+
+5. Catalogo de ejercicios (`Exercise`)
+- Datos base: `name`, `description`, `type`.
+- Soporte multimedia: `image` y `video` para referencia tecnica.
+
+## Como se usan series, pesos y progreso
+
+- Series/repeticiones: se definen a nivel `Workout` con `reps` y aplican como guia del plan.
+- Pesos: se guardan a nivel `WorkoutExercise.weight`, permitiendo registrar carga por ejercicio.
+- Orden de ejecucion: se guarda en `WorkoutExercise.exerciseOrder`.
+- Progreso diario: se mide con `startedAt/finishedAt` y `status` del `WorkoutDay`.
+- Progreso por ejercicio: se controla con `WorkoutExercise.completed` y `comment`.
+
+## Plantillas vs workouts reales
+
+- `WorkoutTemplate*`: define estructuras reutilizables (base para crear planes).
+- `Workout*`: representa el plan real asignado a un usuario, con datos de ejecucion (estado, peso, completado).
+
+Esto permite separar el diseno del plan (plantilla) de la ejecucion real del entrenamiento (workout del usuario).
+
 ## Arquitectura backend
 
 Capas implementadas:
@@ -105,7 +147,7 @@ El backend permite origen `http://localhost:5173` (configurado en `CorsConfig`).
 
 ## Como levantar el proyecto
 
-## 1. Backend
+### 1. Backend
 
 Desde `backend/`:
 
@@ -120,7 +162,7 @@ Requisitos:
 - PostgreSQL corriendo
 - Configurar credenciales/URL de DB en `application.properties` si corresponde
 
-## 2. Frontend
+### 2. Frontend
 
 Desde `gymapp/`:
 
