@@ -31,6 +31,7 @@ const [workout,setWorkout] = useState(null);
 const [selectedDay,setSelectedDay] = useState(null);
 const [phrase,setPhrase] = useState("");
 const [dayStatus,setDayStatus] = useState({});
+const [hasWorkout,setHasWorkout] = useState(true);
 
 useEffect(()=>{
  loadData();
@@ -41,7 +42,14 @@ const loadData = async()=>{
  const u = await getUserById(userId);
  setUser(u);
 
- const current = await getCurrentWorkout(userId);
+ let current = null;
+
+ try{
+  current = await getCurrentWorkout(userId);
+  setHasWorkout(!!current);
+ }catch{
+  setHasWorkout(false);
+ }
 
  if(current){
 
@@ -123,6 +131,12 @@ return(
 <Typography textAlign="center" sx={{fontStyle:"italic"}}>
 {phrase}
 </Typography>
+
+{!hasWorkout &&
+ <Typography textAlign="center" color="text.secondary">
+  Este usuario no tiene planilla asignada actualmente.
+ </Typography>
+}
 
 {workout && sortedDays.map(day => {
 

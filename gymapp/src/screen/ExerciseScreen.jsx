@@ -10,6 +10,7 @@ import {
 import {
   getExerciseImageUrl,
   getExerciseVideoUrl,
+  getExercises,
 } from "../services/exerciseService";
 
 import {
@@ -54,8 +55,21 @@ const loadData = async ()=>{
  const abs = await isAbdominalWorkoutDay(workoutDayId);
  setIsAbdominal(abs);
 
- const data = await getWorkoutExercises(workoutDayId);
- setExercises(data);
+ const [workoutExercises, exerciseCatalog] = await Promise.all([
+  getWorkoutExercises(workoutDayId),
+  getExercises()
+ ]);
+
+ const exerciseById = Object.fromEntries(
+  exerciseCatalog.map((exercise) => [exercise.id, exercise])
+ );
+
+ const merged = workoutExercises.map((item) => ({
+  ...item,
+  exercise: exerciseById[item.exerciseId] || null,
+ }));
+
+ setExercises(merged);
 
 };
 
@@ -69,12 +83,20 @@ const toggleCompleteExercise = async(ex)=>{
   updated = await completeWorkoutExercise(ex.id);
  }
 
- const updatedList = exercises.map(e =>
-  e.id === updated.id ? updated : e
- );
+ const updatedList = exercises.map((e) => {
+  if (e.id !== updated.id) {
+    return e;
+  }
+
+  // Keep enriched exercise details already loaded in UI.
+  return {
+    ...updated,
+    exercise: e.exercise || null,
+  };
+ });
 
  setExercises(updatedList);
- setSelectedExercise(updated);
+ setSelectedExercise(updatedList.find((e) => e.id === updated.id) || null);
 
 };
 
@@ -104,7 +126,7 @@ const finishDayWithAbs = async () => {
 
  setConfirmFinish(false);
 
- await loadExercises();
+ await loadData();
 
 };
 
@@ -125,8 +147,8 @@ return(
 
 <GymCard
  key={ex.id}
- title={`🏋️ ${ex.exercise.name}`}
- subtitle={`Peso: ${ex.weight ?? 0} kg • Reps: ${ex.reps}`}
+ title={`🏋️ ${ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}`}
+ subtitle={`Peso: ${ex.weight ?? 0} kg • Orden: ${ex.exerciseOrder ?? "-"}`}
  onClick={()=>setSelectedExercise(ex)}
 >
 
@@ -206,7 +228,7 @@ Finalizar día
 ) : null}
 
 <DialogTitle sx={{fontWeight:700}}>
-{selectedExercise?.exercise?.name}
+{selectedExercise?.exercise?.name || selectedExercise?.exerciseName}
 </DialogTitle>
 
 <DialogContent>
@@ -233,7 +255,7 @@ Peso: <b>{selectedExercise?.weight ?? 0} kg</b>
 </Typography>
 
 <Typography>
-Reps: <b>{selectedExercise?.reps}</b>
+Orden: <b>{selectedExercise?.exerciseOrder ?? "-"}</b>
 </Typography>
 
 {selectedExercise?.comment &&

@@ -1,23 +1,12 @@
 //Funciones sobre ejercicios
+import { apiRequest } from "./apiClient";
 
 export async function getExercises() {
-  const response = await fetch("/api/exercises");
-
-  if (!response.ok) {
-    throw new Error("Error al obtener ejercicios");
-  }
-
-  return response.json();
+  return apiRequest("/api/exercises");
 }
 
 export async function getExerciseById(id) {
-  const response = await fetch(`/api/exercises/${id}`);
-
-  if (!response.ok) {
-    throw new Error("Error al obtener ejercicio");
-  }
-
-  return response.json();
+  return apiRequest(`/api/exercises/${id}`);
 }
 
 export async function createExercise(exercise) {
@@ -37,16 +26,10 @@ export async function createExercise(exercise) {
     formData.append("video", exercise.video);
   }
 
-  const response = await fetch("/api/exercises", {
+  return apiRequest("/api/exercises", {
     method: "POST",
     body: formData
   });
-
-  if (!response.ok) {
-    throw new Error("Error al crear ejercicio");
-  }
-
-  return response.json();
 }
 
 export async function updateExercise(id, exercise) {
@@ -69,26 +52,16 @@ export async function updateExercise(id, exercise) {
   formData.append("deleteImage", exercise.deleteImage);
   formData.append("deleteVideo", exercise.deleteVideo);
 
-  const response = await fetch(`/api/exercises/${id}`, {
+  return apiRequest(`/api/exercises/${id}`, {
     method: "PUT",
     body: formData
   });
-
-  if (!response.ok) {
-    throw new Error("Error al actualizar ejercicio");
-  }
-
-  return response.json();
 }
 
 export async function deleteExercise(id) {
-  const response = await fetch(`/api/exercises/${id}`, {
+  await apiRequest(`/api/exercises/${id}`, {
     method: "DELETE"
   });
-
-  if (!response.ok) {
-    throw new Error("Error al eliminar ejercicio");
-  }
 }
 
 // Obtener URL de la imagen de un ejercicio

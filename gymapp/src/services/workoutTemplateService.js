@@ -1,77 +1,46 @@
-const API_URL = "http://localhost:8080/api/workout-template";
+import { apiRequest } from "./apiClient";
+
+const API_URL = "/api/workout-template";
 
 
 export async function getWorkoutTemplates(){
-
-  const response = await fetch(API_URL);
-
-  if(!response.ok){
-    throw new Error("Error al obtener templates");
-  }
-
-  return await response.json();
+  return apiRequest(API_URL);
 }
 
 
 
 export async function getWorkoutTemplateById(id){
-
-  const response = await fetch(`${API_URL}/full/${id}`);
-
-  if(!response.ok){
-    throw new Error("Error al obtener el template");
-  }
-
-  return await response.json();
+  return apiRequest(`${API_URL}/full/${id}`);
 }
 
 
 
 export async function createWorkoutTemplate(templateData){
-
-  const response = await fetch(`${API_URL}/full`,{
+  return apiRequest(`${API_URL}/full`,{
     method:"POST",
     headers:{
       "Content-Type":"application/json"
     },
     body:JSON.stringify(templateData)
   });
-
-  if(!response.ok){
-    throw new Error("Error al crear template");
-  }
-
-  return await response.json();
 }
 
 
 
 export async function updateWorkoutTemplate(id,templateData){
-
-  const response = await fetch(`${API_URL}/full/${id}`,{
+  return apiRequest(`${API_URL}/full/${id}`,{
     method:"PUT",
     headers:{
       "Content-Type":"application/json"
     },
     body:JSON.stringify(templateData)
   });
-
-  if(!response.ok){
-    throw new Error("Error al actualizar template");
-  }
-
-  return await response.json();
 }
 
 
 
 export async function deleteWorkoutTemplate(id){
-
-  const response = await fetch(`${API_URL}/full/${id}`,{
+  await apiRequest(`${API_URL}/full/${id}`,{
     method:"DELETE"
   });
-
-  if(!response.ok){
-    throw new Error("Error al eliminar template");
-  }
 }

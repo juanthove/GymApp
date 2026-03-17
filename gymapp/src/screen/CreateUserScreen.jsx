@@ -106,9 +106,7 @@ const handleSubmit = async (e)=>{
    await createUser({
     name,
     surname,
-    gymDaysPerWeek:parseInt(gymDays),
-    isLoggedIn:false,
-    currentWorkoutId:null
+    gymDaysPerWeek:parseInt(gymDays, 10)
    });
 
    setMessage("Usuario creado correctamente");
@@ -119,7 +117,7 @@ const handleSubmit = async (e)=>{
    await updateUser(selectedId,{
     name,
     surname,
-    gymDaysPerWeek:parseInt(gymDays)
+    gymDaysPerWeek:parseInt(gymDays, 10)
    });
 
    setMessage("Usuario actualizado correctamente");
