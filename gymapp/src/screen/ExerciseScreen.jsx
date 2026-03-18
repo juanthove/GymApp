@@ -10,13 +10,13 @@ import {
 import {
   getExerciseImageUrl,
   getExerciseVideoUrl,
-  getExercises,
 } from "../services/exerciseService";
 
 import {
   completeWorkoutDay,
   markAbdominalWorkoutDay,
-  isAbdominalWorkoutDay
+  isAbdominalWorkoutDay,
+  getWorkoutDayExercises
 } from "../services/workoutDayService";
 
 import GymCard from "../components/GymCard";
@@ -38,8 +38,12 @@ export default function ExerciseScreen(){
 
 const { userId, workoutDayId } = useParams();
 
-const [exercises,setExercises] = useState([]);
+const [allExercises,setAllExercises] = useState([]);
+const [displayedExercises,setDisplayedExercises] = useState([]);
+const [selectedExerciseIds,setSelectedExerciseIds] = useState([]);
+const [reps,setReps] = useState(null);
 const [selectedExercise,setSelectedExercise] = useState(null);
+const [isSelectionModalOpen,setIsSelectionModalOpen] = useState(false);
 
 const navigate = useNavigate();
 
@@ -55,21 +59,20 @@ const loadData = async ()=>{
  const abs = await isAbdominalWorkoutDay(workoutDayId);
  setIsAbdominal(abs);
 
- const [workoutExercises, exerciseCatalog] = await Promise.all([
-  getWorkoutExercises(workoutDayId),
-  getExercises()
- ]);
+ const workoutDayData = await getWorkoutDayExercises(workoutDayId);
+ setReps(workoutDayData.reps ?? null);
+ const workoutExercises = workoutDayData.exercises ?? [];
 
- const exerciseById = Object.fromEntries(
-  exerciseCatalog.map((exercise) => [exercise.id, exercise])
- );
+ const allDayExercises = await getWorkoutExercises(workoutDayId);
 
- const merged = workoutExercises.map((item) => ({
-  ...item,
-  exercise: exerciseById[item.exerciseId] || null,
- }));
+ // combine and deduplicate
+ const combined = [ ...workoutExercises, ...allDayExercises ]
+   .reduce((map, ex) => map.set(ex.id, { ...map.get(ex.id), ...ex }), new Map());
+ const combinedList = Array.from(combined.values());
 
- setExercises(merged);
+ setAllExercises(combinedList);
+ setDisplayedExercises(workoutExercises);
+ setSelectedExerciseIds(workoutExercises.map((ex) => ex.id));
 
 };
 
@@ -83,20 +86,20 @@ const toggleCompleteExercise = async(ex)=>{
   updated = await completeWorkoutExercise(ex.id);
  }
 
- const updatedList = exercises.map((e) => {
-  if (e.id !== updated.id) {
-    return e;
-  }
-
-  // Keep enriched exercise details already loaded in UI.
+ const updateItem = (item) => {
+  if (item.id !== updated.id) return item;
   return {
     ...updated,
-    exercise: e.exercise || null,
+    exercise: item.exercise || null,
   };
- });
+};
 
- setExercises(updatedList);
- setSelectedExercise(updatedList.find((e) => e.id === updated.id) || null);
+const updatedAll = allExercises.map(updateItem);
+const updatedDisplayed = displayedExercises.map(updateItem);
+
+setAllExercises(updatedAll);
+setDisplayedExercises(updatedDisplayed);
+setSelectedExercise(updatedDisplayed.find((e) => e.id === updated.id) || null);
 
 };
 
@@ -143,12 +146,12 @@ return(
 
 <Stack spacing={2}>
 
-{exercises.map((ex)=>(
+{displayedExercises.map((ex)=>(
 
 <GymCard
  key={ex.id}
  title={`🏋️ ${ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}`}
- subtitle={`Peso: ${ex.weight ?? 0} kg • Orden: ${ex.exerciseOrder ?? "-"}`}
+ subtitle={`Peso: ${ex.weight ?? 0} kg • Reps: ${reps ?? "-"}`}
  onClick={()=>setSelectedExercise(ex)}
 >
 
@@ -178,6 +181,18 @@ return(
  }}
 >
 
+<Stack direction="row" spacing={1}>
+<Button
+ fullWidth
+ size="large"
+ variant="outlined"
+ color="secondary"
+ onClick={()=>setIsSelectionModalOpen(true)}
+ sx={{fontWeight:700}}
+>
+Seleccionar ejercicios
+</Button>
+
 <Button
  fullWidth
  size="large"
@@ -188,6 +203,7 @@ return(
 >
 Finalizar día
 </Button>
+</Stack>
 
 </Box>
 
@@ -200,11 +216,11 @@ Finalizar día
  maxWidth="sm"
 >
 
-{selectedExercise?.exercise?.video ? (
+{selectedExercise?.video ? (
 
 <video
  controls
- src={getExerciseVideoUrl(selectedExercise.exercise.video)}
+ src={getExerciseVideoUrl(selectedExercise.video)}
  style={{
   width:"100%",
   maxHeight:"260px",
@@ -213,10 +229,10 @@ Finalizar día
  }}
 />
 
-) : selectedExercise?.exercise?.image ? (
+) : selectedExercise?.image ? (
 
 <img
- src={getExerciseImageUrl(selectedExercise.exercise.image)}
+ src={getExerciseImageUrl(selectedExercise.image)}
  style={{
   width:"100%",
   maxHeight:"260px",
@@ -255,7 +271,7 @@ Peso: <b>{selectedExercise?.weight ?? 0} kg</b>
 </Typography>
 
 <Typography>
-Orden: <b>{selectedExercise?.exerciseOrder ?? "-"}</b>
+Repeticiones: <b>{reps ?? "-"}</b>
 </Typography>
 
 {selectedExercise?.comment &&
@@ -299,6 +315,78 @@ Comentario: {selectedExercise.comment}
 Cerrar
 </Button>
 
+</DialogActions>
+
+</Dialog>
+
+{/* MODAL DE SELECCIÓN DE EJERCICIOS */}
+
+<Dialog
+ open={isSelectionModalOpen}
+ onClose={()=>setIsSelectionModalOpen(false)}
+ fullWidth
+ maxWidth="sm"
+>
+<DialogTitle sx={{fontWeight:700}}>
+Seleccionar ejercicios
+</DialogTitle>
+
+<DialogContent>
+<Stack spacing={1}>
+{allExercises.map((ex)=>{
+ const isSelected = selectedExerciseIds.includes(ex.id);
+ return (
+ <Box
+  key={ex.id}
+  onClick={()=>{
+    setSelectedExerciseIds((prev)=>
+      prev.includes(ex.id)
+        ? prev.filter((id)=>id!==ex.id)
+        : [...prev, ex.id]
+    );
+  }}
+  sx={{
+    p:2,
+    borderRadius:2,
+    border: `2px solid ${isSelected ? "#4caf50" : "#ddd"}`,
+    cursor:"pointer",
+    backgroundColor: isSelected ? "rgba(76, 175, 80, 0.08)" : "#fff"
+  }}
+ >
+  <Typography fontWeight={700}>
+    {ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}
+  </Typography>
+  <Typography variant="body2">
+    Peso: {ex.weight ?? 0} kg • Reps: {reps ?? "-"}
+  </Typography>
+ </Box>
+ );
+})}
+</Stack>
+</DialogContent>
+
+<DialogActions sx={{p:2, display:"flex", flexDirection:"column", gap:1}}>
+<Button
+ fullWidth
+ variant="contained"
+ onClick={()=>{
+   const chosen = allExercises.filter((ex)=> selectedExerciseIds.includes(ex.id));
+   if(chosen.length > 0){
+     setDisplayedExercises(chosen);
+   } else {
+     setDisplayedExercises(allExercises);
+   }
+   setIsSelectionModalOpen(false);
+ }}
+>
+ Seleccionar ejercicios
+</Button>
+<Button
+ fullWidth
+ onClick={()=>setIsSelectionModalOpen(false)}
+>
+ Cerrar
+</Button>
 </DialogActions>
 
 </Dialog>

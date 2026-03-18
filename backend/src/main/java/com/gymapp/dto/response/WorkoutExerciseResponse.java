@@ -8,5 +8,8 @@ public record WorkoutExerciseResponse(
         Integer exerciseOrder,
         Double weight,
         String comment,
-        boolean completed
+        boolean completed,
+        String image,
+        String video
+
 ) {}

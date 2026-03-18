@@ -1,4 +1,4 @@
-﻿package com.gymapp.controller;
+package com.gymapp.controller;
 
 import com.gymapp.dto.response.ExerciseResponse;
 import com.gymapp.model.ExerciseType;

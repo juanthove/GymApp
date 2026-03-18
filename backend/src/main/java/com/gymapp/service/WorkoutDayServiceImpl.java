@@ -1,10 +1,13 @@
 package com.gymapp.service;
 
 import com.gymapp.dto.request.WorkoutDayRequest;
+import com.gymapp.dto.response.WorkoutDayExercisesResponse;
 import com.gymapp.dto.response.WorkoutDayResponse;
+import com.gymapp.dto.response.WorkoutExerciseResponse;
 import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.Workout;
 import com.gymapp.model.WorkoutDay;
+import com.gymapp.model.WorkoutExercise;
 import com.gymapp.repository.WorkoutDayRepository;
 import com.gymapp.repository.WorkoutRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +24,9 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
     @Autowired
     private WorkoutRepository workoutRepository;
+
+    @Autowired
+    private com.gymapp.repository.WorkoutExerciseRepository workoutExerciseRepository;
 
     @Override
     public List<WorkoutDayResponse> getAllWorkoutDays() {
@@ -104,6 +110,34 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         if (day.getStartedAt() == null) return "NOT_STARTED";
         if (day.getFinishedAt() == null) return "IN_PROGRESS";
         return "COMPLETED";
+    }
+
+    @Override
+    public WorkoutDayExercisesResponse getWorkoutDayExercises(Long dayId) {
+        WorkoutDay day = workoutDayRepository.findById(dayId)
+                .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found"));
+
+        Integer reps = null;
+        if (day.getWorkout() != null) {
+            reps = day.getWorkout().getReps();
+        }
+
+        var exerciseResponses = workoutExerciseRepository.findByWorkoutDayIdOrderByExerciseOrder(dayId)
+                .stream()
+                .map(this::toWorkoutExerciseResponse)
+                .toList();
+
+        return new WorkoutDayExercisesResponse(dayId, reps, exerciseResponses);
+    }
+
+    private WorkoutExerciseResponse toWorkoutExerciseResponse(WorkoutExercise exercise) {
+        Long dayId = exercise.getWorkoutDay() != null ? exercise.getWorkoutDay().getId() : null;
+        Long exerciseId = exercise.getExercise() != null ? exercise.getExercise().getId() : null;
+        String exerciseName = exercise.getExercise() != null ? exercise.getExercise().getName() : null;
+        String image = exercise.getExercise() != null ? exercise.getExercise().getImage() : null;
+        String video = exercise.getExercise() != null ? exercise.getExercise().getVideo() : null;
+        return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName,
+                exercise.getExerciseOrder(), exercise.getWeight(), exercise.getComment(), exercise.getCompleted(), image, video);
     }
 
     private WorkoutDayResponse toResponse(WorkoutDay day) {

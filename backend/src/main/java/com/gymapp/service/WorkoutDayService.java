@@ -1,6 +1,7 @@
 package com.gymapp.service;
 
 import com.gymapp.dto.request.WorkoutDayRequest;
+import com.gymapp.dto.response.WorkoutDayExercisesResponse;
 import com.gymapp.dto.response.WorkoutDayResponse;
 
 import java.util.List;
@@ -28,4 +29,6 @@ public interface WorkoutDayService {
     boolean isAbdominalDay(Long id);
 
     String getWorkoutDayStatus(Long id);
+
+    WorkoutDayExercisesResponse getWorkoutDayExercises(Long dayId);
 }

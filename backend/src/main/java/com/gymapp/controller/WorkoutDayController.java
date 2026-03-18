@@ -1,6 +1,7 @@
-﻿package com.gymapp.controller;
+package com.gymapp.controller;
 
 import com.gymapp.dto.request.WorkoutDayRequest;
+import com.gymapp.dto.response.WorkoutDayExercisesResponse;
 import com.gymapp.dto.response.WorkoutDayResponse;
 import com.gymapp.service.WorkoutDayService;
 import jakarta.validation.Valid;
@@ -24,6 +25,11 @@ public class WorkoutDayController {
     @GetMapping("/{id}")
     public WorkoutDayResponse getWorkoutDayById(@PathVariable Long id) {
         return workoutDayService.getWorkoutDayById(id);
+    }
+
+    @GetMapping("/{id}/exercises")
+    public WorkoutDayExercisesResponse getWorkoutDayExercises(@PathVariable Long id) {
+        return workoutDayService.getWorkoutDayExercises(id);
     }
 
     @GetMapping("/workout/{workoutId}")

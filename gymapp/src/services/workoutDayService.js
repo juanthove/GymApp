@@ -29,3 +29,7 @@ export async function isAbdominalWorkoutDay(id) {
 export async function getWorkoutDayStatus(id) {
   return apiRequest(`/api/workout-days/${id}/status`, {}, "text");
 }
+
+export async function getWorkoutDayExercises(id) {
+  return apiRequest(`/api/workout-days/${id}/exercises`);
+}
