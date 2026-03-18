@@ -1,4 +1,4 @@
-﻿package com.gymapp.controller;
+package com.gymapp.controller;
 
 import com.gymapp.dto.request.WorkoutExerciseRequest;
 import com.gymapp.dto.response.WorkoutExerciseResponse;
@@ -56,5 +56,25 @@ public class WorkoutExerciseController {
     @PatchMapping("/{id}/uncomplete")
     public WorkoutExerciseResponse uncompleteWorkoutExercise(@PathVariable Long id) {
         return workoutExerciseService.uncompleteWorkoutExercise(id);
+    }
+
+    @PostMapping("/day/{dayId}/exercise/{exerciseId}/select")
+    public void markWorkoutExerciseSelected(@PathVariable Long dayId, @PathVariable Long exerciseId) {
+        workoutExerciseService.markWorkoutExerciseSelected(dayId, exerciseId);
+    }
+
+    @PostMapping("/day/{dayId}/exercise/{exerciseId}/unselect")
+    public void unmarkWorkoutExerciseSelected(@PathVariable Long dayId, @PathVariable Long exerciseId) {
+        workoutExerciseService.unmarkWorkoutExerciseSelected(dayId, exerciseId);
+    }
+
+    @GetMapping("/day/{dayId}/exercise/{exerciseId}/selected")
+    public boolean isWorkoutExerciseSelected(@PathVariable Long dayId, @PathVariable Long exerciseId) {
+        return workoutExerciseService.isWorkoutExerciseSelected(dayId, exerciseId);
+    }
+
+    @DeleteMapping("/day/{dayId}/selected-file")
+    public void deleteSelectedExercisesFile(@PathVariable Long dayId) {
+        workoutExerciseService.deleteSelectedWorkoutDayFile(dayId);
     }
 }

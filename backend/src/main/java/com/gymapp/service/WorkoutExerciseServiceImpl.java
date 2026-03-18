@@ -27,6 +27,9 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
     @Autowired
     private ExerciseRepository exerciseRepository;
 
+    @Autowired
+    private SelectedWorkoutExerciseService selectedWorkoutExerciseService;
+
     @Override
     public List<WorkoutExerciseResponse> getAllWorkoutExercises() {
         return workoutExerciseRepository.findAll().stream().map(this::toResponse).toList();
@@ -110,7 +113,29 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
         String exerciseName = exercise.getExercise() != null ? exercise.getExercise().getName() : null;
         String image = exercise.getExercise() != null ? exercise.getExercise().getImage() : null;
         String video = exercise.getExercise() != null ? exercise.getExercise().getVideo() : null;
-        return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName,
-                exercise.getExerciseOrder(), exercise.getWeight(), exercise.getComment(), exercise.getCompleted(), image, video);
+        boolean selected = dayId != null && exercise.getId() != null && selectedWorkoutExerciseService.isSelected(dayId, exercise.getId());
+        ExerciseType type = exercise.getExercise() != null ? exercise.getExercise().getType() : null;
+        return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName, type,
+                exercise.getExerciseOrder(), exercise.getWeight(), exercise.getComment(), exercise.getCompleted(), image, video, selected);
+    }
+
+    @Override
+    public void markWorkoutExerciseSelected(Long dayId, Long workoutExerciseId) {
+        selectedWorkoutExerciseService.markSelected(dayId, workoutExerciseId);
+    }
+
+    @Override
+    public void unmarkWorkoutExerciseSelected(Long dayId, Long workoutExerciseId) {
+        selectedWorkoutExerciseService.unmarkSelected(dayId, workoutExerciseId);
+    }
+
+    @Override
+    public boolean isWorkoutExerciseSelected(Long dayId, Long workoutExerciseId) {
+        return selectedWorkoutExerciseService.isSelected(dayId, workoutExerciseId);
+    }
+
+    @Override
+    public void deleteSelectedWorkoutDayFile(Long dayId) {
+        selectedWorkoutExerciseService.deleteSelectedFile(dayId);
     }
 }

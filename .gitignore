@@ -3,6 +3,9 @@ backend/uploads/videos/*
 !backend/uploads/images/.gitkeep
 !backend/uploads/videos/.gitkeep
 
+backend/selected-exercises/*
+!backend/selected-exercises/.gitkeep
+
 backend/src/main/resources/application.properties
 
 #Spring Boot

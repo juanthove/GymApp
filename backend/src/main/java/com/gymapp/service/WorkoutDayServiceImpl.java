@@ -5,6 +5,7 @@ import com.gymapp.dto.response.WorkoutDayExercisesResponse;
 import com.gymapp.dto.response.WorkoutDayResponse;
 import com.gymapp.dto.response.WorkoutExerciseResponse;
 import com.gymapp.exception.ResourceNotFoundException;
+import com.gymapp.model.ExerciseType;
 import com.gymapp.model.Workout;
 import com.gymapp.model.WorkoutDay;
 import com.gymapp.model.WorkoutExercise;
@@ -27,6 +28,9 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
     @Autowired
     private com.gymapp.repository.WorkoutExerciseRepository workoutExerciseRepository;
+
+    @Autowired
+    private SelectedWorkoutExerciseService selectedWorkoutExerciseService;
 
     @Override
     public List<WorkoutDayResponse> getAllWorkoutDays() {
@@ -85,6 +89,10 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         WorkoutDay day = workoutDayRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Workout day not found"));
         day.setFinishedAt(LocalDateTime.now());
+
+        //Eliminar json con ejercicios seleccionados
+        selectedWorkoutExerciseService.deleteSelectedFile(id);
+
         return toResponse(workoutDayRepository.save(day));
     }
 
@@ -136,8 +144,10 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         String exerciseName = exercise.getExercise() != null ? exercise.getExercise().getName() : null;
         String image = exercise.getExercise() != null ? exercise.getExercise().getImage() : null;
         String video = exercise.getExercise() != null ? exercise.getExercise().getVideo() : null;
-        return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName,
-                exercise.getExerciseOrder(), exercise.getWeight(), exercise.getComment(), exercise.getCompleted(), image, video);
+        boolean selected = dayId != null && exercise.getId() != null && selectedWorkoutExerciseService.isSelected(dayId, exercise.getId());
+        ExerciseType type = exercise.getExercise() != null ? exercise.getExercise().getType() : null;
+        return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName, type,
+                exercise.getExerciseOrder(), exercise.getWeight(), exercise.getComment(), exercise.getCompleted(), image, video, selected);
     }
 
     private WorkoutDayResponse toResponse(WorkoutDay day) {

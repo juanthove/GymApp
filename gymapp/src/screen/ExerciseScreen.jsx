@@ -4,7 +4,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   getWorkoutExercises,
   completeWorkoutExercise,
-  uncompleteWorkoutExercise
+  uncompleteWorkoutExercise,
+  markWorkoutExerciseSelected,
+  unmarkWorkoutExerciseSelected
 } from "../services/workoutExerciseService";
 
 import {
@@ -25,6 +27,8 @@ import BackButton from "../components/BackButton";
 import {
   Container,
   Typography,
+  Tabs,
+  Tab,
   Stack,
   Button,
   Dialog,
@@ -50,30 +54,80 @@ const navigate = useNavigate();
 const [confirmFinish,setConfirmFinish] = useState(false);
 const [isAbdominal,setIsAbdominal] = useState(false);
 
+const [filterType, setFilterType] = useState("ALL");
+
 useEffect(()=>{
  loadData();
 },[]);
 
-const loadData = async ()=>{
+const loadData = async () => {
 
- const abs = await isAbdominalWorkoutDay(workoutDayId);
- setIsAbdominal(abs);
+  const abs = await isAbdominalWorkoutDay(workoutDayId);
+  setIsAbdominal(abs);
 
- const workoutDayData = await getWorkoutDayExercises(workoutDayId);
- setReps(workoutDayData.reps ?? null);
- const workoutExercises = workoutDayData.exercises ?? [];
+  const workoutDayData = await getWorkoutDayExercises(workoutDayId);
 
- const allDayExercises = await getWorkoutExercises(workoutDayId);
+  setReps(workoutDayData.reps ?? null);
 
- // combine and deduplicate
- const combined = [ ...workoutExercises, ...allDayExercises ]
-   .reduce((map, ex) => map.set(ex.id, { ...map.get(ex.id), ...ex }), new Map());
- const combinedList = Array.from(combined.values());
+  const exercises = workoutDayData.exercises ?? [];
 
- setAllExercises(combinedList);
- setDisplayedExercises(workoutExercises);
- setSelectedExerciseIds(workoutExercises.map((ex) => ex.id));
+  setAllExercises(exercises);
 
+  const selected = exercises.filter((ex) => ex.selected);
+
+  setSelectedExerciseIds(selected.map((ex) => ex.id));
+  setDisplayedExercises(selected);
+
+};
+
+
+const formatExerciseType = (type) => {
+  const map = {
+    PRIMARY: "Primario",
+    SECONDARY: "Secundario",
+    TERTIARY: "Terciario",
+    ABDOMINAL: "Abdominal"
+  };
+  return map[type] || type;
+};
+
+const filteredExercises = allExercises.filter((ex) => {
+
+  // si es día abdominal → solo abdominales
+  if (isAbdominal) {
+    return ex.type === "ABDOMINAL";
+  }
+
+  // si no hay filtro
+  if (filterType === "ALL") return true;
+
+  return ex.type === filterType;
+});
+
+
+
+const toggleSelectedExercise = async (ex) => {
+  const isSelected = selectedExerciseIds.includes(ex.id);
+
+  if (isSelected) {
+    await unmarkWorkoutExerciseSelected(workoutDayId, ex.id);
+  } else {
+    await markWorkoutExerciseSelected(workoutDayId, ex.id);
+  }
+
+  const newSelectedIds = isSelected
+    ? selectedExerciseIds.filter((id) => id !== ex.id)
+    : [...selectedExerciseIds, ex.id];
+
+  const updatedAll = allExercises.map((item) =>
+    item.id === ex.id ? { ...item, selected: !isSelected } : item
+  );
+
+  setSelectedExerciseIds(newSelectedIds);
+  setAllExercises(updatedAll);
+
+  // 🔥 CLAVE: actualizar esto SIEMPRE
+  setDisplayedExercises(updatedAll.filter((item) => item.selected));
 };
 
 const toggleCompleteExercise = async(ex)=>{
@@ -146,24 +200,32 @@ return(
 
 <Stack spacing={2}>
 
-{displayedExercises.map((ex)=>(
+{selectedExerciseIds.length === 0 ? (
 
-<GymCard
- key={ex.id}
- title={`🏋️ ${ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}`}
- subtitle={`Peso: ${ex.weight ?? 0} kg • Reps: ${reps ?? "-"}`}
- onClick={()=>setSelectedExercise(ex)}
->
+<Typography textAlign="center" color="text.secondary">
+No hay ejercicios seleccionados
+</Typography>
 
-{ex.completed &&
- <Typography color="success.main" fontWeight={700}>
-  ✔ Completado
- </Typography>
-}
+) : (
 
-</GymCard>
+displayedExercises.map((ex)=>(
+  <GymCard
+    key={ex.id}
+    title={`🏋️ ${ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}`}
+    subtitle={`Peso: ${ex.weight ?? 0} kg • Reps: ${reps ?? "-"}`}
+    onClick={()=>setSelectedExercise(ex)}
+  >
 
-))}
+  {ex.completed &&
+    <Typography color="success.main" fontWeight={700}>
+      ✔ Completado
+    </Typography>
+  }
+
+  </GymCard>
+))
+
+)}
 
 </Stack>
 
@@ -325,37 +387,57 @@ Cerrar
  open={isSelectionModalOpen}
  onClose={()=>setIsSelectionModalOpen(false)}
  fullWidth
- maxWidth="sm"
+ maxWidth="md"
 >
 <DialogTitle sx={{fontWeight:700}}>
 Seleccionar ejercicios
 </DialogTitle>
 
-<DialogContent>
+<DialogContent
+  sx={{
+    maxHeight: "60vh",
+    overflowY: "auto"
+  }}
+>
+
+  {!isAbdominal && (
+    <Tabs value={filterType} onChange={(e, val) => setFilterType(val)}>
+      <Tab label="Todos" value="ALL" />
+      <Tab label="Primario" value="PRIMARY" />
+      <Tab label="Secundario" value="SECONDARY" />
+      <Tab label="Terciario" value="TERTIARY" />
+      <Tab label="Abdominal" value="ABDOMINAL" />
+    </Tabs>
+  )}
+
+
 <Stack spacing={1}>
-{allExercises.map((ex)=>{
+{filteredExercises.map((ex)=>{
  const isSelected = selectedExerciseIds.includes(ex.id);
  return (
  <Box
   key={ex.id}
-  onClick={()=>{
-    setSelectedExerciseIds((prev)=>
-      prev.includes(ex.id)
-        ? prev.filter((id)=>id!==ex.id)
-        : [...prev, ex.id]
-    );
-  }}
+  onClick={() => {
+  if (ex.completed) return;
+  toggleSelectedExercise(ex);
+}}
   sx={{
     p:2,
     borderRadius:2,
     border: `2px solid ${isSelected ? "#4caf50" : "#ddd"}`,
-    cursor:"pointer",
+    cursor: ex.completed ? "not-allowed" : "pointer", // 👈
+    opacity: ex.completed ? 0.6 : 1, // 👈
     backgroundColor: isSelected ? "rgba(76, 175, 80, 0.08)" : "#fff"
   }}
  >
   <Typography fontWeight={700}>
     {ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}
   </Typography>
+
+  <Typography variant="body2" color="text.secondary">
+    {formatExerciseType(ex.type)} 
+  </Typography> 
+  
   <Typography variant="body2">
     Peso: {ex.weight ?? 0} kg • Reps: {reps ?? "-"}
   </Typography>
@@ -371,11 +453,8 @@ Seleccionar ejercicios
  variant="contained"
  onClick={()=>{
    const chosen = allExercises.filter((ex)=> selectedExerciseIds.includes(ex.id));
-   if(chosen.length > 0){
-     setDisplayedExercises(chosen);
-   } else {
-     setDisplayedExercises(allExercises);
-   }
+   setDisplayedExercises(chosen);
+   setSelectedExerciseIds(chosen.map((ex)=>ex.id));
    setIsSelectionModalOpen(false);
  }}
 >

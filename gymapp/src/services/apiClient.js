@@ -43,5 +43,11 @@ export async function apiRequest(url, options = {}, responseType = "json") {
     return response;
   }
 
-  return response.json();
+  if (response.status === 204) {
+    return null;
+  }
+
+  const text = await response.text();
+
+  return text ? JSON.parse(text) : null;
 }

@@ -22,4 +22,12 @@ public interface WorkoutExerciseService {
     WorkoutExerciseResponse completeWorkoutExercise(Long id);
 
     WorkoutExerciseResponse uncompleteWorkoutExercise(Long id);
+
+    void markWorkoutExerciseSelected(Long dayId, Long workoutExerciseId);
+
+    void unmarkWorkoutExerciseSelected(Long dayId, Long workoutExerciseId);
+
+    boolean isWorkoutExerciseSelected(Long dayId, Long workoutExerciseId);
+
+    void deleteSelectedWorkoutDayFile(Long dayId);
 }
