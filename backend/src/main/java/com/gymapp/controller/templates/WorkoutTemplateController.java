@@ -1,7 +1,6 @@
 ﻿package com.gymapp.controller.templates;
 
 import com.gymapp.dto.request.templates.WorkoutTemplateFullRequest;
-import com.gymapp.dto.request.templates.WorkoutTemplateRequest;
 import com.gymapp.dto.response.templates.WorkoutTemplateFullResponse;
 import com.gymapp.dto.response.templates.WorkoutTemplateResponse;
 import com.gymapp.service.templates.WorkoutTemplateService;
@@ -22,28 +21,6 @@ public class WorkoutTemplateController {
     @GetMapping
     public List<WorkoutTemplateResponse> getAllTemplates() {
         return workoutTemplateService.getAllTemplates();
-    }
-
-    @GetMapping("/{id}")
-    public WorkoutTemplateResponse getTemplateById(@PathVariable Long id) {
-        return workoutTemplateService.getTemplateById(id);
-    }
-
-    @PostMapping
-    public WorkoutTemplateResponse createTemplate(@Valid @RequestBody WorkoutTemplateRequest request) {
-        return workoutTemplateService.createTemplate(request);
-    }
-
-    @PutMapping("/{id}")
-    public WorkoutTemplateResponse updateTemplate(
-            @PathVariable Long id,
-            @Valid @RequestBody WorkoutTemplateRequest request) {
-        return workoutTemplateService.updateTemplate(id, request);
-    }
-
-    @DeleteMapping("/{id}")
-    public void deleteTemplate(@PathVariable Long id) {
-        workoutTemplateService.deleteTemplate(id);
     }
 
     @PostMapping("/full")

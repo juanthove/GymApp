@@ -1,131 +1,77 @@
 package com.gymapp.service.templates;
 
-import com.gymapp.dto.request.templates.WorkoutTemplateDayRequest;
 import com.gymapp.dto.response.templates.WorkoutTemplateDayResponse;
 import com.gymapp.exception.ResourceNotFoundException;
-import com.gymapp.model.templates.WorkoutTemplate;
 import com.gymapp.model.templates.WorkoutTemplateDay;
-import com.gymapp.repository.templates.WorkoutTemplateRepository;
 import com.gymapp.repository.templates.WorkoutTemplateDayRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.*;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.List;
+import java.util.UUID;
 
 @Service
 public class WorkoutTemplateDayServiceImpl implements WorkoutTemplateDayService {
 
     @Autowired
-    private WorkoutTemplateDayRepository workoutTemplateDayRepository;
+    private WorkoutTemplateDayRepository repo;
 
-    @Autowired
-    private WorkoutTemplateRepository workoutTemplateRepository;
-
-    private final Path muscleImagePath = Paths.get("uploads/day");
+    private final Path path = Paths.get("uploads/day");
 
     @Override
-    public List<WorkoutTemplateDayResponse> getAllTemplateDays() {
-        return workoutTemplateDayRepository.findAll().stream().map(this::toResponse).toList();
-    }
+    public WorkoutTemplateDayResponse setMuscleImage(Long id, MultipartFile file) throws IOException {
 
-    @Override
-    public WorkoutTemplateDayResponse getTemplateDayById(Long id) {
-        return toResponse(workoutTemplateDayRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("WorkoutTemplateDay not found")));
-    }
+        WorkoutTemplateDay day = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Day not found"));
 
-    @Override
-    public List<WorkoutTemplateDayResponse> getDaysByTemplate(Long templateId) {
-        return workoutTemplateDayRepository.findByTemplateIdOrderByDayOrder(templateId)
-                .stream().map(this::toResponse).toList();
-    }
+        Files.createDirectories(path);
 
-    @Override
-    public WorkoutTemplateDayResponse createTemplateDay(WorkoutTemplateDayRequest request) {
-        WorkoutTemplate template = workoutTemplateRepository.findById(request.templateId())
-                .orElseThrow(() -> new ResourceNotFoundException("Template not found"));
-        WorkoutTemplateDay day = new WorkoutTemplateDay();
-        day.setName(request.name());
-        day.setMuscles(request.muscles());
-        day.setDayOrder(request.dayOrder());
-        day.setTemplate(template);
-        return toResponse(workoutTemplateDayRepository.save(day));
-    }
-
-    @Override
-    public WorkoutTemplateDayResponse updateTemplateDay(Long id, WorkoutTemplateDayRequest request) {
-
-        WorkoutTemplateDay day = workoutTemplateDayRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("WorkoutTemplateDay not found"));
-
-        day.setName(request.name());
-        day.setMuscles(request.muscles());
-        day.setDayOrder(request.dayOrder());
-
-        return toResponse(workoutTemplateDayRepository.save(day));
-    }
-
-    @Override
-    public WorkoutTemplateDayResponse setMuscleImage(Long id, MultipartFile muscleImage) throws IOException {
-
-        WorkoutTemplateDay day = workoutTemplateDayRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("WorkoutTemplateDay not found"));
-
-        if (muscleImage == null || muscleImage.isEmpty()) {
-            throw new IllegalArgumentException("El archivo muscleImage es requerido");
-        }
-
-        Files.createDirectories(muscleImagePath);
-
-        // borrar anterior
         if (day.getMuscleImage() != null) {
-            Files.deleteIfExists(muscleImagePath.resolve(day.getMuscleImage()));
+            Files.deleteIfExists(path.resolve(day.getMuscleImage()));
         }
 
-        String extension = getExtension(muscleImage.getOriginalFilename());
+        String original = file.getOriginalFilename();
+        if (original == null || !original.contains(".")) {
+            throw new RuntimeException("Archivo inválido");
+        }
+        String ext = original.substring(original.lastIndexOf("."));
+        String fileName = UUID.randomUUID() + ext;
 
-        // 🔥 NOMBRE SEGURO
-        String imageName = "day_" + day.getId() + "." + extension;
+        Files.copy(file.getInputStream(), path.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
 
-        Files.copy(
-                muscleImage.getInputStream(),
-                muscleImagePath.resolve(imageName),
-                StandardCopyOption.REPLACE_EXISTING
-        );
+        day.setMuscleImage(fileName);
 
-        day.setMuscleImage(imageName);
-
-        return toResponse(workoutTemplateDayRepository.save(day));
+        return toResponse(repo.save(day));
     }
 
     @Override
     public WorkoutTemplateDayResponse deleteMuscleImage(Long id) throws IOException {
-        WorkoutTemplateDay day = workoutTemplateDayRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("WorkoutTemplateDay not found"));
+
+        WorkoutTemplateDay day = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Day not found"));
 
         if (day.getMuscleImage() != null) {
-            Files.deleteIfExists(muscleImagePath.resolve(day.getMuscleImage()));
+            Files.deleteIfExists(path.resolve(day.getMuscleImage()));
             day.setMuscleImage(null);
-            workoutTemplateDayRepository.save(day);
         }
 
-        return toResponse(day);
+        return toResponse(repo.save(day));
     }
 
     @Override
     public ResponseEntity<Resource> getMuscleImage(String filename) throws IOException {
-        Path filePath = muscleImagePath.resolve(filename).normalize();
+
+        Path filePath = path.resolve(filename).normalize();
         Resource resource = new UrlResource(filePath.toUri());
+
         if (!resource.exists()) {
-            throw new RuntimeException("Muscle image no encontrada");
+            throw new RuntimeException("Imagen no encontrada");
         }
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(filePath))
                 .body(resource);
@@ -133,35 +79,34 @@ public class WorkoutTemplateDayServiceImpl implements WorkoutTemplateDayService 
 
     @Override
     public void deleteTemplateDay(Long id) {
-        WorkoutTemplateDay day = workoutTemplateDayRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("WorkoutTemplateDay not found"));
-        if (day.getMuscleImage() != null) {
-            try {
-                Files.deleteIfExists(muscleImagePath.resolve(day.getMuscleImage()));
-            } catch (IOException e) {
-                throw new RuntimeException("Error borrando muscleImage", e);
+
+        WorkoutTemplateDay day = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Day not found"));
+
+        try {
+            if (day.getMuscleImage() != null) {
+                Files.deleteIfExists(path.resolve(day.getMuscleImage()));
             }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        workoutTemplateDayRepository.deleteById(id);
+
+        repo.deleteById(id);
     }
 
-    private String getExtension(String fileName) {
-        if (fileName == null || !fileName.contains(".")) {
-            throw new IllegalArgumentException("Nombre de archivo inválido para obtener extensión");
-        }
-        return fileName.substring(fileName.lastIndexOf('.') + 1);
-    }
-
-    private WorkoutTemplateDayResponse toResponse(WorkoutTemplateDay day) {
-        Long templateId = day.getTemplate() != null ? day.getTemplate().getId() : null;
-
+    private WorkoutTemplateDayResponse toResponse(WorkoutTemplateDay d) {
         return new WorkoutTemplateDayResponse(
-                day.getId(),
-                day.getName(),
-                day.getMuscles(),
-                day.getDayOrder(),
-                day.getMuscleImage(),
-                templateId
+                d.getId(),
+                d.getName(),
+                d.getMuscles(),
+                d.getDayOrder(),
+                d.getMuscleImage(),
+                d.getTemplate().getId()
         );
+    }
+
+    public void deleteImageByFilename(String filename) throws IOException {
+        Path filePath = path.resolve(filename).normalize();
+        Files.deleteIfExists(filePath);
     }
 }

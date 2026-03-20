@@ -1,203 +1,203 @@
 package com.gymapp.service.templates;
 
 import com.gymapp.dto.request.templates.WorkoutTemplateFullRequest;
-import com.gymapp.dto.request.templates.WorkoutTemplateRequest;
 import com.gymapp.dto.response.templates.WorkoutTemplateFullResponse;
 import com.gymapp.dto.response.templates.WorkoutTemplateResponse;
 import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.Exercise;
-import com.gymapp.model.templates.WorkoutTemplate;
-import com.gymapp.model.templates.WorkoutTemplateDay;
-import com.gymapp.model.templates.WorkoutTemplateExercise;
+import com.gymapp.model.templates.*;
 import com.gymapp.repository.ExerciseRepository;
-import com.gymapp.repository.templates.WorkoutTemplateDayRepository;
-import com.gymapp.repository.templates.WorkoutTemplateExerciseRepository;
-import com.gymapp.repository.templates.WorkoutTemplateRepository;
+import com.gymapp.repository.templates.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Map;
 
 @Service
 public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
 
     @Autowired
-    private WorkoutTemplateRepository workoutTemplateRepository;
+    private WorkoutTemplateRepository templateRepo;
 
     @Autowired
-    private WorkoutTemplateDayRepository workoutTemplateDayRepository;
+    private WorkoutTemplateDayRepository dayRepo;
 
     @Autowired
-    private WorkoutTemplateExerciseRepository workoutTemplateExerciseRepository;
+    private WorkoutTemplateExerciseRepository exerciseRepo;
 
     @Autowired
     private ExerciseRepository exerciseRepository;
 
-    private final Path muscleImagePath = Paths.get("uploads/day");
-
     @Override
     public List<WorkoutTemplateResponse> getAllTemplates() {
-        return workoutTemplateRepository.findAll().stream().map(this::toResponse).toList();
-    }
-
-    @Override
-    public WorkoutTemplateResponse getTemplateById(Long id) {
-        return toResponse(workoutTemplateRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Template not found")));
-    }
-
-    @Override
-    public WorkoutTemplateResponse createTemplate(WorkoutTemplateRequest request) {
-        WorkoutTemplate template = new WorkoutTemplate();
-        template.setName(request.name());
-        template.setDescription(request.description());
-        return toResponse(workoutTemplateRepository.save(template));
-    }
-
-    @Override
-    public WorkoutTemplateResponse updateTemplate(Long id, WorkoutTemplateRequest request) {
-        WorkoutTemplate template = workoutTemplateRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Template not found"));
-        template.setName(request.name());
-        template.setDescription(request.description());
-        return toResponse(workoutTemplateRepository.save(template));
-    }
-
-    @Override
-    public void deleteTemplate(Long id) {
-        workoutTemplateRepository.deleteById(id);
+        return templateRepo.findAll().stream()
+                .map(t -> new WorkoutTemplateResponse(t.getId(), t.getName(), t.getDescription()))
+                .toList();
     }
 
     @Override
     @Transactional
     public WorkoutTemplateResponse createFullTemplate(WorkoutTemplateFullRequest request) {
+
         WorkoutTemplate template = new WorkoutTemplate();
         template.setName(request.name());
         template.setDescription(request.description());
-        template = workoutTemplateRepository.save(template);
+        template = templateRepo.save(template);
 
-        for (WorkoutTemplateFullRequest.DayItem dayData : request.days()) {
+        for (WorkoutTemplateFullRequest.DayItem d : request.days()) {
+
             WorkoutTemplateDay day = new WorkoutTemplateDay();
-            day.setName(dayData.name());
-            day.setMuscles(dayData.muscles());
-            day.setDayOrder(dayData.dayOrder());
+            day.setName(d.name());
+            day.setMuscles(d.muscles());
+            day.setDayOrder(d.dayOrder());
             day.setTemplate(template);
-            day = workoutTemplateDayRepository.save(day);
+            day = dayRepo.save(day);
 
-            for (WorkoutTemplateFullRequest.ExerciseItem exData : dayData.exercises()) {
-                Exercise exercise = exerciseRepository.findById(exData.exerciseId())
+            for (WorkoutTemplateFullRequest.ExerciseItem ex : d.exercises()) {
+
+                Exercise exercise = exerciseRepository.findById(ex.exerciseId())
                         .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
-                WorkoutTemplateExercise templateExercise = new WorkoutTemplateExercise();
-                templateExercise.setTemplateDay(day);
-                templateExercise.setExercise(exercise);
-                templateExercise.setExerciseOrder(exData.order());
-                workoutTemplateExerciseRepository.save(templateExercise);
+
+                WorkoutTemplateExercise te = new WorkoutTemplateExercise();
+                te.setTemplateDay(day);
+                te.setExercise(exercise);
+                te.setExerciseOrder(ex.order());
+
+                exerciseRepo.save(te);
             }
         }
 
-        return toResponse(template);
+        return new WorkoutTemplateResponse(template.getId(), template.getName(), template.getDescription());
     }
 
     @Override
     public WorkoutTemplateFullResponse getFullTemplate(Long id) {
-        WorkoutTemplate template = workoutTemplateRepository.findById(id)
+
+        WorkoutTemplate template = templateRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Template not found"));
 
-        List<WorkoutTemplateDay> days = workoutTemplateDayRepository.findByTemplateIdOrderByDayOrder(id);
+        List<WorkoutTemplateDay> days = dayRepo.findByTemplateIdOrderByDayOrder(id);
+
         List<WorkoutTemplateFullResponse.DayItem> dayList = new ArrayList<>();
 
         for (WorkoutTemplateDay day : days) {
-            List<WorkoutTemplateExercise> exercises =
-                    workoutTemplateExerciseRepository.findByTemplateDayId(day.getId());
-            List<WorkoutTemplateFullResponse.ExerciseItem> exerciseList = exercises.stream()
-                    .map(ex -> new WorkoutTemplateFullResponse.ExerciseItem(
-                            ex.getId(), ex.getExercise().getId(), ex.getExercise().getName(), ex.getExerciseOrder()))
-                    .toList();
+
+            List<WorkoutTemplateExercise> exercises = exerciseRepo.findByTemplateDayIdOrderByExerciseOrder(day.getId());
+
+            List<WorkoutTemplateFullResponse.ExerciseItem> exList =
+                    exercises.stream()
+                            .map(ex -> new WorkoutTemplateFullResponse.ExerciseItem(
+                                    ex.getId(),
+                                    ex.getExercise().getId(),
+                                    ex.getExercise().getName(),
+                                    ex.getExerciseOrder()
+                            ))
+                            .toList();
+
             dayList.add(new WorkoutTemplateFullResponse.DayItem(
                     day.getId(),
                     day.getName(),
                     day.getMuscles(),
                     day.getDayOrder(),
                     day.getMuscleImage(),
-                    exerciseList));
+                    exList
+            ));
         }
 
-        return new WorkoutTemplateFullResponse(template.getId(), template.getName(), template.getDescription(), dayList);
+        return new WorkoutTemplateFullResponse(
+                template.getId(),
+                template.getName(),
+                template.getDescription(),
+                dayList
+        );
     }
 
     @Override
     @Transactional
     public WorkoutTemplateResponse updateFullTemplate(Long id, WorkoutTemplateFullRequest request) {
 
-        WorkoutTemplate template = workoutTemplateRepository.findById(id)
+        WorkoutTemplate template = templateRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Template not found"));
 
         template.setName(request.name());
         template.setDescription(request.description());
-        workoutTemplateRepository.save(template);
 
-        // 🔥 SOLO borrar relaciones (NO imágenes)
-        List<WorkoutTemplateDay> existingDays = workoutTemplateDayRepository.findByTemplateId(id);
+        templateRepo.save(template);
 
-        for (WorkoutTemplateDay day : existingDays) {
-            workoutTemplateExerciseRepository.deleteByTemplateDayId(day.getId());
-        }
+        // 🔥 TRAER EXISTENTES
+        List<WorkoutTemplateDay> existingDays = dayRepo.findByTemplateId(id);
 
-        // ⚠️ NO borrar imágenes acá
-        workoutTemplateDayRepository.deleteByTemplateId(id);
+        // 🔥 MAPA PARA CONTROL
+        Map<Long, WorkoutTemplateDay> existingMap = existingDays.stream()
+                .collect(Collectors.toMap(WorkoutTemplateDay::getId, d -> d));
 
-        // 🔥 recrear días SIN tocar imágenes
-        for (WorkoutTemplateFullRequest.DayItem dayData : request.days()) {
+        for (WorkoutTemplateFullRequest.DayItem d : request.days()) {
 
-            WorkoutTemplateDay day = new WorkoutTemplateDay();
-            day.setName(dayData.name());
-            day.setMuscles(dayData.muscles());
-            day.setDayOrder(dayData.dayOrder());
-            day.setTemplate(template);
+            WorkoutTemplateDay day;
 
-            // 🚫 NO tocar muscleImage acá
-            day = workoutTemplateDayRepository.save(day);
+            // 🟡 UPDATE
+            if (d.id() != null && existingMap.containsKey(d.id())) {
 
-            for (WorkoutTemplateFullRequest.ExerciseItem exData : dayData.exercises()) {
-                Exercise exercise = exerciseRepository.findById(exData.exerciseId())
+                day = existingMap.get(d.id());
+
+                day.setName(d.name());
+                day.setMuscles(d.muscles());
+                day.setDayOrder(d.dayOrder());
+
+                existingMap.remove(d.id());
+
+            } else {
+                // 🟢 CREATE
+                day = new WorkoutTemplateDay();
+                day.setName(d.name());
+                day.setMuscles(d.muscles());
+                day.setDayOrder(d.dayOrder());
+                day.setTemplate(template);
+
+                day = dayRepo.save(day);
+            }
+
+            // 🔥 EJERCICIOS (simple: borrar y recrear SOLO de ese día)
+            exerciseRepo.deleteByTemplateDayId(day.getId());
+
+            for (WorkoutTemplateFullRequest.ExerciseItem ex : d.exercises()) {
+
+                Exercise exercise = exerciseRepository.findById(ex.exerciseId())
                         .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
 
-                WorkoutTemplateExercise templateExercise = new WorkoutTemplateExercise();
-                templateExercise.setTemplateDay(day);
-                templateExercise.setExercise(exercise);
-                templateExercise.setExerciseOrder(exData.order());
+                WorkoutTemplateExercise te = new WorkoutTemplateExercise();
+                te.setTemplateDay(day);
+                te.setExercise(exercise);
+                te.setExerciseOrder(ex.order());
 
-                workoutTemplateExerciseRepository.save(templateExercise);
+                exerciseRepo.save(te);
             }
         }
 
-        return toResponse(template);
+        // 🔴 DELETE días que ya no existen
+        for (WorkoutTemplateDay toDelete : existingMap.values()) {
+            exerciseRepo.deleteByTemplateDayId(toDelete.getId());
+            dayRepo.delete(toDelete);
+        }
+
+        return new WorkoutTemplateResponse(template.getId(), template.getName(), template.getDescription());
     }
 
     @Override
     @Transactional
     public void deleteFullTemplate(Long id) {
-        List<WorkoutTemplateDay> days = workoutTemplateDayRepository.findByTemplateId(id);
+
+        List<WorkoutTemplateDay> days = dayRepo.findByTemplateId(id);
+
         for (WorkoutTemplateDay day : days) {
-            workoutTemplateExerciseRepository.deleteByTemplateDayId(day.getId());
-            if (day.getMuscleImage() != null) {
-                try {
-                    Files.deleteIfExists(muscleImagePath.resolve(day.getMuscleImage()));
-                } catch (IOException e) {
-                    throw new RuntimeException("Error al eliminar muscleImage del dia", e);
-                }
-            }
+            exerciseRepo.deleteByTemplateDayId(day.getId());
         }
-        workoutTemplateDayRepository.deleteByTemplateId(id);
-        workoutTemplateRepository.deleteById(id);
-    }
 
-
-    private WorkoutTemplateResponse toResponse(WorkoutTemplate template) {
-        return new WorkoutTemplateResponse(template.getId(), template.getName(), template.getDescription());
+        dayRepo.deleteByTemplateId(id);
+        templateRepo.deleteById(id);
     }
 }

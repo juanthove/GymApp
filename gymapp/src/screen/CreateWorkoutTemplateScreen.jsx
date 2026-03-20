@@ -8,17 +8,10 @@ import {
   createWorkoutTemplate,
   updateWorkoutTemplate,
   deleteWorkoutTemplate,
-  getDaysByTemplate,
-  createDay,
-  updateDay,
-  deleteDay,
-  reorderDays,
   uploadWorkoutTemplateDayImage,
   deleteWorkoutTemplateDayImage,
   getWorkoutTemplateDayImageUrl,
-  addExerciseToDay,
-  removeExerciseFromDay,
-  reorderExercises
+  deleteWorkoutTemplateDayImageByFilename
 } from "../services/workoutTemplateService";
 
 import {
@@ -130,46 +123,45 @@ const validateTemplate = ()=>{
 
 };
 
-const loadTemplateData = async(id)=>{
+const loadTemplateData = async (id) => {
 
- if(!id){
-  resetForm();
-  return;
- }
+  if (!id) {
+    resetForm();
+    return;
+  }
 
- const template = await getWorkoutTemplateById(id);
+  const template = await getWorkoutTemplateById(id);
 
- setName(template.name || "");
- setDescription(template.description || "");
+  setName(template.name || "");
+  setDescription(template.description || "");
 
- const loadedDays = template.days.map(day=>({
+  const loadedDays = template.days.map(day => ({
 
-  id: day.id, // 🔥 importante para saber si ya existe
+    id: day.id, // 🔥 importante
 
-  name:day.name,
-  muscles:day.muscles,
-  dayOrder: day.dayOrder,
+    name: day.name,
+    muscles: day.muscles,
+    dayOrder: day.dayOrder,
 
-  exercises:day.exercises.map(ex=>({
-   exerciseId:ex.exerciseId,
-   exerciseName:ex.exerciseName,
-   order:ex.order
-  })),
+    exercises: day.exercises.map(ex => ({
+      exerciseId: ex.exerciseId,
+      exerciseName: ex.exerciseName,
+      order: ex.order
+    })),
 
-  selectedExercise:null,
+    selectedExercise: null,
 
-  image:null,
-  deleteImage:false,
+    image: null,
+    deleteImage: false,
 
-  // 🔥 usamos helper del front
-  preview: day.muscleImage 
-    ? getWorkoutTemplateDayImageUrl(day.muscleImage) 
-    : null
+    // 🔥 clave: armar URL desde filename
+    preview: day.muscleImage
+      ? getWorkoutTemplateDayImageUrl(day.muscleImage)
+      : null
 
- }));
+  }));
 
- setDays(loadedDays);
-
+  setDays(loadedDays);
 };
 
 const addDay=()=>{
@@ -297,72 +289,98 @@ const duplicateDay = (index) => {
 
 };
 
-const handleSubmit = async()=>{
+const handleSubmit = async () => {
 
- if(!validateTemplate()) return;
+  if (!validateTemplate()) return;
 
- try{
+  try {
 
-  const templateData={
-   name,
-   description,
-   days:days.map((day,index)=>({
-    name:day.name,
-    muscles:day.muscles,
-    dayOrder: index + 1,
-    exercises:day.exercises
-  }))
-  };
+    const templateData = {
+      name,
+      description,
+      days: days.map((day, index) => ({
+        name: day.name,
+        muscles: day.muscles,
+        dayOrder: index + 1,
+        exercises: day.exercises.map((ex, i) => ({
+          exerciseId: ex.exerciseId,
+          order: i + 1
+        }))
+      }))
+    };
 
-  let templateId;
+    let templateId;
 
-  // 1️⃣ GUARDAR TEMPLATE
-  if(selectedTemplateId){
+    let oldImages = [];
 
-   await updateWorkoutTemplate(selectedTemplateId,templateData);
-   templateId = selectedTemplateId;
+    if (selectedTemplateId) {
+      const existing = await getWorkoutTemplateById(selectedTemplateId);
 
-   setMessage("Template actualizado correctamente");
-   setMessageType("success");
-
-  }else{
-
-   const res = await createWorkoutTemplate(templateData);
-   templateId = res.id;
-
-   setMessage("Template creado correctamente");
-   setMessageType("success");
-  }
-
-  // 2️⃣ TRAER TEMPLATE CON IDS NUEVOS
-  const fullTemplate = await getWorkoutTemplateById(templateId);
-
-  // 3️⃣ IMÁGENES (solo si usuario hizo algo)
-  for (let i = 0; i < fullTemplate.days.length; i++) {
-
-    const backendDay = fullTemplate.days[i];
-    const frontDay = days[i];
-
-    if (frontDay.image) {
-      await uploadWorkoutTemplateDayImage(backendDay.id, frontDay.image);
+      oldImages = existing.days
+        .map(d => d.muscleImage)
+        .filter(Boolean);
     }
 
-    else if (frontDay.deleteImage) {
-      await deleteWorkoutTemplateDayImage(backendDay.id);
+    // 1️⃣ CREAR o ACTUALIZAR (FULL)
+    if (selectedTemplateId) {
+
+      await updateWorkoutTemplate(selectedTemplateId, templateData);
+      templateId = selectedTemplateId;
+
+      setMessage("Template actualizado correctamente");
+      setMessageType("success");
+
+    } else {
+
+      const res = await createWorkoutTemplate(templateData);
+      templateId = res.id;
+
+      setMessage("Template creado correctamente");
+      setMessageType("success");
     }
+
+    // 2️⃣ TRAER TEMPLATE CON IDS REALES
+    const fullTemplate = await getWorkoutTemplateById(templateId);
+
+    // 3️⃣ MANEJO DE IMÁGENES
+    for (let i = 0; i < fullTemplate.days.length; i++) {
+
+      const backendDay = fullTemplate.days[i];
+      const frontDay = days[i];
+
+      if (frontDay.image) {
+        await uploadWorkoutTemplateDayImage(backendDay.id, frontDay.image);
+      }
+
+      else if (frontDay.deleteImage) {
+        await deleteWorkoutTemplateDayImage(backendDay.id);
+      }
+
+      else if (frontDay.preview && !frontDay.image && !frontDay.deleteImage) {
+
+        const res = await fetch(frontDay.preview);
+        const blob = await res.blob();
+
+        const file = new File([blob], "image.jpg", { type: blob.type });
+
+        await uploadWorkoutTemplateDayImage(backendDay.id, file);
+      }
+    }
+
+    for (const img of oldImages) {
+      deleteWorkoutTemplateDayImageByFilename(img);
+    }
+
+    // 4️⃣ RESET
+    resetForm();
+    loadTemplates();
+
+  } catch (e) {
+
+    setMessage(e.message);
+    setMessageType("error");
+
   }
-
-  // 4️⃣ RESET
-  resetForm();
-  loadTemplates();
-
- }catch(e){
-
-  setMessage(e.message);
-  setMessageType("error");
-
- }
-
 };
 
 const handleDelete = async()=>{

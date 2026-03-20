@@ -10,6 +10,7 @@ public record WorkoutTemplateFullRequest(
         @NotNull @NotEmpty List<@Valid DayItem> days
 ) {
     public record DayItem(
+            Long id,
             @NotBlank @Size(max = 100) String name,
             @NotBlank String muscles,
             @NotNull @Min(0) Integer dayOrder,

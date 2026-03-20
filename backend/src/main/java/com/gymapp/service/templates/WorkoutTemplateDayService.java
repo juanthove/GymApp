@@ -1,27 +1,22 @@
 package com.gymapp.service.templates;
 
-import com.gymapp.dto.request.templates.WorkoutTemplateDayRequest;
 import com.gymapp.dto.response.templates.WorkoutTemplateDayResponse;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
+import java.io.IOException;
 
 public interface WorkoutTemplateDayService {
 
-    List<WorkoutTemplateDayResponse> getAllTemplateDays();
+    WorkoutTemplateDayResponse setMuscleImage(Long id, MultipartFile file) throws IOException;
 
-    WorkoutTemplateDayResponse getTemplateDayById(Long id);
+    WorkoutTemplateDayResponse deleteMuscleImage(Long id) throws IOException;
 
-    List<WorkoutTemplateDayResponse> getDaysByTemplate(Long templateId);
-
-    WorkoutTemplateDayResponse createTemplateDay(WorkoutTemplateDayRequest request);
-
-    WorkoutTemplateDayResponse updateTemplateDay(Long id, WorkoutTemplateDayRequest request);
-
-    WorkoutTemplateDayResponse setMuscleImage(Long id, org.springframework.web.multipart.MultipartFile muscleImage) throws java.io.IOException;
-
-    WorkoutTemplateDayResponse deleteMuscleImage(Long id) throws java.io.IOException;
-
-    org.springframework.http.ResponseEntity<org.springframework.core.io.Resource> getMuscleImage(String filename) throws java.io.IOException;
+    ResponseEntity<Resource> getMuscleImage(String filename) throws IOException;
 
     void deleteTemplateDay(Long id);
+
+    void deleteImageByFilename(String filename) throws IOException;
+
 }

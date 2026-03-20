@@ -18,6 +18,8 @@ public class WorkoutDay {
 
     private int dayOrder;
 
+    private String muscleImage;
+
     private boolean abdominal = false;
 
     private LocalDateTime startedAt;
@@ -58,6 +60,14 @@ public class WorkoutDay {
 
     public void setDayOrder(int dayOrder) {
         this.dayOrder = dayOrder;
+    }
+
+    public String getMuscleImage() {
+        return muscleImage;
+    }
+
+    public void setMuscleImage(String muscleImage) {
+        this.muscleImage = muscleImage;
     }
 
     public boolean getAbdominal() {

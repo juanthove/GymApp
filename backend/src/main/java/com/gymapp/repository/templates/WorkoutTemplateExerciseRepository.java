@@ -9,5 +9,7 @@ public interface WorkoutTemplateExerciseRepository extends JpaRepository<Workout
 
     List<WorkoutTemplateExercise> findByTemplateDayId(Long templateDayId);
 
-    void deleteByTemplateDayId(Long templateDayId);
+    List<WorkoutTemplateExercise> findByTemplateDayIdOrderByExerciseOrder(Long dayId);
+
+    void deleteByTemplateDayId(Long dayId);
 }
