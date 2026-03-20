@@ -12,6 +12,8 @@ public record WorkoutTemplateFullResponse(
             Long id,
             String name,
             String muscles,
+            Integer dayOrder,
+            String muscleImage,
             List<ExerciseItem> exercises
     ) {}
 

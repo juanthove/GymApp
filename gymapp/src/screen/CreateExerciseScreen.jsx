@@ -19,7 +19,8 @@ import {
   Stack,
   Checkbox,
   FormControlLabel,
-  Alert
+  Alert,
+  Snackbar
 } from "@mui/material";
 
 import BackButton from "../components/BackButton";
@@ -31,13 +32,16 @@ export default function CreateExerciseScreen(){
 
   const [name,setName] = useState("");
   const [description,setDescription] = useState("");
+  const [muscle,setMuscle] = useState("");
   const [type,setType] = useState("PRIMARY");
 
   const [image,setImage] = useState(null);
   const [video,setVideo] = useState(null);
+  const [icon,setIcon] = useState(null);
 
   const [deleteImage,setDeleteImage] = useState(false);
   const [deleteVideo,setDeleteVideo] = useState(false);
+  const [deleteIcon,setDeleteIcon] = useState(false);
 
   const [currentExercise,setCurrentExercise] = useState(null);
 
@@ -60,12 +64,15 @@ export default function CreateExerciseScreen(){
     setName("");
     setDescription("");
     setType("PRIMARY");
+    setMuscle("");
     setImage(null);
     setVideo(null);
+    setIcon(null);
     setDeleteImage(false);
     setDeleteVideo(false);
+    setDeleteIcon(false);
     setCurrentExercise(null);
-    setFileKey(prev=>prev+2);
+    setFileKey(prev=>prev+3);
   };
 
   const formatExerciseType = (type)=>{
@@ -95,10 +102,12 @@ export default function CreateExerciseScreen(){
     setCurrentExercise(ex);
     setName(ex.name);
     setDescription(ex.description || "");
+    setMuscle(ex.muscle || "");
     setType(ex.type || "PRIMARY");
 
     setDeleteImage(false);
     setDeleteVideo(false);
+    setDeleteIcon(false);
   };
 
   const handleSubmit = async (e)=>{
@@ -117,9 +126,11 @@ export default function CreateExerciseScreen(){
         await createExercise({
           name,
           description,
+          muscle,
           type,
           image,
-          video
+          video,
+          icon
         });
 
         setMessage("Ejercicio registrado correctamente");
@@ -130,11 +141,14 @@ export default function CreateExerciseScreen(){
         await updateExercise(selectedId,{
           name,
           description,
+          muscle,
           type,
           image,
           video,
+          icon,
           deleteImage,
-          deleteVideo
+          deleteVideo,
+          deleteIcon
         });
 
         setMessage("Ejercicio actualizado correctamente");
@@ -225,6 +239,12 @@ export default function CreateExerciseScreen(){
             onChange={(e)=>setDescription(e.target.value)}
           />
 
+          <TextField
+            label="Músculo trabajado"
+            value={muscle}
+            onChange={(e)=>setMuscle(e.target.value)}
+          />
+
           {/* SELECT TIPO DE EJERCICIO */}
 
           <TextField
@@ -251,6 +271,49 @@ export default function CreateExerciseScreen(){
             </MenuItem>
 
           </TextField>
+
+
+          {/* ICON */}
+
+          <Typography variant="subtitle1">
+            Icono
+          </Typography>
+
+          <input
+            key={fileKey+2}
+            type="file"
+            accept="image/*"
+            onChange={(e)=>setIcon(e.target.files[0])}
+          />
+
+          {currentExercise?.icon && selectedId!=="new" &&
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={deleteIcon}
+                  onChange={()=>setDeleteIcon(!deleteIcon)}
+                />
+              }
+              label="Eliminar icono"
+            />
+
+          }
+
+          {currentExercise?.icon && !deleteIcon &&
+
+            <img
+              src={`/api/exercises/icon/${currentExercise.icon}`}
+              style={{
+                maxWidth:"100px",
+                borderRadius:"8px"
+              }}
+            />
+
+          }
+
+
+          {/* IMAGE */}
 
           <Typography variant="subtitle1">
             Imagen
@@ -288,6 +351,9 @@ export default function CreateExerciseScreen(){
             />
 
           }
+
+
+          {/* VIDEO */}
 
           <Typography variant="subtitle1">
             Video
@@ -327,11 +393,16 @@ export default function CreateExerciseScreen(){
 
           }
 
-          {message &&
-            <Alert severity={messageType}>
+          <Snackbar
+            open={!!message}
+            autoHideDuration={3000}
+            onClose={()=>setMessage("")}
+            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          >
+            <Alert severity={messageType} sx={{ width: "100%" }}>
               {message}
             </Alert>
-          }
+          </Snackbar>
 
           <Stack direction="row" spacing={2}>
 

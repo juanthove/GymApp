@@ -25,6 +25,7 @@ public class ExerciseServiceImpl implements ExerciseService {
 
     private final Path imagePath = Paths.get("uploads/images");
     private final Path videoPath = Paths.get("uploads/videos");
+    private final Path iconPath = Paths.get("uploads/icons");
 
     @Override
     public List<ExerciseResponse> getAllExercises() {
@@ -39,19 +40,22 @@ public class ExerciseServiceImpl implements ExerciseService {
 
     @Override
     public ExerciseResponse createExercise(String name, String description, ExerciseType type,
-                                   MultipartFile image, MultipartFile video) throws IOException {
+                                   String muscle,
+                                   MultipartFile image, MultipartFile video, MultipartFile icon) throws IOException {
         Exercise exercise = new Exercise();
         exercise.setName(name);
         exercise.setDescription(description);
         exercise.setType(type);
-        saveFiles(exercise, name, image, video);
+        exercise.setMuscle(muscle);
+        saveFiles(exercise, name, image, video, icon);
         return toResponse(exerciseRepository.save(exercise));
     }
 
     @Override
     public ExerciseResponse updateExercise(Long id, String name, String description, ExerciseType type,
-                                   MultipartFile image, MultipartFile video,
-                                   Boolean deleteImage, Boolean deleteVideo) throws IOException {
+                                   String muscle,
+                                   MultipartFile image, MultipartFile video, MultipartFile icon,
+                                   Boolean deleteImage, Boolean deleteVideo, Boolean deleteIcon) throws IOException {
 
         Exercise exercise = exerciseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ejercicio no encontrado"));
@@ -62,9 +66,11 @@ public class ExerciseServiceImpl implements ExerciseService {
         exercise.setName(name);
         exercise.setDescription(description);
         exercise.setType(type);
+        exercise.setMuscle(muscle);
 
         Files.createDirectories(imagePath);
         Files.createDirectories(videoPath);
+        Files.createDirectories(iconPath);
 
         if (Boolean.TRUE.equals(deleteImage) && exercise.getImage() != null) {
             Files.deleteIfExists(imagePath.resolve(exercise.getImage()));
@@ -74,6 +80,11 @@ public class ExerciseServiceImpl implements ExerciseService {
         if (Boolean.TRUE.equals(deleteVideo) && exercise.getVideo() != null) {
             Files.deleteIfExists(videoPath.resolve(exercise.getVideo()));
             exercise.setVideo(null);
+        }
+
+        if (Boolean.TRUE.equals(deleteIcon) && exercise.getIcon() != null) {
+            Files.deleteIfExists(iconPath.resolve(exercise.getIcon()));
+            exercise.setIcon(null);
         }
 
         if (image != null && !image.isEmpty()) {
@@ -96,6 +107,16 @@ public class ExerciseServiceImpl implements ExerciseService {
             exercise.setVideo(fileName);
         }
 
+        if (icon != null && !icon.isEmpty()) {
+            if (exercise.getIcon() != null) {
+                Files.deleteIfExists(iconPath.resolve(exercise.getIcon()));
+            }
+            String extension = getExtension(icon.getOriginalFilename());
+            String fileName = newSafeName + "." + extension;
+            Files.copy(icon.getInputStream(), iconPath.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+            exercise.setIcon(fileName);
+        }
+
         if (!oldName.equals(name)) {
             String oldSafeName = oldName.toLowerCase().replace(" ", "_");
             if (exercise.getImage() != null) {
@@ -112,6 +133,13 @@ public class ExerciseServiceImpl implements ExerciseService {
                 if (Files.exists(oldFile)) Files.move(oldFile, newFile, StandardCopyOption.REPLACE_EXISTING);
                 exercise.setVideo(newSafeName + "." + ext);
             }
+            if (exercise.getIcon() != null) {
+                String ext = getExtension(exercise.getIcon());
+                Path oldFile = iconPath.resolve(oldSafeName + "." + ext);
+                Path newFile = iconPath.resolve(newSafeName + "." + ext);
+                if (Files.exists(oldFile)) Files.move(oldFile, newFile, StandardCopyOption.REPLACE_EXISTING);
+                exercise.setIcon(newSafeName + "." + ext);
+            }
         }
 
         return toResponse(exerciseRepository.save(exercise));
@@ -123,6 +151,7 @@ public class ExerciseServiceImpl implements ExerciseService {
                 .orElseThrow(() -> new RuntimeException("Exercise not found"));
         if (exercise.getImage() != null) Files.deleteIfExists(imagePath.resolve(exercise.getImage()));
         if (exercise.getVideo() != null) Files.deleteIfExists(videoPath.resolve(exercise.getVideo()));
+        if (exercise.getIcon() != null) Files.deleteIfExists(iconPath.resolve(exercise.getIcon()));
         exerciseRepository.deleteById(id);
     }
 
@@ -146,10 +175,21 @@ public class ExerciseServiceImpl implements ExerciseService {
                 .body(resource);
     }
 
-    private void saveFiles(Exercise exercise, String name, MultipartFile image, MultipartFile video) throws IOException {
+    @Override
+    public ResponseEntity<Resource> getExerciseIcon(String filename) throws IOException {
+        Path filePath = iconPath.resolve(filename).normalize();
+        Resource resource = new UrlResource(filePath.toUri());
+        if (!resource.exists()) throw new RuntimeException("Icono no encontrado");
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(filePath))
+                .body(resource);
+    }
+
+    private void saveFiles(Exercise exercise, String name, MultipartFile image, MultipartFile video, MultipartFile icon) throws IOException {
         String safeName = name.toLowerCase().replace(" ", "_");
         Files.createDirectories(imagePath);
         Files.createDirectories(videoPath);
+        Files.createDirectories(iconPath);
         if (image != null && !image.isEmpty()) {
             String extension = getExtension(image.getOriginalFilename());
             String fileName = safeName + "." + extension;
@@ -162,6 +202,12 @@ public class ExerciseServiceImpl implements ExerciseService {
             Files.copy(video.getInputStream(), videoPath.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
             exercise.setVideo(fileName);
         }
+        if (icon != null && !icon.isEmpty()) {
+            String extension = getExtension(icon.getOriginalFilename());
+            String fileName = safeName + "." + extension;
+            Files.copy(icon.getInputStream(), iconPath.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+            exercise.setIcon(fileName);
+        }
     }
 
     private String getExtension(String fileName) {
@@ -169,6 +215,6 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     private ExerciseResponse toResponse(Exercise e) {
-        return new ExerciseResponse(e.getId(), e.getName(), e.getDescription(), e.getType(), e.getImage(), e.getVideo());
+        return new ExerciseResponse(e.getId(), e.getName(), e.getDescription(), e.getType(), e.getMuscle(), e.getImage(), e.getVideo(), e.getIcon());
     }
 }

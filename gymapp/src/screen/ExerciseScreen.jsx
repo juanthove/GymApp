@@ -12,6 +12,7 @@ import {
 import {
   getExerciseImageUrl,
   getExerciseVideoUrl,
+  getExerciseIconUrl,
 } from "../services/exerciseService";
 
 import {
@@ -211,17 +212,55 @@ No hay ejercicios seleccionados
 displayedExercises.map((ex)=>(
   <GymCard
     key={ex.id}
-    title={`🏋️ ${ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}`}
-    subtitle={`Peso: ${ex.weight ?? 0} kg • Reps: ${reps ?? "-"}`}
-    onClick={()=>setSelectedExercise(ex)}
+    onClick={() => setSelectedExercise(ex)}
+    align="center"
+    sx={{ height: 150 }}
   >
+    <Stack
+      direction={ex.icon ? "row" : "column"} // 👈 cambia layout
+      alignItems="center"
+      justifyContent="center"
+      spacing={ex.icon ? 3 : 1}
+      sx={ex.icon ? { transform: "translateX(-20px)" } : {}}
+    >
 
-  {ex.completed &&
-    <Typography color="success.main" fontWeight={700}>
-      ✔ Completado
-    </Typography>
-  }
+      {/* ICONO */}
+      {ex.icon && (
+        <img
+          src={getExerciseIconUrl(ex.icon)}
+          style={{
+            width: 120,
+            height: 120,
+            objectFit: "contain",
+            padding: "6px"
+          }}
+        />
+      )}
 
+      {/* TEXTO */}
+      <Stack
+        spacing={0.5}
+        alignItems={ex.icon ? "flex-start" : "center"}
+        textAlign={ex.icon ? "left" : "center"}
+      >
+
+        <Typography variant="h5" fontWeight={700}>
+          {ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}
+        </Typography>
+
+        <Typography fontSize="1.1rem" color="text.secondary">
+          Peso: {ex.weight ?? 0} kg • Reps: {reps ?? "-"}
+        </Typography>
+
+        {ex.completed && (
+          <Typography variant="h6" color="success.main" fontWeight={700}>
+            ✔ Completado
+          </Typography>
+        )}
+
+      </Stack>
+
+    </Stack>
   </GymCard>
 ))
 
@@ -335,6 +374,20 @@ Peso: <b>{selectedExercise?.weight ?? 0} kg</b>
 <Typography>
 Repeticiones: <b>{reps ?? "-"}</b>
 </Typography>
+
+{selectedExercise?.exerciseMuscle &&
+
+<Typography
+  sx={{
+    background:"#e3f2fd",
+    p:1.5,
+    borderRadius:"8px"
+  }}
+>
+  Músculos: <b>{selectedExercise.exerciseMuscle}</b>
+</Typography>
+
+}
 
 {selectedExercise?.comment &&
 

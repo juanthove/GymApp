@@ -33,11 +33,13 @@ public class ExerciseController {
     public ExerciseResponse createExercise(
             @RequestParam("name") String name,
             @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "muscle", required = false) String muscle,
             @RequestParam("type") ExerciseType type,
             @RequestParam(value = "image", required = false) MultipartFile image,
-            @RequestParam(value = "video", required = false) MultipartFile video
+            @RequestParam(value = "video", required = false) MultipartFile video,
+            @RequestParam(value = "icon", required = false) MultipartFile icon
     ) throws IOException {
-        return exerciseService.createExercise(name, description, type, image, video);
+        return exerciseService.createExercise(name, description, type, muscle, image, video, icon);
     }
 
     @PutMapping("/{id}")
@@ -45,13 +47,21 @@ public class ExerciseController {
             @PathVariable Long id,
             @RequestParam("name") String name,
             @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "muscle", required = false) String muscle,
             @RequestParam("type") ExerciseType type,
             @RequestParam(value = "image", required = false) MultipartFile image,
             @RequestParam(value = "video", required = false) MultipartFile video,
+            @RequestParam(value = "icon", required = false) MultipartFile icon,
             @RequestParam(value = "deleteImage", required = false) Boolean deleteImage,
-            @RequestParam(value = "deleteVideo", required = false) Boolean deleteVideo
+            @RequestParam(value = "deleteVideo", required = false) Boolean deleteVideo,
+            @RequestParam(value = "deleteIcon", required = false) Boolean deleteIcon
     ) throws IOException {
-        return exerciseService.updateExercise(id, name, description, type, image, video, deleteImage, deleteVideo);
+        return exerciseService.updateExercise(id, name, description, type, muscle, image, video, icon, deleteImage, deleteVideo, deleteIcon);
+    }
+
+    @GetMapping("/icon/{filename}")
+    public ResponseEntity<Resource> getExerciseIcon(@PathVariable String filename) throws IOException {
+        return exerciseService.getExerciseIcon(filename);
     }
 
     @DeleteMapping("/{id}")

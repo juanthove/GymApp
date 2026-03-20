@@ -15,6 +15,7 @@ export async function createExercise(exercise) {
 
   formData.append("name", exercise.name);
   formData.append("description", exercise.description);
+  formData.append("muscle", exercise.muscle);
 
   formData.append("type", exercise.type);
 
@@ -24,6 +25,10 @@ export async function createExercise(exercise) {
 
   if (exercise.video) {
     formData.append("video", exercise.video);
+  }
+
+  if (exercise.icon) {
+    formData.append("icon", exercise.icon);
   }
 
   return apiRequest("/api/exercises", {
@@ -38,6 +43,7 @@ export async function updateExercise(id, exercise) {
 
   formData.append("name", exercise.name);
   formData.append("description", exercise.description);
+  formData.append("muscle", exercise.muscle);
 
   formData.append("type", exercise.type);
 
@@ -49,8 +55,13 @@ export async function updateExercise(id, exercise) {
     formData.append("video", exercise.video);
   }
 
+  if (exercise.icon) {
+    formData.append("icon", exercise.icon);
+  }
+
   formData.append("deleteImage", exercise.deleteImage);
   formData.append("deleteVideo", exercise.deleteVideo);
+  formData.append("deleteIcon", exercise.deleteIcon);
 
   return apiRequest(`/api/exercises/${id}`, {
     method: "PUT",
@@ -74,4 +85,10 @@ export function getExerciseImageUrl(filename) {
 export function getExerciseVideoUrl(filename) {
   if (!filename) return null;
   return `/api/exercises/video/${filename}`;
+}
+
+// Obtener URL del icono de un ejercicio
+export function getExerciseIconUrl(filename) {
+  if (!filename) return null;
+  return `/api/exercises/icon/${filename}`;
 }

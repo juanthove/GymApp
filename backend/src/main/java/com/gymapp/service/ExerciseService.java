@@ -16,15 +16,19 @@ public interface ExerciseService {
     ExerciseResponse getExerciseById(Long id);
 
     ExerciseResponse createExercise(String name, String description, ExerciseType type,
-                                    MultipartFile image, MultipartFile video) throws IOException;
+                                    String muscle,
+                                    MultipartFile image, MultipartFile video, MultipartFile icon) throws IOException;
 
     ExerciseResponse updateExercise(Long id, String name, String description, ExerciseType type,
-                                    MultipartFile image, MultipartFile video,
-                                    Boolean deleteImage, Boolean deleteVideo) throws IOException;
+                                    String muscle,
+                                    MultipartFile image, MultipartFile video, MultipartFile icon,
+                                    Boolean deleteImage, Boolean deleteVideo, Boolean deleteIcon) throws IOException;
 
     void deleteExercise(Long id) throws IOException;
 
     ResponseEntity<Resource> getExerciseImage(String filename) throws IOException;
 
     ResponseEntity<Resource> getExerciseVideo(String filename) throws IOException;
+
+    ResponseEntity<Resource> getExerciseIcon(String filename) throws IOException;
 }

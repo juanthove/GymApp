@@ -3,11 +3,22 @@ import { useState, useEffect } from "react";
 import { getExercises } from "../services/exerciseService";
 
 import {
-  createWorkoutTemplate,
   getWorkoutTemplates,
   getWorkoutTemplateById,
+  createWorkoutTemplate,
   updateWorkoutTemplate,
-  deleteWorkoutTemplate
+  deleteWorkoutTemplate,
+  getDaysByTemplate,
+  createDay,
+  updateDay,
+  deleteDay,
+  reorderDays,
+  uploadWorkoutTemplateDayImage,
+  deleteWorkoutTemplateDayImage,
+  getWorkoutTemplateDayImageUrl,
+  addExerciseToDay,
+  removeExerciseFromDay,
+  reorderExercises
 } from "../services/workoutTemplateService";
 
 import {
@@ -21,11 +32,14 @@ Stack,
 Card,
 CardContent,
 IconButton,
+FormControlLabel,
+Checkbox,
 Accordion,
 AccordionSummary,
 AccordionDetails,
 Divider,
 Alert,
+Snackbar,
 Autocomplete
 } from "@mui/material";
 
@@ -130,8 +144,11 @@ const loadTemplateData = async(id)=>{
 
  const loadedDays = template.days.map(day=>({
 
+  id: day.id, // 🔥 importante para saber si ya existe
+
   name:day.name,
   muscles:day.muscles,
+  dayOrder: day.dayOrder,
 
   exercises:day.exercises.map(ex=>({
    exerciseId:ex.exerciseId,
@@ -139,7 +156,15 @@ const loadTemplateData = async(id)=>{
    order:ex.order
   })),
 
-  selectedExercise:null
+  selectedExercise:null,
+
+  image:null,
+  deleteImage:false,
+
+  // 🔥 usamos helper del front
+  preview: day.muscleImage 
+    ? getWorkoutTemplateDayImageUrl(day.muscleImage) 
+    : null
 
  }));
 
@@ -152,10 +177,14 @@ const addDay=()=>{
  setDays([
   ...days,
   {
+   id: null,
    name:`Día ${days.length+1}`,
    muscles:"",
    exercises:[],
-   selectedExercise:null
+   selectedExercise:null,
+   image:null,
+   deleteImage:false,
+   preview:null
   }
  ]);
 
@@ -251,16 +280,17 @@ const duplicateDay = (index) => {
  const dayToCopy = days[index];
 
  const newDay = {
+  id: null, // 🔥 nuevo día
   name: dayToCopy.name + " copia",
   muscles: dayToCopy.muscles,
-  exercises: dayToCopy.exercises.map(ex => ({
-    ...ex
-  })),
-  selectedExercise: null
+  exercises: dayToCopy.exercises.map(ex => ({ ...ex })),
+  selectedExercise: null,
+  image: null,
+  deleteImage: false,
+  preview: null // 🔥 NO copiar imagen
  };
 
  const updated = [...days];
-
  updated.splice(index + 1, 0, newDay);
 
  setDays(updated);
@@ -276,29 +306,53 @@ const handleSubmit = async()=>{
   const templateData={
    name,
    description,
-   days:days.map(day=>({
+   days:days.map((day,index)=>({
     name:day.name,
     muscles:day.muscles,
+    dayOrder: index + 1,
     exercises:day.exercises
-   }))
+  }))
   };
 
+  let templateId;
+
+  // 1️⃣ GUARDAR TEMPLATE
   if(selectedTemplateId){
 
    await updateWorkoutTemplate(selectedTemplateId,templateData);
+   templateId = selectedTemplateId;
 
    setMessage("Template actualizado correctamente");
    setMessageType("success");
 
   }else{
 
-   await createWorkoutTemplate(templateData);
+   const res = await createWorkoutTemplate(templateData);
+   templateId = res.id;
 
    setMessage("Template creado correctamente");
    setMessageType("success");
-
   }
 
+  // 2️⃣ TRAER TEMPLATE CON IDS NUEVOS
+  const fullTemplate = await getWorkoutTemplateById(templateId);
+
+  // 3️⃣ IMÁGENES (solo si usuario hizo algo)
+  for (let i = 0; i < fullTemplate.days.length; i++) {
+
+    const backendDay = fullTemplate.days[i];
+    const frontDay = days[i];
+
+    if (frontDay.image) {
+      await uploadWorkoutTemplateDayImage(backendDay.id, frontDay.image);
+    }
+
+    else if (frontDay.deleteImage) {
+      await deleteWorkoutTemplateDayImage(backendDay.id);
+    }
+  }
+
+  // 4️⃣ RESET
   resetForm();
   loadTemplates();
 
@@ -450,6 +504,63 @@ value={day.muscles}
 onChange={(e)=>updateDayField(dayIndex,"muscles",e.target.value)}
 />
 
+<Typography variant="subtitle1">
+Imagen del día
+</Typography>
+
+<input
+  type="file"
+  accept="image/*"
+  onChange={(e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+
+    const updated=[...days];
+
+    updated[dayIndex].image = file;
+    updated[dayIndex].preview = URL.createObjectURL(file);
+    updated[dayIndex].deleteImage = false;
+
+    setDays(updated);
+  }}
+/>
+
+{day.preview && (
+  <Stack spacing={1}>
+
+    <FormControlLabel
+      control={
+        <Checkbox
+          checked={day.deleteImage}
+          onChange={()=>{
+            const updated=[...days];
+
+            updated[dayIndex].deleteImage = !updated[dayIndex].deleteImage;
+
+            if(updated[dayIndex].deleteImage){
+              updated[dayIndex].image = null;
+            }
+
+            setDays(updated);
+          }}
+        />
+      }
+      label="Eliminar imagen"
+    />
+
+    {!day.deleteImage && (
+      <img
+        src={day.preview}
+        style={{
+          maxWidth:"300px",
+          borderRadius:"8px"
+        }}
+      />
+    )}
+
+  </Stack>
+)}
+
 <Autocomplete
 options={exercises}
 getOptionLabel={(option)=>option.name}
@@ -518,11 +629,16 @@ onClick={addDay}
 Agregar día
 </Button>
 
-{message && (
-<Alert severity={messageType}>
-{message}
-</Alert>
-)}
+<Snackbar
+            open={!!message}
+            autoHideDuration={3000}
+            onClose={()=>setMessage("")}
+            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          >
+            <Alert severity={messageType} sx={{ width: "100%" }}>
+              {message}
+            </Alert>
+          </Snackbar>
 
 <Stack direction="row" spacing={2}>
 

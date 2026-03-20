@@ -7,6 +7,7 @@ public record WorkoutExerciseResponse(
         Long workoutDayId,
         Long exerciseId,
         String exerciseName,
+        String exerciseMuscle,
         ExerciseType type,
         Integer exerciseOrder,
         Double weight,
@@ -14,6 +15,7 @@ public record WorkoutExerciseResponse(
         boolean completed,
         String image,
         String video,
+        String icon,
         boolean selected
 
 ) {}

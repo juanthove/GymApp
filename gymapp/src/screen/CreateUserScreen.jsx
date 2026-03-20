@@ -10,7 +10,8 @@ TextField,
 MenuItem,
 Button,
 Stack,
-Alert
+Alert,
+Snackbar
 } from "@mui/material";
 
 import BackButton from "../components/BackButton";
@@ -223,11 +224,16 @@ value={gymDays}
 onChange={(e)=>setGymDays(e.target.value)}
 />
 
-{message && (
-<Alert severity={messageType}>
-{message}
-</Alert>
-)}
+<Snackbar
+            open={!!message}
+            autoHideDuration={3000}
+            onClose={()=>setMessage("")}
+            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          >
+            <Alert severity={messageType} sx={{ width: "100%" }}>
+              {message}
+            </Alert>
+          </Snackbar>
 
 
 <Stack direction="row" spacing={2}>

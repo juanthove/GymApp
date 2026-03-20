@@ -21,6 +21,7 @@ AccordionSummary,
 AccordionDetails,
 Divider,
 Alert,
+Snackbar,
 Autocomplete,
 LinearProgress
 } from "@mui/material";
@@ -227,7 +228,7 @@ const loadLastWorkout = async()=>{
   name:day.name,
   muscles:day.muscles,
 
-  exercises:day.exercises.map(ex=>({
+  exercises:day.exercises.sort((a, b) => a.order - b.order).map(ex=>({
    id:crypto.randomUUID(),
    exerciseId:ex.exerciseId,
    order:ex.order,
@@ -748,7 +749,16 @@ disabled={!selectedUser || (gymDaysPerWeek && days.length >= gymDaysPerWeek)}
 Agregar día
 </Button>
 
-{message && (<Alert severity={messageType}>{message}</Alert>)}
+<Snackbar
+            open={!!message}
+            autoHideDuration={3000}
+            onClose={()=>setMessage("")}
+            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          >
+            <Alert severity={messageType} sx={{ width: "100%" }}>
+              {message}
+            </Alert>
+          </Snackbar>
 
 <Stack direction="row" spacing={2}>
 

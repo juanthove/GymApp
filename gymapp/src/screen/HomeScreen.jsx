@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { getLoggedUser, getNotLoggedUser, loginUser } from "../services/userService";
 import { useNavigate } from "react-router-dom";
 
+import backgroundImg from "../assets/gymproIcon.png";
+
 import {
 Container,
 Typography,
@@ -77,7 +79,31 @@ export default function HomeScreen(){
 
  return(
 
-  <Container maxWidth="lg" sx={{mt:6,mb:6}}>
+  <Box
+    sx={{
+      minHeight: "100vh",
+      position: "relative",
+      backgroundImage: `url(${backgroundImg})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      pt: 6 
+    }}
+  >
+
+    {/* OVERLAY (para transparencia) */}
+    <Box
+      sx={{
+        position: "absolute",
+        inset: 0,
+        backgroundColor: "rgba(88, 88, 88, 0.6)" // 👈 ajustá esto
+      }}
+    />
+
+    {/* CONTENIDO */}
+    <Box sx={{ position: "relative", zIndex: 1 }}>
+
+
+  <Container maxWidth="lg" sx={{mb:6}}>
 
     <Typography
       variant="h3"
@@ -201,6 +227,10 @@ export default function HomeScreen(){
    </Dialog>
 
   </Container>
+
+  </Box>
+
+  </Box>
 
  );
 }

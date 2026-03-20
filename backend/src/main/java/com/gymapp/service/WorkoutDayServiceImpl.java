@@ -142,12 +142,15 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         Long dayId = exercise.getWorkoutDay() != null ? exercise.getWorkoutDay().getId() : null;
         Long exerciseId = exercise.getExercise() != null ? exercise.getExercise().getId() : null;
         String exerciseName = exercise.getExercise() != null ? exercise.getExercise().getName() : null;
+        String exerciseMuscle = exercise.getExercise() != null ? exercise.getExercise().getMuscle() : null;
         String image = exercise.getExercise() != null ? exercise.getExercise().getImage() : null;
         String video = exercise.getExercise() != null ? exercise.getExercise().getVideo() : null;
+         String icon = exercise.getExercise() != null ? exercise.getExercise().getIcon() : null;
         boolean selected = dayId != null && exercise.getId() != null && selectedWorkoutExerciseService.isSelected(dayId, exercise.getId());
         ExerciseType type = exercise.getExercise() != null ? exercise.getExercise().getType() : null;
-        return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName, type,
-                exercise.getExerciseOrder(), exercise.getWeight(), exercise.getComment(), exercise.getCompleted(), image, video, selected);
+        return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName, exerciseMuscle, type,
+                exercise.getExerciseOrder(), exercise.getWeight(), exercise.getComment(), exercise.getCompleted(), image, video,
+                icon, selected);
     }
 
     private WorkoutDayResponse toResponse(WorkoutDay day) {

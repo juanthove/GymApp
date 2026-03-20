@@ -18,6 +18,10 @@ public class Exercise {
 
     private String video;
 
+    private String icon;
+
+    private String muscle;
+
     @Enumerated(EnumType.STRING)
     private ExerciseType type;
 
@@ -60,6 +64,22 @@ public class Exercise {
 
     public void setVideo(String video) {
         this.video = video;
+    }
+
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
+    }
+
+    public String getMuscle() {
+        return muscle;
+    }
+
+    public void setMuscle(String muscle) {
+        this.muscle = muscle;
     }
 
     public ExerciseType getType() {

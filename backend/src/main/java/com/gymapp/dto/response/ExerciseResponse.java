@@ -7,6 +7,8 @@ public record ExerciseResponse(
         String name,
         String description,
         ExerciseType type,
+        String muscle,
         String image,
-        String video
+        String video,
+        String icon
 ) {}

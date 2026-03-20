@@ -4,5 +4,7 @@ public record WorkoutTemplateDayResponse(
         Long id,
         String name,
         String muscles,
+        Integer dayOrder,
+        String muscleImage,
         Long templateId
 ) {}
