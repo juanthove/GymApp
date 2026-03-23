@@ -18,6 +18,7 @@ public record WorkoutFullResponse(
             String name,
             String muscles,
             int dayOrder,
+            String muscleImage,
             boolean abdominal,
             LocalDateTime startedAt,
             LocalDateTime finishedAt,

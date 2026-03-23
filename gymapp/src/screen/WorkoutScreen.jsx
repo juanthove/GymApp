@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 
 import { getUserById, getCurrentWorkout } from "../services/userService";
 import { getWorkoutById } from "../services/workoutService";
-import { startWorkoutDay, getWorkoutDayStatus } from "../services/workoutDayService";
+import { startWorkoutDay, getWorkoutDayStatus, getWorkoutDayImageUrl } from "../services/workoutDayService";
 import { getRandomPhrase } from "../services/phraseService";
 
 import GymCard from "../components/GymCard";
@@ -203,7 +203,7 @@ Músculos que vas a trabajar hoy
 </Typography>
 
 <img
- src="/body-placeholder.png"
+ src={selectedDay?.muscleImage ? getWorkoutDayImageUrl(selectedDay.muscleImage) : "/body-placeholder.png"}
  style={{width:"100%"}}
 />
 

@@ -3,7 +3,11 @@ package com.gymapp.service;
 import com.gymapp.dto.request.WorkoutDayRequest;
 import com.gymapp.dto.response.WorkoutDayExercisesResponse;
 import com.gymapp.dto.response.WorkoutDayResponse;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface WorkoutDayService {
@@ -17,6 +21,14 @@ public interface WorkoutDayService {
     WorkoutDayResponse createWorkoutDay(WorkoutDayRequest request);
 
     WorkoutDayResponse updateWorkoutDay(Long id, WorkoutDayRequest request);
+
+    WorkoutDayResponse setMuscleImage(Long id, MultipartFile file) throws IOException;
+
+    WorkoutDayResponse deleteMuscleImage(Long id) throws IOException;
+
+    ResponseEntity<Resource> getMuscleImage(String filename) throws IOException;
+
+    void deleteImageByFilename(String filename) throws IOException;
 
     void deleteWorkoutDay(Long id);
 

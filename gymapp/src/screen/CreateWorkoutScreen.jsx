@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 
 import { getUsers, getCurrentWorkout, setCurrentWorkout, getUserById } from "../services/userService";
 import { getExercises } from "../services/exerciseService";
-import { getWorkoutTemplates, getWorkoutTemplateById } from "../services/workoutTemplateService";
+import { getWorkoutTemplates, getWorkoutTemplateById, getWorkoutTemplateDayImageUrl } from "../services/workoutTemplateService";
 import { createWorkout, updateWorkout, getWorkoutById } from "../services/workoutService";
+import { uploadWorkoutDayImage, deleteWorkoutDayImage, getWorkoutDayImageUrl, deleteWorkoutDayImageByFilename } from "../services/workoutDayService";
 
 import {
 Container,
@@ -16,6 +17,8 @@ Stack,
 Card,
 CardContent,
 IconButton,
+FormControlLabel,
+Checkbox,
 Accordion,
 AccordionSummary,
 AccordionDetails,
@@ -190,11 +193,18 @@ const loadTemplate = async(id)=>{
 
  const template = await getWorkoutTemplateById(id);
 
+ setIsLastWorkout(false);
+ setWorkoutId(null);
+
  const loadedDays = template.days.map(day=>({
 
   id:crypto.randomUUID(),
   name:day.name,
   muscles:day.muscles,
+  dayOrder:day.dayOrder,
+  image:null,
+  deleteImage:false,
+  preview:day.muscleImage ? getWorkoutTemplateDayImageUrl(day.muscleImage) : null,
 
   exercises:day.exercises.map(ex=>({
    id:crypto.randomUUID(),
@@ -224,9 +234,13 @@ const loadLastWorkout = async()=>{
 
  const loadedDays = workout.days.map(day=>({
 
-  id:crypto.randomUUID(),
+  id:day.id,
   name:day.name,
   muscles:day.muscles,
+  dayOrder:day.dayOrder,
+  image:null,
+  deleteImage:false,
+  preview:day.muscleImage ? getWorkoutDayImageUrl(day.muscleImage) : null,
 
   exercises:day.exercises.sort((a, b) => a.order - b.order).map(ex=>({
    id:crypto.randomUUID(),
@@ -248,6 +262,8 @@ const handleSourceChange = async(value)=>{
  if(value==="empty"){
   setDays([]);
   setWorkoutName("");
+  setWorkoutId(null);
+  setIsLastWorkout(false);
  }
 
  if(value==="last"){
@@ -269,7 +285,10 @@ const addDay = ()=>{
    id:crypto.randomUUID(),
    name:`Día ${days.length+1}`,
    muscles:"",
-   exercises:[]
+    exercises:[],
+    image:null,
+    deleteImage:false,
+    preview:null
   }
  ]);
 
@@ -378,6 +397,9 @@ const duplicateDay = (index) => {
   id:crypto.randomUUID(),
   name: dayToCopy.name + " copia",
   muscles: dayToCopy.muscles,
+  image: null,
+  deleteImage: false,
+  preview: null,
   exercises: dayToCopy.exercises.map(ex => ({
     ...ex,
     id:crypto.randomUUID()
@@ -420,6 +442,22 @@ const handleCreateWorkout = async()=>{
 
   await setCurrentWorkout(Number(selectedUser), newWorkout.id);
 
+    const fullWorkout = await getWorkoutById(newWorkout.id);
+
+    for (let i = 0; i < fullWorkout.days.length; i++) {
+     const backendDay = fullWorkout.days[i];
+     const frontDay = days[i];
+
+     if (frontDay?.image) {
+      await uploadWorkoutDayImage(backendDay.id, frontDay.image);
+     } else if (frontDay?.preview && !frontDay.deleteImage) {
+      const response = await fetch(frontDay.preview);
+      const blob = await response.blob();
+      const file = new File([blob], "day-image.jpg", { type: blob.type || "image/jpeg" });
+      await uploadWorkoutDayImage(backendDay.id, file);
+     }
+    }
+
   resetForm();
 
   setMessage("Planilla creada");
@@ -437,6 +475,11 @@ const handleUpdateWorkout = async()=>{
  if(!validateWorkout()) return;
 
  try{
+
+  const existingWorkout = await getWorkoutById(workoutId);
+  const oldImages = existingWorkout.days
+   .map((day) => day.muscleImage)
+   .filter(Boolean);
 
   const workoutData={
    name:workoutName,
@@ -456,6 +499,28 @@ const handleUpdateWorkout = async()=>{
   };
 
   await updateWorkout(workoutId,workoutData);
+
+  const fullWorkout = await getWorkoutById(workoutId);
+
+  for (let i = 0; i < fullWorkout.days.length; i++) {
+   const backendDay = fullWorkout.days[i];
+   const frontDay = days[i];
+
+   if (frontDay?.image) {
+    await uploadWorkoutDayImage(backendDay.id, frontDay.image);
+   } else if (frontDay?.deleteImage) {
+    await deleteWorkoutDayImage(backendDay.id);
+   } else if (frontDay?.preview) {
+    const response = await fetch(frontDay.preview);
+    const blob = await response.blob();
+    const file = new File([blob], "day-image.jpg", { type: blob.type || "image/jpeg" });
+    await uploadWorkoutDayImage(backendDay.id, file);
+   }
+  }
+
+  for (const image of oldImages) {
+   await deleteWorkoutDayImageByFilename(image);
+  }
 
   resetForm();
 
@@ -664,6 +729,58 @@ label="Músculos trabajados"
 value={day.muscles}
 onChange={(e)=>updateDayField(dayIndex,"muscles",e.target.value)}
 />
+
+<Typography variant="subtitle1">
+Imagen del día
+</Typography>
+
+<input
+ type="file"
+ accept="image/*"
+ onChange={(e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const updated=[...days];
+  updated[dayIndex].image = file;
+  updated[dayIndex].preview = URL.createObjectURL(file);
+  updated[dayIndex].deleteImage = false;
+  setDays(updated);
+ }}
+/>
+
+{day.preview && (
+ <Stack spacing={1}>
+  <FormControlLabel
+   control={
+    <Checkbox
+     checked={day.deleteImage}
+     onChange={()=>{
+      const updated=[...days];
+      updated[dayIndex].deleteImage = !updated[dayIndex].deleteImage;
+
+      if(updated[dayIndex].deleteImage){
+       updated[dayIndex].image = null;
+      }
+
+      setDays(updated);
+     }}
+    />
+   }
+   label="Eliminar imagen"
+  />
+
+  {!day.deleteImage && (
+   <img
+    src={day.preview}
+    style={{
+     maxWidth:"300px",
+     borderRadius:"8px"
+    }}
+   />
+  )}
+ </Stack>
+)}
 
 <Autocomplete
 options={exercises}

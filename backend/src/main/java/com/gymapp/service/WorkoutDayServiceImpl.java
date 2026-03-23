@@ -12,13 +12,26 @@ import com.gymapp.model.WorkoutExercise;
 import com.gymapp.repository.WorkoutDayRepository;
 import com.gymapp.repository.WorkoutRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class WorkoutDayServiceImpl implements WorkoutDayService {
+
+    private final Path dayImagePath = Paths.get("uploads/day");
 
     @Autowired
     private WorkoutDayRepository workoutDayRepository;
@@ -72,7 +85,75 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
     }
 
     @Override
+    public WorkoutDayResponse setMuscleImage(Long id, MultipartFile file) throws IOException {
+        WorkoutDay day = workoutDayRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found"));
+
+        Files.createDirectories(dayImagePath);
+
+        if (day.getMuscleImage() != null) {
+            Files.deleteIfExists(dayImagePath.resolve(day.getMuscleImage()));
+        }
+
+        String original = file.getOriginalFilename();
+        if (original == null || !original.contains(".")) {
+            throw new RuntimeException("Archivo invalido");
+        }
+
+        String ext = original.substring(original.lastIndexOf("."));
+        String fileName = UUID.randomUUID() + ext;
+
+        Files.copy(file.getInputStream(), dayImagePath.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+
+        day.setMuscleImage(fileName);
+        return toResponse(workoutDayRepository.save(day));
+    }
+
+    @Override
+    public WorkoutDayResponse deleteMuscleImage(Long id) throws IOException {
+        WorkoutDay day = workoutDayRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found"));
+
+        if (day.getMuscleImage() != null) {
+            Files.deleteIfExists(dayImagePath.resolve(day.getMuscleImage()));
+            day.setMuscleImage(null);
+        }
+
+        return toResponse(workoutDayRepository.save(day));
+    }
+
+    @Override
+    public ResponseEntity<Resource> getMuscleImage(String filename) throws IOException {
+        Path filePath = dayImagePath.resolve(filename).normalize();
+        Resource resource = new UrlResource(filePath.toUri());
+
+        if (!resource.exists()) {
+            throw new ResourceNotFoundException("Imagen no encontrada");
+        }
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(filePath))
+                .body(resource);
+    }
+
+    @Override
+    public void deleteImageByFilename(String filename) throws IOException {
+        Files.deleteIfExists(dayImagePath.resolve(filename).normalize());
+    }
+
+    @Override
     public void deleteWorkoutDay(Long id) {
+        WorkoutDay day = workoutDayRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found"));
+
+        try {
+            if (day.getMuscleImage() != null) {
+                Files.deleteIfExists(dayImagePath.resolve(day.getMuscleImage()));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         workoutDayRepository.deleteById(id);
     }
 
@@ -156,6 +237,6 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
     private WorkoutDayResponse toResponse(WorkoutDay day) {
         Long workoutId = day.getWorkout() != null ? day.getWorkout().getId() : null;
         return new WorkoutDayResponse(day.getId(), day.getName(), day.getMuscles(), day.getDayOrder(),
-                day.getAbdominal(), day.getStartedAt(), day.getFinishedAt(), day.getStatus(), workoutId);
+                day.getMuscleImage(), day.getAbdominal(), day.getStartedAt(), day.getFinishedAt(), day.getStatus(), workoutId);
     }
 }

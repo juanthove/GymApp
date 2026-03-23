@@ -19,10 +19,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 @Service
 public class WorkoutServiceImpl implements WorkoutService {
+
+    private final Path dayImagePath = Paths.get("uploads/day");
 
     @Autowired
     private WorkoutRepository workoutRepository;
@@ -100,7 +106,7 @@ public class WorkoutServiceImpl implements WorkoutService {
                             ex.getExerciseOrder(), ex.getWeight(), ex.getComment(), ex.getCompleted()))
                     .toList();
             dayList.add(new WorkoutFullResponse.DayItem(
-                    day.getId(), day.getName(), day.getMuscles(), day.getDayOrder(),
+                    day.getId(), day.getName(), day.getMuscles(), day.getDayOrder(), day.getMuscleImage(),
                     day.getAbdominal(), day.getStartedAt(), day.getFinishedAt(), day.getStatus(), exerciseList));
         }
 
@@ -186,6 +192,13 @@ public class WorkoutServiceImpl implements WorkoutService {
     public void deleteFullWorkout(Long id) {
         List<WorkoutDay> days = workoutDayRepository.findByWorkoutIdOrderByDayOrder(id);
         for (WorkoutDay day : days) {
+            if (day.getMuscleImage() != null) {
+                try {
+                    Files.deleteIfExists(dayImagePath.resolve(day.getMuscleImage()));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
             workoutExerciseRepository.deleteByWorkoutDayId(day.getId());
         }
         workoutDayRepository.deleteByWorkoutId(id);

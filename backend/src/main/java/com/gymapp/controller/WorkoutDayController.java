@@ -6,8 +6,12 @@ import com.gymapp.dto.response.WorkoutDayResponse;
 import com.gymapp.service.WorkoutDayService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -45,6 +49,28 @@ public class WorkoutDayController {
     @PutMapping("/{id}")
     public WorkoutDayResponse updateWorkoutDay(@PathVariable Long id, @Valid @RequestBody WorkoutDayRequest request) {
         return workoutDayService.updateWorkoutDay(id, request);
+    }
+
+    @PostMapping("/{id}/muscle-image")
+    public WorkoutDayResponse uploadMuscleImage(
+            @PathVariable Long id,
+            @RequestParam("muscleImage") MultipartFile muscleImage) throws IOException {
+        return workoutDayService.setMuscleImage(id, muscleImage);
+    }
+
+    @DeleteMapping("/{id}/muscle-image")
+    public WorkoutDayResponse deleteMuscleImage(@PathVariable Long id) throws IOException {
+        return workoutDayService.deleteMuscleImage(id);
+    }
+
+    @GetMapping("/muscle-image/{filename}")
+    public ResponseEntity<Resource> getMuscleImage(@PathVariable String filename) throws IOException {
+        return workoutDayService.getMuscleImage(filename);
+    }
+
+    @DeleteMapping("/muscle-image/file/{filename}")
+    public void deleteImageByFilename(@PathVariable String filename) throws IOException {
+        workoutDayService.deleteImageByFilename(filename);
     }
 
     @DeleteMapping("/{id}")
