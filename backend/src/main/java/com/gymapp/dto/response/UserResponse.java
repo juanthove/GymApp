@@ -6,5 +6,6 @@ public record UserResponse(
         String surname,
         boolean logged,
         Integer gymDaysPerWeek,
+        String image,
         Long currentWorkoutId
 ) {}

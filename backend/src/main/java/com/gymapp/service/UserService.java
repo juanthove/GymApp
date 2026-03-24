@@ -3,7 +3,11 @@ package com.gymapp.service;
 import com.gymapp.dto.request.UserRequest;
 import com.gymapp.dto.response.UserResponse;
 import com.gymapp.dto.response.WorkoutResponse;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface UserService {
@@ -21,6 +25,12 @@ public interface UserService {
     UserResponse createUser(UserRequest request);
 
     UserResponse updateUser(Long id, UserRequest request);
+
+    UserResponse setUserImage(Long id, MultipartFile file) throws IOException;
+
+    UserResponse deleteUserImage(Long id) throws IOException;
+
+    ResponseEntity<Resource> getUserImage(String filename) throws IOException;
 
     UserResponse loginUser(Long id);
 

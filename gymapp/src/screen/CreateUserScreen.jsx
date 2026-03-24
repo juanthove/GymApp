@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
 
-import { createUser, updateUser, deleteUser, getUsers } from "../services/userService";
+import {
+  createUser,
+  updateUser,
+  deleteUser,
+  getUsers,
+  uploadUserImage,
+  deleteUserImage,
+  getUserImageUrl
+} from "../services/userService";
 
 import {
 Container,
@@ -11,6 +19,8 @@ MenuItem,
 Button,
 Stack,
 Alert,
+FormControlLabel,
+Checkbox,
 Snackbar
 } from "@mui/material";
 
@@ -25,6 +35,9 @@ const [currentUser,setCurrentUser] = useState(null);
 const [name,setName] = useState("");
 const [surname,setSurname] = useState("");
 const [gymDays,setGymDays] = useState("");
+const [image,setImage] = useState(null);
+const [preview,setPreview] = useState(null);
+const [deleteImageChecked,setDeleteImageChecked] = useState(false);
 
 const [message,setMessage] = useState("");
 const [messageType,setMessageType] = useState("info");
@@ -44,6 +57,9 @@ const resetForm = ()=>{
  setName("");
  setSurname("");
  setGymDays("");
+ setImage(null);
+ setPreview(null);
+ setDeleteImageChecked(false);
 };
 
 const handleSelect = (id)=>{
@@ -61,6 +77,9 @@ const handleSelect = (id)=>{
  setName(user.name);
  setSurname(user.surname);
  setGymDays(user.gymDaysPerWeek || "");
+ setImage(null);
+ setDeleteImageChecked(false);
+ setPreview(user.image ? getUserImageUrl(user.image) : null);
 
 };
 
@@ -104,11 +123,15 @@ const handleSubmit = async (e)=>{
 
   if(selectedId==="new"){
 
-   await createUser({
+    const created = await createUser({
     name,
     surname,
     gymDaysPerWeek:parseInt(gymDays, 10)
    });
+
+    if (image) {
+     await uploadUserImage(created.id, image);
+    }
 
    setMessage("Usuario creado correctamente");
    setMessageType("success");
@@ -120,6 +143,12 @@ const handleSubmit = async (e)=>{
     surname,
     gymDaysPerWeek:parseInt(gymDays, 10)
    });
+
+    if (image) {
+     await uploadUserImage(Number(selectedId), image);
+    } else if (deleteImageChecked) {
+     await deleteUserImage(Number(selectedId));
+    }
 
    setMessage("Usuario actualizado correctamente");
    setMessageType("success");
@@ -223,6 +252,56 @@ inputProps={{min:1,max:7}}
 value={gymDays}
 onChange={(e)=>setGymDays(e.target.value)}
 />
+
+<Typography variant="subtitle1">
+Foto de perfil
+</Typography>
+
+<input
+ type="file"
+ accept="image/*"
+ onChange={(e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+
+  setImage(file);
+  setDeleteImageChecked(false);
+  setPreview(URL.createObjectURL(file));
+ }}
+/>
+
+{preview && (
+ <Stack spacing={1}>
+  {currentUser && (
+   <FormControlLabel
+    control={
+     <Checkbox
+      checked={deleteImageChecked}
+      onChange={()=>{
+       const checked = !deleteImageChecked;
+       setDeleteImageChecked(checked);
+       if (checked) {
+        setImage(null);
+       }
+      }}
+     />
+    }
+    label="Eliminar foto"
+   />
+  )}
+
+  {!deleteImageChecked && (
+   <img
+    src={preview}
+    style={{
+     maxWidth:"180px",
+     borderRadius:"10px",
+     border:"1px solid #ddd"
+    }}
+   />
+  )}
+ </Stack>
+)}
 
 <Snackbar
             open={!!message}

@@ -7,8 +7,12 @@ import com.gymapp.service.UserService;
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -53,6 +57,23 @@ public class UserController {
                            @Valid @RequestBody UserRequest request) {
 
         return userService.updateUser(id, request);
+    }
+
+    @PostMapping("/{id}/image")
+    public UserResponse uploadUserImage(
+            @PathVariable Long id,
+            @RequestParam("image") MultipartFile image) throws IOException {
+        return userService.setUserImage(id, image);
+    }
+
+    @DeleteMapping("/{id}/image")
+    public UserResponse deleteUserImage(@PathVariable Long id) throws IOException {
+        return userService.deleteUserImage(id);
+    }
+
+    @GetMapping("/image/{filename}")
+    public ResponseEntity<Resource> getUserImage(@PathVariable String filename) throws IOException {
+        return userService.getUserImage(filename);
     }
 
     @PatchMapping("/{id}/login")

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getLoggedUser, getNotLoggedUser, loginUser } from "../services/userService";
+import { getLoggedUser, getNotLoggedUser, loginUser, getUserImageUrl } from "../services/userService";
 import { useNavigate } from "react-router-dom";
 
 import backgroundImg from "../assets/gymproIcon.png";
@@ -18,7 +18,9 @@ DialogActions,
 Button,
 List,
 ListItemButton,
+ListItemAvatar,
 ListItemText,
+Avatar,
 Paper,
 Box
 } from "@mui/material";
@@ -153,6 +155,7 @@ export default function HomeScreen(){
 
       <GymCard
         title={`${user.name} ${user.surname}`}
+        imageUrl={user.image ? getUserImageUrl(user.image) : null}
         onClick={()=>goWorkoutWithUser(user)}
       />
 
@@ -248,6 +251,11 @@ export default function HomeScreen(){
               }
             }}
           >
+            <ListItemAvatar>
+              <Avatar src={user.image ? getUserImageUrl(user.image) : undefined}>
+                {user.name?.[0]}
+              </Avatar>
+            </ListItemAvatar>
             <ListItemText
               primary={`${user.name} ${user.surname}`}
               primaryTypographyProps={{
