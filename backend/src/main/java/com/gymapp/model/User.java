@@ -20,6 +20,8 @@ public class User {
 
     private Integer gymDaysPerWeek;
 
+    private String image;
+
     @OneToOne
     @JoinColumn(name = "current_workout_id")
     private Workout currentWorkout;
@@ -62,6 +64,14 @@ public class User {
 
     public void setGymDaysPerWeek(Integer gymDaysPerWeek) {
         this.gymDaysPerWeek = gymDaysPerWeek;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
     }
 
     public Workout getCurrentWorkout() {

@@ -95,7 +95,7 @@ export default function HomeScreen(){
       sx={{
         position: "absolute",
         inset: 0,
-        backgroundColor: "rgba(88, 88, 88, 0.6)" // 👈 ajustá esto
+        backgroundColor: "rgba(88, 88, 88, 0.6)" 
       }}
     />
 
@@ -105,16 +105,45 @@ export default function HomeScreen(){
 
   <Container maxWidth="lg" sx={{mb:6}}>
 
-    <Typography
-      variant="h3"
-      sx={{
-        mb:5,
-        fontWeight:700,
-        textAlign:"center"
-      }}
+    <Box sx={{ textAlign: "center" }}>
+      <Typography
+        variant="h3"
+        sx={{
+          mb: 5,
+          fontWeight: 700,
+          display: "inline-block",
+          lineHeight: 0.55
+        }}
       >
-      Usuarios activos
-    </Typography>
+        Usuarios activos
+
+        <Box sx={{ width: "150%", ml: "-25%"}}>
+          <svg
+            width="100%"
+            height="6"
+            viewBox="0 0 100 6"
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <filter id="blur">
+                <feGaussianBlur stdDeviation="0.4" />
+              </filter>
+            </defs>
+            <linearGradient id="grad" x1="0%" x2="100%">
+              <stop offset="0%" stopColor="#e53935" stopOpacity="0" />
+              <stop offset="10%" stopColor="#e53935" stopOpacity="1" />
+              <stop offset="90%" stopColor="#e53935" stopOpacity="1" />
+              <stop offset="100%" stopColor="#e53935" stopOpacity="0" />
+            </linearGradient>
+            <path
+              d="M0 3 Q 50 6 100 3 Q 50 0 0 3"
+              fill="url(#grad)"
+              filter="url(#blur)"
+            />
+          </svg>
+        </Box>
+      </Typography>
+    </Box>
 
    <Grid container spacing={4} justifyContent="center">
 
@@ -155,6 +184,7 @@ export default function HomeScreen(){
         justifyContent:"center",
         cursor:"pointer",
         transition:"0.2s",
+        border: "2px solid #d32f2f",
         "&:hover":{
          transform:"scale(1.08)",
          boxShadow:6
@@ -162,7 +192,7 @@ export default function HomeScreen(){
        }}
       >
 
-       <AddIcon sx={{fontSize:42,color:"primary.main"}}/>
+       <AddIcon sx={{fontSize:42,color:"mainRed.hover"}}/>
 
       </Card>
 
@@ -174,57 +204,101 @@ export default function HomeScreen(){
 
    {/* MODAL */}
 
-   <Dialog open={showModal} onClose={()=>setShowModal(false)} fullWidth>
-
-    <DialogTitle>
-     Seleccionar usuario
+   <Dialog
+    open={showModal}
+    onClose={() => setShowModal(false)}
+    fullWidth
+    maxWidth="xs"
+    PaperProps={{
+      sx: {
+        borderRadius: 4,
+        p: 1
+      }
+    }}
+  >
+    <DialogTitle
+      sx={{
+        fontWeight: 700,
+        textAlign: "center",
+        pb: 1
+      }}
+    >
+      Seleccionar usuario
     </DialogTitle>
 
     <DialogContent>
+      <List sx={{ mt: 1 }}>
 
-     <Paper variant="outlined">
+        {allUsers.map(user => (
+          <ListItemButton
+            key={user.id}
+            selected={selectedUser?.id === user.id}
+            onClick={() => setSelectedUser(user)}
+            sx={{
+              borderRadius: 3,
+              mb: 1,
+              transition: "0.2s",
 
-      <List>
-
-       {allUsers.map(user=>(
-
-        <ListItemButton
-         key={user.id}
-         selected={selectedUser?.id===user.id}
-         onClick={()=>setSelectedUser(user)}
-        >
-
-         <ListItemText
-          primary={`${user.name} ${user.surname}`}
-         />
-
-        </ListItemButton>
-
-       ))}
+              "&.Mui-selected": {
+                backgroundColor: "mainRed.main",
+                color: "#fff",
+                "&:hover": {
+                  backgroundColor: "mainRed.hover"
+                }
+              }
+            }}
+          >
+            <ListItemText
+              primary={`${user.name} ${user.surname}`}
+              primaryTypographyProps={{
+                fontWeight: selectedUser?.id === user.id ? 600 : 400
+              }}
+            />
+          </ListItemButton>
+        ))}
 
       </List>
-
-     </Paper>
-
     </DialogContent>
 
-    <DialogActions>
+    <DialogActions
+      sx={{
+        justifyContent: "space-between",
+        px: 3,
+        pb: 2
+      }}
+    >
+      <Button
+        onClick={() => setShowModal(false)}
+        variant="outlined"
+        sx={{
+          borderRadius: 5,
+          px: 3,
+          textTransform: "none",
+          fontWeight: 500
+        }}
+      >
+        Cancelar
+      </Button>
 
-     <Button onClick={()=>setShowModal(false)}>
-      Cancelar
-     </Button>
-
-     <Button
-      variant="contained"
-      disabled={!selectedUser}
-      onClick={goWorkout}
-     >
-      Ingresar
-     </Button>
-
+      <Button
+        variant="contained"
+        disabled={!selectedUser}
+        onClick={goWorkout}
+        sx={{
+          borderRadius: 5,
+          px: 4,
+          textTransform: "none",
+          fontWeight: 600,
+          backgroundColor: "#202020",
+          "&:hover": {
+            backgroundColor: "#000000"
+          }
+        }}
+      >
+        Ingresar
+      </Button>
     </DialogActions>
-
-   </Dialog>
+  </Dialog>
 
   </Container>
 

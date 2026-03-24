@@ -18,6 +18,11 @@ const theme = createTheme({
 
   background:{
    default:"#f5f5f5"
+  },
+
+  mainRed:{
+    main:"#e53935",
+    hover:"#d32f2f"
   }
 
  },
