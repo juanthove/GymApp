@@ -3,6 +3,15 @@ backend/uploads/videos/*
 !backend/uploads/images/.gitkeep
 !backend/uploads/videos/.gitkeep
 
+backend/uploads/day/*
+!backend/uploads/day/.gitkeep
+
+backend/uploads/icons/*
+!backend/uploads/icons/.gitkeep
+
+backend/uploads/users/*
+!backend/uploads/users/.gitkeep
+
 backend/selected-exercises/*
 !backend/selected-exercises/.gitkeep
 
