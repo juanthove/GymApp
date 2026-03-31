@@ -132,7 +132,7 @@ export default function GymCard({
           )}
 
           {subtitle && (
-            <Typography color="text.secondary">
+            <Typography component="div" color="text.secondary">
               {subtitle}
             </Typography>
           )}

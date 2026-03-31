@@ -15,8 +15,8 @@ public class WorkoutSet {
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "exercise_id")
-    private Exercise exercise;
+    @JoinColumn(name = "workout_exercise_id")
+    private WorkoutExercise workoutExercise;
 
     private Integer setNumber;
 
@@ -41,12 +41,12 @@ public class WorkoutSet {
         this.user = user;
     }
 
-    public Exercise getExercise() {
-        return exercise;
+    public WorkoutExercise getExercise() {
+        return workoutExercise;
     }
 
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
+    public void setExercise(WorkoutExercise workoutExercise) {
+        this.workoutExercise = workoutExercise;
     }
 
     public Integer getSetNumber() {

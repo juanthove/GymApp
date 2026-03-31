@@ -24,6 +24,7 @@ import {
 
 import GymCard from "../components/GymCard";
 import BackButton from "../components/BackButton";
+import MuscleChips from "../components/MuscleChips";
 
 import {
   Container,
@@ -344,13 +345,14 @@ Finalizar día
 
 ) : null}
 
-<DialogTitle sx={{fontWeight:700}}>
+<DialogTitle sx={{fontWeight:700, textAlign:"center"}}>
 {selectedExercise?.exercise?.name || selectedExercise?.exerciseName}
 </DialogTitle>
 
 <DialogContent>
 
-<Stack spacing={2}>
+
+<Stack spacing={2} alignItems="center" textAlign="center">
 
 {selectedExercise?.exercise?.description &&
 
@@ -377,15 +379,7 @@ Repeticiones: <b>{reps ?? "-"}</b>
 
 {selectedExercise?.exerciseMuscle &&
 
-<Typography
-  sx={{
-    background:"#e3f2fd",
-    p:1.5,
-    borderRadius:"8px"
-  }}
->
-  Músculos: <b>{selectedExercise.exerciseMuscle}</b>
-</Typography>
+<MuscleChips muscles={[selectedExercise.exerciseMuscle]} />
 
 }
 

@@ -6,12 +6,11 @@ import { getWorkoutById } from "../services/workoutService";
 import { startWorkoutDay, getWorkoutDayStatus, getWorkoutDayImageUrl } from "../services/workoutDayService";
 import { getRandomPhrase } from "../services/phraseService";
 
-import GymCard from "../components/GymCard";
-
 import {
 Container,
 Typography,
 Stack,
+Box,
 Button,
 Dialog,
 DialogTitle,
@@ -19,7 +18,9 @@ DialogContent,
 DialogActions
 } from "@mui/material";
 
+import GymCard from "../components/GymCard";
 import BackButton from "../components/BackButton";
+import MuscleChips from "../components/MuscleChips";
 
 export default function WorkoutScreen(){
 
@@ -147,7 +148,11 @@ return(
 <GymCard
  key={day.id}
  title={day.name}
- subtitle={day.muscles}
+ subtitle={
+    <Box my={1}>
+        <MuscleChips muscles={day.muscles} />
+    </Box>
+ }
  onClick={()=>openDay(day)}
  sx={{
   opacity: status === "COMPLETED" ? 0.6 : 1
@@ -192,22 +197,32 @@ return(
  fullWidth
 >
 
-<DialogTitle>
+
+<DialogTitle sx={{textAlign:"center"}}>
 Músculos que vas a trabajar hoy
 </DialogTitle>
 
+
 <DialogContent>
 
-<Typography sx={{mb:2}}>
-{selectedDay?.muscles}
-</Typography>
+<Box display="flex"
+    flexDirection="column"
+    alignItems="center"
+    textAlign="center"
+    gap={2}
+>
+
+<MuscleChips muscles={selectedDay?.muscles} />
 
 <img
  src={selectedDay?.muscleImage ? getWorkoutDayImageUrl(selectedDay.muscleImage) : "/body-placeholder.png"}
- style={{width:"100%"}}
+ style={{width:"100%", maxWidth:"500px"}}
 />
 
+</Box>
+
 </DialogContent>
+
 
 <DialogActions>
 
