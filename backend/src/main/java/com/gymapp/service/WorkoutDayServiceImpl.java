@@ -6,6 +6,7 @@ import com.gymapp.dto.response.WorkoutDayResponse;
 import com.gymapp.dto.response.WorkoutExerciseResponse;
 import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.ExerciseType;
+import com.gymapp.model.MuscleType;
 import com.gymapp.model.Workout;
 import com.gymapp.model.WorkoutDay;
 import com.gymapp.model.WorkoutExercise;
@@ -45,6 +46,9 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
     @Autowired
     private SelectedWorkoutExerciseService selectedWorkoutExerciseService;
 
+    @Autowired
+    private MuscleService muscleService;
+
     @Override
     public List<WorkoutDayResponse> getAllWorkoutDays() {
         return workoutDayRepository.findAll().stream().map(this::toResponse).toList();
@@ -68,7 +72,6 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
                 .orElseThrow(() -> new ResourceNotFoundException("Workout not found"));
         WorkoutDay workoutDay = new WorkoutDay();
         workoutDay.setName(request.name());
-        workoutDay.setMuscles(request.muscles());
         workoutDay.setDayOrder(request.dayOrder());
         workoutDay.setWorkout(workout);
         return toResponse(workoutDayRepository.save(workoutDay));
@@ -79,7 +82,6 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         WorkoutDay day = workoutDayRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found"));
         day.setName(request.name());
-        day.setMuscles(request.muscles());
         day.setDayOrder(request.dayOrder());
         return toResponse(workoutDayRepository.save(day));
     }
@@ -223,7 +225,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         Long dayId = exercise.getWorkoutDay() != null ? exercise.getWorkoutDay().getId() : null;
         Long exerciseId = exercise.getExercise() != null ? exercise.getExercise().getId() : null;
         String exerciseName = exercise.getExercise() != null ? exercise.getExercise().getName() : null;
-        String exerciseMuscle = exercise.getExercise() != null ? exercise.getExercise().getMuscle() : null;
+        MuscleType exerciseMuscle = exercise.getExercise() != null ? exercise.getExercise().getMuscle() : null;
         String image = exercise.getExercise() != null ? exercise.getExercise().getImage() : null;
         String video = exercise.getExercise() != null ? exercise.getExercise().getVideo() : null;
          String icon = exercise.getExercise() != null ? exercise.getExercise().getIcon() : null;
@@ -236,7 +238,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
     private WorkoutDayResponse toResponse(WorkoutDay day) {
         Long workoutId = day.getWorkout() != null ? day.getWorkout().getId() : null;
-        return new WorkoutDayResponse(day.getId(), day.getName(), day.getMuscles(), day.getDayOrder(),
+        return new WorkoutDayResponse(day.getId(), day.getName(), muscleService.getMusclesFromWorkoutDay(day), day.getDayOrder(),
                 day.getMuscleImage(), day.getAbdominal(), day.getStartedAt(), day.getFinishedAt(), day.getStatus(), workoutId);
     }
 }

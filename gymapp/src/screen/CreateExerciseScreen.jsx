@@ -24,6 +24,7 @@ import {
 } from "@mui/material";
 
 import BackButton from "../components/BackButton";
+import FileUploadField from "../components/FileUploadField";
 
 export default function CreateExerciseScreen(){
 
@@ -38,6 +39,9 @@ export default function CreateExerciseScreen(){
   const [image,setImage] = useState(null);
   const [video,setVideo] = useState(null);
   const [icon,setIcon] = useState(null);
+  const [iconPreview, setIconPreview] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [videoPreview, setVideoPreview] = useState(null);
 
   const [deleteImage,setDeleteImage] = useState(false);
   const [deleteVideo,setDeleteVideo] = useState(false);
@@ -49,6 +53,28 @@ export default function CreateExerciseScreen(){
   const [messageType,setMessageType] = useState("info");
 
   const [fileKey,setFileKey] = useState(0);
+
+   useEffect(() => {
+    return () => {
+      if (iconPreview) URL.revokeObjectURL(iconPreview);
+      if (imagePreview) URL.revokeObjectURL(imagePreview);
+      if (videoPreview) URL.revokeObjectURL(videoPreview);
+    };
+  }, [iconPreview, imagePreview, videoPreview]);
+
+  const muscleOptions = [
+    { value: "CHEST", label: "Pecho" },
+    { value: "BACK", label: "Espalda" },
+    { value: "SHOULDERS", label: "Hombros" },
+    { value: "BICEPS", label: "Bíceps" },
+    { value: "TRICEPS", label: "Tríceps" },
+    { value: "FOREARMS", label: "Antebrazos" },
+    { value: "QUADRICEPS", label: "Cuádriceps" },
+    { value: "GLUTES", label: "Glúteos" },
+    { value: "HAMSTRINGS", label: "Femorales" },
+    { value: "CALVES", label: "Gemelos" },
+    { value: "ABDOMINALS", label: "Abdominales" }
+  ];
 
   useEffect(()=>{
     loadExercises();
@@ -68,6 +94,9 @@ export default function CreateExerciseScreen(){
     setImage(null);
     setVideo(null);
     setIcon(null);
+    setIconPreview(null);
+    setImagePreview(null);
+    setVideoPreview(null);
     setDeleteImage(false);
     setDeleteVideo(false);
     setDeleteIcon(false);
@@ -105,6 +134,10 @@ export default function CreateExerciseScreen(){
     setMuscle(ex.muscle || "");
     setType(ex.type || "PRIMARY");
 
+    setIconPreview(null);
+    setImagePreview(null);
+    setVideoPreview(null);
+
     setDeleteImage(false);
     setDeleteVideo(false);
     setDeleteIcon(false);
@@ -115,6 +148,12 @@ export default function CreateExerciseScreen(){
 
     if(!name.trim()){
       setMessage("El nombre del ejercicio es obligatorio");
+      setMessageType("warning");
+      return;
+    }
+
+    if(!muscle){
+      setMessage("El músculo es obligatorio");
       setMessageType("warning");
       return;
     }
@@ -240,10 +279,19 @@ export default function CreateExerciseScreen(){
           />
 
           <TextField
+            select
             label="Músculo trabajado"
             value={muscle}
             onChange={(e)=>setMuscle(e.target.value)}
-          />
+          >
+
+            {muscleOptions.map((m) => (
+              <MenuItem key={m.value} value={m.value}>
+                {m.label}
+              </MenuItem>
+            ))}
+
+          </TextField>
 
           {/* SELECT TIPO DE EJERCICIO */}
 
@@ -275,123 +323,53 @@ export default function CreateExerciseScreen(){
 
           {/* ICON */}
 
-          <Typography variant="subtitle1">
-            Icono
-          </Typography>
-
-          <input
-            key={fileKey+2}
-            type="file"
+          <FileUploadField
+            label="Icono"
             accept="image/*"
-            onChange={(e)=>setIcon(e.target.files[0])}
+            setFile={setIcon}
+            preview={iconPreview}
+            setPreview={setIconPreview}
+            existingUrl={currentExercise?.icon && `/api/exercises/icon/${currentExercise.icon}`}
+            deleteFlag={deleteIcon}
+            setDeleteFlag={setDeleteIcon}
+            renderPreview={(src)=>(
+              <img src={src} style={{ maxWidth:"100px", borderRadius:"8px" }} />
+            )}
           />
-
-          {currentExercise?.icon && selectedId!=="new" &&
-
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={deleteIcon}
-                  onChange={()=>setDeleteIcon(!deleteIcon)}
-                />
-              }
-              label="Eliminar icono"
-            />
-
-          }
-
-          {currentExercise?.icon && !deleteIcon &&
-
-            <img
-              src={`/api/exercises/icon/${currentExercise.icon}`}
-              style={{
-                maxWidth:"100px",
-                borderRadius:"8px"
-              }}
-            />
-
-          }
 
 
           {/* IMAGE */}
 
-          <Typography variant="subtitle1">
-            Imagen
-          </Typography>
-
-          <input
-            key={fileKey}
-            type="file"
+          <FileUploadField
+            label="Imagen"
             accept="image/*"
-            onChange={(e)=>setImage(e.target.files[0])}
+            setFile={setImage}
+            preview={imagePreview}
+            setPreview={setImagePreview}
+            existingUrl={currentExercise?.image && getExerciseImageUrl(currentExercise.image)}
+            deleteFlag={deleteImage}
+            setDeleteFlag={setDeleteImage}
+            renderPreview={(src)=>(
+              <img src={src} style={{ maxWidth:"300px", borderRadius:"8px" }} />
+            )}
           />
-
-          {currentExercise?.image && selectedId!=="new" &&
-
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={deleteImage}
-                  onChange={()=>setDeleteImage(!deleteImage)}
-                />
-              }
-              label="Eliminar imagen"
-            />
-
-          }
-
-          {currentExercise?.image && !deleteImage &&
-
-            <img
-              src={getExerciseImageUrl(currentExercise.image)}
-              style={{
-                maxWidth:"300px",
-                borderRadius:"8px"
-              }}
-            />
-
-          }
 
 
           {/* VIDEO */}
 
-          <Typography variant="subtitle1">
-            Video
-          </Typography>
-
-          <input
-            key={fileKey+1}
-            type="file"
+          <FileUploadField
+            label="Video"
             accept="video/*"
-            onChange={(e)=>setVideo(e.target.files[0])}
+            setFile={setVideo}
+            preview={videoPreview}
+            setPreview={setVideoPreview}
+            existingUrl={currentExercise?.video && getExerciseVideoUrl(currentExercise.video)}
+            deleteFlag={deleteVideo}
+            setDeleteFlag={setDeleteVideo}
+            renderPreview={(src)=>(
+              <video src={src} controls style={{ maxWidth:"400px" }} />
+            )}
           />
-
-          {currentExercise?.video && selectedId!=="new" &&
-
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={deleteVideo}
-                  onChange={()=>setDeleteVideo(!deleteVideo)}
-                />
-              }
-              label="Eliminar video"
-            />
-
-          }
-
-          {currentExercise?.video && !deleteVideo &&
-
-            <video
-              src={getExerciseVideoUrl(currentExercise.video)}
-              controls
-              style={{
-                maxWidth:"400px",
-                borderRadius:"8px"
-              }}
-            />
-
-          }
 
           <Snackbar
             open={!!message}

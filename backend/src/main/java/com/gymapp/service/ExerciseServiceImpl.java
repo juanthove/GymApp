@@ -4,6 +4,7 @@ import com.gymapp.dto.response.ExerciseResponse;
 import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.Exercise;
 import com.gymapp.model.ExerciseType;
+import com.gymapp.model.MuscleType;
 import com.gymapp.repository.ExerciseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -40,7 +41,7 @@ public class ExerciseServiceImpl implements ExerciseService {
 
     @Override
     public ExerciseResponse createExercise(String name, String description, ExerciseType type,
-                                   String muscle,
+                                   MuscleType muscle,
                                    MultipartFile image, MultipartFile video, MultipartFile icon) throws IOException {
         Exercise exercise = new Exercise();
         exercise.setName(name);
@@ -53,7 +54,7 @@ public class ExerciseServiceImpl implements ExerciseService {
 
     @Override
     public ExerciseResponse updateExercise(Long id, String name, String description, ExerciseType type,
-                                   String muscle,
+                                   MuscleType muscle,
                                    MultipartFile image, MultipartFile video, MultipartFile icon,
                                    Boolean deleteImage, Boolean deleteVideo, Boolean deleteIcon) throws IOException {
 

@@ -6,7 +6,6 @@ import jakarta.validation.constraints.Size;
 
 public record WorkoutTemplateDayRequest(
         @NotBlank @Size(max = 100) String name,
-        @NotBlank String muscles,
         @NotNull Integer dayOrder,
         @NotNull Long templateId
 ) {}

@@ -1,4 +1,4 @@
-﻿package com.gymapp.controller.templates;
+package com.gymapp.controller.templates;
 
 import com.gymapp.dto.response.templates.WorkoutTemplateDayResponse;
 import com.gymapp.service.templates.WorkoutTemplateDayService;

@@ -11,6 +11,7 @@ import com.gymapp.repository.templates.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.gymapp.service.MuscleService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,9 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
     @Autowired
     private ExerciseRepository exerciseRepository;
 
+    @Autowired
+    private MuscleService muscleService;
+
     @Override
     public List<WorkoutTemplateResponse> getAllTemplates() {
         return templateRepo.findAll().stream()
@@ -52,7 +56,6 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
 
             WorkoutTemplateDay day = new WorkoutTemplateDay();
             day.setName(d.name());
-            day.setMuscles(d.muscles());
             day.setDayOrder(d.dayOrder());
             day.setTemplate(template);
             day = dayRepo.save(day);
@@ -101,7 +104,7 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
             dayList.add(new WorkoutTemplateFullResponse.DayItem(
                     day.getId(),
                     day.getName(),
-                    day.getMuscles(),
+                    muscleService.getMusclesFromTemplateDay(day),
                     day.getDayOrder(),
                     day.getMuscleImage(),
                     exList
@@ -145,7 +148,6 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
                 day = existingMap.get(d.id());
 
                 day.setName(d.name());
-                day.setMuscles(d.muscles());
                 day.setDayOrder(d.dayOrder());
 
                 existingMap.remove(d.id());
@@ -154,7 +156,6 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
                 // 🟢 CREATE
                 day = new WorkoutTemplateDay();
                 day.setName(d.name());
-                day.setMuscles(d.muscles());
                 day.setDayOrder(d.dayOrder());
                 day.setTemplate(template);
 

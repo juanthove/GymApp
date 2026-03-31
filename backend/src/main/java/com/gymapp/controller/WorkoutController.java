@@ -1,4 +1,4 @@
-﻿package com.gymapp.controller;
+package com.gymapp.controller;
 
 import com.gymapp.dto.request.WorkoutFullRequest;
 import com.gymapp.dto.request.WorkoutRequest;

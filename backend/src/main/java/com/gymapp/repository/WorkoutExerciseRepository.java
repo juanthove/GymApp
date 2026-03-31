@@ -1,6 +1,7 @@
 package com.gymapp.repository;
 
 import com.gymapp.model.ExerciseType;
+import com.gymapp.model.WorkoutDay;
 import com.gymapp.model.WorkoutExercise;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -11,6 +12,8 @@ public interface WorkoutExerciseRepository extends JpaRepository<WorkoutExercise
     List<WorkoutExercise> findByWorkoutDayIdOrderByExerciseOrder(Long workoutDayId);
 
     List<WorkoutExercise> findByWorkoutDayId(Long workoutDayId);
+
+    List<WorkoutExercise> findByWorkoutDay(WorkoutDay workoutDay);
 
     void deleteByWorkoutDayId(Long workoutDayId);
 

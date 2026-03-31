@@ -1,5 +1,6 @@
 package com.gymapp.repository.templates;
 
+import com.gymapp.model.templates.WorkoutTemplateDay;
 import com.gymapp.model.templates.WorkoutTemplateExercise;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -12,4 +13,6 @@ public interface WorkoutTemplateExerciseRepository extends JpaRepository<Workout
     List<WorkoutTemplateExercise> findByTemplateDayIdOrderByExerciseOrder(Long dayId);
 
     void deleteByTemplateDayId(Long dayId);
+
+    List<WorkoutTemplateExercise> findByTemplateDay(WorkoutTemplateDay day);
 }

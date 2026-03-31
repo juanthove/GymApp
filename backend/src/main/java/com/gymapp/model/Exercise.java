@@ -1,6 +1,7 @@
 package com.gymapp.model;
 
 import jakarta.persistence.*;
+//import java.util.Set;
 
 @Entity
 public class Exercise {
@@ -20,7 +21,8 @@ public class Exercise {
 
     private String icon;
 
-    private String muscle;
+    @Enumerated(EnumType.STRING)
+    private MuscleType muscle;
 
     @Enumerated(EnumType.STRING)
     private ExerciseType type;
@@ -74,11 +76,11 @@ public class Exercise {
         this.icon = icon;
     }
 
-    public String getMuscle() {
+    public MuscleType getMuscle() {
         return muscle;
     }
 
-    public void setMuscle(String muscle) {
+    public void setMuscle(MuscleType muscle) {
         this.muscle = muscle;
     }
 

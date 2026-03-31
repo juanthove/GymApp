@@ -84,10 +84,13 @@ export default function HomeScreen(){
   <Box
     sx={{
       minHeight: "100vh",
+      width: "100%",
+      overflowX: "hidden",
       position: "relative",
       backgroundImage: `url(${backgroundImg})`,
       backgroundSize: "cover",
       backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
       pt: 6 
     }}
   >
@@ -105,7 +108,7 @@ export default function HomeScreen(){
     <Box sx={{ position: "relative", zIndex: 1 }}>
 
 
-  <Container maxWidth="lg" sx={{mb:6}}>
+  <Container maxWidth="lg" sx={{pb:6}}>
 
     <Box sx={{ textAlign: "center" }}>
       <Typography
@@ -147,40 +150,50 @@ export default function HomeScreen(){
       </Typography>
     </Box>
 
-   <Grid container spacing={4} justifyContent="center">
+   <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: "repeat(3, 1fr)", // 🔥 SIEMPRE 3
+        gap: 4,
+        maxWidth: "1100px",
+        margin: "0 auto",
+        px: 3,
+        boxSizing: "border-box",
+        width: "100%"
+      }}
+    >
 
     {users.map(user=>(
 
-     <Grid item xs={12} sm={6} md={4} key={user.id}>
-
       <GymCard
+        key={user.id}
         title={`${user.name} ${user.surname}`}
         imageUrl={user.image ? getUserImageUrl(user.image) : null}
         onClick={()=>goWorkoutWithUser(user)}
+        variant="user"
+        sx={{ width: "100%"}}
       />
-
-     </Grid>
 
     ))}
 
     {/* BOTÓN + */}
-
-    <Grid item xs={12} sm={6} md={4}>
 
      <Box
       sx={{
        height:140,
        display:"flex",
        alignItems:"center",
-       justifyContent:"center"
+       justifyContent:"center",
+       width: "100%",
+       height: "100%"
       }}
      >
 
       <Card
        onClick={openModal}
        sx={{
-        width:90,
-        height:90,
+        width:180,
+        height:180,
         borderRadius:"50%",
         display:"flex",
         alignItems:"center",
@@ -189,21 +202,19 @@ export default function HomeScreen(){
         transition:"0.2s",
         border: "2px solid #d32f2f",
         "&:hover":{
-         transform:"scale(1.08)",
+         transform:"scale(1.1)",
          boxShadow:6
         }
        }}
       >
 
-       <AddIcon sx={{fontSize:42,color:"mainRed.hover"}}/>
+       <AddIcon sx={{fontSize:70,color:"mainRed.hover"}}/>
 
       </Card>
 
      </Box>
 
-    </Grid>
-
-   </Grid>
+   </Box>
 
    {/* MODAL */}
 

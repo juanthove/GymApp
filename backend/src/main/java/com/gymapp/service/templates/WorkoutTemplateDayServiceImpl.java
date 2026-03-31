@@ -9,6 +9,7 @@ import org.springframework.core.io.*;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import com.gymapp.service.MuscleService;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -20,7 +21,11 @@ public class WorkoutTemplateDayServiceImpl implements WorkoutTemplateDayService 
     @Autowired
     private WorkoutTemplateDayRepository repo;
 
+    @Autowired
+    private MuscleService muscleService;
+
     private final Path path = Paths.get("uploads/day");
+    
 
     @Override
     public WorkoutTemplateDayResponse setMuscleImage(Long id, MultipartFile file) throws IOException {
@@ -98,7 +103,7 @@ public class WorkoutTemplateDayServiceImpl implements WorkoutTemplateDayService 
         return new WorkoutTemplateDayResponse(
                 d.getId(),
                 d.getName(),
-                d.getMuscles(),
+                muscleService.getMusclesFromTemplateDay(d),
                 d.getDayOrder(),
                 d.getMuscleImage(),
                 d.getTemplate().getId()

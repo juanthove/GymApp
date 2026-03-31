@@ -15,7 +15,6 @@ public record WorkoutFullRequest(
 ) {
     public record DayItem(
             @NotBlank @Size(max = 100) String name,
-            @NotBlank String muscles,
             @NotNull @PositiveOrZero Integer dayOrder,
             @NotNull List<@Valid ExerciseItem> exercises
     ) {}

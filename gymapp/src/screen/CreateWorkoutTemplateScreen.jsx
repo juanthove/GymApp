@@ -43,6 +43,8 @@ import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import FileCopyIcon from "@mui/icons-material/FileCopy";
 
 import BackButton from "../components/BackButton";
+import MuscleChips from "../components/MuscleChips";
+import FileUploadField from "../components/FileUploadField";
 
 export default function CreateWorkoutTemplateScreen(){
 
@@ -73,6 +75,21 @@ const loadExercises = async()=>{
  setExercises(data);
 };
 
+const calculateDayMuscles = (dayExercises) => {
+
+  const musclesSet = new Set();
+
+  dayExercises.forEach(ex => {
+    const fullExercise = exercises.find(e => e.id === ex.exerciseId);
+
+    if (fullExercise?.muscle) {
+      musclesSet.add(fullExercise.muscle);
+    }
+  });
+
+  return Array.from(musclesSet);
+};
+
 const resetForm = ()=>{
  setSelectedTemplateId("");
  setName("");
@@ -100,12 +117,6 @@ const validateTemplate = ()=>{
 
   if(!day.name.trim()){
    setMessage(`El día ${d+1} debe tener nombre`);
-   setMessageType("warning");
-   return false;
-  }
-
-  if(!day.muscles.trim()){
-   setMessage(`El día ${d+1} debe tener músculos trabajados`);
    setMessageType("warning");
    return false;
   }
@@ -140,7 +151,8 @@ const loadTemplateData = async (id) => {
     id: day.id, // 🔥 importante
 
     name: day.name,
-    muscles: day.muscles,
+    muscles: day.muscles || [],
+    isDirty: false,
     dayOrder: day.dayOrder,
 
     exercises: day.exercises.map(ex => ({
@@ -171,7 +183,7 @@ const addDay=()=>{
   {
    id: null,
    name:`Día ${days.length+1}`,
-   muscles:"",
+   muscles: [],
    exercises:[],
    selectedExercise:null,
    image:null,
@@ -214,23 +226,24 @@ const updateDayField=(index,field,value)=>{
 
 };
 
-const addExerciseToDay=(dayIndex)=>{
+const addExerciseToDay = (dayIndex) => {
 
- const selected = days[dayIndex].selectedExercise;
- if(!selected) return;
+  const selected = days[dayIndex].selectedExercise;
+  if(!selected) return;
 
- const updated=[...days];
+  const updated = [...days];
 
- updated[dayIndex].exercises.push({
-  exerciseId:selected.id,
-  exerciseName:selected.name,
-  order:updated[dayIndex].exercises.length+1
- });
+  updated[dayIndex].exercises.push({
+    exerciseId: selected.id,
+    exerciseName: selected.name,
+    order: updated[dayIndex].exercises.length + 1
+  });
 
- updated[dayIndex].selectedExercise=null;
+  updated[dayIndex].muscles = calculateDayMuscles(updated[dayIndex].exercises);
 
- setDays(updated);
+  updated[dayIndex].selectedExercise = null;
 
+  setDays(updated);
 };
 
 const removeExerciseFromDay=(dayIndex,exIndex)=>{
@@ -244,6 +257,8 @@ const removeExerciseFromDay=(dayIndex,exIndex)=>{
   ...ex,
   order:i+1
  }));
+
+ updated[dayIndex].muscles = calculateDayMuscles(updated[dayIndex].exercises);
 
  setDays(updated);
 
@@ -263,6 +278,8 @@ const moveExercise=(dayIndex,exIndex,direction)=>{
 
  exercises.forEach((ex,i)=>ex.order=i+1);
 
+ updated[dayIndex].muscles = calculateDayMuscles(updated[dayIndex].exercises);
+
  setDays(updated);
 
 };
@@ -274,7 +291,6 @@ const duplicateDay = (index) => {
  const newDay = {
   id: null, // 🔥 nuevo día
   name: dayToCopy.name + " copia",
-  muscles: dayToCopy.muscles,
   exercises: dayToCopy.exercises.map(ex => ({ ...ex })),
   selectedExercise: null,
   image: null,
@@ -300,7 +316,6 @@ const handleSubmit = async () => {
       description,
       days: days.map((day, index) => ({
         name: day.name,
-        muscles: day.muscles,
         dayOrder: index + 1,
         exercises: day.exercises.map((ex, i) => ({
           exerciseId: ex.exerciseId,
@@ -516,68 +531,48 @@ value={day.name}
 onChange={(e)=>updateDayField(dayIndex,"name",e.target.value)}
 />
 
-<TextField
-label="Músculos trabajados"
-value={day.muscles}
-onChange={(e)=>updateDayField(dayIndex,"muscles",e.target.value)}
-/>
+<MuscleChips muscles={day.muscles} />
 
-<Typography variant="subtitle1">
-Imagen del día
-</Typography>
-
-<input
-  type="file"
+<FileUploadField
+  label="Imagen del día"
   accept="image/*"
-  onChange={(e)=>{
-    const file = e.target.files[0];
-    if(!file) return;
-
-    const updated=[...days];
-
+  setFile={(file) => {
+    const updated = [...days];
     updated[dayIndex].image = file;
-    updated[dayIndex].preview = URL.createObjectURL(file);
-    updated[dayIndex].deleteImage = false;
+    setDays(updated);
+  }}
+  preview={day.preview}
+  setPreview={(preview) => {
+    const updated = [...days];
+    updated[dayIndex].preview = preview;
+    setDays(updated);
+  }}
+  existingUrl={
+    day.preview && !day.preview.startsWith("blob:")
+      ? day.preview
+      : null
+  }
+  deleteFlag={day.deleteImage}
+  setDeleteFlag={(value) => {
+    const updated = [...days];
+    updated[dayIndex].deleteImage = value;
+
+    if (value) {
+      updated[dayIndex].image = null;
+    }
 
     setDays(updated);
   }}
-/>
-
-{day.preview && (
-  <Stack spacing={1}>
-
-    <FormControlLabel
-      control={
-        <Checkbox
-          checked={day.deleteImage}
-          onChange={()=>{
-            const updated=[...days];
-
-            updated[dayIndex].deleteImage = !updated[dayIndex].deleteImage;
-
-            if(updated[dayIndex].deleteImage){
-              updated[dayIndex].image = null;
-            }
-
-            setDays(updated);
-          }}
-        />
-      }
-      label="Eliminar imagen"
+  renderPreview={(src) => (
+    <img
+      src={src}
+      style={{
+        maxWidth: "300px",
+        borderRadius: "8px"
+      }}
     />
-
-    {!day.deleteImage && (
-      <img
-        src={day.preview}
-        style={{
-          maxWidth:"300px",
-          borderRadius:"8px"
-        }}
-      />
-    )}
-
-  </Stack>
-)}
+  )}
+/>
 
 <Autocomplete
 options={exercises}

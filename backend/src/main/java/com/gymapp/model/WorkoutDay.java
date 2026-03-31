@@ -5,6 +5,7 @@ package com.gymapp.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+
 @Entity
 public class WorkoutDay {
 
@@ -13,8 +14,6 @@ public class WorkoutDay {
     private Long id;
 
     private String name; // Day 1, Push, Pull, etc
-
-    private String muscles;
 
     private int dayOrder;
 
@@ -44,14 +43,6 @@ public class WorkoutDay {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getMuscles() {
-        return muscles;
-    }
-
-    public void setMuscles(String muscles) {
-        this.muscles = muscles;
     }
 
     public int getDayOrder() {

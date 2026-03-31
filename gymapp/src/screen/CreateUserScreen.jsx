@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import Cropper from "react-easy-crop";
 
 import {
   createUser,
@@ -11,299 +12,334 @@ import {
 } from "../services/userService";
 
 import {
-Container,
-Paper,
-Typography,
-TextField,
-MenuItem,
-Button,
-Stack,
-Alert,
-FormControlLabel,
-Checkbox,
-Snackbar
+  Container,
+  Paper,
+  Typography,
+  TextField,
+  MenuItem,
+  Button,
+  Stack,
+  Alert,
+  FormControlLabel,
+  Checkbox,
+  Snackbar,
+  Dialog,
+  DialogContent,
+  DialogActions,
+  Slider
 } from "@mui/material";
 
 import BackButton from "../components/BackButton";
 
 export default function CreateUserScreen() {
 
-const [users,setUsers] = useState([]);
-const [selectedId,setSelectedId] = useState("new");
-const [currentUser,setCurrentUser] = useState(null);
+  const [users,setUsers] = useState([]);
+  const [selectedId,setSelectedId] = useState("new");
+  const [currentUser,setCurrentUser] = useState(null);
 
-const [name,setName] = useState("");
-const [surname,setSurname] = useState("");
-const [gymDays,setGymDays] = useState("");
-const [image,setImage] = useState(null);
-const [preview,setPreview] = useState(null);
-const [deleteImageChecked,setDeleteImageChecked] = useState(false);
+  const [name,setName] = useState("");
+  const [surname,setSurname] = useState("");
+  const [gymDays,setGymDays] = useState("");
 
-const [message,setMessage] = useState("");
-const [messageType,setMessageType] = useState("info");
+  const [image,setImage] = useState(null);
+  const [preview,setPreview] = useState(null);
+  const [deleteImageChecked,setDeleteImageChecked] = useState(false);
 
-useEffect(()=>{
- loadUsers();
-},[]);
+  // 🔥 crop states
+  const [showCropModal,setShowCropModal] = useState(false);
+  const [crop,setCrop] = useState({ x:0, y:0 });
+  const [zoom,setZoom] = useState(1);
+  const [croppedAreaPixels,setCroppedAreaPixels] = useState(null);
+  const fileInputRef = useRef(null);
 
-const loadUsers = async ()=>{
- const data = await getUsers();
- setUsers(data);
-};
+  const [message,setMessage] = useState("");
+  const [messageType,setMessageType] = useState("info");
 
-const resetForm = ()=>{
- setSelectedId("new");
- setCurrentUser(null);
- setName("");
- setSurname("");
- setGymDays("");
- setImage(null);
- setPreview(null);
- setDeleteImageChecked(false);
-};
+  useEffect(()=>{
+    loadUsers();
+  },[]);
 
-const handleSelect = (id)=>{
+  const loadUsers = async ()=>{
+    const data = await getUsers();
+    setUsers(data);
+  };
 
- setSelectedId(id);
+  const resetForm = ()=>{
+    setSelectedId("new");
+    setCurrentUser(null);
+    setName("");
+    setSurname("");
+    setGymDays("");
+    setImage(null);
+    setPreview(null);
+    setDeleteImageChecked(false);
 
- if(id==="new"){
-  resetForm();
-  return;
- }
+    if(fileInputRef.current){
+      fileInputRef.current.value = "";
+    }
+  };
 
- const user = users.find(u=>u.id===Number(id));
+  const handleSelect = (id)=>{
+    setSelectedId(id);
 
- setCurrentUser(user);
- setName(user.name);
- setSurname(user.surname);
- setGymDays(user.gymDaysPerWeek || "");
- setImage(null);
- setDeleteImageChecked(false);
- setPreview(user.image ? getUserImageUrl(user.image) : null);
-
-};
-
-const validateForm = ()=>{
-
- if(!name.trim()){
-  setMessage("El nombre es obligatorio");
-  setMessageType("warning");
-  return false;
- }
-
- if(!surname.trim()){
-  setMessage("El apellido es obligatorio");
-  setMessageType("warning");
-  return false;
- }
-
- if(!gymDays){
-  setMessage("Debes indicar los días de gimnasio por semana");
-  setMessageType("warning");
-  return false;
- }
-
- if(gymDays < 1 || gymDays > 7){
-  setMessage("Los días de gimnasio deben ser entre 1 y 7");
-  setMessageType("warning");
-  return false;
- }
-
- return true;
-
-};
-
-const handleSubmit = async (e)=>{
-
- e.preventDefault();
-
- if(!validateForm()) return;
-
- try{
-
-  if(selectedId==="new"){
-
-    const created = await createUser({
-    name,
-    surname,
-    gymDaysPerWeek:parseInt(gymDays, 10)
-   });
-
-    if (image) {
-     await uploadUserImage(created.id, image);
+    if(id==="new"){
+      resetForm();
+      return;
     }
 
-   setMessage("Usuario creado correctamente");
-   setMessageType("success");
+    const user = users.find(u=>u.id===Number(id));
 
-  }else{
+    setCurrentUser(user);
+    setName(user.name);
+    setSurname(user.surname);
+    setGymDays(user.gymDaysPerWeek || "");
+    setImage(null);
+    setDeleteImageChecked(false);
+    setPreview(user.image ? getUserImageUrl(user.image) : null);
+  };
 
-   await updateUser(selectedId,{
-    name,
-    surname,
-    gymDaysPerWeek:parseInt(gymDays, 10)
-   });
-
-    if (image) {
-     await uploadUserImage(Number(selectedId), image);
-    } else if (deleteImageChecked) {
-     await deleteUserImage(Number(selectedId));
+  const validateForm = ()=>{
+    if(!name.trim()){
+      setMessage("El nombre es obligatorio");
+      setMessageType("warning");
+      return false;
     }
 
-   setMessage("Usuario actualizado correctamente");
-   setMessageType("success");
-
-  }
-
-  resetForm();
-
-  loadUsers();
-
- }catch(error){
-
-  setMessage("Error: "+error.message);
-  setMessageType("error");
-
- }
-
-};
-
-const handleDelete = async ()=>{
-
- if(!currentUser) return;
-
- if(window.confirm("¿Seguro que deseas eliminar este usuario?")){
-
-  try{
-
-   await deleteUser(currentUser.id);
-
-   setMessage("Usuario eliminado correctamente");
-   setMessageType("success");
-
-   resetForm();
-
-   loadUsers();
-
-  }catch(error){
-
-   setMessage("Error al eliminar usuario");
-   setMessageType("error");
-
-  }
-
- }
-
-};
-
-return(
-
-<Container maxWidth="sm" sx={{mt:4,mb:6}}>
-
-<Paper sx={{p:4}}>
-
-<Stack direction="row" alignItems="center" spacing={1} sx={{mb:2}}>
-
-<BackButton to="/admin" />
-
-<Typography variant="h4" gutterBottom>
-Usuarios
-</Typography>
-
-</Stack>
-
-<Stack spacing={3}>
-
-
-
-<TextField
-select
-label="Seleccionar usuario"
-value={selectedId}
-onChange={(e)=>handleSelect(e.target.value)}
->
-
-<MenuItem value="new">Nuevo Usuario</MenuItem>
-
-{users.map(u=>(
-<MenuItem key={u.id} value={u.id}>
-{u.name} {u.surname}
-</MenuItem>
-))}
-
-</TextField>
-
-<TextField
-label="Nombre"
-value={name}
-onChange={(e)=>setName(e.target.value)}
-/>
-
-<TextField
-label="Apellido"
-value={surname}
-onChange={(e)=>setSurname(e.target.value)}
-/>
-
-<TextField
-label="Días por semana en el gimnasio"
-type="number"
-inputProps={{min:1,max:7}}
-value={gymDays}
-onChange={(e)=>setGymDays(e.target.value)}
-/>
-
-<Typography variant="subtitle1">
-Foto de perfil
-</Typography>
-
-<input
- type="file"
- accept="image/*"
- onChange={(e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-
-  setImage(file);
-  setDeleteImageChecked(false);
-  setPreview(URL.createObjectURL(file));
- }}
-/>
-
-{preview && (
- <Stack spacing={1}>
-  {currentUser && (
-   <FormControlLabel
-    control={
-     <Checkbox
-      checked={deleteImageChecked}
-      onChange={()=>{
-       const checked = !deleteImageChecked;
-       setDeleteImageChecked(checked);
-       if (checked) {
-        setImage(null);
-       }
-      }}
-     />
+    if(!surname.trim()){
+      setMessage("El apellido es obligatorio");
+      setMessageType("warning");
+      return false;
     }
-    label="Eliminar foto"
-   />
-  )}
 
-  {!deleteImageChecked && (
-   <img
-    src={preview}
-    style={{
-     maxWidth:"180px",
-     borderRadius:"10px",
-     border:"1px solid #ddd"
-    }}
-   />
-  )}
- </Stack>
-)}
+    if(!gymDays){
+      setMessage("Debes indicar los días de gimnasio por semana");
+      setMessageType("warning");
+      return false;
+    }
 
-<Snackbar
+    if(gymDays < 1 || gymDays > 7){
+      setMessage("Los días de gimnasio deben ser entre 1 y 7");
+      setMessageType("warning");
+      return false;
+    }
+
+    return true;
+  };
+
+  // 🔥 helper para recortar
+  const getCroppedImg = async (imageSrc, crop) => {
+    const image = new Image();
+    image.src = imageSrc;
+
+    await new Promise((resolve) => (image.onload = resolve));
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = crop.width;
+    canvas.height = crop.height;
+
+    ctx.drawImage(
+      image,
+      crop.x,
+      crop.y,
+      crop.width,
+      crop.height,
+      0,
+      0,
+      crop.width,
+      crop.height
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, "image/jpeg");
+    });
+  };
+
+  const handleCropSave = async () => {
+    const croppedBlob = await getCroppedImg(preview, croppedAreaPixels);
+
+    const croppedFile = new File([croppedBlob], "avatar.jpg", {
+      type: "image/jpeg",
+    });
+
+    setImage(croppedFile);
+    setPreview(URL.createObjectURL(croppedBlob));
+    setShowCropModal(false);
+  };
+
+  const handleSubmit = async (e)=>{
+    e.preventDefault();
+
+    if(!validateForm()) return;
+
+    try{
+
+      if(selectedId==="new"){
+
+        const created = await createUser({
+          name,
+          surname,
+          gymDaysPerWeek:parseInt(gymDays, 10)
+        });
+
+        if (image) {
+          await uploadUserImage(created.id, image);
+        }
+
+        setMessage("Usuario creado correctamente");
+        setMessageType("success");
+
+      }else{
+
+        await updateUser(selectedId,{
+          name,
+          surname,
+          gymDaysPerWeek:parseInt(gymDays, 10)
+        });
+
+        if (image) {
+          await uploadUserImage(Number(selectedId), image);
+        } else if (deleteImageChecked) {
+          await deleteUserImage(Number(selectedId));
+        }
+
+        setMessage("Usuario actualizado correctamente");
+        setMessageType("success");
+      }
+
+      resetForm();
+      loadUsers();
+
+    }catch(error){
+      setMessage("Error: "+error.message);
+      setMessageType("error");
+    }
+  };
+
+  const handleDelete = async ()=>{
+    if(!currentUser) return;
+
+    if(window.confirm("¿Seguro que deseas eliminar este usuario?")){
+      try{
+        await deleteUser(currentUser.id);
+
+        setMessage("Usuario eliminado correctamente");
+        setMessageType("success");
+
+        resetForm();
+        loadUsers();
+
+      }catch{
+        setMessage("Error al eliminar usuario");
+        setMessageType("error");
+      }
+    }
+  };
+
+  return(
+
+    <Container maxWidth="sm" sx={{mt:4,mb:6}}>
+
+      <Paper sx={{p:4}}>
+
+        <Stack direction="row" alignItems="center" spacing={1} sx={{mb:2}}>
+          <BackButton to="/admin" />
+          <Typography variant="h4">Usuarios</Typography>
+        </Stack>
+
+        <Stack spacing={3}>
+
+          <TextField
+            select
+            label="Seleccionar usuario"
+            value={selectedId}
+            onChange={(e)=>handleSelect(e.target.value)}
+          >
+            <MenuItem value="new">Nuevo Usuario</MenuItem>
+
+            {users.map(u=>(
+              <MenuItem key={u.id} value={u.id}>
+                {u.name} {u.surname}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField label="Nombre" value={name} onChange={(e)=>setName(e.target.value)} />
+          <TextField label="Apellido" value={surname} onChange={(e)=>setSurname(e.target.value)} />
+
+          <TextField
+            label="Días por semana en el gimnasio"
+            type="number"
+            inputProps={{min:1,max:7}}
+            value={gymDays}
+            onChange={(e)=>setGymDays(e.target.value)}
+          />
+
+          <Stack spacing={1}>
+            <Typography>Foto de perfil</Typography>
+
+            <Button variant="outlined" component="label">
+              Seleccionar imagen
+              <input
+                hidden
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onClick={() => { //Permitir volver a elegir la misma imagen
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                  }
+                }}
+                onChange={(e)=>{
+                  const file = e.target.files[0];
+                  if(!file) return;
+
+                  const imageUrl = URL.createObjectURL(file);
+
+                  setPreview(imageUrl);
+                  setImage(file);
+                  setDeleteImageChecked(false);
+                  setShowCropModal(true);
+                }}
+              />
+            </Button>
+          </Stack>
+
+          {preview && (
+            <Stack spacing={1}>
+              {currentUser && (
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={deleteImageChecked}
+                      onChange={()=>{
+                        const checked = !deleteImageChecked;
+                        setDeleteImageChecked(checked);
+                        if (checked) setImage(null);
+                      }}
+                    />
+                  }
+                  label="Eliminar foto"
+                />
+              )}
+
+              {!deleteImageChecked && (
+                <img
+                  src={preview}
+                  style={{
+                    maxWidth:"180px",
+                    borderRadius:"10px",
+                    border:"1px solid #ddd"
+                  }}
+                />
+              )}
+            </Stack>
+          )}
+
+          <Snackbar
             open={!!message}
             autoHideDuration={3000}
             onClose={()=>setMessage("")}
@@ -314,36 +350,58 @@ Foto de perfil
             </Alert>
           </Snackbar>
 
+          <Stack direction="row" spacing={2}>
 
-<Stack direction="row" spacing={2}>
+            {currentUser && (
+              <Button variant="contained" color="error" onClick={handleDelete}>
+                Eliminar Usuario
+              </Button>
+            )}
 
-{currentUser && (
+            <Button variant="contained" color="success" onClick={handleSubmit}>
+              {currentUser ? "Actualizar Usuario" : "Crear Usuario"}
+            </Button>
 
-<Button
-variant="contained"
-color="error"
-onClick={handleDelete}
->
-Eliminar Usuario
-</Button>
+          </Stack>
 
-)}
+        </Stack>
+      </Paper>
 
-<Button
-variant="contained"
-color="success"
-onClick={handleSubmit}
->
-{currentUser ? "Actualizar Usuario" : "Crear Usuario"}
-</Button>
+      {/* 🔥 MODAL CROPPER */}
+      <Dialog open={showCropModal} onClose={()=>setShowCropModal(false)} fullWidth>
+        <DialogContent sx={{ position:"relative", height:300 }}>
 
-</Stack>
+          <Cropper
+            image={preview}
+            crop={crop}
+            zoom={zoom}
+            aspect={4/3}
+            onCropChange={setCrop}
+            onZoomChange={setZoom}
+            onCropComplete={(area, pixels)=>setCroppedAreaPixels(pixels)}
+          />
 
-</Stack>
+        </DialogContent>
 
-</Paper>
+        <Stack sx={{ px:3 }}>
+          <Typography>Zoom</Typography>
+          <Slider
+            min={1}
+            max={3}
+            step={0.1}
+            value={zoom}
+            onChange={(e,val)=>setZoom(val)}
+          />
+        </Stack>
 
-</Container>
+        <DialogActions>
+          <Button onClick={()=>setShowCropModal(false)}>Cancelar</Button>
+          <Button variant="contained" onClick={handleCropSave}>
+            Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-);
+    </Container>
+  );
 }

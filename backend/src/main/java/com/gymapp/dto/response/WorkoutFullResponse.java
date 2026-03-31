@@ -3,6 +3,8 @@ package com.gymapp.dto.response;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.gymapp.model.MuscleType;
+import java.util.Set;
 
 public record WorkoutFullResponse(
         Long id,
@@ -16,7 +18,7 @@ public record WorkoutFullResponse(
     public record DayItem(
             Long id,
             String name,
-            String muscles,
+            Set<MuscleType> muscles,
             int dayOrder,
             String muscleImage,
             boolean abdominal,

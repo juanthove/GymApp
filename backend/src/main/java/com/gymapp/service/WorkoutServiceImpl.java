@@ -45,6 +45,9 @@ public class WorkoutServiceImpl implements WorkoutService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private MuscleService muscleService;
+
     @Override
     public List<WorkoutResponse> getAllWorkouts() {
         return workoutRepository.findAll().stream().map(this::toResponse).toList();
@@ -106,7 +109,7 @@ public class WorkoutServiceImpl implements WorkoutService {
                             ex.getExerciseOrder(), ex.getWeight(), ex.getComment(), ex.getCompleted()))
                     .toList();
             dayList.add(new WorkoutFullResponse.DayItem(
-                    day.getId(), day.getName(), day.getMuscles(), day.getDayOrder(), day.getMuscleImage(),
+                    day.getId(), day.getName(), muscleService.getMusclesFromWorkoutDay(day), day.getDayOrder(), day.getMuscleImage(),
                     day.getAbdominal(), day.getStartedAt(), day.getFinishedAt(), day.getStatus(), exerciseList));
         }
 
@@ -131,7 +134,6 @@ public class WorkoutServiceImpl implements WorkoutService {
         for (WorkoutFullRequest.DayItem dayData : request.days()) {
             WorkoutDay day = new WorkoutDay();
             day.setName(dayData.name());
-            day.setMuscles(dayData.muscles());
             day.setDayOrder(dayData.dayOrder());
             day.setWorkout(workout);
             day = workoutDayRepository.save(day);
@@ -169,7 +171,6 @@ public class WorkoutServiceImpl implements WorkoutService {
         for (WorkoutFullRequest.DayItem dayData : request.days()) {
             WorkoutDay day = new WorkoutDay();
             day.setName(dayData.name());
-            day.setMuscles(dayData.muscles());
             day.setDayOrder(dayData.dayOrder());
             day.setWorkout(workout);
             day = workoutDayRepository.save(day);

@@ -5,6 +5,7 @@ import com.gymapp.dto.response.WorkoutExerciseResponse;
 import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.Exercise;
 import com.gymapp.model.ExerciseType;
+import com.gymapp.model.MuscleType;
 import com.gymapp.model.WorkoutDay;
 import com.gymapp.model.WorkoutExercise;
 import com.gymapp.repository.ExerciseRepository;
@@ -111,7 +112,7 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
         Long dayId = exercise.getWorkoutDay() != null ? exercise.getWorkoutDay().getId() : null;
         Long exerciseId = exercise.getExercise() != null ? exercise.getExercise().getId() : null;
         String exerciseName = exercise.getExercise() != null ? exercise.getExercise().getName() : null;
-        String exerciseMuscle = exercise.getExercise() != null ? exercise.getExercise().getMuscle() : null;
+        MuscleType exerciseMuscle = exercise.getExercise() != null ? exercise.getExercise().getMuscle() : null;
         String image = exercise.getExercise() != null ? exercise.getExercise().getImage() : null;
         String video = exercise.getExercise() != null ? exercise.getExercise().getVideo() : null;
         String icon = exercise.getExercise() != null ? exercise.getExercise().getIcon() : null;

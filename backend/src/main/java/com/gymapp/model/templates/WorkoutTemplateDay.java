@@ -11,8 +11,6 @@ public class WorkoutTemplateDay {
 
     private String name; // Day 1, Push, Pull, etc
 
-    private String muscles;
-
     private Integer dayOrder;
 
     private String muscleImage; //Imagen del cuerpo con los musculos
@@ -35,14 +33,6 @@ public class WorkoutTemplateDay {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getMuscles() {
-        return muscles;
-    }
-
-    public void setMuscles(String muscles) {
-        this.muscles = muscles;
     }
 
     public Integer getDayOrder() {

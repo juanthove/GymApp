@@ -2,6 +2,7 @@ package com.gymapp.controller;
 
 import com.gymapp.dto.response.ExerciseResponse;
 import com.gymapp.model.ExerciseType;
+import com.gymapp.model.MuscleType;
 import com.gymapp.service.ExerciseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -33,7 +34,7 @@ public class ExerciseController {
     public ExerciseResponse createExercise(
             @RequestParam("name") String name,
             @RequestParam(value = "description", required = false) String description,
-            @RequestParam(value = "muscle", required = false) String muscle,
+            @RequestParam("muscle") MuscleType muscle,
             @RequestParam("type") ExerciseType type,
             @RequestParam(value = "image", required = false) MultipartFile image,
             @RequestParam(value = "video", required = false) MultipartFile video,
@@ -47,7 +48,7 @@ public class ExerciseController {
             @PathVariable Long id,
             @RequestParam("name") String name,
             @RequestParam(value = "description", required = false) String description,
-            @RequestParam(value = "muscle", required = false) String muscle,
+            @RequestParam("muscle") MuscleType muscle,
             @RequestParam("type") ExerciseType type,
             @RequestParam(value = "image", required = false) MultipartFile image,
             @RequestParam(value = "video", required = false) MultipartFile video,
