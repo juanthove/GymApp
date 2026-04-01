@@ -2,6 +2,8 @@ package com.gymapp.model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "workout_set")
 public class WorkoutSet {
@@ -23,6 +25,8 @@ public class WorkoutSet {
     private Integer reps;
 
     private Double weight;
+
+    private LocalDateTime performedAt;
 
 
     public Long getId() {
@@ -71,5 +75,13 @@ public class WorkoutSet {
 
     public void setWeight(Double weight) {
         this.weight = weight;
+    }
+
+    public LocalDateTime getPerformedAt() {
+        return performedAt;
+    }
+
+    public void setPerformedAt(LocalDateTime performedAt) {
+        this.performedAt = performedAt;
     }
 }

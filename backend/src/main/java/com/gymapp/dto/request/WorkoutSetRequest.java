@@ -5,7 +5,6 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
 public record WorkoutSetRequest(
-        @NotNull Long userId,
         @NotNull Long workoutExerciseId,
         @NotNull @Positive Integer setNumber,
         @NotNull @Positive Integer reps,

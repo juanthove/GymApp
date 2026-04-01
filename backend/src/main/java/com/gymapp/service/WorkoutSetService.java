@@ -2,7 +2,10 @@ package com.gymapp.service;
 
 import com.gymapp.dto.request.WorkoutSetRequest;
 import com.gymapp.dto.response.WorkoutSetResponse;
+import com.gymapp.dto.response.WorkoutSetVolumeResponse;
+import com.gymapp.dto.response.WorkoutSetWeeklyMuscleVolumeResponse;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface WorkoutSetService {
@@ -12,6 +15,12 @@ public interface WorkoutSetService {
     WorkoutSetResponse getWorkoutSetById(Long id);
 
     List<WorkoutSetResponse> getWorkoutSetsByUser(Long userId);
+
+    List<WorkoutSetResponse> getWorkoutSetsByUserAndDateRange(Long userId, LocalDate from, LocalDate to);
+
+    WorkoutSetVolumeResponse getTotalVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to);
+
+    List<WorkoutSetWeeklyMuscleVolumeResponse> getWeeklyMuscleVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to);
 
     List<WorkoutSetResponse> getWorkoutSetsByWorkoutExercise(Long workoutExerciseId);
 

@@ -14,6 +14,21 @@ export async function getWorkoutSetsByUser(userId) {
 	return apiRequest(`${API_URL}/user/${userId}`);
 }
 
+export async function getWorkoutSetsByUserAndDateRange(userId, from, to) {
+	const params = new URLSearchParams({ from, to });
+	return apiRequest(`${API_URL}/user/${userId}/range?${params.toString()}`);
+}
+
+export async function getTotalWorkoutVolumeByUserAndDateRange(userId, from, to) {
+	const params = new URLSearchParams({ from, to });
+	return apiRequest(`${API_URL}/user/${userId}/volume?${params.toString()}`);
+}
+
+export async function getWeeklyMuscleVolumeByUserAndDateRange(userId, from, to) {
+	const params = new URLSearchParams({ from, to });
+	return apiRequest(`${API_URL}/user/${userId}/volume/weekly-by-muscle?${params.toString()}`);
+}
+
 export async function getWorkoutSetsByWorkoutExercise(workoutExerciseId) {
 	return apiRequest(`${API_URL}/workout-exercise/${workoutExerciseId}`);
 }
