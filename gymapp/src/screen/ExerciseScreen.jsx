@@ -22,6 +22,16 @@ import {
   getWorkoutDayExercises
 } from "../services/workoutDayService";
 
+import {
+  getWorkoutSets,
+  getWorkoutSetById,
+  getWorkoutSetsByUser,
+  getWorkoutSetsByWorkoutExercise,
+  createWorkoutSet,
+  updateWorkoutSet,
+  deleteWorkoutSet
+} from "../services/workoutSetService";
+
 import GymCard from "../components/GymCard";
 import BackButton from "../components/BackButton";
 import MuscleChips from "../components/MuscleChips";
@@ -29,6 +39,7 @@ import MuscleChips from "../components/MuscleChips";
 import {
   Container,
   Typography,
+  TextField,
   Tabs,
   Tab,
   Stack,
@@ -37,12 +48,17 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Snackbar,
+  Alert,
   Box
 } from "@mui/material";
 
 export default function ExerciseScreen(){
 
 const { userId, workoutDayId } = useParams();
+
+const [message, setMessage] = useState("");
+const [messageType, setMessageType] = useState("success");
 
 const [allExercises,setAllExercises] = useState([]);
 const [displayedExercises,setDisplayedExercises] = useState([]);
@@ -58,9 +74,42 @@ const [isAbdominal,setIsAbdominal] = useState(false);
 
 const [filterType, setFilterType] = useState("ALL");
 
+const [sets, setSets] = useState([
+  [{ reps: "", weight: "", id: null }],
+  [{ reps: "", weight: "", id: null }],
+  [{ reps: "", weight: "", id: null }]
+]);
+
 useEffect(()=>{
  loadData();
 },[]);
+
+useEffect(() => {
+  if (!selectedExercise) return;
+
+  loadSets();
+}, [selectedExercise]);
+
+const loadSets = async () => {
+  const data = await getWorkoutSetsByWorkoutExercise(selectedExercise.id);
+
+  if (!data || data.length === 0) return;
+
+  const grouped = {};
+
+  data.forEach(s => {
+    if (!grouped[s.setNumber]) grouped[s.setNumber] = [];
+    grouped[s.setNumber].push({
+      id: s.id,
+      reps: s.reps,
+      weight: s.weight
+    });
+  });
+
+  const result = Object.values(grouped);
+
+  setSets(result);
+};
 
 const loadData = async () => {
 
@@ -134,6 +183,17 @@ const toggleSelectedExercise = async (ex) => {
 
 const toggleCompleteExercise = async(ex)=>{
 
+  const hasInvalid = sets.some(set =>
+    set.some(b => b.reps || b.weight) &&
+    !set.every(b => b.reps && b.weight)
+  );
+
+  if (hasInvalid) {
+    setMessage("Tenés series incompletas");
+    setMessageType("error");
+    return;
+  }
+
  let updated;
 
  if(ex.completed){
@@ -187,6 +247,69 @@ const finishDayWithAbs = async () => {
 
  await loadData();
 
+};
+
+const addBlock = (setIndex) => {
+  const updated = [...sets];
+  updated[setIndex].push({ reps: "", weight: "", id: null });
+  setSets(updated);
+};
+
+const removeBlock = (setIndex, blockIndex) => {
+  const updated = [...sets];
+  updated[setIndex].splice(blockIndex, 1);
+  setSets(updated);
+};
+
+const handleChange = (setIndex, blockIndex, field, value) => {
+  const updated = [...sets];
+  updated[setIndex][blockIndex][field] = value;
+  setSets(updated);
+};
+
+const saveSet = async (setIndex) => {
+  const blocks = sets[setIndex];
+
+  const allEmpty = blocks.every(b => !b.reps && !b.weight);
+  const allFull = blocks.every(b => b.reps && b.weight);
+
+  if (!allEmpty && !allFull) {
+    setMessage("Completá todos los bloques de la serie");
+    setMessageType("error");
+    return;
+  }
+
+  // 🔴 BORRAR
+  if (allEmpty) {
+    for (const b of blocks) {
+      if (b.id) await deleteWorkoutSet(b.id);
+    }
+    setMessage("Serie eliminada");
+    setMessageType("info");
+    return;
+  }
+
+  // 🟢 GUARDAR
+  for (const b of blocks) {
+    if (b.id) {
+      await updateWorkoutSet(b.id, {
+        reps: b.reps,
+        weight: b.weight,
+        setNumber: setIndex + 1,
+        workoutExerciseId: selectedExercise.id
+      });
+    } else {
+      await createWorkoutSet({
+        reps: b.reps,
+        weight: b.weight,
+        setNumber: setIndex + 1,
+        workoutExerciseId: selectedExercise.id
+      });
+    }
+  }
+
+  setMessage(`Serie ${setIndex + 1} guardada`);
+  setMessageType("success");
 };
 
 return(
@@ -268,6 +391,17 @@ displayedExercises.map((ex)=>(
 )}
 
 </Stack>
+
+<Snackbar
+  open={!!message}
+  autoHideDuration={3000}
+  onClose={()=>setMessage("")}
+  anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+>
+  <Alert severity={messageType} sx={{ width: "100%" }}>
+    {message}
+  </Alert>
+</Snackbar>
 
 {/* BOTON FINALIZAR */}
 
@@ -390,6 +524,63 @@ Comentario: {selectedExercise.comment}
 </Typography>
 
 }
+
+</Stack>
+
+<Stack spacing={3} sx={{ mt: 3 }}>
+
+{sets.map((set, setIndex) => (
+
+  <Box key={setIndex} sx={{ border: "1px solid #ddd", p:2, borderRadius:2 }}>
+
+    <Typography fontWeight={700}>
+      Serie {setIndex + 1}
+    </Typography>
+
+    <Stack spacing={1} mt={1}>
+
+      {set.map((block, blockIndex) => (
+
+        <Stack direction="row" spacing={1} key={blockIndex} alignItems="center">
+
+          <TextField
+            label="Reps"
+            size="small"
+            value={block.reps}
+            onChange={(e)=>handleChange(setIndex, blockIndex, "reps", e.target.value)}
+            sx={{ width: 80 }}
+          />
+
+          <TextField
+            label="Peso"
+            size="small"
+            value={block.weight}
+            onChange={(e)=>handleChange(setIndex, blockIndex, "weight", e.target.value)}
+            sx={{ width: 90 }}
+          />
+
+          <Button onClick={()=>addBlock(setIndex)}>+</Button>
+
+          {set.length > 1 && (
+            <Button onClick={()=>removeBlock(setIndex, blockIndex)}>-</Button>
+          )}
+
+        </Stack>
+
+      ))}
+
+      <Button
+        variant="contained"
+        onClick={()=>saveSet(setIndex)}
+      >
+        Guardar serie {setIndex + 1}
+      </Button>
+
+    </Stack>
+
+  </Box>
+
+))}
 
 </Stack>
 
