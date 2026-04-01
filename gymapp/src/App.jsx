@@ -10,6 +10,7 @@ import HomeScreen from "./screen/HomeScreen";
 import WorkoutScreen from "./screen/WorkoutScreen";
 import ExerciseScreen from "./screen/ExerciseScreen";
 import FinalResumeScreen from "./screen/FinalResumeScreen";
+import StatsScreen from "./screen/StatsScreen";
 
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         <Route path="/workout/:userId" element={<WorkoutScreen />} />
         <Route path="/exercise/:userId/:workoutDayId" element={<ExerciseScreen />} />
         <Route path="/final/:userId/:workoutDayId" element={<FinalResumeScreen />} />
+        <Route path="/stats/:userId" element={<StatsScreen />} />
 
         <Route path="/admin" element={<AdminScreen />} />
         <Route path="/admin/users" element={<CreateUserScreen />} />

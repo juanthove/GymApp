@@ -181,7 +181,7 @@ return(
 
 })}
 
-<Button variant="contained">
+<Button variant="contained" onClick={() => navigate(`/stats/${userId}`)}>
 📊 Estadísticas
 </Button>
 
