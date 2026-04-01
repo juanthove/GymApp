@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   Alert,
@@ -9,6 +9,7 @@ import {
   Chip,
   Container,
   LinearProgress,
+  MenuItem,
   Stack,
   Table,
   TableBody,
@@ -72,6 +73,7 @@ export default function StatsScreen() {
 
   const [totalVolume, setTotalVolume] = useState(0);
   const [weeklyByMuscle, setWeeklyByMuscle] = useState([]);
+  const [selectedMuscle, setSelectedMuscle] = useState("ALL");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -105,6 +107,42 @@ export default function StatsScreen() {
       volumeRatio: maxVolume > 0 ? (row.currentVolume / maxVolume) * 100 : 0,
     }));
   }, [weeklyByMuscle]);
+
+  const muscleOptions = useMemo(() => {
+    const muscles = [...new Set(enhancedRows.map((row) => row.muscle))].sort();
+    return ["ALL", ...muscles];
+  }, [enhancedRows]);
+
+  const filteredRows = useMemo(() => {
+    if (selectedMuscle === "ALL") {
+      return enhancedRows;
+    }
+
+    return enhancedRows.filter((row) => row.muscle === selectedMuscle);
+  }, [enhancedRows, selectedMuscle]);
+
+  const weeklyGroups = useMemo(() => {
+    const groups = new Map();
+
+    for (const row of filteredRows) {
+      const key = `${row.weekStart}|${row.weekEnd}`;
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          weekStart: row.weekStart,
+          weekEnd: row.weekEnd,
+          rows: [],
+          subtotal: 0,
+        });
+      }
+
+      const group = groups.get(key);
+      group.rows.push(row);
+      group.subtotal += row.currentVolume;
+    }
+
+    return Array.from(groups.values());
+  }, [filteredRows]);
 
   const loadStats = async () => {
     if (!from || !to) {
@@ -174,6 +212,20 @@ export default function StatsScreen() {
                 {loading ? "Cargando..." : "Actualizar"}
               </Button>
             </Stack>
+
+            <TextField
+              select
+              label="Músculo"
+              value={selectedMuscle}
+              onChange={(e) => setSelectedMuscle(e.target.value)}
+              sx={{ mt: 2, maxWidth: 260 }}
+            >
+              {muscleOptions.map((muscle) => (
+                <MenuItem key={muscle} value={muscle}>
+                  {muscle === "ALL" ? "Todos" : muscle}
+                </MenuItem>
+              ))}
+            </TextField>
           </CardContent>
         </Card>
 
@@ -194,7 +246,7 @@ export default function StatsScreen() {
               Volumen semanal por músculo
             </Typography>
 
-            {enhancedRows.length === 0 ? (
+            {filteredRows.length === 0 ? (
               <Typography color="text.secondary">No hay datos para ese rango.</Typography>
             ) : (
               <Box sx={{ overflowX: "auto" }}>
@@ -209,51 +261,65 @@ export default function StatsScreen() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {enhancedRows.map((row, index) => (
-                      <TableRow key={`${row.weekStart}-${row.muscle}-${index}`}>
-                        <TableCell>{row.weekStart} a {row.weekEnd}</TableCell>
-                        <TableCell>
-                          <Chip
-                            size="small"
-                            label={row.muscle}
-                            sx={{
-                              color: "#fff",
-                              bgcolor: getMuscleColor(row.muscle),
-                              fontWeight: 600,
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell align="right">
-                          <Stack spacing={0.6} alignItems="flex-end">
-                            <Typography variant="body2">{formatVolume(row.currentVolume)} kg</Typography>
-                            <Box sx={{ width: 120 }}>
-                              <LinearProgress
-                                variant="determinate"
-                                value={row.volumeRatio}
-                                sx={{ height: 7, borderRadius: 10 }}
+                    {weeklyGroups.map((group) => (
+                      <Fragment key={`${group.weekStart}-${group.weekEnd}`}>
+                        {group.rows.map((row, index) => (
+                          <TableRow key={`${row.weekStart}-${row.muscle}-${index}`}>
+                            <TableCell>{row.weekStart} a {row.weekEnd}</TableCell>
+                            <TableCell>
+                              <Chip
+                                size="small"
+                                label={row.muscle}
+                                sx={{
+                                  color: "#fff",
+                                  bgcolor: getMuscleColor(row.muscle),
+                                  fontWeight: 600,
+                                }}
                               />
-                            </Box>
-                          </Stack>
-                        </TableCell>
-                        <TableCell
-                          align="right"
-                          sx={{
-                            color: row.delta >= 0 ? "success.main" : "error.main",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {row.delta >= 0 ? "+" : ""}{formatVolume(row.delta)} kg
-                        </TableCell>
-                        <TableCell
-                          align="right"
-                          sx={{
-                            color: row.percent == null ? "text.secondary" : row.percent >= 0 ? "success.main" : "error.main",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {row.percent == null ? "-" : `${row.percent >= 0 ? "+" : ""}${formatVolume(row.percent)}%`}
-                        </TableCell>
-                      </TableRow>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Stack spacing={0.6} alignItems="flex-end">
+                                <Typography variant="body2">{formatVolume(row.currentVolume)} kg</Typography>
+                                <Box sx={{ width: 120 }}>
+                                  <LinearProgress
+                                    variant="determinate"
+                                    value={row.volumeRatio}
+                                    sx={{ height: 7, borderRadius: 10 }}
+                                  />
+                                </Box>
+                              </Stack>
+                            </TableCell>
+                            <TableCell
+                              align="right"
+                              sx={{
+                                color: row.delta >= 0 ? "success.main" : "error.main",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {row.delta >= 0 ? "+" : ""}{formatVolume(row.delta)} kg
+                            </TableCell>
+                            <TableCell
+                              align="right"
+                              sx={{
+                                color: row.percent == null ? "text.secondary" : row.percent >= 0 ? "success.main" : "error.main",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {row.percent == null ? "-" : `${row.percent >= 0 ? "+" : ""}${formatVolume(row.percent)}%`}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+
+                        <TableRow sx={{ bgcolor: "action.hover" }}>
+                          <TableCell colSpan={2} sx={{ fontWeight: 700 }}>
+                            Subtotal semanal ({group.weekStart} a {group.weekEnd})
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 700 }}>
+                            {formatVolume(group.subtotal)} kg
+                          </TableCell>
+                          <TableCell colSpan={2} />
+                        </TableRow>
+                      </Fragment>
                     ))}
                   </TableBody>
                 </Table>
