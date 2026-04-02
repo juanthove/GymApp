@@ -33,21 +33,67 @@ const theme = createTheme({
 
  components:{
 
-  MuiButton:{
-   styleOverrides:{
-    root:{
-     borderRadius:8,
-     textTransform:"none",
-     fontWeight:600
-    }
-   }
-  },
-
   MuiTextField:{
    defaultProps:{
     variant:"outlined"
    }
-  }
+  },
+
+  MuiDialog: {
+      defaultProps: {
+        fullWidth: true,
+        maxWidth: "sm", // 👈 más chico que md (esto arregla el ancho excesivo)
+      },
+      styleOverrides: {
+        paper: {
+          borderRadius: 16,
+          padding: 16,
+          width: "100%",
+          maxWidth: 600, // 👈 control fino del ancho REAL
+        },
+      },
+    },
+
+    MuiDialogTitle: {
+      styleOverrides: {
+        root: {
+          fontSize: "2rem",
+          fontWeight: 700,
+          textAlign: "center",
+          paddingBottom: 8,
+        },
+      },
+    },
+
+    MuiDialogContent: {
+      styleOverrides: {
+        root: {
+          padding: "24px 32px",
+          textAlign: "center",
+        },
+      },
+    },
+
+    MuiDialogActions: {
+      styleOverrides: {
+        root: {
+          padding: "16px 32px 24px",
+          gap: 16,
+          justifyContent: "center",
+        },
+      },
+    },
+
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          fontSize: "1.1rem",
+          fontWeight: 700,
+          padding: "14px 24px",
+          borderRadius: 12,
+        },
+      },
+    },
 
  }
 

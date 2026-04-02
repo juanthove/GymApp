@@ -15,18 +15,27 @@ export async function getWorkoutSetsByUser(userId) {
 }
 
 export async function getWorkoutSetsByUserAndDateRange(userId, from, to) {
-	const params = new URLSearchParams({ from, to });
-	return apiRequest(`${API_URL}/user/${userId}/range?${params.toString()}`);
+	const params = new URLSearchParams();
+	if (from) params.append("from", from);
+	if (to) params.append("to", to);
+	const query = params.toString();
+	return apiRequest(`${API_URL}/user/${userId}/range${query ? `?${query}` : ""}`);
 }
 
 export async function getTotalWorkoutVolumeByUserAndDateRange(userId, from, to) {
-	const params = new URLSearchParams({ from, to });
-	return apiRequest(`${API_URL}/user/${userId}/volume?${params.toString()}`);
+	const params = new URLSearchParams();
+	if (from) params.append("from", from);
+	if (to) params.append("to", to);
+	const query = params.toString();
+	return apiRequest(`${API_URL}/user/${userId}/volume${query ? `?${query}` : ""}`);
 }
 
 export async function getWeeklyMuscleVolumeByUserAndDateRange(userId, from, to) {
-	const params = new URLSearchParams({ from, to });
-	return apiRequest(`${API_URL}/user/${userId}/volume/weekly-by-muscle?${params.toString()}`);
+	const params = new URLSearchParams();
+	if (from) params.append("from", from);
+	if (to) params.append("to", to);
+	const query = params.toString();
+	return apiRequest(`${API_URL}/user/${userId}/volume/weekly-by-muscle${query ? `?${query}` : ""}`);
 }
 
 export async function getWorkoutSetsByWorkoutExercise(workoutExerciseId) {

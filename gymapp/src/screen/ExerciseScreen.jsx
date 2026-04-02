@@ -73,12 +73,44 @@ const [confirmFinish,setConfirmFinish] = useState(false);
 const [isAbdominal,setIsAbdominal] = useState(false);
 
 const [filterType, setFilterType] = useState("ALL");
+const [filterMuscle, setFilterMuscle] = useState("ALL");
+
+const availableMuscles = [
+  "ALL",
+  ...Array.from(
+    new Set(
+      allExercises
+        .map(ex => ex.exerciseMuscle)
+        .filter(Boolean)
+    )
+  )
+];
 
 const [sets, setSets] = useState([
   [{ reps: "", weight: "", id: null }],
   [{ reps: "", weight: "", id: null }],
   [{ reps: "", weight: "", id: null }]
 ]);
+
+const emptySets = [
+  [{ reps: "", weight: "", id: null }],
+  [{ reps: "", weight: "", id: null }],
+  [{ reps: "", weight: "", id: null }]
+];
+
+const muscleLabels = {
+  CHEST: "Pecho",
+  BACK: "Espalda",
+  SHOULDERS: "Hombros",
+  BICEPS: "Bíceps",
+  TRICEPS: "Tríceps",
+  FOREARMS: "Antebrazos",
+  QUADRICEPS: "Cuádriceps",
+  GLUTES: "Glúteos",
+  HAMSTRINGS: "Femorales",
+  CALVES: "Gemelos",
+  ABDOMINALS: "Abdominales"
+};
 
 useEffect(()=>{
  loadData();
@@ -91,6 +123,8 @@ useEffect(() => {
 }, [selectedExercise]);
 
 const loadSets = async () => {
+  setSets(emptySets);
+
   const data = await getWorkoutSetsByWorkoutExercise(selectedExercise.id);
 
   if (!data || data.length === 0) return;
@@ -106,7 +140,9 @@ const loadSets = async () => {
     });
   });
 
-  const result = Object.values(grouped);
+  const result = [1, 2, 3].map((setNum) => {
+    return grouped[setNum] || [{ reps: "", weight: "", id: null }];
+  });
 
   setSets(result);
 };
@@ -144,15 +180,16 @@ const formatExerciseType = (type) => {
 
 const filteredExercises = allExercises.filter((ex) => {
 
-  // si es día abdominal → solo abdominales
-  if (isAbdominal) {
-    return ex.type === "ABDOMINAL";
-  }
+  // 🔴 día abdominal
+  if (isAbdominal && ex.type !== "ABDOMINAL") return false;
 
-  // si no hay filtro
-  if (filterType === "ALL") return true;
+  // 🔵 filtro por tipo
+  if (filterType !== "ALL" && ex.type !== filterType) return false;
 
-  return ex.type === filterType;
+  // 🟢 filtro por músculo
+  if (filterMuscle !== "ALL" && ex.exerciseMuscle !== filterMuscle) return false;
+
+  return true;
 });
 
 
@@ -183,15 +220,21 @@ const toggleSelectedExercise = async (ex) => {
 
 const toggleCompleteExercise = async(ex)=>{
 
-  const hasInvalid = sets.some(set =>
-    set.some(b => b.reps || b.weight) &&
-    !set.every(b => b.reps && b.weight)
-  );
-
-  if (hasInvalid) {
+  if (!areSetsValid()) {
     setMessage("Tenés series incompletas");
     setMessageType("error");
     return;
+  }
+
+  if (!ex.completed) {
+
+    const existing = await getWorkoutSetsByWorkoutExercise(selectedExercise.id);
+
+    for (let i = 0; i < sets.length; i++) {
+      await saveSet(i, false, existing);
+    }
+    setMessage("Series guardadas automáticamente");
+    setMessageType("success");
   }
 
  let updated;
@@ -219,7 +262,19 @@ setSelectedExercise(updatedDisplayed.find((e) => e.id === updated.id) || null);
 
 };
 
+const areAllExercisesCompleted = () => {
+  if (displayedExercises.length === 0) return false;
+
+  return displayedExercises.every(ex => ex.completed);
+};
+
 const handleFinishClick = ()=>{
+
+  if (!areAllExercisesCompleted()) {
+    setMessage("Tenés ejercicios sin completar");
+    setMessageType("error");
+    return;
+  }
 
  if(isAbdominal){
   finishDay();
@@ -267,29 +322,68 @@ const handleChange = (setIndex, blockIndex, field, value) => {
   setSets(updated);
 };
 
-const saveSet = async (setIndex) => {
+const deleteSet = async (setIndex) => {
+  const setNumber = setIndex + 1;
+
+  const existing = await getWorkoutSetsByWorkoutExercise(selectedExercise.id);
+
+  const toDelete = existing.filter(
+    s => s.setNumber === setNumber
+  );
+
+  for (const s of toDelete) {
+    await deleteWorkoutSet(s.id);
+  }
+
+  // resetear en UI
+  const updated = [...sets];
+  updated[setIndex] = [{ reps: "", weight: "", id: null }];
+  setSets(updated);
+
+  setMessage(`Serie ${setNumber} eliminada`);
+  setMessageType("info");
+};
+
+const saveSet = async (setIndex, showMessage = true, existingSets = null) => {
   const blocks = sets[setIndex];
+
+  const existing = existingSets ?? await getWorkoutSetsByWorkoutExercise(selectedExercise.id);
+
+  const currentIds = blocks.map(b => b.id).filter(Boolean);
+
+  const toDelete = existing.filter(
+    s => s.setNumber === setIndex + 1 && !currentIds.includes(s.id)
+  );
+
+  // 🔴 BORRAR LOS QUE SACASTE CON "-"
+  for (const d of toDelete) {
+    await deleteWorkoutSet(d.id);
+  }
 
   const allEmpty = blocks.every(b => !b.reps && !b.weight);
   const allFull = blocks.every(b => b.reps && b.weight);
 
   if (!allEmpty && !allFull) {
-    setMessage("Completá todos los bloques de la serie");
-    setMessageType("error");
+    if (showMessage) {
+      setMessage("Completá todos los bloques de la serie");
+      setMessageType("error");
+    }
     return;
   }
 
-  // 🔴 BORRAR
+  // 🔴 SI TODO VACÍO → BORRAR TODO
   if (allEmpty) {
     for (const b of blocks) {
       if (b.id) await deleteWorkoutSet(b.id);
     }
-    setMessage("Serie eliminada");
-    setMessageType("info");
+    if (showMessage) {
+      setMessage("Serie eliminada");
+      setMessageType("info");
+    }
     return;
   }
 
-  // 🟢 GUARDAR
+  // 🟢 GUARDAR / UPDATE
   for (const b of blocks) {
     if (b.id) {
       await updateWorkoutSet(b.id, {
@@ -307,10 +401,36 @@ const saveSet = async (setIndex) => {
       });
     }
   }
-
-  setMessage(`Serie ${setIndex + 1} guardada`);
-  setMessageType("success");
+  if (showMessage) {
+    setMessage(`Serie ${setIndex + 1} guardada`);
+    setMessageType("success");
+  }
 };
+
+
+const hasValue = (v) => v !== null && v !== "" && v !== undefined;
+
+const areSetsValid = () => {
+  let hasAnyData = false;
+  let hasAnyEmpty = false;
+
+  for (const set of sets) {
+    const allEmpty = set.every(b => !hasValue(b.reps) && !hasValue(b.weight));
+    const allFull = set.every(b => hasValue(b.reps) && hasValue(b.weight));
+
+    // ❌ serie inválida (mezcla interna)
+    if (!allEmpty && !allFull) return false;
+
+    if (allFull) hasAnyData = true;
+    if (allEmpty) hasAnyEmpty = true;
+  }
+
+  // ❌ mezcla entre series (unas sí, otras no)
+  if (hasAnyData && hasAnyEmpty) return false;
+
+  return true;
+};
+
 
 return(
 
@@ -436,6 +556,7 @@ Seleccionar ejercicios
  color="primary"
  onClick={handleFinishClick}
  sx={{fontWeight:700}}
+ disabled={!areAllExercisesCompleted()}
 >
 Finalizar día
 </Button>
@@ -449,7 +570,13 @@ Finalizar día
  open={!!selectedExercise}
  onClose={()=>setSelectedExercise(null)}
  fullWidth
- maxWidth="sm"
+ maxWidth="md"
+ sx={{
+    "& .MuiDialog-paper": {
+      width: { xs: "95%", md: "80%" },
+      maxWidth: "900px"
+    }
+  }}
 >
 
 {selectedExercise?.video ? (
@@ -488,39 +615,29 @@ Finalizar día
 
 <Stack spacing={2} alignItems="center" textAlign="center">
 
-{selectedExercise?.exercise?.description &&
-
-<Typography
- color="text.secondary"
- sx={{
-  background:"#f5f5f5",
-  p:2,
-  borderRadius:"8px"
- }}
->
-{selectedExercise.exercise.description}
-</Typography>
-
-}
-
-<Typography>
+<Typography fontSize={"1.5em"}>
 Peso: <b>{selectedExercise?.weight ?? 0} kg</b>
 </Typography>
 
-<Typography>
+<Typography fontSize={"1.5em"}>
 Repeticiones: <b>{reps ?? "-"}</b>
 </Typography>
 
 {selectedExercise?.exerciseMuscle &&
 
-<MuscleChips muscles={[selectedExercise.exerciseMuscle]} />
+<MuscleChips muscles={[selectedExercise.exerciseMuscle]} size="medium" chipSx={{
+    fontSize: "1.4rem",
+    fontWeight: 700,
+    height: 36,
+    px: 1.5
+  }}/>
 
 }
 
-{selectedExercise?.comment &&
+{selectedExercise?.description &&
 
-<Typography color="text.secondary">
-Comentario: {selectedExercise.comment}
+<Typography fontSize={"1.5em"} color="text.secondary">
+{selectedExercise.description}
 </Typography>
 
 }
@@ -529,7 +646,14 @@ Comentario: {selectedExercise.comment}
 
 <Stack spacing={3} sx={{ mt: 3 }}>
 
-{sets.map((set, setIndex) => (
+{sets.map((set, setIndex) => {
+
+  const allEmpty = set.every(b => !b.reps && !b.weight);
+  const allFull = set.every(b => b.reps && b.weight);
+  const isInvalid = !allEmpty && !allFull;
+  const hasData = set.some(b => b.id);
+
+  return(
 
   <Box key={setIndex} sx={{ border: "1px solid #ddd", p:2, borderRadius:2 }}>
 
@@ -547,6 +671,7 @@ Comentario: {selectedExercise.comment}
             label="Reps"
             size="small"
             value={block.reps}
+            disabled={selectedExercise?.completed}
             onChange={(e)=>handleChange(setIndex, blockIndex, "reps", e.target.value)}
             sx={{ width: 80 }}
           />
@@ -555,32 +680,48 @@ Comentario: {selectedExercise.comment}
             label="Peso"
             size="small"
             value={block.weight}
+            disabled={selectedExercise?.completed}
             onChange={(e)=>handleChange(setIndex, blockIndex, "weight", e.target.value)}
             sx={{ width: 90 }}
           />
 
-          <Button onClick={()=>addBlock(setIndex)}>+</Button>
+          <Button onClick={()=>addBlock(setIndex)} disabled={selectedExercise?.completed}>+</Button>
 
           {set.length > 1 && (
-            <Button onClick={()=>removeBlock(setIndex, blockIndex)}>-</Button>
+            <Button onClick={()=>removeBlock(setIndex, blockIndex)} disabled={selectedExercise?.completed}>-</Button>
           )}
 
         </Stack>
 
       ))}
 
-      <Button
-        variant="contained"
-        onClick={()=>saveSet(setIndex)}
-      >
-        Guardar serie {setIndex + 1}
-      </Button>
+      <Stack direction="row" spacing={1}>
+        <Button
+          fullWidth
+          variant="contained"
+          onClick={() => saveSet(setIndex)}
+          disabled={allEmpty || isInvalid || selectedExercise?.completed} // 🔥 clave
+        >
+          Guardar serie {setIndex + 1}
+        </Button>
+
+        <Button
+          fullWidth
+          variant="outlined"
+          color="error"
+          onClick={() => deleteSet(setIndex)}
+          disabled={!hasData || selectedExercise?.completed}
+        >
+          Eliminar
+        </Button>
+      </Stack>
 
     </Stack>
 
   </Box>
 
-))}
+  );
+})}
 
 </Stack>
 
@@ -602,6 +743,7 @@ Comentario: {selectedExercise.comment}
  color={selectedExercise?.completed ? "error" : "success"}
  onClick={()=>toggleCompleteExercise(selectedExercise)}
  sx={{fontWeight:700}}
+ disabled={!areSetsValid()}
 >
 {selectedExercise?.completed
  ? "Quitar completado"
@@ -626,6 +768,12 @@ Cerrar
  onClose={()=>setIsSelectionModalOpen(false)}
  fullWidth
  maxWidth="md"
+ sx={{
+    "& .MuiDialog-paper": {
+      width: { xs: "95%", md: "80%" },
+      maxWidth: "900px"
+    }
+  }}
 >
 <DialogTitle sx={{fontWeight:700}}>
 Seleccionar ejercicios
@@ -639,13 +787,31 @@ Seleccionar ejercicios
 >
 
   {!isAbdominal && (
-    <Tabs value={filterType} onChange={(e, val) => setFilterType(val)}>
+    <Stack spacing={1} mb={1}>
+    <Tabs value={filterType} onChange={(e, val) => setFilterType(val)} sx={{"& .MuiTab-root": {fontSize: "1.1rem"}}}>
       <Tab label="Todos" value="ALL" />
       <Tab label="Primario" value="PRIMARY" />
       <Tab label="Secundario" value="SECONDARY" />
       <Tab label="Terciario" value="TERTIARY" />
       <Tab label="Abdominal" value="ABDOMINAL" />
     </Tabs>
+      
+    <Tabs
+      value={filterMuscle}
+      onChange={(e, val) => setFilterMuscle(val)}
+      variant="scrollable"
+      scrollButtons="auto"
+      sx={{"& .MuiTab-root": {mb:1, fontSize: "1.1rem"}}}
+    >
+      {availableMuscles.map((muscle) => (
+        <Tab
+          key={muscle}
+          value={muscle}
+          label={muscle === "ALL" ? "Todos" : muscleLabels[muscle] || muscle}
+        />
+      ))}
+    </Tabs>
+    </Stack>
   )}
 
 
@@ -668,15 +834,15 @@ Seleccionar ejercicios
     backgroundColor: isSelected ? "rgba(76, 175, 80, 0.08)" : "#fff"
   }}
  >
-  <Typography fontWeight={700}>
+  <Typography fontWeight={700} fontSize={"1.5rem"}>
     {ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}
   </Typography>
 
-  <Typography variant="body2" color="text.secondary">
+  <Typography color="text.secondary" fontWeight={700} fontSize={"1.1rem"}>
     {formatExerciseType(ex.type)} 
   </Typography> 
   
-  <Typography variant="body2">
+  <Typography fontSize={"1.2rem"}>
     Peso: {ex.weight ?? 0} kg • Reps: {reps ?? "-"}
   </Typography>
  </Box>
@@ -711,40 +877,35 @@ Seleccionar ejercicios
 {/* MODAL ABDOMINALES */}
 
 <Dialog
- open={confirmFinish}
- onClose={()=>setConfirmFinish(false)}
+  open={confirmFinish}
+  onClose={() => setConfirmFinish(false)}
 >
+  <DialogTitle>
+    Finalizar día
+  </DialogTitle>
 
-<DialogTitle>
-Finalizar día
-</DialogTitle>
+  <DialogContent>
+    <Typography
+      sx={{
+        fontSize: "1.4rem",
+        fontWeight: 500
+      }}
+    >
+      ¿Querés hacer abdominales antes de terminar la rutina?
+    </Typography>
+  </DialogContent>
 
-<DialogContent>
+  <DialogActions>
+    <Button onClick={finishDay} variant="outlined">
+      No
+    </Button>
 
-<Typography>
-¿Querés hacer abdominales antes de terminar la rutina?
-</Typography>
-
-</DialogContent>
-
-<DialogActions>
-
-<Button
- onClick={finishDay}
->
-No
-</Button>
-
-<Button
- variant="contained"
- onClick={finishDayWithAbs}
->
-Sí, agregar abdominales
-</Button>
-
-</DialogActions>
-
+    <Button variant="contained" onClick={finishDayWithAbs}>
+      Sí, agregar abdominales
+    </Button>
+  </DialogActions>
 </Dialog>
+
 
 </Container>
 

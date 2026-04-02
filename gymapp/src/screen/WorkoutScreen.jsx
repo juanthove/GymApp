@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
-import { getUserById, getCurrentWorkout } from "../services/userService";
+import { getUserById, getCurrentWorkout, logoutUser } from "../services/userService";
 import { getWorkoutById } from "../services/workoutService";
 import { startWorkoutDay, getWorkoutDayStatus, getWorkoutDayImageUrl } from "../services/workoutDayService";
 import { getRandomPhrase } from "../services/phraseService";
@@ -33,6 +33,7 @@ const [selectedDay,setSelectedDay] = useState(null);
 const [phrase,setPhrase] = useState("");
 const [dayStatus,setDayStatus] = useState({});
 const [hasWorkout,setHasWorkout] = useState(true);
+
 
 useEffect(()=>{
  loadData();
@@ -92,6 +93,27 @@ const startWorkout= async ()=>{
 
 };
 
+const formatDate = (date) => {
+  if (!date) return "-";
+  return new Date(date).toLocaleDateString("es-UY");
+};
+
+const hasDayInProgress = () => {
+  return Object.values(dayStatus).some(status => status === "IN_PROGRESS");
+};
+
+const handleLogout = () => {
+
+  if (hasDayInProgress()) {
+    alert("No podés cerrar sesión mientras hay un entrenamiento en curso");
+    return;
+  }
+
+  logoutUser(userId);
+
+  navigate("/home");
+};
+
 const sortedDays = workout?.days
  ? [...workout.days].sort((a,b)=>{
 
@@ -124,12 +146,26 @@ return(
 
 <Stack direction="row" alignItems="center" spacing={1} sx={{position:"relative"}}>
  <BackButton to="/home" sx={{ position:"absolute", left:0, top:"50%", transform:"translateY(-50%)" }} />
- <Typography variant="h4" textAlign="center" sx={{width:"100%"}}>
+ <Typography variant="h3" textAlign="center" sx={{width:"100%"}}>
   Hola {user.name}
  </Typography>
+ <Button
+    variant="outlined"
+    color="error"
+    onClick={handleLogout}
+    disabled={hasDayInProgress()}
+    >
+    Cerrar sesión
+  </Button>
 </Stack>
 
-<Typography textAlign="center" sx={{fontStyle:"italic"}}>
+{workout && (
+  <Typography variant="h6" textAlign="center" color="text.secondary">
+    Desde {formatDate(workout.startDate)} hasta {formatDate(workout.endDate)}
+  </Typography>
+)}
+
+<Typography variant="h5" textAlign="center" sx={{fontStyle:"italic"}}>
 {phrase}
 </Typography>
 
@@ -150,7 +186,7 @@ return(
  title={day.name}
  subtitle={
     <Box my={1}>
-        <MuscleChips muscles={day.muscles} />
+        <MuscleChips muscles={day.muscles} chipSx={{fontWeight: 600,}} />
     </Box>
  }
  onClick={()=>openDay(day)}
@@ -212,7 +248,7 @@ Músculos que vas a trabajar hoy
     gap={2}
 >
 
-<MuscleChips muscles={selectedDay?.muscles} />
+<MuscleChips muscles={selectedDay?.muscles} chipSx={{fontWeight: 600,}} />
 
 <img
  src={selectedDay?.muscleImage ? getWorkoutDayImageUrl(selectedDay.muscleImage) : "/body-placeholder.png"}

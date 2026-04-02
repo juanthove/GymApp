@@ -12,6 +12,7 @@ public record WorkoutExerciseResponse(
         ExerciseType type,
         Integer exerciseOrder,
         Double weight,
+        String description,
         String comment,
         boolean completed,
         String image,

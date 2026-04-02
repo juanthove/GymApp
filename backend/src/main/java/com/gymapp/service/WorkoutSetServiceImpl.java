@@ -51,55 +51,68 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
                 .stream().map(this::toResponse).toList();
     }
 
+    private List<WorkoutSet> getSetsByDateFilter(Long userId, LocalDate from, LocalDate to) {
+    if (from != null && to != null) {
+        return workoutSetRepository.findByUserIdAndPerformedAtBetweenOrderByPerformedAtAscSetNumberAsc(
+            userId, from.atStartOfDay(), to.atTime(LocalTime.MAX)
+        );
+    } else if (from != null) {
+        return workoutSetRepository.findByUserIdAndPerformedAtAfterOrderByPerformedAtAscSetNumberAsc(
+            userId, from.atStartOfDay()
+        );
+    } else if (to != null) {
+        return workoutSetRepository.findByUserIdAndPerformedAtBeforeOrderByPerformedAtAscSetNumberAsc(
+            userId, to.atTime(LocalTime.MAX)
+        );
+    } else {
+        return workoutSetRepository.findByUserIdOrderByPerformedAtAscSetNumberAsc(userId);
+    }
+}
+
     @Override
     public List<WorkoutSetResponse> getWorkoutSetsByUserAndDateRange(Long userId, LocalDate from, LocalDate to) {
-        LocalDateTime fromDateTime = from.atStartOfDay();
-        LocalDateTime toDateTime = to.atTime(LocalTime.MAX);
 
-        return workoutSetRepository
-                .findByUserIdAndPerformedAtBetweenOrderByPerformedAtAscSetNumberAsc(userId, fromDateTime, toDateTime)
-                .stream().map(this::toResponse).toList();
+        List<WorkoutSet> sets = getSetsByDateFilter(userId, from, to);
+
+        return sets.stream().map(this::toResponse).toList();
     }
 
-            @Override
-            public WorkoutSetVolumeResponse getTotalVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to) {
-            LocalDateTime fromDateTime = from.atStartOfDay();
-            LocalDateTime toDateTime = to.atTime(LocalTime.MAX);
+    @Override
+    public WorkoutSetVolumeResponse getTotalVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to) {
 
-            double totalVolume = workoutSetRepository
-                .findByUserIdAndPerformedAtBetweenOrderByPerformedAtAscSetNumberAsc(userId, fromDateTime, toDateTime)
-                .stream()
-                .mapToDouble(this::calculateSetVolume)
-                .sum();
+        List<WorkoutSet> sets = getSetsByDateFilter(userId, from, to);
 
-            return new WorkoutSetVolumeResponse(userId, from, to, totalVolume);
-            }
+        double totalVolume = sets.stream()
+            .mapToDouble(this::calculateSetVolume)
+            .sum();
 
-            @Override
-            public List<WorkoutSetWeeklyMuscleVolumeResponse> getWeeklyMuscleVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to) {
-            LocalDateTime fromDateTime = from.atStartOfDay();
-            LocalDateTime toDateTime = to.atTime(LocalTime.MAX);
+        return new WorkoutSetVolumeResponse(userId, from, to, totalVolume);
+    }
 
-            Map<WeekMuscleKey, Double> grouped = workoutSetRepository
-                .findByUserIdAndPerformedAtBetweenOrderByPerformedAtAscSetNumberAsc(userId, fromDateTime, toDateTime)
-                .stream()
-                .collect(Collectors.groupingBy(
-                    set -> new WeekMuscleKey(resolveWeekStart(set), resolveMuscle(set)),
-                    Collectors.summingDouble(this::calculateSetVolume)
-                ));
+    @Override
+    public List<WorkoutSetWeeklyMuscleVolumeResponse> getWeeklyMuscleVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to) {
 
-            return grouped.entrySet().stream()
-                .map(entry -> new WorkoutSetWeeklyMuscleVolumeResponse(
-                    entry.getKey().weekStart(),
-                    entry.getKey().weekStart().plusDays(6),
-                    entry.getKey().muscle(),
-                    entry.getValue()
-                ))
-                .sorted(Comparator
-                    .comparing(WorkoutSetWeeklyMuscleVolumeResponse::weekStart)
-                    .thenComparing(item -> item.muscle() != null ? item.muscle().name() : ""))
-                .toList();
-            }
+        List<WorkoutSet> sets = getSetsByDateFilter(userId, from, to);
+
+        Map<WeekMuscleKey, Double> grouped = sets.stream()
+            .collect(Collectors.groupingBy(
+                set -> new WeekMuscleKey(resolveWeekStart(set), resolveMuscle(set)),
+                Collectors.summingDouble(this::calculateSetVolume)
+            ));
+
+        return grouped.entrySet().stream()
+            .map(entry -> new WorkoutSetWeeklyMuscleVolumeResponse(
+                entry.getKey().weekStart(),
+                entry.getKey().weekStart().plusDays(6),
+                entry.getKey().muscle(),
+                entry.getValue()
+            ))
+            .sorted(Comparator
+                .comparing(WorkoutSetWeeklyMuscleVolumeResponse::weekStart)
+                .thenComparing(item -> item.muscle() != null ? item.muscle().name() : "")
+            )
+            .toList();
+    }
 
     @Override
     public List<WorkoutSetResponse> getWorkoutSetsByWorkoutExercise(Long workoutExerciseId) {

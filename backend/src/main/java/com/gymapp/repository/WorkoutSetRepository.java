@@ -17,4 +17,16 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
             LocalDateTime from,
             LocalDateTime to
     );
+
+    List<WorkoutSet> findByUserIdOrderByPerformedAtAscSetNumberAsc(Long userId);
+
+    List<WorkoutSet> findByUserIdAndPerformedAtAfterOrderByPerformedAtAscSetNumberAsc(
+        Long userId,
+        LocalDateTime from
+    );
+
+    List<WorkoutSet> findByUserIdAndPerformedAtBeforeOrderByPerformedAtAscSetNumberAsc(
+        Long userId,
+        LocalDateTime to
+    );
 }

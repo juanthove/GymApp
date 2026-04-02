@@ -21,6 +21,8 @@ import {
 } from "@mui/material";
 
 import BackButton from "../components/BackButton";
+import MuscleChips from "../components/MuscleChips";
+
 import {
   getTotalWorkoutVolumeByUserAndDateRange,
   getWeeklyMuscleVolumeByUserAndDateRange,
@@ -40,41 +42,29 @@ function shiftDateIso(dateIso, days) {
   return d.toISOString().slice(0, 10);
 }
 
-function getMuscleColor(muscle) {
-  const colorMap = {
-    CHEST: "#ef5350",
-    BACK: "#42a5f5",
-    SHOULDERS: "#ffb74d",
-    BICEPS: "#66bb6a",
-    TRICEPS: "#26a69a",
-    FOREARMS: "#8d6e63",
-    QUADRICEPS: "#7e57c2",
-    GLUTES: "#ab47bc",
-    HAMSTRINGS: "#5c6bc0",
-    CALVES: "#29b6f6",
-    ABDOMINALS: "#ec407a",
-  };
-
-  return colorMap[muscle] || "#78909c";
-}
+const muscleLabels = {
+  CHEST: "Pecho",
+  BACK: "Espalda",
+  SHOULDERS: "Hombros",
+  BICEPS: "Bíceps",
+  TRICEPS: "Tríceps",
+  FOREARMS: "Antebrazos",
+  QUADRICEPS: "Cuádriceps",
+  GLUTES: "Glúteos",
+  HAMSTRINGS: "Femorales",
+  CALVES: "Gemelos",
+  ABDOMINALS: "Abdominales"
+};
 
 export default function StatsScreen() {
   const { userId } = useParams();
 
-  const defaultTo = useMemo(() => new Date(), []);
-  const defaultFrom = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 28);
-    return d;
-  }, []);
-
-  const [from, setFrom] = useState(toInputDate(defaultFrom));
-  const [to, setTo] = useState(toInputDate(defaultTo));
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
 
   const [totalVolume, setTotalVolume] = useState(0);
   const [weeklyByMuscle, setWeeklyByMuscle] = useState([]);
   const [selectedMuscle, setSelectedMuscle] = useState("ALL");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const enhancedRows = useMemo(() => {
@@ -145,18 +135,12 @@ export default function StatsScreen() {
   }, [filteredRows]);
 
   const loadStats = async () => {
-    if (!from || !to) {
-      setError("Debes seleccionar fecha desde y hasta");
-      return;
-    }
-
-    if (from > to) {
+    if (from && to && from > to) {
       setError("La fecha desde no puede ser mayor que la fecha hasta");
       return;
     }
 
     setError("");
-    setLoading(true);
 
     try {
       const [totalRes, weeklyRes] = await Promise.all([
@@ -168,14 +152,18 @@ export default function StatsScreen() {
       setWeeklyByMuscle(weeklyRes || []);
     } catch (e) {
       setError(e?.message || "No se pudieron cargar las estadísticas");
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
     loadStats();
-  }, []);
+  }, [from, to]);
+
+  useEffect(() => {
+    if (!muscleOptions.includes(selectedMuscle)) {
+      setSelectedMuscle("ALL");
+    }
+  }, [muscleOptions, selectedMuscle]);
 
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 6 }}>
@@ -208,8 +196,15 @@ export default function StatsScreen() {
                 fullWidth
               />
 
-              <Button variant="contained" onClick={loadStats} disabled={loading}>
-                {loading ? "Cargando..." : "Actualizar"}
+              <Button
+                variant="contained"
+                onClick={() => {
+                  setFrom("");
+                  setTo("");
+                  setSelectedMuscle("ALL");
+                }}
+              >
+              Resetear filtros
               </Button>
             </Stack>
 
@@ -222,7 +217,7 @@ export default function StatsScreen() {
             >
               {muscleOptions.map((muscle) => (
                 <MenuItem key={muscle} value={muscle}>
-                  {muscle === "ALL" ? "Todos" : muscle}
+                  {muscle === "ALL" ? "Todos" : muscleLabels[muscle] || muscle}
                 </MenuItem>
               ))}
             </TextField>
@@ -267,13 +262,12 @@ export default function StatsScreen() {
                           <TableRow key={`${row.weekStart}-${row.muscle}-${index}`}>
                             <TableCell>{row.weekStart} a {row.weekEnd}</TableCell>
                             <TableCell>
-                              <Chip
-                                size="small"
-                                label={row.muscle}
-                                sx={{
-                                  color: "#fff",
-                                  bgcolor: getMuscleColor(row.muscle),
-                                  fontWeight: 600,
+                              <MuscleChips muscles={[row.muscle]} 
+                                chipSx={{
+                                  fontSize: "1rem",
+                                  fontWeight: 700,
+                                  height: 30,
+                                  px: 1.5
                                 }}
                               />
                             </TableCell>
