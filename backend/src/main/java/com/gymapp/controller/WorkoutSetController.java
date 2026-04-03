@@ -2,8 +2,10 @@ package com.gymapp.controller;
 
 import com.gymapp.dto.request.WorkoutSetRequest;
 import com.gymapp.dto.response.WorkoutSetResponse;
+import com.gymapp.dto.response.WorkoutSetVolumePointResponse;
 import com.gymapp.dto.response.WorkoutSetVolumeResponse;
 import com.gymapp.dto.response.WorkoutSetWeeklyMuscleVolumeResponse;
+import com.gymapp.model.Granularity;
 import com.gymapp.service.WorkoutSetService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +59,16 @@ public class WorkoutSetController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return workoutSetService.getWeeklyMuscleVolumeByUserAndDateRange(userId, from, to);
+    }
+
+    @GetMapping("/user/{userId}/volume-series")
+    public List<WorkoutSetVolumePointResponse> getVolumeSeries(
+            @PathVariable Long userId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(defaultValue = "WEEK") Granularity granularity
+    ) {
+        return workoutSetService.getVolumeSeriesByUserAndDateRange(userId, from, to, granularity);
     }
 
     @GetMapping("/workout-exercise/{workoutExerciseId}")

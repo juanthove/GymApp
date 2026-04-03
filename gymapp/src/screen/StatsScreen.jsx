@@ -20,13 +20,30 @@ import {
   Typography,
 } from "@mui/material";
 
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
+
 import BackButton from "../components/BackButton";
 import MuscleChips from "../components/MuscleChips";
 
 import {
   getTotalWorkoutVolumeByUserAndDateRange,
   getWeeklyMuscleVolumeByUserAndDateRange,
+  getVolumeByUserAndDateRange,
 } from "../services/workoutSetService";
+
+import {
+  getWorkoutFrequency,
+} from "../services/workoutDayService";
 
 function toInputDate(date) {
   return date.toISOString().slice(0, 10);
@@ -65,6 +82,8 @@ export default function StatsScreen() {
   const [totalVolume, setTotalVolume] = useState(0);
   const [weeklyByMuscle, setWeeklyByMuscle] = useState([]);
   const [selectedMuscle, setSelectedMuscle] = useState("ALL");
+  const [chartData, setChartData] = useState([]);
+  const [frequencyData, setFrequencyData] = useState([]);
   const [error, setError] = useState("");
 
   const enhancedRows = useMemo(() => {
@@ -165,6 +184,79 @@ export default function StatsScreen() {
     }
   }, [muscleOptions, selectedMuscle]);
 
+
+  function getGranularity(from, to) {
+    if (!from || !to) return "WEEK"; // default
+
+    const days = (new Date(to) - new Date(from)) / (1000 * 60 * 60 * 24);
+
+    if (days <= 30) return "DAY";
+    if (days <= 180) return "WEEK";
+    return "MONTH";
+  }
+
+  const loadChartData = async () => {
+    try {
+      const granularity = getGranularity(from, to);
+
+      const res = await getVolumeByUserAndDateRange(
+        userId,
+        from,
+        to,
+        granularity
+      );
+
+      // ya viene listo del backend
+      const formatted = (res || []).map((item) => ({
+        date: item.date,
+        volume: Number(item.volume || 0),
+      }));
+
+      setChartData(formatted);
+
+    } catch (e) {
+      console.error("Error cargando gráfica", e);
+    }
+  };
+
+  const loadFrequency = async () => {
+    try {
+      const granularity = getGranularity(from, to);
+
+      const res = await getWorkoutFrequency(
+        userId,
+        from,
+        to,
+        granularity
+      );
+
+      const formatted = (res || []).map((item) => ({
+        date: item.date,
+        count: item.count,
+      }));
+
+      setFrequencyData(formatted);
+
+    } catch (e) {
+      console.error("Error frecuencia", e);
+    }
+  };
+
+  const formatXAxis = (value) => {
+    const granularity = getGranularity(from, to);
+
+    if (granularity === "DAY") return value.slice(5); // MM-DD
+    if (granularity === "WEEK") return value.slice(5); // semana inicio
+    if (granularity === "MONTH") return value.slice(0, 7); // YYYY-MM
+
+    return value;
+  };
+
+  useEffect(() => {
+    loadChartData();
+    loadFrequency();
+  }, [from, to]);
+
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 6 }}>
       <Stack spacing={3}>
@@ -179,6 +271,8 @@ export default function StatsScreen() {
           <CardContent>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="end">
               <TextField
+                id="from-date"
+                name="from"
                 type="date"
                 label="Desde"
                 InputLabelProps={{ shrink: true }}
@@ -188,6 +282,8 @@ export default function StatsScreen() {
               />
 
               <TextField
+                id="to-date"
+                name="to"
                 type="date"
                 label="Hasta"
                 InputLabelProps={{ shrink: true }}
@@ -209,6 +305,8 @@ export default function StatsScreen() {
             </Stack>
 
             <TextField
+              id="muscle-select"
+              name="muscle"
               select
               label="Músculo"
               value={selectedMuscle}
@@ -321,6 +419,139 @@ export default function StatsScreen() {
             )}
           </CardContent>
         </Card>
+
+
+
+        <Card>
+          <CardContent>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              Evolución del volumen
+            </Typography>
+
+            {chartData.length === 0 ? (
+              <Typography color="text.secondary">
+                No hay datos para graficar.
+              </Typography>
+            ) : (
+              <Box sx={{ width: "100%", height: 300}}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={formatXAxis} // muestra MM-DD
+                    />
+
+                    <YAxis />
+
+                    <Tooltip
+                      trigger="click"
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload || payload.length === 0) return null;
+
+                        const value = payload[0].value;
+
+                        return (
+                          <Box
+                            sx={{
+                              bgcolor: "background.paper",
+                              p: 1.5,
+                              borderRadius: 2,
+                              boxShadow: 3,
+                            }}
+                          >
+                            <Typography variant="body2">
+                              Fecha: {label}
+                            </Typography>
+
+                            <Typography variant="body2" fontWeight={600}>
+                              {formatVolume(value)} kg
+                            </Typography>
+                          </Box>
+                        );
+                      }}
+                    />
+
+                    <Line
+                      type="monotone"
+                      dataKey="volume"
+                      stroke="#1976d2"
+                      strokeWidth={3}
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Box>
+            )}
+          </CardContent>
+        </Card>
+
+
+        <Card>
+          <CardContent>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              Frecuencia de entrenamiento
+            </Typography>
+
+            {frequencyData.length === 0 ? (
+              <Typography color="text.secondary">
+                No hay datos para mostrar.
+              </Typography>
+            ) : (
+              <Box sx={{ width: "100%", height: 300}}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={frequencyData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={formatXAxis}
+                    />
+
+                    <YAxis allowDecimals={false} domain={[0, 7]}/>
+
+                    <Tooltip
+                      trigger="click"
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload || payload.length === 0) return null;
+
+                        const value = payload[0].value;
+
+                        return (
+                          <Box
+                            sx={{
+                              bgcolor: "background.paper",
+                              p: 1.5,
+                              borderRadius: 2,
+                              boxShadow: 3,
+                            }}
+                          >
+                            <Typography variant="body2">
+                              Fecha: {label}
+                            </Typography>
+
+                            <Typography variant="body2" fontWeight={600}>
+                              {value} {value === 1? "día" : "días"}
+                            </Typography>
+                          </Box>
+                        );
+                      }}
+                    />
+
+                    <Bar
+                      dataKey="count"
+                      fill="#2e7d32"
+                      radius={[6, 6, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
+            )}
+          </CardContent>
+        </Card>
+
+
       </Stack>
     </Container>
   );

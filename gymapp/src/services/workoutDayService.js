@@ -63,3 +63,17 @@ export function deleteWorkoutDayImageByFilename(filename) {
     method: "DELETE",
   });
 }
+
+export async function getWorkoutFrequency(userId, from, to, granularity) {
+  const params = new URLSearchParams();
+
+  if (from) params.append("from", from);
+  if (to) params.append("to", to);
+  if (granularity) params.append("granularity", granularity);
+
+  const query = params.toString();
+
+  return apiRequest(
+    `${DAY_API}/user/${userId}/workout-frequency${query ? `?${query}` : ""}`
+  );
+}

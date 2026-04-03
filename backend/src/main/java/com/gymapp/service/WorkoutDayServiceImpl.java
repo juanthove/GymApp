@@ -1,17 +1,20 @@
 package com.gymapp.service;
 
 import com.gymapp.dto.request.WorkoutDayRequest;
+import com.gymapp.dto.response.WorkoutDayCountResponse;
 import com.gymapp.dto.response.WorkoutDayExercisesResponse;
 import com.gymapp.dto.response.WorkoutDayResponse;
 import com.gymapp.dto.response.WorkoutExerciseResponse;
 import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.ExerciseType;
+import com.gymapp.model.Granularity;
 import com.gymapp.model.MuscleType;
 import com.gymapp.model.Workout;
 import com.gymapp.model.WorkoutDay;
 import com.gymapp.model.WorkoutExercise;
 import com.gymapp.repository.WorkoutDayRepository;
 import com.gymapp.repository.WorkoutRepository;
+import com.gymapp.repository.projection.WorkoutDayCountProjection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -25,9 +28,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.Map;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class WorkoutDayServiceImpl implements WorkoutDayService {
@@ -219,6 +227,78 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
                 .toList();
 
         return new WorkoutDayExercisesResponse(dayId, reps, exerciseResponses);
+    }
+
+    private LocalDate resolveDate(LocalDate date, Granularity granularity) {
+        return switch (granularity) {
+            case DAY -> date;
+            case WEEK -> date.with(java.time.DayOfWeek.MONDAY);
+            case MONTH -> date.withDayOfMonth(1);
+        };
+    }
+
+    @Override
+    public List<WorkoutDayCountResponse> getWorkoutFrequency(
+            Long userId,
+            LocalDate from,
+            LocalDate to,
+            Granularity granularity
+    ) {
+
+        List<WorkoutDayCountProjection> rawData =
+            workoutDayRepository.countWorkoutDaysByDate(userId);
+
+        List<WorkoutDayCountResponse> result = rawData.stream()
+            .map(d -> new WorkoutDayCountResponse(
+                d.getDate(),
+                d.getCount()
+            ))
+            .toList();
+
+        if (from != null) {
+            result = result.stream()
+                .filter(d -> !d.date().isBefore(from))
+                .toList();
+        }
+
+        if (to != null) {
+            result = result.stream()
+                .filter(d -> !d.date().isAfter(to))
+                .toList();
+        }
+
+        // 🔥 si querés granularidad dinámica
+        Granularity resolvedGranularity;
+
+        if (from == null && to == null && !result.isEmpty()) {
+
+            LocalDate min = result.get(0).date();
+            LocalDate max = result.get(result.size() - 1).date();
+
+            long days = ChronoUnit.DAYS.between(min, max);
+
+            if (days <= 60) {
+                resolvedGranularity = Granularity.DAY;
+            } else if (days <= 180) {
+                resolvedGranularity = Granularity.WEEK;
+            } else {
+                resolvedGranularity = Granularity.MONTH;
+            }
+        }else{
+            resolvedGranularity = granularity;
+        }
+
+        // 🔥 agrupar según granularidad
+        Map<LocalDate, Long> grouped = result.stream()
+                .collect(Collectors.groupingBy(
+                        item -> resolveDate(item.date(), resolvedGranularity),
+                        Collectors.summingLong(WorkoutDayCountResponse::count)
+                ));
+
+        return grouped.entrySet().stream()
+                .map(e -> new WorkoutDayCountResponse(e.getKey(), e.getValue()))
+                .sorted(Comparator.comparing(WorkoutDayCountResponse::date))
+                .toList();
     }
 
     private WorkoutExerciseResponse toWorkoutExerciseResponse(WorkoutExercise exercise) {

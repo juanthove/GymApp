@@ -38,6 +38,18 @@ export async function getWeeklyMuscleVolumeByUserAndDateRange(userId, from, to) 
 	return apiRequest(`${API_URL}/user/${userId}/volume/weekly-by-muscle${query ? `?${query}` : ""}`);
 }
 
+export async function getVolumeByUserAndDateRange(userId, from, to, granularity) {
+  const params = new URLSearchParams();
+
+  if (from) params.append("from", from);
+  if (to) params.append("to", to);
+  if (granularity) params.append("granularity", granularity);
+
+  const query = params.toString();
+
+  return apiRequest(`${API_URL}/user/${userId}/volume-series${query ? `?${query}` : ""}`);
+}
+
 export async function getWorkoutSetsByWorkoutExercise(workoutExerciseId) {
 	return apiRequest(`${API_URL}/workout-exercise/${workoutExerciseId}`);
 }

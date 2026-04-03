@@ -1,8 +1,10 @@
 package com.gymapp.controller;
 
 import com.gymapp.dto.request.WorkoutDayRequest;
+import com.gymapp.dto.response.WorkoutDayCountResponse;
 import com.gymapp.dto.response.WorkoutDayExercisesResponse;
 import com.gymapp.dto.response.WorkoutDayResponse;
+import com.gymapp.model.Granularity;
 import com.gymapp.service.WorkoutDayService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -101,5 +104,15 @@ public class WorkoutDayController {
     @GetMapping("/{id}/status")
     public String getWorkoutDayStatus(@PathVariable Long id) {
         return workoutDayService.getWorkoutDayStatus(id);
+    }
+
+    @GetMapping("/user/{userId}/workout-frequency")
+    public List<WorkoutDayCountResponse> getWorkoutFrequency(
+            @PathVariable Long userId,
+            @RequestParam(required = false) LocalDate from,
+            @RequestParam(required = false) LocalDate to,
+            @RequestParam(defaultValue = "DAY") Granularity granularity
+    ) {
+        return workoutDayService.getWorkoutFrequency(userId, from, to, granularity);
     }
 }

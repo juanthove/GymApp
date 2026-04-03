@@ -4,7 +4,9 @@ import com.gymapp.dto.request.WorkoutSetRequest;
 import com.gymapp.dto.response.WorkoutSetResponse;
 import com.gymapp.dto.response.WorkoutSetVolumeResponse;
 import com.gymapp.dto.response.WorkoutSetWeeklyMuscleVolumeResponse;
+import com.gymapp.dto.response.WorkoutSetVolumePointResponse;
 import com.gymapp.exception.ResourceNotFoundException;
+import com.gymapp.model.Granularity;
 import com.gymapp.model.MuscleType;
 import com.gymapp.model.User;
 import com.gymapp.model.WorkoutDay;
@@ -19,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.DayOfWeek;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
 import java.util.Map;
@@ -112,6 +115,58 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
                 .thenComparing(item -> item.muscle() != null ? item.muscle().name() : "")
             )
             .toList();
+    }
+
+    private LocalDate resolveDateByGranularity(WorkoutSet set, Granularity granularity) {
+
+        LocalDate date = set.getPerformedAt().toLocalDate();
+
+        return switch (granularity) {
+            case DAY -> date;
+
+            case WEEK -> date.with(java.time.DayOfWeek.MONDAY);
+
+            case MONTH -> date.withDayOfMonth(1);
+        };
+    }
+
+    private Granularity resolveGranularity(List<WorkoutSet> sets, LocalDate from, LocalDate to, Granularity requested) {
+        if (from == null && to == null && !sets.isEmpty()) {
+
+            LocalDate minDate = sets.get(0).getPerformedAt().toLocalDate();
+            LocalDate maxDate = sets.get(sets.size() - 1).getPerformedAt().toLocalDate();
+
+            long days = ChronoUnit.DAYS.between(minDate, maxDate);
+
+            if (days <= 30) return Granularity.DAY;
+            if (days <= 180) return Granularity.WEEK;
+            return Granularity.MONTH;
+        }
+
+        return requested;
+    }
+
+    @Override
+    public List<WorkoutSetVolumePointResponse> getVolumeSeriesByUserAndDateRange(Long userId, LocalDate from, LocalDate to, 
+        Granularity granularity) {
+
+        List<WorkoutSet> sets = getSetsByDateFilter(userId, from, to);
+
+        Granularity resolvedGranularity = resolveGranularity(sets, from, to, granularity);
+
+        Map<LocalDate, Double> grouped = sets.stream()
+                .collect(Collectors.groupingBy(
+                        set -> resolveDateByGranularity(set, resolvedGranularity),
+                        Collectors.summingDouble(this::calculateSetVolume)
+                ));
+
+        return grouped.entrySet().stream()
+                .map(entry -> new WorkoutSetVolumePointResponse(
+                        entry.getKey(),
+                        entry.getValue()
+                ))
+                .sorted(Comparator.comparing(WorkoutSetVolumePointResponse::date))
+                .toList();
     }
 
     @Override

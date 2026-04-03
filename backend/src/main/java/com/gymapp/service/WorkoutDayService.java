@@ -1,13 +1,17 @@
 package com.gymapp.service;
 
 import com.gymapp.dto.request.WorkoutDayRequest;
+import com.gymapp.dto.response.WorkoutDayCountResponse;
 import com.gymapp.dto.response.WorkoutDayExercisesResponse;
 import com.gymapp.dto.response.WorkoutDayResponse;
+import com.gymapp.model.Granularity;
+
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 
 public interface WorkoutDayService {
@@ -43,4 +47,6 @@ public interface WorkoutDayService {
     String getWorkoutDayStatus(Long id);
 
     WorkoutDayExercisesResponse getWorkoutDayExercises(Long dayId);
+
+    List<WorkoutDayCountResponse> getWorkoutFrequency(Long userId, LocalDate from, LocalDate to, Granularity granularity);
 }
