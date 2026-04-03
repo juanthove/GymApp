@@ -66,7 +66,7 @@ public class WorkoutSetController {
             @PathVariable Long userId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @RequestParam(defaultValue = "WEEK") Granularity granularity
+            @RequestParam(required = false) Granularity granularity
     ) {
         return workoutSetService.getVolumeSeriesByUserAndDateRange(userId, from, to, granularity);
     }

@@ -111,7 +111,7 @@ public class WorkoutDayController {
             @PathVariable Long userId,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
-            @RequestParam(defaultValue = "DAY") Granularity granularity
+            @RequestParam(required = false) Granularity granularity
     ) {
         return workoutDayService.getWorkoutFrequency(userId, from, to, granularity);
     }

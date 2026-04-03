@@ -131,7 +131,12 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
     }
 
     private Granularity resolveGranularity(List<WorkoutSet> sets, LocalDate from, LocalDate to, Granularity requested) {
-        if (from == null && to == null && !sets.isEmpty()) {
+
+        if (requested != null) {
+            return requested;
+        }
+
+        if (!sets.isEmpty()) {
 
             LocalDate minDate = sets.get(0).getPerformedAt().toLocalDate();
             LocalDate maxDate = sets.get(sets.size() - 1).getPerformedAt().toLocalDate();
@@ -143,7 +148,7 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
             return Granularity.MONTH;
         }
 
-        return requested;
+        return Granularity.DAY;
     }
 
     @Override

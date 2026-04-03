@@ -237,6 +237,27 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         };
     }
 
+    private Granularity resolveGranularity(List<LocalDate> dates, Granularity requested) {
+
+        if (requested != null) {
+            return requested;
+        }
+
+        if (!dates.isEmpty()) {
+
+            LocalDate minDate = dates.get(0);
+            LocalDate maxDate = dates.get(dates.size() - 1);
+
+            long days = ChronoUnit.DAYS.between(minDate, maxDate);
+
+            if (days <= 180) return Granularity.WEEK;
+            return Granularity.MONTH;
+        }
+
+        return Granularity.DAY;
+    }
+
+
     @Override
     public List<WorkoutDayCountResponse> getWorkoutFrequency(
             Long userId,
@@ -267,26 +288,12 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
                 .toList();
         }
 
-        // 🔥 si querés granularidad dinámica
-        Granularity resolvedGranularity;
+        List<LocalDate> dates = result.stream()
+            .map(WorkoutDayCountResponse::date)
+            .toList();
 
-        if (from == null && to == null && !result.isEmpty()) {
-
-            LocalDate min = result.get(0).date();
-            LocalDate max = result.get(result.size() - 1).date();
-
-            long days = ChronoUnit.DAYS.between(min, max);
-
-            if (days <= 60) {
-                resolvedGranularity = Granularity.DAY;
-            } else if (days <= 180) {
-                resolvedGranularity = Granularity.WEEK;
-            } else {
-                resolvedGranularity = Granularity.MONTH;
-            }
-        }else{
-            resolvedGranularity = granularity;
-        }
+        Granularity resolvedGranularity = resolveGranularity(dates, granularity);
+       
 
         // 🔥 agrupar según granularidad
         Map<LocalDate, Long> grouped = result.stream()

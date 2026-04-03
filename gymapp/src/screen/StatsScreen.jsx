@@ -186,7 +186,7 @@ export default function StatsScreen() {
 
 
   function getGranularity(from, to) {
-    if (!from || !to) return "WEEK"; // default
+    if (!from || !to) return null; // default
 
     const days = (new Date(to) - new Date(from)) / (1000 * 60 * 60 * 24);
 
