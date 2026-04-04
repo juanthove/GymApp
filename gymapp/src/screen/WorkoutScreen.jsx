@@ -21,6 +21,7 @@ DialogActions
 import GymCard from "../components/GymCard";
 import BackButton from "../components/BackButton";
 import MuscleChips from "../components/MuscleChips";
+import PrimaryButton from "../components/PrimaryButton";
 
 export default function WorkoutScreen(){
 
@@ -217,13 +218,16 @@ return(
 
 })}
 
-<Button variant="contained" onClick={() => navigate(`/stats/${userId}`)}>
-📊 Estadísticas
-</Button>
 
-<Button variant="contained">
-🏆 Logros
-</Button>
+<PrimaryButton
+            label="📊 Estadísticas"
+            to={`/stats/${userId}`}
+          />
+
+<PrimaryButton
+            label="🏆 Logros"
+            to={``}
+          />
 
 </Stack>
 

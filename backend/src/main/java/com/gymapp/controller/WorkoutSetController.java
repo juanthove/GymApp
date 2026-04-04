@@ -2,9 +2,9 @@ package com.gymapp.controller;
 
 import com.gymapp.dto.request.WorkoutSetRequest;
 import com.gymapp.dto.response.WorkoutSetResponse;
-import com.gymapp.dto.response.WorkoutSetVolumePointResponse;
 import com.gymapp.dto.response.WorkoutSetVolumeResponse;
 import com.gymapp.dto.response.WorkoutSetWeeklyMuscleVolumeResponse;
+import com.gymapp.dto.response.WorkoutVolumeResponse;
 import com.gymapp.model.Granularity;
 import com.gymapp.service.WorkoutSetService;
 import jakarta.validation.Valid;
@@ -62,7 +62,7 @@ public class WorkoutSetController {
     }
 
     @GetMapping("/user/{userId}/volume-series")
-    public List<WorkoutSetVolumePointResponse> getVolumeSeries(
+    public WorkoutVolumeResponse getVolumeSeries(
             @PathVariable Long userId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,

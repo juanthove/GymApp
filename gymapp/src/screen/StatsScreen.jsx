@@ -84,6 +84,8 @@ export default function StatsScreen() {
   const [selectedMuscle, setSelectedMuscle] = useState("ALL");
   const [chartData, setChartData] = useState([]);
   const [frequencyData, setFrequencyData] = useState([]);
+  const [volumeGranularity, setVolumeGranularity] = useState(null);
+  const [frequencyGranularity, setFrequencyGranularity] = useState(null);
   const [error, setError] = useState("");
 
   const enhancedRows = useMemo(() => {
@@ -198,16 +200,18 @@ export default function StatsScreen() {
   const loadChartData = async () => {
     try {
       const granularity = getGranularity(from, to);
-
+      
       const res = await getVolumeByUserAndDateRange(
         userId,
         from,
         to,
-        granularity
+        granularity // podés mandar null también
       );
 
-      // ya viene listo del backend
-      const formatted = (res || []).map((item) => ({
+      // 🔥 IMPORTANTE
+      setVolumeGranularity(res.granularity);
+
+      const formatted = (res.data || []).map((item) => ({
         date: item.date,
         volume: Number(item.volume || 0),
       }));
@@ -230,7 +234,10 @@ export default function StatsScreen() {
         granularity
       );
 
-      const formatted = (res || []).map((item) => ({
+      // 🔥 IMPORTANTE
+      setFrequencyGranularity(res.granularity);
+
+      const formatted = (res.data || []).map((item) => ({
         date: item.date,
         count: item.count,
       }));
@@ -242,12 +249,12 @@ export default function StatsScreen() {
     }
   };
 
-  const formatXAxis = (value) => {
-    const granularity = getGranularity(from, to);
+  const formatXAxis = (value, granularity) => {
+    if (!granularity) return value;
 
-    if (granularity === "DAY") return value.slice(5); // MM-DD
-    if (granularity === "WEEK") return value.slice(5); // semana inicio
-    if (granularity === "MONTH") return value.slice(0, 7); // YYYY-MM
+    if (granularity === "DAY") return value.slice(5);
+    if (granularity === "WEEK") return value.slice(5);
+    if (granularity === "MONTH") return value.slice(0, 7);
 
     return value;
   };
@@ -440,7 +447,7 @@ export default function StatsScreen() {
 
                     <XAxis
                       dataKey="date"
-                      tickFormatter={formatXAxis} // muestra MM-DD
+                      tickFormatter={(value) => formatXAxis(value, volumeGranularity)}
                     />
 
                     <YAxis />
@@ -506,7 +513,7 @@ export default function StatsScreen() {
 
                     <XAxis
                       dataKey="date"
-                      tickFormatter={formatXAxis}
+                      tickFormatter={(value) => formatXAxis(value, frequencyGranularity)}
                     />
 
                     <YAxis allowDecimals={false} domain={[0, 7]}/>

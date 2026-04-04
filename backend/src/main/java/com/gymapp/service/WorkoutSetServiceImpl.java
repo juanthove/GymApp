@@ -5,6 +5,7 @@ import com.gymapp.dto.response.WorkoutSetResponse;
 import com.gymapp.dto.response.WorkoutSetVolumeResponse;
 import com.gymapp.dto.response.WorkoutSetWeeklyMuscleVolumeResponse;
 import com.gymapp.dto.response.WorkoutSetVolumePointResponse;
+import com.gymapp.dto.response.WorkoutVolumeResponse;
 import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.Granularity;
 import com.gymapp.model.MuscleType;
@@ -55,22 +56,22 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
     }
 
     private List<WorkoutSet> getSetsByDateFilter(Long userId, LocalDate from, LocalDate to) {
-    if (from != null && to != null) {
-        return workoutSetRepository.findByUserIdAndPerformedAtBetweenOrderByPerformedAtAscSetNumberAsc(
-            userId, from.atStartOfDay(), to.atTime(LocalTime.MAX)
-        );
-    } else if (from != null) {
-        return workoutSetRepository.findByUserIdAndPerformedAtAfterOrderByPerformedAtAscSetNumberAsc(
-            userId, from.atStartOfDay()
-        );
-    } else if (to != null) {
-        return workoutSetRepository.findByUserIdAndPerformedAtBeforeOrderByPerformedAtAscSetNumberAsc(
-            userId, to.atTime(LocalTime.MAX)
-        );
-    } else {
-        return workoutSetRepository.findByUserIdOrderByPerformedAtAscSetNumberAsc(userId);
+        if (from != null && to != null) {
+            return workoutSetRepository.findByUserIdAndPerformedAtBetweenOrderByPerformedAtAscSetNumberAsc(
+                userId, from.atStartOfDay(), to.atTime(LocalTime.MAX)
+            );
+        } else if (from != null) {
+            return workoutSetRepository.findByUserIdAndPerformedAtAfterOrderByPerformedAtAscSetNumberAsc(
+                userId, from.atStartOfDay()
+            );
+        } else if (to != null) {
+            return workoutSetRepository.findByUserIdAndPerformedAtBeforeOrderByPerformedAtAscSetNumberAsc(
+                userId, to.atTime(LocalTime.MAX)
+            );
+        } else {
+            return workoutSetRepository.findByUserIdOrderByPerformedAtAscSetNumberAsc(userId);
+        }
     }
-}
 
     @Override
     public List<WorkoutSetResponse> getWorkoutSetsByUserAndDateRange(Long userId, LocalDate from, LocalDate to) {
@@ -152,7 +153,7 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
     }
 
     @Override
-    public List<WorkoutSetVolumePointResponse> getVolumeSeriesByUserAndDateRange(Long userId, LocalDate from, LocalDate to, 
+    public WorkoutVolumeResponse getVolumeSeriesByUserAndDateRange(Long userId, LocalDate from, LocalDate to, 
         Granularity granularity) {
 
         List<WorkoutSet> sets = getSetsByDateFilter(userId, from, to);
@@ -165,13 +166,15 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
                         Collectors.summingDouble(this::calculateSetVolume)
                 ));
 
-        return grouped.entrySet().stream()
+        List<WorkoutSetVolumePointResponse> data = grouped.entrySet().stream()
                 .map(entry -> new WorkoutSetVolumePointResponse(
                         entry.getKey(),
                         entry.getValue()
                 ))
                 .sorted(Comparator.comparing(WorkoutSetVolumePointResponse::date))
                 .toList();
+        
+        return new WorkoutVolumeResponse(resolvedGranularity, data);
     }
 
     @Override

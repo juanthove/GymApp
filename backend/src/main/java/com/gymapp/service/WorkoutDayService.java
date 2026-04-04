@@ -1,7 +1,7 @@
 package com.gymapp.service;
 
 import com.gymapp.dto.request.WorkoutDayRequest;
-import com.gymapp.dto.response.WorkoutDayCountResponse;
+import com.gymapp.dto.response.WorkoutFrequencyResponse;
 import com.gymapp.dto.response.WorkoutDayExercisesResponse;
 import com.gymapp.dto.response.WorkoutDayResponse;
 import com.gymapp.model.Granularity;
@@ -48,5 +48,5 @@ public interface WorkoutDayService {
 
     WorkoutDayExercisesResponse getWorkoutDayExercises(Long dayId);
 
-    List<WorkoutDayCountResponse> getWorkoutFrequency(Long userId, LocalDate from, LocalDate to, Granularity granularity);
+    WorkoutFrequencyResponse getWorkoutFrequency(Long userId, LocalDate from, LocalDate to, Granularity granularity);
 }

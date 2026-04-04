@@ -1,7 +1,7 @@
 package com.gymapp.controller;
 
 import com.gymapp.dto.request.WorkoutDayRequest;
-import com.gymapp.dto.response.WorkoutDayCountResponse;
+import com.gymapp.dto.response.WorkoutFrequencyResponse;
 import com.gymapp.dto.response.WorkoutDayExercisesResponse;
 import com.gymapp.dto.response.WorkoutDayResponse;
 import com.gymapp.model.Granularity;
@@ -107,7 +107,7 @@ public class WorkoutDayController {
     }
 
     @GetMapping("/user/{userId}/workout-frequency")
-    public List<WorkoutDayCountResponse> getWorkoutFrequency(
+    public WorkoutFrequencyResponse getWorkoutFrequency(
             @PathVariable Long userId,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,

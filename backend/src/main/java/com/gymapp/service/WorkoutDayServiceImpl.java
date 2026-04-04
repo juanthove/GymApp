@@ -5,6 +5,7 @@ import com.gymapp.dto.response.WorkoutDayCountResponse;
 import com.gymapp.dto.response.WorkoutDayExercisesResponse;
 import com.gymapp.dto.response.WorkoutDayResponse;
 import com.gymapp.dto.response.WorkoutExerciseResponse;
+import com.gymapp.dto.response.WorkoutFrequencyResponse;
 import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.ExerciseType;
 import com.gymapp.model.Granularity;
@@ -259,7 +260,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
 
     @Override
-    public List<WorkoutDayCountResponse> getWorkoutFrequency(
+    public WorkoutFrequencyResponse getWorkoutFrequency(
             Long userId,
             LocalDate from,
             LocalDate to,
@@ -302,10 +303,12 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
                         Collectors.summingLong(WorkoutDayCountResponse::count)
                 ));
 
-        return grouped.entrySet().stream()
+        List<WorkoutDayCountResponse> data = grouped.entrySet().stream()
                 .map(e -> new WorkoutDayCountResponse(e.getKey(), e.getValue()))
                 .sorted(Comparator.comparing(WorkoutDayCountResponse::date))
                 .toList();
+        
+        return new WorkoutFrequencyResponse(resolvedGranularity, data);
     }
 
     private WorkoutExerciseResponse toWorkoutExerciseResponse(WorkoutExercise exercise) {
