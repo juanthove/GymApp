@@ -37,6 +37,7 @@ import {
 import GymCard from "../components/GymCard";
 import BackButton from "../components/BackButton";
 import MuscleChips from "../components/MuscleChips";
+import PrimaryButton from "../components/PrimaryButton";
 
 import {
   Container,
@@ -162,9 +163,16 @@ const loadData = async () => {
 
   setAllExercises(exercises);
 
-  const selected = exercises.filter((ex) => ex.selected);
+  const selectedIds = workoutDayData.selectedExerciseIds ?? [];
 
-  setSelectedExerciseIds(selected.map((ex) => ex.id));
+  //REAR MAPA (PRO)
+  const exerciseMap = new Map(exercises.map(ex => [ex.id, ex]));
+
+  const selected = selectedIds
+    .map(id => exerciseMap.get(id))
+    .filter(Boolean);
+
+  setSelectedExerciseIds(selectedIds);
   setDisplayedExercises(selected);
 
 };
@@ -199,25 +207,30 @@ const filteredExercises = allExercises.filter((ex) => {
 const toggleSelectedExercise = async (ex) => {
   const isSelected = selectedExerciseIds.includes(ex.id);
 
+  let newSelectedIds;
+
   if (isSelected) {
     await unmarkWorkoutExerciseSelected(workoutDayId, ex.id);
+    newSelectedIds = selectedExerciseIds.filter(id => id !== ex.id);
   } else {
     await markWorkoutExerciseSelected(workoutDayId, ex.id);
+    newSelectedIds = [...selectedExerciseIds, ex.id];
   }
-
-  const newSelectedIds = isSelected
-    ? selectedExerciseIds.filter((id) => id !== ex.id)
-    : [...selectedExerciseIds, ex.id];
 
   const updatedAll = allExercises.map((item) =>
     item.id === ex.id ? { ...item, selected: !isSelected } : item
   );
 
+  //ESTADOS
   setSelectedExerciseIds(newSelectedIds);
   setAllExercises(updatedAll);
 
-  // 🔥 CLAVE: actualizar esto SIEMPRE
-  setDisplayedExercises(updatedAll.filter((item) => item.selected));
+  //USAR ORDEN
+  const ordered = newSelectedIds
+    .map(id => updatedAll.find(ex => ex.id === id))
+    .filter(Boolean);
+
+  setDisplayedExercises(ordered);
 };
 
 const toggleCompleteExercise = async(ex)=>{
@@ -470,12 +483,40 @@ return(
 
 <Container maxWidth="sm" sx={{mt:6, mb:10, zIndex:2, position:"relative"}}>
 
-<Stack direction="row" alignItems="center" spacing={1} sx={{position:"relative", mb:2}}>
- <BackButton to={`/workout/${userId}`} sx={{ position:"absolute", left:0, top:"50%", transform:"translateY(-50%)" }} />
- <Typography variant="h5" textAlign="center" sx={{width:"100%"}}>
-  Ejercicios del día
- </Typography>
-</Stack>
+
+<Box
+  sx={{
+    position: "relative",
+    mb: 3,
+    px: 2,
+    py: 1.5,
+    borderRadius: 3,
+    backdropFilter: "blur(10px)",
+    background: "rgba(255,255,255,0.15)",
+    border: "1px solid rgba(255,255,255,0.25)",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.2)"
+  }}
+>
+  <Stack direction="row" alignItems="center">
+    
+    <BackButton to={`/workout/${userId}`} sx={{ position:"absolute", left:10, top:"50%", transform:"translateY(-50%)" }} />
+
+    <Typography
+      variant="h5"
+      textAlign="center"
+      sx={{
+        width: "100%",
+        fontWeight: 800,
+        letterSpacing: "0.8px",
+        color: "#fff",
+        textShadow: "0 3px 8px rgba(0,0,0,0.7)"
+      }}
+    >
+      Ejercicios del día
+    </Typography>
+
+  </Stack>
+</Box>
 
 <Stack spacing={2}>
 
@@ -487,45 +528,103 @@ No hay ejercicios seleccionados
 
 ) : (
 
-displayedExercises.map((ex)=>(
+displayedExercises.map((ex) => (
   <GymCard
-  key={ex.id}
-  onClick={() => setSelectedExercise(ex)}
-  variant="exercise"
-  sx={{ height: 150 }}
->
-  <Stack
-    direction={ex.icon ? "row" : "column"}
-    alignItems="center"
-    justifyContent="center"
-    spacing={ex.icon ? 3 : 1}
-    sx={ex.icon ? { transform: "translateX(-20px)" } : {}}
+    key={ex.id}
+    onClick={() => setSelectedExercise(ex)}
+    variant="exercise"
+    sx={{
+      height: 140,
+      display: "flex",
+      alignItems: "center",
+      px: 2,
+    }}
   >
-    {ex.icon && (
-      <img
-        src={getExerciseIconUrl(ex.icon)}
-        style={{ width: 120, height: 120, objectFit: "contain", padding: "6px" }}
-      />
-    )}
     <Stack
-      spacing={0.5}
-      alignItems={ex.icon ? "flex-start" : "center"}
-      textAlign={ex.icon ? "left" : "center"}
+      direction="row"
+      alignItems="center"
+      spacing={2}
+      sx={{ width: "100%" }}
     >
-      <Typography variant="h5" fontWeight={700}>
-        {ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}
-      </Typography>
-      <Typography fontSize="1.1rem" color="text.secondary">
-        Peso: {ex.weight ?? 0} kg • Reps: {reps ?? "-"}
-      </Typography>
-      {ex.completed && (
-        <Typography variant="h6" color="success.main" fontWeight={700}>
-          ✔ Completado
-        </Typography>
+      {/* 🖼️ ICONO */}
+      {ex.icon && (
+        <Box
+          sx={{
+            width: 110,
+            height: 110,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <img
+            src={getExerciseIconUrl(ex.icon)}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+            }}
+          />
+        </Box>
       )}
+
+      {/* 📊 CONTENIDO */}
+      <Box sx={{ flex: 1 }}>
+        
+        {/* 🔝 FILA: NOMBRE + PESO/REPS */}
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Typography
+            fontWeight={700}
+            sx={{
+              fontSize: "1.5rem",
+              lineHeight: 1.2,
+            }}
+          >
+            {ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}
+          </Typography>
+
+          <Typography
+            sx={{
+              fontSize: "1.1rem",
+              color: "text.secondary",
+              fontWeight: 500,
+              whiteSpace: "nowrap"
+            }}
+          >
+            Peso: {ex.weight ?? 0} kg • Reps: {reps ?? "-"}
+          </Typography>
+        </Stack>
+
+        {/* 📏 LINEA */}
+        <Box
+          sx={{
+            width: "100%",
+            height: "1px",
+            background: "rgba(0,0,0,0.15)",
+            my: 1,
+          }}
+        />
+
+        {/* ✅ COMPLETADO */}
+        {ex.completed && (
+          <Typography
+            sx={{
+              fontWeight: 700,
+              color: "#2e7d32",
+              fontSize: "1.1rem",
+            }}
+          >
+            ✔ Completado
+          </Typography>
+        )}
+      </Box>
     </Stack>
-  </Stack>
-</GymCard>
+  </GymCard>
 ))
 
 )}
@@ -556,28 +655,28 @@ displayedExercises.map((ex)=>(
 >
 
 <Stack direction="row" spacing={1}>
-<Button
- fullWidth
- size="large"
- variant="outlined"
- color="secondary"
- onClick={()=>setIsSelectionModalOpen(true)}
- sx={{fontWeight:700}}
->
-Seleccionar ejercicios
-</Button>
 
-<Button
- fullWidth
- size="large"
- variant="contained"
- color="primary"
- onClick={handleFinishClick}
- sx={{fontWeight:700}}
- disabled={!areAllExercisesCompleted()}
->
-Finalizar día
-</Button>
+<PrimaryButton
+  label="Seleccionar ejercicios"
+  onClick={() => setIsSelectionModalOpen(true)}
+  sx={{
+    width: "100%",
+    fontWeight: 700,
+    py: 1.8,
+    background: "linear-gradient(145deg, #c35aff, #ba20e9)"
+  }}
+/>
+
+<PrimaryButton
+  label="Finalizar día"
+  onClick={handleFinishClick}
+  disabled={!areAllExercisesCompleted()}
+  sx={{
+    width: "100%",
+    fontWeight: 700,
+    py: 1.8
+  }}
+/>
 </Stack>
 
 </Box>

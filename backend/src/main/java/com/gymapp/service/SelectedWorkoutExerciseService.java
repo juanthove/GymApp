@@ -9,9 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Service
 public class SelectedWorkoutExerciseService {
@@ -29,9 +27,10 @@ public class SelectedWorkoutExerciseService {
             throw new IllegalArgumentException("Day id and exercise id are required");
         }
 
-        Set<Long> selected = new HashSet<>(readSelectedIds(workoutDayId));
-        if (selected.add(workoutExerciseId)) {
-            writeSelectedIds(workoutDayId, new ArrayList<>(selected));
+        List<Long> selected = new ArrayList<>(readSelectedIds(workoutDayId));
+        if (!selected.contains(workoutExerciseId)) {
+            selected.add(workoutExerciseId); // 👈 se agrega al final
+            writeSelectedIds(workoutDayId, selected);
         }
     }
 
@@ -40,9 +39,9 @@ public class SelectedWorkoutExerciseService {
             throw new IllegalArgumentException("Day id and exercise id are required");
         }
 
-        Set<Long> selected = new HashSet<>(readSelectedIds(workoutDayId));
+        List<Long> selected = new ArrayList<>(readSelectedIds(workoutDayId));
         if (selected.remove(workoutExerciseId)) {
-            writeSelectedIds(workoutDayId, new ArrayList<>(selected));
+            writeSelectedIds(workoutDayId, selected);
         }
     }
 
@@ -63,6 +62,10 @@ public class SelectedWorkoutExerciseService {
         } catch (IOException e) {
             throw new RuntimeException("Could not delete selected-file for workoutDay " + workoutDayId, e);
         }
+    }
+
+    public List<Long> getSelectedIds(Long workoutDayId) {
+        return readSelectedIds(workoutDayId);
     }
 
     private Path selectedDirectory() {

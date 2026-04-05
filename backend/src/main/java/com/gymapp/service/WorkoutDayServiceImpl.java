@@ -222,12 +222,14 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
             reps = day.getWorkout().getReps();
         }
 
+        List<Long> selectedIds = selectedWorkoutExerciseService.getSelectedIds(dayId);
+
         var exerciseResponses = workoutExerciseRepository.findByWorkoutDayIdOrderByExerciseOrder(dayId)
                 .stream()
                 .map(this::toWorkoutExerciseResponse)
                 .toList();
 
-        return new WorkoutDayExercisesResponse(dayId, reps, exerciseResponses);
+        return new WorkoutDayExercisesResponse(dayId, reps, selectedIds, exerciseResponses);
     }
 
     private LocalDate resolveDate(LocalDate date, Granularity granularity) {
