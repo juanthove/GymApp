@@ -27,7 +27,7 @@ Box
 
 import AddIcon from "@mui/icons-material/Add";
 
-import GymCard from "../components/GymCard";
+import UserCard from "../components/UserCard";
 
 export default function HomeScreen(){
 
@@ -165,12 +165,11 @@ export default function HomeScreen(){
 
     {users.map(user=>(
 
-      <GymCard
+      <UserCard
         key={user.id}
         title={`${user.name} ${user.surname}`}
         imageUrl={user.image ? getUserImageUrl(user.image) : null}
         onClick={()=>goWorkoutWithUser(user)}
-        variant="user"
         sx={{ width: "100%"}}
       />
 

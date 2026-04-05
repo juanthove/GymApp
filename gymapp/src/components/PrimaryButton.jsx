@@ -5,12 +5,13 @@ export default function PrimaryButton({
   label,
   to,
   onClick,
-  color = "blue", // 🔥 opcional para futuro
+  disabled = false, // 👈 NUEVO
   sx = {}
 }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
+    if (disabled) return; // 👈 evita acción
     if (onClick) onClick();
     if (to) navigate(to);
   };
@@ -18,6 +19,7 @@ export default function PrimaryButton({
   return (
     <Button
       onClick={handleClick}
+      disabled={disabled} // 👈 importante para MUI
       sx={{
         px: 4,
         py: 1.5,
@@ -27,33 +29,43 @@ export default function PrimaryButton({
         textTransform: "uppercase",
         color: "#fff",
 
-        // 🎨 gradiente celeste default
-        background: "linear-gradient(145deg, #4a9dfd, #3379db)",
+        background: disabled
+          ? "linear-gradient(145deg, #9e9e9e, #757575)" // 👈 gris
+          : "linear-gradient(145deg, #4a9dfd, #3379db)",
 
-        boxShadow: `
-          0 6px 12px rgba(0,0,0,0.25),
-          inset 0 2px 4px rgba(255,255,255,0.2)
-        `,
+        boxShadow: disabled
+          ? "none"
+          : `
+            0 6px 12px rgba(0,0,0,0.25),
+            inset 0 2px 4px rgba(255,255,255,0.2)
+          `,
+
+        opacity: disabled ? 0.7 : 1,
+        cursor: disabled ? "not-allowed" : "pointer",
 
         transition: "all 0.2s ease",
 
-        "&:hover": {
-          transform: "translateY(-2px)",
-          boxShadow: `
-            0 10px 18px rgba(0,0,0,0.3),
-            inset 0 2px 4px rgba(255,255,255,0.25)
-          `
-        },
+        "&:hover": disabled
+          ? {}
+          : {
+              transform: "translateY(-2px)",
+              boxShadow: `
+                0 10px 18px rgba(0,0,0,0.3),
+                inset 0 2px 4px rgba(255,255,255,0.25)
+              `
+            },
 
-        "&:active": {
-          transform: "translateY(2px)",
-          boxShadow: `
-            inset 0 4px 8px rgba(0,0,0,0.3),
-            inset 0 -2px 4px rgba(255,255,255,0.2)
-          `
-        },
+        "&:active": disabled
+          ? {}
+          : {
+              transform: "translateY(2px)",
+              boxShadow: `
+                inset 0 4px 8px rgba(0,0,0,0.3),
+                inset 0 -2px 4px rgba(255,255,255,0.2)
+              `
+            },
 
-        ...sx // 🔥 para overrides
+        ...sx
       }}
     >
       {label}

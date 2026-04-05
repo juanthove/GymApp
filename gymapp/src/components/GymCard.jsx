@@ -1,145 +1,187 @@
-import { Avatar, Card, CardActionArea, CardContent, Typography, Box } from "@mui/material";
+// GymCard.jsx
+import React from "react";
+import PropTypes from "prop-types";
+import { Card, CardActionArea, CardContent, Box, Typography } from "@mui/material";
 
 export default function GymCard({
   title,
   subtitle,
-  imageUrl,
-  onClick,
   children,
+  onClick,
   sx,
-  align = "center",
-  variant = "default" // 🔥 nueva prop
+  status = "NORMAL", // "COMPLETED", "IN_PROGRESS", "NORMAL"
+  showArrow = false,
+  variant = "day", // "day" o "exercise"
 }) {
+  // Base style general de la Card
+  const baseStyle = {
+    borderRadius: 4,
+    position: "relative",
+    overflow: "hidden",
+    transition: "0.25s",
+    cursor: onClick ? "pointer" : "default",
+    background: "linear-gradient(180deg, #ffffff, #f5f5f5)",
+    border: "1px solid rgba(255,255,255,0.9)",
+    boxShadow: `
+      0 6px 18px rgba(0,0,0,0.12),
+      inset 0 1px 2px rgba(255,255,255,0.8)
+    `,
+    "&:hover": {
+      transform: "translateY(-6px)",
+      boxShadow: "0 12px 28px rgba(0,0,0,0.18)",
+    },
+    ...sx,
+  };
 
-  const isCenter = align === "center";
+  // Solo para day y status COMPLETED
+  if (variant === "day" && status === "COMPLETED") {
+    Object.assign(baseStyle, {
+      background: "rgba(230, 230, 230, 0.3)", 
+      backdropFilter: "blur(12px)", 
+      border: "1px solid rgba(255, 255, 255, 0.4)",
+      boxShadow: "none", 
+      opacity: 1, 
 
-  // 🔥 NUEVO DISEÑO SOLO PARA HOME
-  if (variant === "user") {
-    return (
-      <Card
-        sx={{
-          borderRadius: 4,
-          overflow: "hidden",
-          height: 300,
-          minHeight: 300,
-          transition: "0.3s",
-          cursor: "pointer",
-          "&:hover": {
-            transform: "scale(1.03)",
-            boxShadow: 6
-          },
-          ...sx
-        }}
-      >
-        <CardActionArea sx={{ height: "100%" }} onClick={onClick}>
+      // Estilo para los textos generales (título, subtítulo)
+      "& .MuiTypography-root": {
+        color: "rgba(255, 255, 255, 0.85)", // Blanco más sólido para que se lea sobre el fondo claro
+        textShadow: "0px 1px 2px rgba(0,0,0,0.2)", // Sombra suave para separar del blanco
+      },
+      
+      // ESTO ES LA CLAVE: Forzamos el color verde para el estado completado
+      "& .status-text-completed": {
+        color: "#127919 !important", // Un verde oscuro tipo "Forest Green" que resalte sobre blanco
+        fontWeight: 800,
+        textShadow: "0px 1px 2px rgba(255, 255, 255, 0.41)", // Quitamos la sombra blanca para que no se ensucie
+      },
 
-          {/* IMAGEN */}
-          <Box
-            sx={{
-              height: "70%",
-              backgroundImage: imageUrl ? `url(${imageUrl})` : "none",
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundColor: "#ccc"
-            }}
-          />
-
-          {/* FOOTER */}
-          <Box
-            sx={{
-              height: "30%",
-              backgroundColor: "rgba(0,0,0,0.75)",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              px: 2
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{
-                color: "#fff",
-                fontWeight: 600,
-                textAlign: "center"
-              }}
-            >
-              {title}
-            </Typography>
-
-            {/* línea roja */}
-            <Box
-              sx={{
-                width: "80%",
-                height: "4px",
-                mt: 1,
-                borderRadius: "10px",
-                background: "linear-gradient(90deg, transparent, #e53935, transparent)"
-              }}
-            />
-          </Box>
-
-        </CardActionArea>
-      </Card>
-    );
+      "&:hover": {
+        transform: "none",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+      },
+    });
   }
 
-  // 🔥 TU DISEÑO ORIGINAL (NO TOCAR)
   return (
-    <Card
-      sx={{
-        borderRadius: 4,
-        height: imageUrl ? 180 : 140,
-        transition: "0.2s",
-        "&:hover": {
-          transform: "translateY(-4px)",
-          boxShadow: 6
-        },
-        ...sx
-      }}
-    >
-      <CardActionArea
+    <Card sx={baseStyle}>
+      {/* BRILLO SUPERIOR */}
+      <Box
         sx={{
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: isCenter ? "center" : "flex-start"
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "45%",
+          background: "linear-gradient(to bottom, rgba(255,255,255,0.6), transparent)",
+          pointerEvents: "none",
         }}
-        onClick={onClick}
-      >
-        <CardContent
-          sx={{
-            textAlign: isCenter ? "center" : "left",
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: isCenter ? "center" : "flex-start",
-            gap: imageUrl ? 1 : 0
-          }}
-        >
-          {imageUrl && (
-            <Avatar
-              src={imageUrl}
-              alt={title || "Usuario"}
-              sx={{ width: 64, height: 64 }}
-            />
-          )}
+      />
 
-          {title && (
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              {title}
-            </Typography>
-          )}
+      {/* SOMBRA INFERIOR */}
+      <Box
+        sx={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          width: "100%",
+          height: "30%",
+          background: "linear-gradient(to top, rgba(0,0,0,0.08), transparent)",
+          pointerEvents: "none",
+        }}
+      />
 
-          {subtitle && (
-            <Typography component="div" color="text.secondary">
-              {subtitle}
-            </Typography>
-          )}
+      <CardActionArea sx={{ height: "100%" }} onClick={onClick}>
+        {variant === "exercise" ? (
+          <CardContent sx={{ width: "100%", p: 0 }}>{children}</CardContent>
+        ) : (
+          <CardContent
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "stretch",
+              height: "100%",
+              p: 2,
+            }}
+          >
+            {/* IZQUIERDA: Titulo + Subtitle + children */}
+            <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "flex-start" }}>
+              {title && (
+                <Typography fontWeight={700} sx={{ mb: 0.5, fontSize: "1.7rem"  }}>
+                  {title}
+                </Typography>
+              )}
+              {subtitle && <Box>{subtitle}</Box>}
+              {children}
+            </Box>
 
-          {children}
-        </CardContent>
+            {/* DERECHA: Estado arriba, flecha abajo */}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                alignItems: "flex-end",
+              }}
+            >
+              <Box>
+                {status === "COMPLETED" && (
+                  <Typography 
+                    className="status-text-completed"
+                    sx={{ 
+                      color: "success.main",
+                      fontWeight: 700 
+                    }}
+                  >
+                    ✔ Completado
+                  </Typography>
+                )}
+                {status === "IN_PROGRESS" && (
+                  <Typography color="warning.main" fontWeight={700}>
+                    ⏳ En curso
+                  </Typography>
+                )}
+              </Box>
+              {showArrow && (
+                <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mt: 1 }}>
+                  <svg
+                    width="32"
+                    height="32"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    style={{ filter: "drop-shadow(1px 1px 2px rgba(0,0,0,0.3))" }}
+                  >
+                    <defs>
+                      <linearGradient id="arrowGradient" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor="#888" />
+                        <stop offset="100%" stopColor="#000" />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d="M8 4L16 12L8 20"
+                      stroke="url(#arrowGradient)"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </Box>
+              )}
+            </Box>
+          </CardContent>
+        )}
       </CardActionArea>
     </Card>
   );
 }
+
+GymCard.propTypes = {
+  title: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+  subtitle: PropTypes.node,
+  children: PropTypes.node,
+  onClick: PropTypes.func,
+  sx: PropTypes.object,
+  status: PropTypes.oneOf(["COMPLETED", "IN_PROGRESS", "NORMAL"]),
+  showArrow: PropTypes.bool,
+  variant: PropTypes.oneOf(["day", "exercise"]),
+};

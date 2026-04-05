@@ -3,6 +3,32 @@ import { keyframes } from "@mui/system";
 import { useEffect, useRef, useState } from "react";
 import { useCountUp } from "react-countup";
 
+import ChestIcon from "../assets/muscles/chest.svg?react";
+import BackIcon from "../assets/muscles/back.svg?react";
+import ShouldersIcon from "../assets/muscles/shoulders.svg?react";
+import BicepsIcon from "../assets/muscles/biceps.svg?react";
+import TricepsIcon from "../assets/muscles/triceps.svg?react";
+import ForearmsIcon from "../assets/muscles/forearms.svg?react";
+import QuadricepsIcon from "../assets/muscles/quadriceps.svg?react";
+import GlutesIcon from "../assets/muscles/glutes.svg?react";
+import HamstringsIcon from "../assets/muscles/hamstrings.svg?react";
+import CalvesIcon from "../assets/muscles/calves.svg?react";
+import AbsIcon from "../assets/muscles/abdominals.svg?react";
+
+const muscleIcons = {
+  CHEST: ChestIcon,
+  BACK: BackIcon,
+  SHOULDERS: ShouldersIcon,
+  BICEPS: BicepsIcon,
+  TRICEPS: TricepsIcon,
+  FOREARMS: ForearmsIcon,
+  QUADRICEPS: QuadricepsIcon,
+  GLUTES: GlutesIcon,
+  HAMSTRINGS: HamstringsIcon,
+  CALVES: CalvesIcon,
+  ABDOMINALS: AbsIcon
+};
+
 // 🎨 labels
 const muscleLabels = {
   CHEST: "Pecho",
@@ -70,6 +96,7 @@ export default function MuscleVolumeCard({ muscle, volume }) {
   const bgColor = lightenColor(baseColor, 0.6);
   const bgColorSoft = lightenColor(baseColor, 0.7);
   const textColor = darkenColor(baseColor, 0.15);
+  const Icon = muscleIcons[muscle];
 
   const { start } = useCountUp({
     ref: countUpRef,
@@ -131,15 +158,45 @@ export default function MuscleVolumeCard({ muscle, volume }) {
             }}
         />
       {/* IZQUIERDA */}
-      <Typography
-        sx={{
-          fontWeight: 600,
-          color: "#444",
-          fontSize: "1.25rem"
-        }}
-      >
-        {muscleLabels[muscle] || muscle}
-      </Typography>
+      <Box sx={{ position: "relative", display: "flex", alignItems: "center"}}>
+        {Icon && (
+          <>
+            <style>
+              {`
+                .muscle-icon .muscle-main {
+                  fill: currentColor;
+                }
+
+                .muscle-icon .muscle-secondary {
+                  fill: color-mix(in srgb, currentColor 65%, black);
+                }
+              `}
+            </style>
+            <Icon
+              className="muscle-icon"
+              style={{
+                left: -6,
+                width: 50,
+                height: 50,
+                color: baseColor, // 🔥 mismo color que usás en la card
+                filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.25))",
+                transform: "scale(1.2)",
+              }}
+            />
+          </>
+        )}
+
+        <Typography
+          sx={{
+            fontWeight: 600,
+            color: "#444",
+            fontSize: "1.25rem",
+            pl: 4.5
+          }}
+        >
+          {muscleLabels[muscle] || muscle}
+        </Typography>
+      </Box>
 
       {/* DERECHA (KG animados) */}
       <Typography

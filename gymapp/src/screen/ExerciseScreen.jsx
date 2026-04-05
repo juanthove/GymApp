@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
+import backgroundImg from "../assets/gymproIcon.png";
+
 import {
   getWorkoutExercises,
   completeWorkoutExercise,
@@ -434,7 +436,39 @@ const areSetsValid = () => {
 
 return(
 
-<Container maxWidth="sm" sx={{mt:6,mb:10}}>
+  <Box
+    sx={{
+      position: "relative",
+      minHeight: "100vh",
+      overflow: "hidden"
+    }}
+  >
+  
+    {/* 🖼️ BACKGROUND */}
+    <Box
+      sx={{
+        position: "absolute",
+        inset: 0,
+        backgroundImage: `url(${backgroundImg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        zIndex: 0
+      }}
+    />
+  
+    {/* 🌑 OVERLAY */}
+    <Box
+      sx={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(44, 44, 44, 0.4)",
+        backdropFilter: "blur(6px)",
+        zIndex: 1
+      }}
+    />
+
+<Container maxWidth="sm" sx={{mt:6, mb:10, zIndex:2, position:"relative"}}>
 
 <Stack direction="row" alignItems="center" spacing={1} sx={{position:"relative", mb:2}}>
  <BackButton to={`/workout/${userId}`} sx={{ position:"absolute", left:0, top:"50%", transform:"translateY(-50%)" }} />
@@ -455,57 +489,43 @@ No hay ejercicios seleccionados
 
 displayedExercises.map((ex)=>(
   <GymCard
-    key={ex.id}
-    onClick={() => setSelectedExercise(ex)}
-    align="center"
-    sx={{ height: 150 }}
+  key={ex.id}
+  onClick={() => setSelectedExercise(ex)}
+  variant="exercise"
+  sx={{ height: 150 }}
+>
+  <Stack
+    direction={ex.icon ? "row" : "column"}
+    alignItems="center"
+    justifyContent="center"
+    spacing={ex.icon ? 3 : 1}
+    sx={ex.icon ? { transform: "translateX(-20px)" } : {}}
   >
+    {ex.icon && (
+      <img
+        src={getExerciseIconUrl(ex.icon)}
+        style={{ width: 120, height: 120, objectFit: "contain", padding: "6px" }}
+      />
+    )}
     <Stack
-      direction={ex.icon ? "row" : "column"} // 👈 cambia layout
-      alignItems="center"
-      justifyContent="center"
-      spacing={ex.icon ? 3 : 1}
-      sx={ex.icon ? { transform: "translateX(-20px)" } : {}}
+      spacing={0.5}
+      alignItems={ex.icon ? "flex-start" : "center"}
+      textAlign={ex.icon ? "left" : "center"}
     >
-
-      {/* ICONO */}
-      {ex.icon && (
-        <img
-          src={getExerciseIconUrl(ex.icon)}
-          style={{
-            width: 120,
-            height: 120,
-            objectFit: "contain",
-            padding: "6px"
-          }}
-        />
+      <Typography variant="h5" fontWeight={700}>
+        {ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}
+      </Typography>
+      <Typography fontSize="1.1rem" color="text.secondary">
+        Peso: {ex.weight ?? 0} kg • Reps: {reps ?? "-"}
+      </Typography>
+      {ex.completed && (
+        <Typography variant="h6" color="success.main" fontWeight={700}>
+          ✔ Completado
+        </Typography>
       )}
-
-      {/* TEXTO */}
-      <Stack
-        spacing={0.5}
-        alignItems={ex.icon ? "flex-start" : "center"}
-        textAlign={ex.icon ? "left" : "center"}
-      >
-
-        <Typography variant="h5" fontWeight={700}>
-          {ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}
-        </Typography>
-
-        <Typography fontSize="1.1rem" color="text.secondary">
-          Peso: {ex.weight ?? 0} kg • Reps: {reps ?? "-"}
-        </Typography>
-
-        {ex.completed && (
-          <Typography variant="h6" color="success.main" fontWeight={700}>
-            ✔ Completado
-          </Typography>
-        )}
-
-      </Stack>
-
     </Stack>
-  </GymCard>
+  </Stack>
+</GymCard>
 ))
 
 )}
@@ -531,9 +551,7 @@ displayedExercises.map((ex)=>(
   bottom:0,
   left:0,
   right:0,
-  p:2,
-  background:"#fff",
-  borderTop:"1px solid #ddd"
+  p:2
  }}
 >
 
@@ -908,6 +926,8 @@ Seleccionar ejercicios
 
 
 </Container>
+
+</Box>
 
 );
 

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
+import backgroundImg from "../assets/gymproIcon.png";
+
 import { getUserById, getCurrentWorkout, logoutUser } from "../services/userService";
 import { getWorkoutById } from "../services/workoutService";
 import { startWorkoutDay, getWorkoutDayStatus, getWorkoutDayImageUrl } from "../services/workoutDayService";
@@ -137,41 +139,111 @@ const sortedDays = workout?.days
  : [];
 
 
-if(!user) return null;
+if (!user) {
+  return (
+    <Box sx={{ minHeight: "100vh", backgroundColor: "#2c2c2c", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+       <Typography color="white">Cargando...</Typography>
+    </Box>
+  );
+}
 
 return(
 
-<Container maxWidth="sm" sx={{mt:6}}>
+<Box
+  sx={{
+    position: "relative",
+    minHeight: "100vh",
+    overflow: "hidden"
+  }}
+>
+
+  {/* 🖼️ BACKGROUND */}
+  <Box
+    sx={{
+      position: "absolute",
+      inset: 0,
+      backgroundImage: `url(${backgroundImg})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+      zIndex: 0
+    }}
+  />
+
+  {/* 🌑 OVERLAY */}
+  <Box
+    sx={{
+      position: "absolute",
+      inset: 0,
+      backgroundColor: "rgba(44, 44, 44, 0.4)",
+      backdropFilter: "blur(6px)",
+      zIndex: 1
+    }}
+  />
+
+  {/* 📦 CONTENIDO */}
+  <Container
+    maxWidth="sm"
+    sx={{
+      position: "relative",
+      zIndex: 2, // 👈 CLAVE
+      mt: 6
+    }}
+  >
 
 <Stack spacing={4}>
 
-<Stack direction="row" alignItems="center" spacing={1} sx={{position:"relative"}}>
- <BackButton to="/home" sx={{ position:"absolute", left:0, top:"50%", transform:"translateY(-50%)" }} />
- <Typography variant="h3" textAlign="center" sx={{width:"100%"}}>
-  Hola {user.name}
- </Typography>
- <Button
-    variant="outlined"
-    color="error"
-    onClick={handleLogout}
-    disabled={hasDayInProgress()}
-    >
-    Cerrar sesión
-  </Button>
-</Stack>
+<Box sx={{ position: "relative", mb: 2 }}>
+
+  {/* 🔝 TOP BAR */}
+  <Box
+    sx={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }}
+  >
+    <BackButton to="/home" />
+
+    <PrimaryButton
+      label="Cerrar sesión"
+      onClick={handleLogout}
+      disabled={hasDayInProgress()}
+      sx={{
+        fontSize: "0.75rem",
+        px: 2,
+        py: 0.8,
+        background: "linear-gradient(145deg, #ff5a5a, #d32f2f)"
+      }}
+    />
+  </Box>
+
+  {/* 👋 TITULO */}
+  <Typography
+    variant="h3"
+    textAlign="center"
+    sx={{
+      mt: 2,
+      fontWeight: 800
+    }}
+  >
+    Hola {user.name}
+  </Typography>
+
+</Box>
 
 {workout && (
-  <Typography variant="h6" textAlign="center" color="text.secondary">
+  <Typography variant="h6" textAlign="center" color="white">
     Desde {formatDate(workout.startDate)} hasta {formatDate(workout.endDate)}
   </Typography>
 )}
 
-<Typography variant="h5" textAlign="center" sx={{fontStyle:"italic"}}>
+<Typography variant="h5" textAlign="center" sx={{fontStyle:"italic", color:"white"}}>
 {phrase}
 </Typography>
 
 {!hasWorkout &&
- <Typography textAlign="center" color="text.secondary">
+ <Typography textAlign="center" color="white">
   Este usuario no tiene planilla asignada actualmente.
  </Typography>
 }
@@ -183,36 +255,13 @@ return(
  return(
 
 <GymCard
- key={day.id}
- title={day.name}
- subtitle={
-    <Box my={1}>
-        <MuscleChips muscles={day.muscles} chipSx={{fontWeight: 600,}} />
-    </Box>
- }
- onClick={()=>openDay(day)}
- sx={{
-  opacity: status === "COMPLETED" ? 0.6 : 1
- }}
->
-
-{status === "COMPLETED" &&
-
-<Typography color="success.main" fontWeight={700}>
- ✔ Completado
-</Typography>
-
-}
-
-{status === "IN_PROGRESS" &&
-
-<Typography color="warning.main" fontWeight={700}>
- ⏳ En curso
-</Typography>
-
-}
-
-</GymCard>
+  key={day.id}
+  title={day.name}
+  subtitle={<MuscleChips muscles={day.muscles} chipSx={{ fontWeight: 600, fontSize: "1.05rem" }} />}
+  onClick={() => openDay(day)}
+  status={status}
+  showArrow={true}
+/>
 
 );
 
@@ -289,6 +338,8 @@ Cancelar
 </Dialog>
 
 </Container>
+
+</Box>
 
 );
 
