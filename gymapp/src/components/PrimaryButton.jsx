@@ -26,7 +26,7 @@ export default function PrimaryButton({
         borderRadius: "999px",
         fontWeight: 600,
         fontSize: "0.95rem",
-        textTransform: "uppercase",
+        textTransform: "none",
         color: "#fff",
 
         background: disabled
@@ -44,16 +44,6 @@ export default function PrimaryButton({
         cursor: disabled ? "not-allowed" : "pointer",
 
         transition: "all 0.2s ease",
-
-        "&:hover": disabled
-          ? {}
-          : {
-              transform: "translateY(-2px)",
-              boxShadow: `
-                0 10px 18px rgba(0,0,0,0.3),
-                inset 0 2px 4px rgba(255,255,255,0.25)
-              `
-            },
 
         "&:active": disabled
           ? {}

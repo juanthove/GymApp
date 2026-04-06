@@ -97,12 +97,14 @@ export default function HomeScreen(){
 
     {/* OVERLAY (para transparencia) */}
     <Box
-      sx={{
-        position: "absolute",
-        inset: 0,
-        backgroundColor: "rgba(88, 88, 88, 0.6)" 
-      }}
-    />
+    sx={{
+      position: "absolute",
+      inset: 0,
+      backgroundColor: "rgba(44, 44, 44, 0.4)",
+      backdropFilter: "blur(6px)",
+      zIndex: 1
+    }}
+  />
 
     {/* CONTENIDO */}
     <Box sx={{ position: "relative", zIndex: 1 }}>

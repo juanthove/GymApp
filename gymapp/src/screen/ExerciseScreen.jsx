@@ -38,6 +38,7 @@ import GymCard from "../components/GymCard";
 import BackButton from "../components/BackButton";
 import MuscleChips from "../components/MuscleChips";
 import PrimaryButton from "../components/PrimaryButton";
+import CloseButton from "../components/CloseButton";
 
 import {
   Container,
@@ -502,11 +503,11 @@ return(
     <BackButton to={`/workout/${userId}`} sx={{ position:"absolute", left:10, top:"50%", transform:"translateY(-50%)" }} />
 
     <Typography
-      variant="h5"
       textAlign="center"
       sx={{
         width: "100%",
         fontWeight: 800,
+        fontSize: "1.9rem",
         letterSpacing: "0.8px",
         color: "#fff",
         textShadow: "0 3px 8px rgba(0,0,0,0.7)"
@@ -522,7 +523,15 @@ return(
 
 {selectedExerciseIds.length === 0 ? (
 
-<Typography textAlign="center" color="text.secondary">
+<Typography textAlign="center" 
+  sx={{
+    color: "#fff",
+    fontSize: "1.7rem",
+    fontWeight: 600,
+    textShadow: "0 2px 6px rgba(0,0,0,0.7)",
+    letterSpacing: "0.5px"
+  }}
+>
 No hay ejercicios seleccionados
 </Typography>
 
@@ -662,7 +671,8 @@ displayedExercises.map((ex) => (
   sx={{
     width: "100%",
     fontWeight: 700,
-    py: 1.8,
+    fontSize: "2rem",
+    py: 0.7,
     background: "linear-gradient(145deg, #c35aff, #ba20e9)"
   }}
 />
@@ -674,7 +684,8 @@ displayedExercises.map((ex) => (
   sx={{
     width: "100%",
     fontWeight: 700,
-    py: 1.8
+    fontSize: "2rem",
+    py: 0.7
   }}
 />
 </Stack>
@@ -723,9 +734,17 @@ displayedExercises.map((ex) => (
 
 ) : null}
 
-<DialogTitle sx={{fontWeight:700, textAlign:"center"}}>
-{selectedExercise?.exercise?.name || selectedExercise?.exerciseName}
-</DialogTitle>
+<DialogTitle sx={{fontWeight:700, position: "relative", textAlign:"center"}}>
+  {selectedExercise?.exercise?.name || selectedExercise?.exerciseName}
+  <CloseButton onClick={() => setSelectedExercise(null)}
+    sx={{
+      position: "absolute",
+      right: 16,
+      top: "50%",
+      transform: "translateY(-50%)",
+    }}
+  />
+  </DialogTitle>
 
 <DialogContent>
 
@@ -867,12 +886,7 @@ Repeticiones: <b>{reps ?? "-"}</b>
  : "Marcar como completado"}
 </Button>
 
-<Button
- fullWidth
- onClick={()=>setSelectedExercise(null)}
->
-Cerrar
-</Button>
+
 
 </DialogActions>
 
@@ -892,8 +906,16 @@ Cerrar
     }
   }}
 >
-<DialogTitle sx={{fontWeight:700}}>
+<DialogTitle sx={{fontWeight:700, position: "relative", textAlign:"center"}}>
 Seleccionar ejercicios
+<CloseButton onClick={() => setIsSelectionModalOpen(false)}
+  sx={{
+    position: "absolute",
+    right: 16,
+    top: "50%",
+    transform: "translateY(-50%)",
+  }}
+/>
 </DialogTitle>
 
 <DialogContent
@@ -905,29 +927,50 @@ Seleccionar ejercicios
 
   {!isAbdominal && (
     <Stack spacing={1} mb={1}>
-    <Tabs value={filterType} onChange={(e, val) => setFilterType(val)} sx={{"& .MuiTab-root": {fontSize: "1.1rem"}}}>
-      <Tab label="Todos" value="ALL" />
-      <Tab label="Primario" value="PRIMARY" />
-      <Tab label="Secundario" value="SECONDARY" />
-      <Tab label="Terciario" value="TERTIARY" />
-      <Tab label="Abdominal" value="ABDOMINAL" />
-    </Tabs>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center"
+        }}
+      >
+        <Tabs value={filterType} onChange={(e, val) => setFilterType(val)} 
+          sx={{"& .MuiTabs-flexContainer": {justifyContent: "center"}, 
+            "& .MuiTab-root": {fontSize: "1.1rem"}
+          }}
+        >
+          <Tab label="Todos" value="ALL" />
+          <Tab label="Primario" value="PRIMARY" />
+          <Tab label="Secundario" value="SECONDARY" />
+          <Tab label="Terciario" value="TERTIARY" />
+          <Tab label="Abdominal" value="ABDOMINAL" />
+        </Tabs>
+
+      </Box>
       
-    <Tabs
-      value={filterMuscle}
-      onChange={(e, val) => setFilterMuscle(val)}
-      variant="scrollable"
-      scrollButtons="auto"
-      sx={{"& .MuiTab-root": {mb:1, fontSize: "1.1rem"}}}
-    >
-      {availableMuscles.map((muscle) => (
-        <Tab
-          key={muscle}
-          value={muscle}
-          label={muscle === "ALL" ? "Todos" : muscleLabels[muscle] || muscle}
-        />
-      ))}
-    </Tabs>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center"
+        }}
+       >
+        <Tabs
+          value={filterMuscle}
+          onChange={(e, val) => setFilterMuscle(val)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            "& .MuiTab-root": {mb:1, fontSize: "1.1rem"}
+          }}
+        >
+          {availableMuscles.map((muscle) => (
+            <Tab
+              key={muscle}
+              value={muscle}
+              label={muscle === "ALL" ? "Todos" : muscleLabels[muscle] || muscle}
+            />
+          ))}
+        </Tabs>
+      </Box>
     </Stack>
   )}
 
@@ -939,29 +982,86 @@ Seleccionar ejercicios
  <Box
   key={ex.id}
   onClick={() => {
-  if (ex.completed) return;
-  toggleSelectedExercise(ex);
-}}
-  sx={{
-    p:2,
-    borderRadius:2,
-    border: `2px solid ${isSelected ? "#4caf50" : "#ddd"}`,
-    cursor: ex.completed ? "not-allowed" : "pointer", // 👈
-    opacity: ex.completed ? 0.6 : 1, // 👈
-    backgroundColor: isSelected ? "rgba(76, 175, 80, 0.08)" : "#fff"
+    if (ex.completed) return;
+    toggleSelectedExercise(ex);
   }}
- >
-  <Typography fontWeight={700} fontSize={"1.5rem"}>
-    {ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}
-  </Typography>
+  sx={{
+    p: 2,
+    borderRadius: 2,
+    border: `2px solid ${isSelected ? "#4caf50" : "#ddd"}`,
+    cursor: ex.completed ? "not-allowed" : "pointer",
+    opacity: ex.completed ? 0.6 : 1,
+    backgroundColor: isSelected ? "rgba(76, 175, 80, 0.08)" : "#fff",
 
-  <Typography color="text.secondary" fontWeight={700} fontSize={"1.1rem"}>
-    {formatExerciseType(ex.type)} 
-  </Typography> 
+    position: "relative",
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 2,
+  }}
+>
+  <Box
+    component="img"
+    src={getExerciseIconUrl(ex.icon)}
+    alt={ex.exerciseName}
+    sx={{
+      width: 100,
+      height: 100,
+      objectFit: "contain",
+      borderRadius: 2,
+      p: 0.5,
+      flexShrink: 0,
+      transform: "translateX(28px)"
+    }}
+  />
+
+  <Box
+    sx={{
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      mt: 0.5
+    }}
+  >
+    {/* Nombre */}
+    <Typography fontWeight={700} fontSize={"1.4rem"}>
+      {ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}
+    </Typography>
+
+    {/* Tipo */}
+    <Typography color="text.secondary" fontWeight={600} fontSize={"1.05rem"}>
+      {formatExerciseType(ex.type)}
+    </Typography>
+
+    {/* Datos */}
+    <Typography fontSize={"1.1rem"}>
+      Peso: {ex.weight ?? 0} kg • Reps: {reps ?? "-"}
+    </Typography>
+
+    
+  </Box>
+
+  {/* ✔ COMPLETADO */}
+  <Box
+    sx={{
+      minWidth: "120px", // 👈 reserva espacio SIEMPRE
+      display: "flex",
+      justifyContent: "flex-end",
+      alignItems: "flex-start"
+    }}
+  >
+    <Typography
+      sx={{
+        fontWeight: 700,
+        color: "#2e7d32",
+        fontSize: "1.2rem",
+        visibility: ex.completed ? "visible" : "hidden"
+      }}
+    >
+      ✔ Completado
+    </Typography>
+  </Box>
   
-  <Typography fontSize={"1.2rem"}>
-    Peso: {ex.weight ?? 0} kg • Reps: {reps ?? "-"}
-  </Typography>
  </Box>
  );
 })}
@@ -978,14 +1078,9 @@ Seleccionar ejercicios
    setSelectedExerciseIds(chosen.map((ex)=>ex.id));
    setIsSelectionModalOpen(false);
  }}
+ sx={{mt:1}}
 >
  Seleccionar ejercicios
-</Button>
-<Button
- fullWidth
- onClick={()=>setIsSelectionModalOpen(false)}
->
- Cerrar
 </Button>
 </DialogActions>
 
@@ -997,8 +1092,16 @@ Seleccionar ejercicios
   open={confirmFinish}
   onClose={() => setConfirmFinish(false)}
 >
-  <DialogTitle>
-    Finalizar día
+  <DialogTitle sx={{fontWeight:700, position: "relative", textAlign:"center"}}>
+  Finalizar día
+  <CloseButton onClick={() => setConfirmFinish(false)}
+    sx={{
+      position: "absolute",
+      right: 16,
+      top: "50%",
+      transform: "translateY(-50%)",
+    }}
+  />
   </DialogTitle>
 
   <DialogContent>

@@ -1,5 +1,6 @@
 import { Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 
 export default function BackButton({ to, sx }) {
   const navigate = useNavigate();
@@ -8,25 +9,17 @@ export default function BackButton({ to, sx }) {
     <Box
       onClick={() => navigate(to)}
       sx={{
-        cursor: "pointer",
         display: "inline-flex",
         alignItems: "center",
 
-        fontSize: "3rem",
+        fontSize: "3.9rem",
         fontWeight: 600,
         color: "#fff",
-
-        transition: "0.2s",
-
-        "&:hover": {
-          transform: "translateX(-4px)",
-          opacity: 0.8
-        },
 
         ...sx
       }}
     >
-      ‹
+      <ArrowBackIosNewIcon sx={{ filter: "drop-shadow(0 0 2px white)", fontSize: "2.2rem" }} />
     </Box>
   );
 }

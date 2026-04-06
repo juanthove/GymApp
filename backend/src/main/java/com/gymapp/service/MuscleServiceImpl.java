@@ -7,6 +7,7 @@ import com.gymapp.repository.templates.WorkoutTemplateExerciseRepository;
 
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,11 +27,13 @@ public class MuscleServiceImpl implements MuscleService {
     public Set<MuscleType> getMusclesFromWorkoutDay(WorkoutDay day) {
         if (day == null) return Set.of();
 
-        return workoutExerciseRepository.findByWorkoutDay(day).stream()
+        return workoutExerciseRepository
+                .findByWorkoutDayOrderByExerciseOrder(day) // 🔥 IMPORTANTE
+                .stream()
                 .map(WorkoutExercise::getExercise)
                 .filter(e -> e != null && e.getMuscle() != null)
                 .map(Exercise::getMuscle)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(LinkedHashSet::new)); // 🔥 MANTIENE ORDEN
     }
 
     @Override

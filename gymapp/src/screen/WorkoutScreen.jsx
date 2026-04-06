@@ -20,6 +20,8 @@ DialogContent,
 DialogActions
 } from "@mui/material";
 
+import { keyframes } from "@mui/system";
+
 import GymCard from "../components/GymCard";
 import BackButton from "../components/BackButton";
 import MuscleChips from "../components/MuscleChips";
@@ -139,6 +141,30 @@ const sortedDays = workout?.days
  : [];
 
 
+const glow = keyframes`
+  0% {
+    text-shadow:
+      0 0 6px rgba(255, 235, 59, 0.4),
+      0 0 12px rgba(255, 193, 7, 0.3),
+      0 2px 6px rgba(0,0,0,0.7);
+  }
+  100% {
+    text-shadow:
+      0 0 14px rgba(255, 235, 59, 0.8),
+      0 0 28px rgba(255, 193, 7, 0.6),
+      0 3px 12px rgba(0,0,0,0.9);
+  }
+`;
+
+const shine = keyframes`
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+`;
+
 if (!user) {
   return (
     <Box sx={{ minHeight: "100vh", backgroundColor: "#2c2c2c", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -200,7 +226,17 @@ return(
     sx={{
       display: "flex",
       justifyContent: "space-between",
-      alignItems: "center"
+      alignItems: "center",
+
+      px: 2,
+      py: 1.2,
+
+      mb: 3,
+      borderRadius: 3,
+      backdropFilter: "blur(10px)",
+      background: "rgba(255,255,255,0.15)",
+      border: "1px solid rgba(255,255,255,0.25)",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.2)"
     }}
   >
     <BackButton to="/home" />
@@ -210,10 +246,11 @@ return(
       onClick={handleLogout}
       disabled={hasDayInProgress()}
       sx={{
-        fontSize: "0.75rem",
-        px: 2,
-        py: 0.8,
-        background: "linear-gradient(145deg, #ff5a5a, #d32f2f)"
+        fontSize: "1.2rem",
+        px: 1.2,
+        py: 0.2,
+        background: "linear-gradient(145deg, #ff6b6b, #c62828)",
+        opacity: 0.9,
       }}
     />
   </Box>
@@ -223,8 +260,13 @@ return(
     variant="h3"
     textAlign="center"
     sx={{
-      mt: 2,
-      fontWeight: 800
+      mt: 3,
+      fontWeight: 900,
+      color: "#fff",
+
+      textShadow: "0 4px 20px rgba(0,0,0,0.6)",
+
+      letterSpacing: "0.5px"
     }}
   >
     Hola {user.name}
@@ -233,14 +275,73 @@ return(
 </Box>
 
 {workout && (
-  <Typography variant="h6" textAlign="center" color="white">
-    Desde {formatDate(workout.startDate)} hasta {formatDate(workout.endDate)}
+  <Box
+  sx={{
+    textAlign: "center",
+    mt: 1
+  }}
+>
+
+  <Typography
+    sx={{
+      fontSize: "1.5rem",
+      fontWeight: 600,
+      color: "#fff",
+      textShadow: "0 4px 15px rgba(0,0,0,0.6)",
+      mt: 0.5
+    }}
+  >
+    {formatDate(workout.startDate)} - {formatDate(workout.endDate)}
   </Typography>
+</Box>
 )}
 
-<Typography variant="h5" textAlign="center" sx={{fontStyle:"italic", color:"white"}}>
-{phrase}
-</Typography>
+
+<Box sx={{ position: "relative", display: "inline-block" }}>
+
+  {/* BASE (SIEMPRE visible) */}
+  <Typography
+    textAlign="center"
+    sx={{
+      fontStyle: "italic",
+      fontSize: "1.8rem",
+      fontWeight: 700,
+      letterSpacing: "0.5px",
+      color: "#ffeb3b",
+      animation: `${glow} 3s ease-in-out infinite alternate`,
+    }}
+  >
+    {phrase}
+  </Typography>
+
+  {/* SHINE REAL */}
+  <Typography
+    textAlign="center"
+    sx={{
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+
+      fontStyle: "italic",
+      fontSize: "1.8rem",
+      fontWeight: 700,
+      letterSpacing: "0.5px",
+
+      background: "linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.9) 50%, transparent 60%)",
+      backgroundSize: "200% auto",
+
+      WebkitBackgroundClip: "text",
+      WebkitTextFillColor: "transparent",
+
+      animation: `${shine} 8s linear infinite`,
+      pointerEvents: "none",
+    }}
+  >
+    {phrase}
+  </Typography>
+
+</Box>
 
 {!hasWorkout &&
  <Typography textAlign="center" color="white">

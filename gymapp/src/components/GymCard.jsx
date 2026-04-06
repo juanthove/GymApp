@@ -97,52 +97,73 @@ export default function GymCard({
           <CardContent
             sx={{
               display: "flex",
-              justifyContent: "space-between",
-              alignItems: "stretch",
+              flexDirection: "column",
               height: "100%",
               p: 2,
+              pr: 6
             }}
           >
             {/* IZQUIERDA: Titulo + Subtitle + children */}
-            <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "flex-start" }}>
-              {title && (
-                <Typography fontWeight={700} sx={{ mb: 0.5, fontSize: "1.7rem"  }}>
-                  {title}
-                </Typography>
-              )}
-              {subtitle && <Box>{subtitle}</Box>}
-              {children}
-            </Box>
+            {/* 🔝 HEADER: título + estado */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                }}
+              >
+                {title && (
+                  <Typography fontWeight={700} sx={{ mb: 0.5, fontSize: "1.7rem" }}>
+                    {title}
+                  </Typography>
+                )}
 
-            {/* DERECHA: Estado arriba, flecha abajo */}
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                alignItems: "flex-end",
-              }}
-            >
-              <Box>
-                {status === "COMPLETED" && (
-                  <Typography 
-                    className="status-text-completed"
-                    sx={{ 
-                      color: "success.main",
-                      fontWeight: 700 
-                    }}
-                  >
-                    ✔ Completado
-                  </Typography>
-                )}
-                {status === "IN_PROGRESS" && (
-                  <Typography color="warning.main" fontWeight={700}>
-                    ⏳ En curso
-                  </Typography>
-                )}
+                <Box>
+                  {status === "COMPLETED" && (
+                    <Typography 
+                      className="status-text-completed"
+                      sx={{ 
+                        fontWeight: 700, 
+                        fontSize: "1.1rem",
+                        letterSpacing: "0.5px", 
+                      }}
+                    >
+                      ✔ Completado
+                    </Typography>
+                  )}
+                  {status === "IN_PROGRESS" && (
+                    <Typography color="warning.main"
+                    sx={{
+                      fontSize: "1.1rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.5px",
+                      }}
+                    >
+                      ⏳ En curso
+                    </Typography>
+                  )}
+                </Box>
               </Box>
+
+              {/* 📊 SUBTITLE + contenido */}
+              <Box sx={{ mt: 0.5 }}>
+                {subtitle && <Box>{subtitle}</Box>}
+                {children}
+              </Box>
+
               {showArrow && (
-                <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mt: 1 }}>
+                <Box
+                  sx={{
+                    position: "absolute",
+                    right: 16,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
                   <svg
                     width="32"
                     height="32"
@@ -167,7 +188,6 @@ export default function GymCard({
                   </svg>
                 </Box>
               )}
-            </Box>
           </CardContent>
         )}
       </CardActionArea>
