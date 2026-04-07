@@ -77,3 +77,15 @@ export async function getWorkoutFrequency(userId, from, to, granularity) {
     `${DAY_API}/user/${userId}/workout-frequency${query ? `?${query}` : ""}`
   );
 }
+
+export async function getWorkoutDaySummary(userId, dayId) {
+  const params = new URLSearchParams();
+  if (userId) params.append("userId", userId);
+  if (dayId) params.append("dayId", dayId);
+
+  const query = params.toString();
+
+  return apiRequest(
+    `${DAY_API}/summary${query ? `?${query}` : ""}`
+  );
+}

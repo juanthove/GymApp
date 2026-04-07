@@ -4,6 +4,7 @@ import com.gymapp.dto.request.WorkoutDayRequest;
 import com.gymapp.dto.response.WorkoutDayCountResponse;
 import com.gymapp.dto.response.WorkoutDayExercisesResponse;
 import com.gymapp.dto.response.WorkoutDayResponse;
+import com.gymapp.dto.response.WorkoutDaySummaryResponse;
 import com.gymapp.dto.response.WorkoutExerciseResponse;
 import com.gymapp.dto.response.WorkoutFrequencyResponse;
 import com.gymapp.exception.ResourceNotFoundException;
@@ -57,6 +58,9 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
     @Autowired
     private MuscleService muscleService;
+
+    @Autowired
+    private WorkoutSetService workoutSetService;
 
     @Override
     public List<WorkoutDayResponse> getAllWorkoutDays() {
@@ -311,6 +315,45 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
                 .toList();
         
         return new WorkoutFrequencyResponse(resolvedGranularity, data);
+    }
+
+    @Override
+    public WorkoutDaySummaryResponse getWorkoutDaySummary(Long userId, Long dayId) {
+
+        WorkoutDay day = workoutDayRepository.findById(dayId)
+            .orElseThrow(() -> new ResourceNotFoundException("Workout day not found"));
+
+        // 🕒 Duración
+        Long duration = 0L;
+
+        if (day.getStartedAt() != null && day.getFinishedAt() != null) {
+            duration = ChronoUnit.MINUTES.between(
+                day.getStartedAt(),
+                day.getFinishedAt()
+            );
+        }
+
+        // 📅 Fecha del entrenamiento
+        LocalDate date = day.getStartedAt() != null
+            ? day.getStartedAt().toLocalDate()
+            : LocalDate.now();
+
+        // 📊 Volumen total
+        var totalResponse = workoutSetService
+            .getTotalVolumeByUserAndDateRange(userId, date, date);
+
+        Double totalVolume = totalResponse.totalVolume();
+
+        // 💪 Volumen por músculo
+        var muscleVolumes = workoutSetService
+            .getWeeklyMuscleVolumeByUserAndDateRange(userId, date, date);
+
+        return new WorkoutDaySummaryResponse(
+            dayId,
+            totalVolume,
+            duration,
+            muscleVolumes
+        );
     }
 
     private WorkoutExerciseResponse toWorkoutExerciseResponse(WorkoutExercise exercise) {

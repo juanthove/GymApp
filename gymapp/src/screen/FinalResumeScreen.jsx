@@ -6,9 +6,8 @@ import { getUserById } from "../services/userService";
 import backgroundImg from "../assets/gymproIcon.png";
 
 import {
-  getTotalWorkoutVolumeByUserAndDateRange,
-  getWeeklyMuscleVolumeByUserAndDateRange
-} from "../services/workoutSetService";
+  getWorkoutDaySummary
+} from "../services/workoutDayService";
 
 import {
   Container,
@@ -27,40 +26,28 @@ import MuscleVolumeCard from "../components/MuscleVolumeCard";
 
 export default function FinalResumeScreen() {
 
-  const { userId } = useParams();
+  const { userId, workoutDayId } = useParams();
   const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
   const [totalVolume, setTotalVolume] = useState(0);
   const [muscleVolume, setMuscleVolume] = useState([]);
+  const [duration, setDuration] = useState(0);
 
   useEffect(() => {
     loadData();
   }, []);
 
-  const getTodayRange = () => {
-    const today = new Date();
-
-    const localDate = today.toLocaleDateString("en-CA"); 
-    // formato YYYY-MM-DD sin romper por zona horaria
-
-    return {
-      from: localDate,
-      to: localDate
-    };
-  };
 
   const loadData = async () => {
     const u = await getUserById(userId);
     setUser(u);
 
-    const { from, to } = getTodayRange();
+    const summary = await getWorkoutDaySummary(userId, workoutDayId);
 
-    const total = await getTotalWorkoutVolumeByUserAndDateRange(userId, from, to);
-    setTotalVolume(total?.totalVolume ?? 0);
-
-    const muscle = await getWeeklyMuscleVolumeByUserAndDateRange(userId, from, to);
-    setMuscleVolume(muscle ?? []);
+    setTotalVolume(summary.totalVolume ?? 0);
+    setMuscleVolume(summary.muscleVolumes ?? []);
+    setDuration(summary.durationMinutes ?? 0);
   };
 
   // 🎬 ENTRADA (fade + scale)
@@ -103,6 +90,14 @@ export default function FinalResumeScreen() {
     }
   `;
 
+  const formatDuration = (minutes) => {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m} min`;
+  };
+
   if (!user) return null;
 
   return (
@@ -125,6 +120,7 @@ export default function FinalResumeScreen() {
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
+          backgroundAttachment: "fixed",
           zIndex: 0
         }}
       />
@@ -212,9 +208,21 @@ export default function FinalResumeScreen() {
             }}
           />
 
-          <Typography variant="h5" sx={{ color: "rgba(255,255,255,0.85)" }}>
-            Finalizaste el día
+          <Typography sx={{ color: "rgba(255,255,255,0.85)", fontSize: "1.7rem" }}>
+            Finalizaste la rutina en{" "}
+            <Box
+              component="span"
+              sx={{
+                fontWeight: 800,
+                color: "#ffffff", // mismo color pero sin gradient
+                textShadow: "0 2px 6px rgba(0,0,0,0.3)"
+              }}
+            >
+              {formatDuration(duration)}
+            </Box>
+          
           </Typography>
+
 
           {/* 🔵 VOLUMEN TOTAL */}
           <VolumeCard value={totalVolume} />

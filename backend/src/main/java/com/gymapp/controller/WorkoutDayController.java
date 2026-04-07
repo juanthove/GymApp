@@ -4,6 +4,7 @@ import com.gymapp.dto.request.WorkoutDayRequest;
 import com.gymapp.dto.response.WorkoutFrequencyResponse;
 import com.gymapp.dto.response.WorkoutDayExercisesResponse;
 import com.gymapp.dto.response.WorkoutDayResponse;
+import com.gymapp.dto.response.WorkoutDaySummaryResponse;
 import com.gymapp.model.Granularity;
 import com.gymapp.service.WorkoutDayService;
 import jakarta.validation.Valid;
@@ -114,5 +115,13 @@ public class WorkoutDayController {
             @RequestParam(required = false) Granularity granularity
     ) {
         return workoutDayService.getWorkoutFrequency(userId, from, to, granularity);
+    }
+
+    @GetMapping("/summary")
+    public WorkoutDaySummaryResponse getSummary(
+        @RequestParam Long userId,
+        @RequestParam Long dayId
+    ) {
+        return workoutDayService.getWorkoutDaySummary(userId, dayId);
     }
 }

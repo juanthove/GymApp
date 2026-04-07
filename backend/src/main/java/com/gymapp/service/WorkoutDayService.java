@@ -4,6 +4,7 @@ import com.gymapp.dto.request.WorkoutDayRequest;
 import com.gymapp.dto.response.WorkoutFrequencyResponse;
 import com.gymapp.dto.response.WorkoutDayExercisesResponse;
 import com.gymapp.dto.response.WorkoutDayResponse;
+import com.gymapp.dto.response.WorkoutDaySummaryResponse;
 import com.gymapp.model.Granularity;
 
 import org.springframework.core.io.Resource;
@@ -49,4 +50,6 @@ public interface WorkoutDayService {
     WorkoutDayExercisesResponse getWorkoutDayExercises(Long dayId);
 
     WorkoutFrequencyResponse getWorkoutFrequency(Long userId, LocalDate from, LocalDate to, Granularity granularity);
+
+    WorkoutDaySummaryResponse getWorkoutDaySummary(Long userId, Long dayId);
 }

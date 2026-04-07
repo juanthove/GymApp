@@ -467,6 +467,7 @@ return(
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
         zIndex: 0
       }}
     />
@@ -482,7 +483,7 @@ return(
       }}
     />
 
-<Container maxWidth="sm" sx={{mt:6, mb:10, zIndex:2, position:"relative"}}>
+<Container maxWidth="sm" sx={{mt:6, mb:15, zIndex:2, position:"relative"}}>
 
 
 <Box
@@ -659,11 +660,22 @@ displayedExercises.map((ex) => (
   bottom:0,
   left:0,
   right:0,
-  p:2
+  p:2,
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+
+  background: "linear-gradient(to top, rgba(255,255,255,0.12), rgba(168, 168, 168, 0.02))", // 🔥 super liviano (no oscurece)
+  
+  borderTop: "1px solid rgba(255,255,255,0.2)",
+
+  boxShadow: "0 -4px 20px rgba(0,0,0,0.15)",
+
+  zIndex: 5
  }}
 >
 
 <Stack direction="row" spacing={1}>
+  
 
 <PrimaryButton
   label="Seleccionar ejercicios"

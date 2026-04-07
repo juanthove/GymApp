@@ -113,7 +113,7 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
             ))
             .sorted(Comparator
                 .comparing(WorkoutSetWeeklyMuscleVolumeResponse::weekStart)
-                .thenComparing(item -> item.muscle() != null ? item.muscle().name() : "")
+                .thenComparing(item -> item.muscle() != null ? item.muscle().ordinal() : Integer.MAX_VALUE)
             )
             .toList();
     }

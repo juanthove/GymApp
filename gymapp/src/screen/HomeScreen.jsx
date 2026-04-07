@@ -91,6 +91,7 @@ export default function HomeScreen(){
       backgroundSize: "cover",
       backgroundPosition: "center",
       backgroundRepeat: "no-repeat",
+      backgroundAttachment: "fixed",
       pt: 6 
     }}
   >

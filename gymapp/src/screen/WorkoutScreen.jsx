@@ -192,6 +192,7 @@ return(
       backgroundSize: "cover",
       backgroundPosition: "center",
       backgroundRepeat: "no-repeat",
+      backgroundAttachment: "fixed",
       zIndex: 0
     }}
   />

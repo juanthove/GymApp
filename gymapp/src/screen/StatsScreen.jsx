@@ -1,5 +1,8 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+
+import backgroundImg from "../assets/gymproIcon.png";
+
 import {
   Alert,
   Box,
@@ -252,9 +255,24 @@ export default function StatsScreen() {
   const formatXAxis = (value, granularity) => {
     if (!granularity) return value;
 
-    if (granularity === "DAY") return value.slice(5);
-    if (granularity === "WEEK") return value.slice(5);
-    if (granularity === "MONTH") return value.slice(0, 7);
+    const date = new Date(value);
+
+    if (granularity === "DAY") {
+      return value.slice(5); // ej: 04-06
+    }
+
+    if (granularity === "WEEK") {
+      return value.slice(5); // podés mejorar esto después
+    }
+
+    if (granularity === "MONTH") {
+      const formatted = new Intl.DateTimeFormat("es-ES", {
+        year: "numeric",
+        month: "short"
+      }).format(new Date(value)); // "abr 2026"
+
+      return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+    }
 
     return value;
   };
@@ -265,7 +283,41 @@ export default function StatsScreen() {
   }, [from, to]);
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 6 }}>
+
+    <Box
+        sx={{
+          position: "relative",
+          minHeight: "100vh",
+          overflow: "hidden"
+        }}
+      >
+      
+        {/* 🖼️ BACKGROUND */}
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: `url(${backgroundImg})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            backgroundAttachment: "fixed",
+            zIndex: 0
+          }}
+        />
+      
+        {/* 🌑 OVERLAY */}
+        <Box
+          sx={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(44, 44, 44, 0.4)",
+            backdropFilter: "blur(6px)",
+            zIndex: 1
+          }}
+        />
+
+    <Container maxWidth="md" sx={{ mt: 4, mb: 6, zIndex: 2, position: "relative" }}>
       <Stack spacing={3}>
         <Stack direction="row" alignItems="center" spacing={1} sx={{ position: "relative" }}>
           <BackButton to={`/workout/${userId}`} sx={{ position: "absolute", left: 0 }} />
@@ -561,5 +613,6 @@ export default function StatsScreen() {
 
       </Stack>
     </Container>
+    </Box>
   );
 }
