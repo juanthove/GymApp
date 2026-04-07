@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/workout-exercises")
@@ -49,8 +50,10 @@ public class WorkoutExerciseController {
     }
 
     @PatchMapping("/{id}/complete")
-    public WorkoutExerciseResponse completeWorkoutExercise(@PathVariable Long id) {
-        return workoutExerciseService.completeWorkoutExercise(id);
+    public WorkoutExerciseResponse completeWorkoutExercise(@PathVariable Long id, 
+        @RequestBody(required = false) Map<String, Double> body) {
+        Double nextWeight = body != null ? body.get("nextWeight") : null;
+        return workoutExerciseService.completeWorkoutExercise(id, nextWeight);
     }
 
     @PatchMapping("/{id}/uncomplete")

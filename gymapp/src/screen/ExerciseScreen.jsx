@@ -71,6 +71,10 @@ const [reps,setReps] = useState(null);
 const [selectedExercise,setSelectedExercise] = useState(null);
 const [isSelectionModalOpen,setIsSelectionModalOpen] = useState(false);
 
+const [weightModalOpen, setWeightModalOpen] = useState(false);
+const [nextWeight, setNextWeight] = useState("");
+const [pendingExercise, setPendingExercise] = useState(null);
+
 const navigate = useNavigate();
 
 const [confirmFinish,setConfirmFinish] = useState(false);
@@ -258,7 +262,7 @@ const toggleCompleteExercise = async(ex)=>{
  if(ex.completed){
   updated = await uncompleteWorkoutExercise(ex.id);
  }else{
-  updated = await completeWorkoutExercise(ex.id);
+  updated = await completeWorkoutExercise(ex.id, nextWeight);
  }
 
  const updateItem = (item) => {
@@ -276,6 +280,31 @@ setAllExercises(updatedAll);
 setDisplayedExercises(updatedDisplayed);
 setSelectedExercise(updatedDisplayed.find((e) => e.id === updated.id) || null);
 
+};
+
+const handleCompleteClick = (ex) => {
+  if (ex.completed) {
+    // comportamiento actual
+    toggleCompleteExercise(ex);
+    return;
+  }
+
+  // abrir modal
+  setPendingExercise(ex);
+  setNextWeight(ex.weight ?? ""); // placeholder lógico
+  setWeightModalOpen(true);
+};
+
+const confirmCompleteWithWeight = async () => {
+  if (!pendingExercise) return;
+
+  await toggleCompleteExercise(pendingExercise);
+
+  // 🔥 acá después podrías guardar el nextWeight en backend
+  // (para progreso futuro)
+
+  setWeightModalOpen(false);
+  setPendingExercise(null);
 };
 
 const areAllExercisesCompleted = () => {
@@ -889,7 +918,7 @@ Repeticiones: <b>{reps ?? "-"}</b>
  size="large"
  variant="contained"
  color={selectedExercise?.completed ? "error" : "success"}
- onClick={()=>toggleCompleteExercise(selectedExercise)}
+ onClick={()=>handleCompleteClick(selectedExercise)}
  sx={{fontWeight:700}}
  disabled={!areSetsValid()}
 >
@@ -1134,6 +1163,58 @@ Seleccionar ejercicios
 
     <Button variant="contained" onClick={finishDayWithAbs}>
       Sí, agregar abdominales
+    </Button>
+  </DialogActions>
+</Dialog>
+
+
+
+<Dialog
+  open={weightModalOpen}
+  onClose={() => setWeightModalOpen(false)}
+  fullWidth
+  maxWidth="xs"
+>
+  <DialogTitle sx={{fontWeight:700, position: "relative", textAlign:"center"}}>
+  Próxima semana 💪
+  <CloseButton onClick={() => setWeightModalOpen(false)}
+    sx={{
+      position: "absolute",
+      right: 16,
+      top: "50%",
+      transform: "translateY(-50%)",
+    }}
+  />
+  </DialogTitle>
+
+  <DialogContent>
+    <Typography
+      sx={{
+        fontSize: "1.3rem",
+        textAlign: "center",
+        mb: 2
+      }}
+    >
+      ¿Cuánto peso querés usar la próxima semana?
+    </Typography>
+
+    <TextField
+      fullWidth
+      label="Peso"
+      value={nextWeight}
+      onChange={(e) => setNextWeight(e.target.value)}
+      placeholder={`${pendingExercise?.weight ?? 0}`}
+      type="number"
+    />
+  </DialogContent>
+
+  <DialogActions sx={{ p: 2 }}>
+    <Button
+      onClick={confirmCompleteWithWeight}
+      variant="contained"
+      fullWidth
+    >
+      Guardar y completar
     </Button>
   </DialogActions>
 </Dialog>

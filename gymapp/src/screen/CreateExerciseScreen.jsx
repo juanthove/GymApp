@@ -72,6 +72,8 @@ export default function CreateExerciseScreen(){
     { value: "QUADRICEPS", label: "Cuádriceps" },
     { value: "GLUTES", label: "Glúteos" },
     { value: "HAMSTRINGS", label: "Femorales" },
+    { value: "ADDUCTORS", label: "Aductores" },
+    { value: "ABDUCTORS", label: "Abductores" },
     { value: "CALVES", label: "Gemelos" },
     { value: "ABDOMINALS", label: "Abdominales" }
   ];

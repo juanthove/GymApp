@@ -93,10 +93,11 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
     }
 
     @Override
-    public WorkoutExerciseResponse completeWorkoutExercise(Long id) {
+    public WorkoutExerciseResponse completeWorkoutExercise(Long id, Double nextWeight) {
         WorkoutExercise exercise = workoutExerciseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
         exercise.setCompleted(true);
+        exercise.setNextWeight(nextWeight);
         return toResponse(workoutExerciseRepository.save(exercise));
     }
 
@@ -105,6 +106,7 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
         WorkoutExercise exercise = workoutExerciseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
         exercise.setCompleted(false);
+        exercise.setNextWeight(null);
         return toResponse(workoutExerciseRepository.save(exercise));
     }
 
@@ -120,8 +122,8 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
         boolean selected = dayId != null && exercise.getId() != null && selectedWorkoutExerciseService.isSelected(dayId, exercise.getId());
         ExerciseType type = exercise.getExercise() != null ? exercise.getExercise().getType() : null;
         return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName, exerciseMuscle, type,
-                exercise.getExerciseOrder(), exercise.getWeight(), description, exercise.getComment(), exercise.getCompleted(), image, video, 
-                icon, selected);
+                exercise.getExerciseOrder(), exercise.getWeight(), description, exercise.getComment(), exercise.getCompleted(), 
+                exercise.getNextWeight(), image, video, icon, selected);
     }
 
     @Override

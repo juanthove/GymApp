@@ -15,6 +15,7 @@ public record WorkoutExerciseResponse(
         String description,
         String comment,
         boolean completed,
+        Double nextWeight,
         String image,
         String video,
         String icon,

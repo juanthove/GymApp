@@ -19,7 +19,7 @@ public interface WorkoutExerciseService {
 
     void deleteWorkoutExercise(Long id);
 
-    WorkoutExerciseResponse completeWorkoutExercise(Long id);
+    WorkoutExerciseResponse completeWorkoutExercise(Long id, Double nextWeight);
 
     WorkoutExerciseResponse uncompleteWorkoutExercise(Long id);
 

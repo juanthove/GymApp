@@ -25,6 +25,8 @@ public class WorkoutExercise {
 
     private String comment;
 
+    private Double nextWeight;
+
     public Long getId() {
         return id;
     }
@@ -79,5 +81,13 @@ public class WorkoutExercise {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public Double getNextWeight() {
+        return nextWeight;
+    }
+
+    public void setNextWeight(Double nextWeight) {
+        this.nextWeight = nextWeight;
     }
 }

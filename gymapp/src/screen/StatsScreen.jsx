@@ -351,7 +351,25 @@ export default function StatsScreen() {
                 fullWidth
               />
 
-              <Button
+              <TextField
+                id="muscle-select"
+                name="muscle"
+                select
+                label="Músculo"
+                value={selectedMuscle}
+                onChange={(e) => setSelectedMuscle(e.target.value)}
+                sx={{ mt: 2, maxWidth: 260 }}
+              >
+                {muscleOptions.map((muscle) => (
+                  <MenuItem key={muscle} value={muscle}>
+                    {muscle === "ALL" ? "Todos" : muscleLabels[muscle] || muscle}
+                  </MenuItem>
+                ))}
+              </TextField>
+              
+            </Stack>
+
+            <Button
                 variant="contained"
                 onClick={() => {
                   setFrom("");
@@ -361,23 +379,7 @@ export default function StatsScreen() {
               >
               Resetear filtros
               </Button>
-            </Stack>
 
-            <TextField
-              id="muscle-select"
-              name="muscle"
-              select
-              label="Músculo"
-              value={selectedMuscle}
-              onChange={(e) => setSelectedMuscle(e.target.value)}
-              sx={{ mt: 2, maxWidth: 260 }}
-            >
-              {muscleOptions.map((muscle) => (
-                <MenuItem key={muscle} value={muscle}>
-                  {muscle === "ALL" ? "Todos" : muscleLabels[muscle] || muscle}
-                </MenuItem>
-              ))}
-            </TextField>
           </CardContent>
         </Card>
 

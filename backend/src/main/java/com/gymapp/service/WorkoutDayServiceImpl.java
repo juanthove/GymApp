@@ -368,8 +368,8 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         boolean selected = dayId != null && exercise.getId() != null && selectedWorkoutExerciseService.isSelected(dayId, exercise.getId());
         ExerciseType type = exercise.getExercise() != null ? exercise.getExercise().getType() : null;
         return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName, exerciseMuscle, type,
-                exercise.getExerciseOrder(), exercise.getWeight(), description, exercise.getComment(), exercise.getCompleted(), image, video,
-                icon, selected);
+                exercise.getExerciseOrder(), exercise.getWeight(), description, exercise.getComment(), exercise.getCompleted(), 
+                exercise.getNextWeight(), image, video, icon, selected);
     }
 
     private WorkoutDayResponse toResponse(WorkoutDay day) {

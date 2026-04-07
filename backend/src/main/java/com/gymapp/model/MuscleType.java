@@ -10,6 +10,8 @@ public enum MuscleType {
     QUADRICEPS, //Cuadriceps
     GLUTES, //Gluteos
     HAMSTRINGS, //Femorales
+    ADDUCTORS, //Aductores
+    ABDUCTORS, //Abductores
     CALVES, //Gemelos
     ABDOMINALS //Abdominales
 }

@@ -4,9 +4,13 @@ export async function getWorkoutExercises(workoutDayId) {
   return apiRequest(`/api/workout-exercises/day/${workoutDayId}`);
 }
 
-export async function completeWorkoutExercise(id) {
+export async function completeWorkoutExercise(id, nextWeight) {
   return apiRequest(`/api/workout-exercises/${id}/complete`, {
-    method: "PATCH"
+    method: "PATCH",
+    body: JSON.stringify({ nextWeight }),
+    headers: {
+      "Content-Type": "application/json"
+    }
   });
 }
 
