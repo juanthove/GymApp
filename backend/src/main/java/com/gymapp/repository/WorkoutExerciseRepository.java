@@ -22,4 +22,6 @@ public interface WorkoutExerciseRepository extends JpaRepository<WorkoutExercise
     List<WorkoutExercise> findByWorkoutDayIdAndExercise_TypeNotOrderByExerciseOrder(Long dayId, ExerciseType type);
 
     List<WorkoutExercise> findByWorkoutDayOrderByExerciseOrder(WorkoutDay day);
+
+    int countByWorkoutDayIdAndCompletedTrue(Long workoutDayId);
 }

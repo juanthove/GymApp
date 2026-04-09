@@ -2,6 +2,7 @@ import CreateUserScreen from "./screen/CreateUserScreen";
 import CreateExerciseScreen from "./screen/CreateExerciseScreen";
 import CreateWorkoutTemplateScreen from "./screen/CreateWorkoutTemplateScreen";
 import CreateWorkoutScreen from "./screen/CreateWorkoutScreen";
+import CreatePhraseScreen from "./screen/CreatePhraseScreen";
 import AdminScreen from "./screen/AdminScreen";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
@@ -28,6 +29,7 @@ function App() {
         <Route path="/admin/exercises" element={<CreateExerciseScreen />} />
         <Route path="/admin/workout-templates" element={<CreateWorkoutTemplateScreen />} />
         <Route path="/admin/workouts" element={<CreateWorkoutScreen />} />
+        <Route path="/admin/phrases" element={<CreatePhraseScreen />} />
       </Routes>
     </BrowserRouter>
   );

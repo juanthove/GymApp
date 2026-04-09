@@ -14,6 +14,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import DescriptionIcon from "@mui/icons-material/Description";
+import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
 
 export default function AdminScreen(){
 
@@ -43,6 +44,12 @@ export default function AdminScreen(){
    description:"Crear planillas de entrenamiento",
    icon:<DescriptionIcon sx={{fontSize:50}} />,
    route:"/admin/workouts"
+  },
+  {
+   title:"Frases",
+   description:"Crear frases de motivación",
+   icon:<FormatQuoteIcon sx={{fontSize:50}} />,
+   route:"/admin/phrases"
   }
  ];
 

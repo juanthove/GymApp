@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import backgroundImg from "../assets/gymproIcon.png";
@@ -17,7 +17,8 @@ Button,
 Dialog,
 DialogTitle,
 DialogContent,
-DialogActions
+DialogActions,
+CircularProgress
 } from "@mui/material";
 
 import { keyframes } from "@mui/system";
@@ -36,8 +37,13 @@ const [user,setUser] = useState(null);
 const [workout,setWorkout] = useState(null);
 const [selectedDay,setSelectedDay] = useState(null);
 const [phrase,setPhrase] = useState("");
+const hasLoadedPhrase = useRef(false);
 const [dayStatus,setDayStatus] = useState({});
 const [hasWorkout,setHasWorkout] = useState(true);
+
+
+const [animatedProgress, setAnimatedProgress] = useState(0);
+
 
 
 useEffect(()=>{
@@ -73,14 +79,23 @@ const loadData = async()=>{
   setWorkout(w);
  }
 
- try{
-  const phraseData = await getRandomPhrase();
-  setPhrase(phraseData.text);
- }catch{
-  setPhrase("Hoy es un buen día para mejorar.");
- }
-
 };
+
+useEffect(() => {
+  if (hasLoadedPhrase.current) return;
+  hasLoadedPhrase.current = true;
+
+  const loadPhrase = async () => {
+    try{
+      const phraseData = await getRandomPhrase();
+      setPhrase(phraseData.text);
+    }catch{
+      setPhrase("Hoy es un buen día para mejorar");
+    }
+  };
+
+  loadPhrase();
+}, []);
 
 const openDay=(day)=>{
  setSelectedDay(day);
@@ -164,6 +179,36 @@ const shine = keyframes`
     background-position: 200% center;
   }
 `;
+
+const totalDays = workout?.days?.length || 0;
+
+const completedDays = Object.values(dayStatus).filter(
+  status => status === "COMPLETED"
+).length;
+
+const progress = totalDays > 0 ? (completedDays / totalDays) * 100 : 0;
+
+useEffect(() => {
+  let start = null;
+  const duration = 1200; // ⏱️ duración total (más alto = más lento)
+
+  const animate = (timestamp) => {
+    if (!start) start = timestamp;
+    const progressTime = timestamp - start;
+
+    const progressPercent = Math.min(progressTime / duration, 1);
+
+    setAnimatedProgress(progress * progressPercent);
+
+    if (progressPercent < 1) {
+      requestAnimationFrame(animate);
+    }
+  };
+
+  requestAnimationFrame(animate);
+}, [progress]);
+
+const isComplete = completedDays === totalDays;
 
 if (!user) {
   return (
@@ -342,6 +387,117 @@ return(
     {phrase}
   </Typography>
 
+</Box>
+
+<Box
+  sx={{
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    mt: 2,
+    mb: 1
+  }}
+>
+  <Box sx={{ position: "relative", display: "inline-flex", bodrderRadius: "50%", overflow: "hidden" }}>
+
+    <Box
+      sx={{
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        width: 180,
+        height: 180,
+        borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(0, 0, 0, 0.7) 0%, transparent 70%)",
+        zIndex: 0
+      }}
+    />
+
+    <Box sx={{ position: "relative", zIndex: 1, borderRadius: "50%", overflow: "hidden" }}>
+    
+      {/* SVG GRADIENT DEFINICIÓN */}
+      <svg width={0} height={0}>
+        <defs>
+          <linearGradient id="gradientProgress" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#ff4343" />   {/* amarillo claro */}
+            <stop offset="50%" stopColor="#ff1f1f" />  {/* amarillo */}
+            <stop offset="100%" stopColor="#ff0000" /> {/* dorado */}
+          </linearGradient>
+        </defs>
+      </svg>
+
+      {/* Fondo */}
+      <CircularProgress
+        variant="determinate"
+        value={100}
+        size={180}
+        thickness={4}
+        sx={{
+          color: "rgba(255,255,255,0.15)"
+        }}
+      />
+
+      {/* Progreso con gradiente */}
+      <CircularProgress
+        variant="determinate"
+        value={animatedProgress}
+        size={180}
+        thickness={4}
+        sx={{
+          position: "absolute",
+          left: 0,
+          color: "url(#gradientProgress)",
+          transform: isComplete ? "scale(1.05)" : "scale(1)",
+          transition: "transform 0.4s ease",
+
+          "& .MuiCircularProgress-circle": {
+            stroke: "url(#gradientProgress)",
+            strokeLinecap: "round",
+            filter: "drop-shadow(0 0 8px rgba(255, 59, 59, 0.6))"
+          }
+        }}
+      />
+
+      {/* Texto centro */}
+      <Box
+        sx={{
+          top: 0,
+          left: 0,
+          bottom: 0,
+          right: 0,
+          position: "absolute",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "column"
+        }}
+      >
+        <Typography
+          sx={{
+            fontWeight: 900,
+            fontSize: "1.6rem",
+            color: "#fff",
+            textShadow: "0 2px 8px rgba(0,0,0,0.9)"
+          }}
+        >
+          {completedDays}/{totalDays}
+        </Typography>
+
+        <Typography
+          sx={{
+            fontSize: "1.2rem",
+            color: "rgba(255,255,255,0.8)",
+            textShadow: "0 2px 8px rgba(0,0,0,0.9)",
+            textAlign: "center",
+            lineHeight: 1.1,
+          }}
+        >
+          días <br /> completados
+        </Typography>
+      </Box>
+    </Box>
+  </Box>
 </Box>
 
 {!hasWorkout &&

@@ -12,6 +12,8 @@ import ForearmsIcon from "../assets/muscles/forearms.svg?react";
 import QuadricepsIcon from "../assets/muscles/quadriceps.svg?react";
 import GlutesIcon from "../assets/muscles/glutes.svg?react";
 import HamstringsIcon from "../assets/muscles/hamstrings.svg?react";
+import AductorsIcon from "../assets/muscles/aductors.svg?react";
+import AbductorsIcon from "../assets/muscles/abductors.svg?react";
 import CalvesIcon from "../assets/muscles/calves.svg?react";
 import AbsIcon from "../assets/muscles/abdominals.svg?react";
 
@@ -25,6 +27,8 @@ const muscleIcons = {
   QUADRICEPS: QuadricepsIcon,
   GLUTES: GlutesIcon,
   HAMSTRINGS: HamstringsIcon,
+  ADDUCTORS: AductorsIcon,
+  ABDUCTORS: AbductorsIcon,
   CALVES: CalvesIcon,
   ABDOMINALS: AbsIcon
 };
@@ -40,6 +44,8 @@ const muscleLabels = {
   QUADRICEPS: "Cuádriceps",
   GLUTES: "Glúteos",
   HAMSTRINGS: "Femorales",
+  ADDUCTORS: "Aductores",
+  ABDUCTORS: "Abductores",
   CALVES: "Gemelos",
   ABDOMINALS: "Abdominales"
 };
@@ -55,6 +61,8 @@ const colorMap = {
   QUADRICEPS: "#7e57c2",
   GLUTES: "#ab47bc",
   HAMSTRINGS: "#5c6bc0",
+  ADDUCTORS: "#8bc34a", 
+  ABDUCTORS: "#4db6ac",
   CALVES: "#29b6f6",
   ABDOMINALS: "#ec407a"
 };
@@ -112,7 +120,7 @@ export default function MuscleVolumeCard({ muscle, volume }) {
   });
 
   useEffect(() => {
-    if (volume > 0) start();
+    start();
   }, [volume, start]);
 
   return (

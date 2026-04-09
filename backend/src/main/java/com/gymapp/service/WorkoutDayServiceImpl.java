@@ -344,6 +344,8 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
         Double totalVolume = totalResponse.totalVolume();
 
+        int totalExercises = workoutExerciseRepository.countByWorkoutDayIdAndCompletedTrue(dayId);
+
         // 💪 Volumen por músculo
         var muscleVolumes = workoutSetService
             .getWeeklyMuscleVolumeByUserAndDateRange(userId, date, date);
@@ -352,6 +354,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
             dayId,
             totalVolume,
             duration,
+            totalExercises,
             muscleVolumes
         );
     }

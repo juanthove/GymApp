@@ -23,16 +23,17 @@ import { keyframes } from "@mui/system";
 import VolumeCard from "../components/VolumeCard";
 import PrimaryButton from "../components/PrimaryButton";
 import MuscleVolumeCard from "../components/MuscleVolumeCard";
+import StatCard from "../components/StatCard";
 
 export default function FinalResumeScreen() {
 
   const { userId, workoutDayId } = useParams();
-  const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
   const [totalVolume, setTotalVolume] = useState(0);
   const [muscleVolume, setMuscleVolume] = useState([]);
   const [duration, setDuration] = useState(0);
+  const [totalExercises, setTotalExercises] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -48,6 +49,7 @@ export default function FinalResumeScreen() {
     setTotalVolume(summary.totalVolume ?? 0);
     setMuscleVolume(summary.muscleVolumes ?? []);
     setDuration(summary.durationMinutes ?? 0);
+    setTotalExercises(summary.totalExercises ?? 0);
   };
 
   // 🎬 ENTRADA (fade + scale)
@@ -159,75 +161,91 @@ export default function FinalResumeScreen() {
           mt: 6
         }}
       >
-        <Stack spacing={4} textAlign="center" alignItems="center">
+        <Stack spacing={5} textAlign="center" alignItems="center" sx={{ pb: 15 }}>
 
           {/* 🟢 MENSAJE */}
-          <Typography
-            variant="h3"
-            sx={{
-              fontWeight: 800,
-              color: "#fff",
-              textShadow: "0 4px 12px rgba(0,0,0,0.35)"
-            }}
-          >
-            <Box
-              component="span"
-              sx={{
-                display: "inline-block",
-                mr: 1,
-                animation: `${bounceIdle} 2.5s ease-in-out infinite`
-              }}
-            >
-              🎉
-            </Box>
-            Felicitaciones{" "}
-          <Box
-            component="span"
-            sx={{
-              fontWeight: 900,
-              background: "linear-gradient(90deg, #ffd54f, #ffd36c)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              textShadow: "0 4px 12px rgba(0, 0, 0, 0.06)",
-              animation: `
-                ${fadeScale} 0.6s ease-out,
-                ${glow} 2s ease-in-out 0.6s infinite alternate
-              `
-            }}
-          >
-            {user.name}
-          </Box>
-          </Typography>
-
-          <Box
-            sx={{
-              height: "1px",
-              width: "75%",
-              backgroundColor: "#ddd",
-              mb: 2
-            }}
-          />
-
-          <Typography sx={{ color: "rgba(255,255,255,0.85)", fontSize: "1.7rem" }}>
-            Finalizaste la rutina en{" "}
-            <Box
-              component="span"
+          <Box sx={{ textAlign: "center", display: "inline-block" }}>
+            <Typography
+              variant="h3"
               sx={{
                 fontWeight: 800,
-                color: "#ffffff", // mismo color pero sin gradient
-                textShadow: "0 2px 6px rgba(0,0,0,0.3)"
+                color: "#fff",
+                textShadow: "0 4px 12px rgba(0,0,0,0.35)"
               }}
             >
-              {formatDuration(duration)}
+              <Box
+                component="span"
+                sx={{
+                  display: "inline-block",
+                  mr: 1,
+                  animation: `${bounceIdle} 2.5s ease-in-out infinite`
+                }}
+              >
+                🎉
+              </Box>
+              Felicitaciones{" "}
+            <Box
+              component="span"
+              sx={{
+                fontWeight: 900,
+                background: "linear-gradient(90deg, #ffd54f, #ffd36c)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                textShadow: "0 4px 12px rgba(0, 0, 0, 0.06)",
+                animation: `
+                  ${fadeScale} 0.6s ease-out,
+                  ${glow} 2s ease-in-out 0.6s infinite alternate
+                `
+              }}
+            >
+              {user.name}
             </Box>
-          
-          </Typography>
+            </Typography>
+
+            <Box
+              sx={{
+                height: "1px",
+                width: "90%",
+                mx: "auto",
+                backgroundColor: "#ddd",
+                mb: 2,
+                mt: 3,
+              }}
+            />
+          </Box>
 
 
           {/* 🔵 VOLUMEN TOTAL */}
-          <VolumeCard value={totalVolume} />
+          {muscleVolume.length === 0 ? (
+            <Box></Box>
+          ) : (
+            <VolumeCard value={totalVolume} />
+          )}
+          
+
+          {/* Estadisticas */}
+          <Stack
+            direction="row"
+            spacing={2}
+            width="100%"
+            maxWidth={520}
+          >
+            <StatCard
+              label="Duración"
+              value={formatDuration(duration)}
+            />
+
+            <StatCard
+              label="Ejercicios completados"
+              value={totalExercises} // 🔥 mock por ahora
+            />
+          </Stack>
 
           {/* 🟣 VOLUMEN POR MÚSCULO */}
+          {muscleVolume.length === 0 ? (
+            <Box></Box>
+          ) : (
+          
           <Box width="75%">
             <Box
               sx={{
@@ -267,13 +285,30 @@ export default function FinalResumeScreen() {
             </Stack>
           </Box>
 
-          {/* 🔙 BOTÓN */}
-          <PrimaryButton
-            label="Volver"
-            to={`/workout/${userId}`}
-          />
+          )}
 
+          {/* 🔙 BOTÓN */}
+          <Box
+            sx={{
+              position: "fixed",
+              bottom: 20,
+              left: 0,
+              right: 0,
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+              zIndex: 10,
+              pb: 2
+            }}
+          >
+            <PrimaryButton
+              label="Volver"
+              to={`/workout/${userId}`}
+            />
+          </Box>
         </Stack>
+
+        
       </Container>
     </Box>
   );

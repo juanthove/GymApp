@@ -23,6 +23,8 @@ import {
   Typography,
 } from "@mui/material";
 
+import { keyframes } from "@mui/system";
+
 import {
   LineChart,
   Line,
@@ -48,12 +50,9 @@ import {
   getWorkoutFrequency,
 } from "../services/workoutDayService";
 
-function toInputDate(date) {
-  return date.toISOString().slice(0, 10);
-}
 
 function formatVolume(value) {
-  return Number(value || 0).toFixed(2);
+  return Number(value || 0).toFixed(0);
 }
 
 function shiftDateIso(dateIso, days) {
@@ -72,6 +71,8 @@ const muscleLabels = {
   QUADRICEPS: "Cuádriceps",
   GLUTES: "Glúteos",
   HAMSTRINGS: "Femorales",
+  ADDUCTORS: "Aductores",
+  ABDUCTORS: "Abductores",
   CALVES: "Gemelos",
   ABDOMINALS: "Abdominales"
 };
@@ -282,6 +283,22 @@ export default function StatsScreen() {
     loadFrequency();
   }, [from, to]);
 
+
+  const glow = keyframes`
+    0% {
+      text-shadow:
+        0 0 6px rgba(255, 80, 60, 0.25),
+        0 0 10px rgba(255, 80, 60, 0.2);
+    }
+    100% {
+      text-shadow:
+        0 0 8px rgba(255, 80, 60, 0.5),
+        0 0 10px rgba(255, 80, 60, 0.8);
+    }
+  `;
+
+
+
   return (
 
     <Box
@@ -326,39 +343,54 @@ export default function StatsScreen() {
           </Typography>
         </Stack>
 
-        <Card>
+        <Card
+          sx={{
+            background: "rgba(255, 255, 255, 0.7)",
+            backdropFilter: "blur(6px)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 3
+          }}
+        >
           <CardContent>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="end">
+
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={2}
+              alignItems="center"
+              flexWrap="wrap"
+            >
+
+              {/* 📅 Desde */}
               <TextField
-                id="from-date"
-                name="from"
                 type="date"
                 label="Desde"
                 InputLabelProps={{ shrink: true }}
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
-                fullWidth
+                sx={{ width: 150 }}
               />
 
+              {/* 📅 Hasta */}
               <TextField
-                id="to-date"
-                name="to"
                 type="date"
                 label="Hasta"
                 InputLabelProps={{ shrink: true }}
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
-                fullWidth
+                sx={{ width: 150 }}
               />
 
+              {/* 💪 Músculo */}
               <TextField
-                id="muscle-select"
-                name="muscle"
                 select
                 label="Músculo"
                 value={selectedMuscle}
                 onChange={(e) => setSelectedMuscle(e.target.value)}
-                sx={{ mt: 2, maxWidth: 260 }}
+                sx={{
+                  minWidth: 180,
+                  maxWidth: 260,
+                  flexGrow: 1
+                }}
               >
                 {muscleOptions.map((muscle) => (
                   <MenuItem key={muscle} value={muscle}>
@@ -366,118 +398,212 @@ export default function StatsScreen() {
                   </MenuItem>
                 ))}
               </TextField>
-              
-            </Stack>
 
-            <Button
-                variant="contained"
+              {/* 🔄 Reset */}
+              <Button
+                //variant="contained"
+                variant="outlined"
                 onClick={() => {
                   setFrom("");
                   setTo("");
                   setSelectedMuscle("ALL");
                 }}
+                sx={{
+                  height: 40,
+                  whiteSpace: "nowrap"
+                }}
               >
-              Resetear filtros
+                Resetear filtros
               </Button>
+
+            </Stack>
 
           </CardContent>
         </Card>
 
         {error && <Alert severity="error">{error}</Alert>}
 
-        <Card>
+        <Card
+          sx={{
+            background: "rgba(255, 255, 255, 0.7)",
+            backdropFilter: "blur(6px)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 3
+          }}
+        >
           <CardContent>
-            <Typography variant="h6">Volumen total del período</Typography>
-            <Typography variant="h3" sx={{ mt: 1, fontWeight: 700 }}>
-              {formatVolume(totalVolume)} kg
-            </Typography>
+            <Stack alignItems="center" spacing={1.5}>
+
+              <Typography
+                variant="body1"
+                sx={{ opacity: 0.7, letterSpacing: 1 }}
+              >
+                VOLUMEN TOTAL
+              </Typography>
+
+              <Typography
+                variant="h2"
+                sx={{
+                  fontWeight: 800,
+                  background: "linear-gradient(135deg, #ff2020, #f16744)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  animation: `
+                    ${glow} 2.2s ease-in-out infinite alternate
+                  `
+                }}
+              >
+                {formatVolume(totalVolume)} kg
+              </Typography>
+
+              <Box
+                sx={{
+                  width: 40,
+                  height: 4,
+                  borderRadius: 10,
+                  background: "linear-gradient(90deg, #42a5f5, #66bb6a)"
+                }}
+              />
+
+            </Stack>
           </CardContent>
         </Card>
 
-        <Card>
+
+
+        <Card
+          sx={{
+            background: "rgba(255, 255, 255, 0.7)",
+            backdropFilter: "blur(6px)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 3
+          }}
+        >
           <CardContent>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Volumen semanal por músculo
-            </Typography>
+
+            {/* 🔥 TÍTULO ÚNICO */}
+            <Stack spacing={1} sx={{ mb: 3 }}>
+              <Typography variant="h5" fontWeight={800}>
+                Volumen semanal por músculo
+              </Typography>
+
+              <Box
+                sx={{
+                  width: 60,
+                  height: 4,
+                  borderRadius: 10,
+                  background: "linear-gradient(90deg, #ff2020, #f16744)"
+                }}
+              />
+            </Stack>
 
             {filteredRows.length === 0 ? (
-              <Typography color="text.secondary">No hay datos para ese rango.</Typography>
+              <Typography color="text.secondary">
+                No hay datos para ese rango.
+              </Typography>
             ) : (
-              <Box sx={{ overflowX: "auto" }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Semana</TableCell>
-                      <TableCell>Músculo</TableCell>
-                      <TableCell align="right">Volumen</TableCell>
-                      <TableCell align="right">Δ vs semana previa</TableCell>
-                      <TableCell align="right">Δ %</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {weeklyGroups.map((group) => (
-                      <Fragment key={`${group.weekStart}-${group.weekEnd}`}>
-                        {group.rows.map((row, index) => (
-                          <TableRow key={`${row.weekStart}-${row.muscle}-${index}`}>
-                            <TableCell>{row.weekStart} a {row.weekEnd}</TableCell>
-                            <TableCell>
-                              <MuscleChips muscles={[row.muscle]} 
-                                chipSx={{
-                                  fontSize: "1rem",
-                                  fontWeight: 700,
-                                  height: 30,
-                                  px: 1.5
-                                }}
-                              />
-                            </TableCell>
-                            <TableCell align="right">
-                              <Stack spacing={0.6} alignItems="flex-end">
-                                <Typography variant="body2">{formatVolume(row.currentVolume)} kg</Typography>
-                                <Box sx={{ width: 120 }}>
-                                  <LinearProgress
-                                    variant="determinate"
-                                    value={row.volumeRatio}
-                                    sx={{ height: 7, borderRadius: 10 }}
-                                  />
-                                </Box>
-                              </Stack>
-                            </TableCell>
-                            <TableCell
-                              align="right"
-                              sx={{
-                                color: row.delta >= 0 ? "success.main" : "error.main",
-                                fontWeight: 600,
-                              }}
-                            >
-                              {row.delta >= 0 ? "+" : ""}{formatVolume(row.delta)} kg
-                            </TableCell>
-                            <TableCell
-                              align="right"
-                              sx={{
-                                color: row.percent == null ? "text.secondary" : row.percent >= 0 ? "success.main" : "error.main",
-                                fontWeight: 600,
-                              }}
-                            >
-                              {row.percent == null ? "-" : `${row.percent >= 0 ? "+" : ""}${formatVolume(row.percent)}%`}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+              <Stack spacing={2}>
 
-                        <TableRow sx={{ bgcolor: "action.hover" }}>
-                          <TableCell colSpan={2} sx={{ fontWeight: 700 }}>
-                            Subtotal semanal ({group.weekStart} a {group.weekEnd})
-                          </TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 700 }}>
-                            {formatVolume(group.subtotal)} kg
-                          </TableCell>
-                          <TableCell colSpan={2} />
-                        </TableRow>
-                      </Fragment>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Box>
+                {weeklyGroups.map((group) => (
+                  <Box
+                    key={`${group.weekStart}-${group.weekEnd}`}
+                    sx={{
+                      p: 2,
+                      borderRadius: 3,
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderLeft: "4px solid #ff2020"
+                    }}
+                  >
+
+                    {/* 📅 HEADER SEMANA */}
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      sx={{ mb: 2 }}
+                    >
+                      <Typography fontWeight={700}>
+                        {group.weekStart} a {group.weekEnd}
+                      </Typography>
+
+                      <Typography fontWeight={800}>
+                        {formatVolume(group.subtotal)} kg
+                      </Typography>
+                    </Stack>
+
+                    {/* 💪 MÚSCULOS */}
+                    <Stack spacing={1.2}>
+                      {group.rows.map((row, index) => (
+                        <Box
+                          key={`${row.weekStart}-${row.muscle}-${index}`}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 2
+                          }}
+                        >
+                          {/* músculo */}
+                          <MuscleChips muscles={[row.muscle]} />
+
+                          {/* barra */}
+                          <Box sx={{ flex: 1 }}>
+                            <LinearProgress
+                              variant="determinate"
+                              value={row.volumeRatio}
+                              sx={{
+                                height: 8,
+                                borderRadius: 10,
+                                mb: 0.5
+                              }}
+                            />
+
+                            <Typography variant="caption">
+                              {formatVolume(row.currentVolume)} kg
+                            </Typography>
+                          </Box>
+
+                          {/* delta */}
+                          <Typography
+                            sx={{
+                              minWidth: 70,
+                              textAlign: "right",
+                              fontWeight: 600,
+                              color: row.delta >= 0 ? "success.main" : "error.main"
+                            }}
+                          >
+                            {row.delta >= 0 ? "+" : ""}
+                            {formatVolume(row.delta)}
+                          </Typography>
+
+                          {/* % */}
+                          <Typography
+                            sx={{
+                              minWidth: 70,
+                              textAlign: "right",
+                              fontWeight: 600,
+                              color:
+                                row.percent == null
+                                  ? "text.secondary"
+                                  : row.percent >= 0
+                                  ? "success.main"
+                                  : "error.main"
+                            }}
+                          >
+                            {row.percent == null
+                              ? "-"
+                              : `${row.percent >= 0 ? "+" : ""}${formatVolume(row.percent)}%`}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Stack>
+
+                  </Box>
+                ))}
+
+              </Stack>
             )}
+
           </CardContent>
         </Card>
 

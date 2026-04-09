@@ -6,5 +6,6 @@ public record WorkoutDaySummaryResponse(
     Long dayId,
     Double totalVolume,
     Long durationMinutes,
+    int totalExercises,
     List<WorkoutSetWeeklyMuscleVolumeResponse> muscleVolumes
 ) {}
