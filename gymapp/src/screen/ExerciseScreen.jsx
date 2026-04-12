@@ -39,6 +39,7 @@ import BackButton from "../components/BackButton";
 import MuscleChips from "../components/MuscleChips";
 import PrimaryButton from "../components/PrimaryButton";
 import CloseButton from "../components/CloseButton";
+import AnimatedDialog from "../components/AnimatedDialog";
 
 import {
   Container,
@@ -116,6 +117,8 @@ const muscleLabels = {
   QUADRICEPS: "Cuádriceps",
   GLUTES: "Glúteos",
   HAMSTRINGS: "Femorales",
+  ADDUCTORS: "Aductores",
+  ABDUCTORS: "Abductores",
   CALVES: "Gemelos",
   ABDOMINALS: "Abdominales"
 };
@@ -305,6 +308,7 @@ const confirmCompleteWithWeight = async () => {
 
   setWeightModalOpen(false);
   setPendingExercise(null);
+  setSelectedExercise(null);
 };
 
 const areAllExercisesCompleted = () => {
@@ -446,6 +450,9 @@ const saveSet = async (setIndex, showMessage = true, existingSets = null) => {
       });
     }
   }
+
+  await loadSets();
+
   if (showMessage) {
     setMessage(`Serie ${setIndex + 1} guardada`);
     setMessageType("success");
@@ -735,437 +742,492 @@ displayedExercises.map((ex) => (
 
 {/* MODAL EJERCICIO */}
 
-<Dialog
- open={!!selectedExercise}
- onClose={()=>setSelectedExercise(null)}
- fullWidth
- maxWidth="md"
- sx={{
-    "& .MuiDialog-paper": {
-      width: { xs: "95%", md: "80%" },
-      maxWidth: "900px"
-    }
-  }}
+<AnimatedDialog
+  open={!!selectedExercise}
+  onClose={() => setSelectedExercise(null)}
+  title={selectedExercise?.exercise?.name || selectedExercise?.exerciseName}
+  maxWidth={false}
+  titleSize="2rem"
+  headerSx={{py: 1.5}}
+  paperSx={{width: {xs: "95%", md: "80%"}, maxWidth: "900px"}}
+  actions={
+    <Button
+      fullWidth
+      size="large"
+      variant="contained"
+      color={selectedExercise?.completed ? "error" : "success"}
+      onClick={() => handleCompleteClick(selectedExercise)}
+      sx={{ fontWeight: 700 }}
+      disabled={!areSetsValid()}
+    >
+      {selectedExercise?.completed
+        ? "Quitar completado"
+        : "Marcar como completado"}
+    </Button>
+  }
 >
 
-{selectedExercise?.video ? (
+  {/* MEDIA */}
+  {selectedExercise?.video ? (
+    <video
+      controls
+      src={getExerciseVideoUrl(selectedExercise.video)}
+      style={{
+        width: "100%",
+        maxHeight: "260px",
+        objectFit: "contain",
+        background: "#000",
+        borderRadius: "8px"
+      }}
+    />
+  ) : selectedExercise?.image ? (
+    <img
+      src={getExerciseImageUrl(selectedExercise.image)}
+      style={{
+        width: "100%",
+        maxHeight: "260px",
+        objectFit: "contain",
+        background: "#000",
+        borderRadius: "8px"
+      }}
+    />
+  ) : null}
 
-<video
- controls
- src={getExerciseVideoUrl(selectedExercise.video)}
- style={{
-  width:"100%",
-  maxHeight:"260px",
-  objectFit:"contain",
-  background:"#000"
- }}
-/>
-
-) : selectedExercise?.image ? (
-
-<img
- src={getExerciseImageUrl(selectedExercise.image)}
- style={{
-  width:"100%",
-  maxHeight:"260px",
-  objectFit:"contain",
-  background:"#000"
- }}
-/>
-
-) : null}
-
-<DialogTitle sx={{fontWeight:700, position: "relative", textAlign:"center"}}>
-  {selectedExercise?.exercise?.name || selectedExercise?.exerciseName}
-  <CloseButton onClick={() => setSelectedExercise(null)}
-    sx={{
-      position: "absolute",
-      right: 16,
-      top: "50%",
-      transform: "translateY(-50%)",
-    }}
-  />
-  </DialogTitle>
-
-<DialogContent>
-
-
-<Stack spacing={2} alignItems="center" textAlign="center">
-
-<Typography fontSize={"1.5em"}>
-Peso: <b>{selectedExercise?.weight ?? 0} kg</b>
-</Typography>
-
-<Typography fontSize={"1.5em"}>
-Repeticiones: <b>{reps ?? "-"}</b>
-</Typography>
-
-{selectedExercise?.exerciseMuscle &&
-
-<MuscleChips muscles={[selectedExercise.exerciseMuscle]} size="medium" chipSx={{
-    fontSize: "1.4rem",
-    fontWeight: 700,
-    height: 36,
-    px: 1.5
-  }}/>
-
-}
-
-{selectedExercise?.description &&
-
-<Typography fontSize={"1.5em"} color="text.secondary">
-{selectedExercise.description}
-</Typography>
-
-}
-
-</Stack>
-
-<Stack spacing={3} sx={{ mt: 3 }}>
-
-{sets.map((set, setIndex) => {
-
-  const allEmpty = set.every(b => !b.reps && !b.weight);
-  const allFull = set.every(b => b.reps && b.weight);
-  const isInvalid = !allEmpty && !allFull;
-  const hasData = set.some(b => b.id);
-
-  return(
-
-  <Box key={setIndex} sx={{ border: "1px solid #ddd", p:2, borderRadius:2 }}>
-
-    <Typography fontWeight={700}>
-      Serie {setIndex + 1}
+  <Stack spacing={2} alignItems="center" textAlign="center" mt={2}>
+    <Typography fontSize={"1.5em"}>
+      Peso: <b>{selectedExercise?.weight ?? 0} kg</b>
     </Typography>
 
-    <Stack spacing={1} mt={1}>
+    <Typography fontSize={"1.5em"}>
+      Repeticiones: <b>{reps ?? "-"}</b>
+    </Typography>
 
-      {set.map((block, blockIndex) => (
+    {selectedExercise?.exerciseMuscle && (
+      <MuscleChips
+        muscles={[selectedExercise.exerciseMuscle]}
+        size="medium"
+        chipSx={{
+          fontSize: "1.4rem",
+          fontWeight: 700,
+          height: 36,
+          px: 1.5
+        }}
+      />
+    )}
 
-        <Stack direction="row" spacing={1} key={blockIndex} alignItems="center">
+    {selectedExercise?.description && (
+      <Typography fontSize={"1.5em"} color="text.secondary">
+        {selectedExercise.description}
+      </Typography>
+    )}
+  </Stack>
 
-          <TextField
-            label="Reps"
-            size="small"
-            value={block.reps}
-            disabled={selectedExercise?.completed}
-            onChange={(e)=>handleChange(setIndex, blockIndex, "reps", e.target.value)}
-            sx={{ width: 80 }}
-          />
+  <Stack spacing={3} sx={{ mt: 3 }}>
+    {sets.map((set, setIndex) => {
+      const allEmpty = set.every(b => !b.reps && !b.weight);
+      const allFull = set.every(b => b.reps && b.weight);
+      const isInvalid = !allEmpty && !allFull;
+      const hasData = set.some(b => b.id);
 
-          <TextField
-            label="Peso"
-            size="small"
-            value={block.weight}
-            disabled={selectedExercise?.completed}
-            onChange={(e)=>handleChange(setIndex, blockIndex, "weight", e.target.value)}
-            sx={{ width: 90 }}
-          />
-
-          <Button onClick={()=>addBlock(setIndex)} disabled={selectedExercise?.completed}>+</Button>
-
-          {set.length > 1 && (
-            <Button onClick={()=>removeBlock(setIndex, blockIndex)} disabled={selectedExercise?.completed}>-</Button>
-          )}
-
-        </Stack>
-
-      ))}
-
-      <Stack direction="row" spacing={1}>
-        <Button
-          fullWidth
-          variant="contained"
-          onClick={() => saveSet(setIndex)}
-          disabled={allEmpty || isInvalid || selectedExercise?.completed} // 🔥 clave
+      return (
+        <Box
+          key={setIndex}
+          sx={{
+            border: "1px solid #ddd",
+            p: 2,
+            borderRadius: 2
+          }}
         >
-          Guardar serie {setIndex + 1}
-        </Button>
+          <Typography sx={{fontWeight: 700, fontSize: "1.4rem"}}>
+            Serie {setIndex + 1}
+          </Typography>
 
-        <Button
-          fullWidth
-          variant="outlined"
-          color="error"
-          onClick={() => deleteSet(setIndex)}
-          disabled={!hasData || selectedExercise?.completed}
-        >
-          Eliminar
-        </Button>
-      </Stack>
+          <Stack spacing={1} mt={1}>
+            {set.map((block, blockIndex) => (
+              <Stack
+                direction="row"
+                spacing={1}
+                key={blockIndex}
+                alignItems="center"
+              >
+                <TextField
+                  label="Reps"
+                  size="small"
+                  value={block.reps}
+                  disabled={selectedExercise?.completed}
+                  onChange={(e) =>
+                    handleChange(setIndex, blockIndex, "reps", e.target.value)
+                  }
+                  sx={{ width: 100, 
+                    // input
+                    "& .MuiInputBase-input": {
+                      fontSize: "1.5rem",
+                      paddingTop: "12px",
+                      paddingBottom: "4px"
+                    },
 
-    </Stack>
+                    // label normal
+                    "& .MuiInputLabel-root": {
+                      fontSize: "1.5rem"
+                    },
 
-  </Box>
+                    // 🔥 label cuando sube (con valor)
+                    "& .MuiInputLabel-root.MuiInputLabel-shrink": {
+                      fontSize: "1.6rem"
+                    },
 
-  );
-})}
+                    "& .MuiInputBase-root": {
+                      height: 65
+                    }
+                  }}
+                />
 
-</Stack>
+                <TextField
+                  label="Peso"
+                  size="small"
+                  value={block.weight}
+                  disabled={selectedExercise?.completed}
+                  onChange={(e) =>
+                    handleChange(setIndex, blockIndex, "weight", e.target.value)
+                  }
+                  sx={{ width: 100,
+                    // input
+                    "& .MuiInputBase-input": {
+                      fontSize: "1.5rem",
+                      paddingTop: "12px",
+                      paddingBottom: "4px"
+                    },
 
-</DialogContent>
+                    // label normal
+                    "& .MuiInputLabel-root": {
+                      fontSize: "1.5rem"
+                    },
 
-<DialogActions
- sx={{
-  p:2,
-  display:"flex",
-  flexDirection:"column",
-  gap:1
- }}
->
+                    // 🔥 label cuando sube (con valor)
+                    "& .MuiInputLabel-root.MuiInputLabel-shrink": {
+                      fontSize: "1.6rem"
+                    },
 
-<Button
- fullWidth
- size="large"
- variant="contained"
- color={selectedExercise?.completed ? "error" : "success"}
- onClick={()=>handleCompleteClick(selectedExercise)}
- sx={{fontWeight:700}}
- disabled={!areSetsValid()}
->
-{selectedExercise?.completed
- ? "Quitar completado"
- : "Marcar como completado"}
-</Button>
+                    "& .MuiInputBase-root": {
+                      height: 65
+                    }
+                  }}
+                />
+
+                <Button
+                  onClick={() => addBlock(setIndex)}
+                  disabled={selectedExercise?.completed}
+                  sx={{
+                      fontSize: "1.8rem",
+                      minWidth: 40,
+                      height: 57,
+                      lineHeight: 1
+                    }}
+                >
+                  +
+                </Button>
+
+                {set.length > 1 && (
+                  <Button
+                    onClick={() => removeBlock(setIndex, blockIndex)}
+                    disabled={selectedExercise?.completed}
+                    sx={{
+                      fontSize: "2rem",
+                      minWidth: 40,
+                      height: 57,
+                      lineHeight: 1
+                    }}
+                  >
+                    -
+                  </Button>
+                )}
+              </Stack>
+            ))}
+
+            <Stack direction="row" spacing={1}>
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={() => saveSet(setIndex)}
+                disabled={allEmpty || isInvalid || selectedExercise?.completed}
+                sx={{fontSize: "1.2rem", py: 1.2}}
+              >
+                Guardar serie {setIndex + 1}
+              </Button>
+
+              <Button
+                fullWidth
+                variant="outlined"
+                color="error"
+                onClick={() => deleteSet(setIndex)}
+                disabled={!hasData || selectedExercise?.completed}
+                sx={{fontSize: "1.2rem", py: 1.2}}
+              >
+                Eliminar
+              </Button>
+            </Stack>
+          </Stack>
+        </Box>
+      );
+    })}
+  </Stack>
+
+</AnimatedDialog>
 
 
 
-</DialogActions>
 
-</Dialog>
+
+
 
 {/* MODAL DE SELECCIÓN DE EJERCICIOS */}
 
-<Dialog
- open={isSelectionModalOpen}
- onClose={()=>setIsSelectionModalOpen(false)}
- fullWidth
- maxWidth="md"
- sx={{
-    "& .MuiDialog-paper": {
-      width: { xs: "95%", md: "80%" },
-      maxWidth: "900px"
-    }
+<AnimatedDialog
+  open={isSelectionModalOpen}
+  onClose={() => setIsSelectionModalOpen(false)}
+  title="Seleccionar ejercicios"
+  titleSize="2rem"
+  headerSx={{py: 1.5}}
+  maxWidth={false}
+  paperSx={{
+    width: { xs: "95%", md: "80%" },
+    maxWidth: "900px"
   }}
->
-<DialogTitle sx={{fontWeight:700, position: "relative", textAlign:"center"}}>
-Seleccionar ejercicios
-<CloseButton onClick={() => setIsSelectionModalOpen(false)}
-  sx={{
-    position: "absolute",
-    right: 16,
-    top: "50%",
-    transform: "translateY(-50%)",
-  }}
-/>
-</DialogTitle>
-
-<DialogContent
-  sx={{
-    maxHeight: "60vh",
-    overflowY: "auto"
-  }}
->
-
-  {!isAbdominal && (
-    <Stack spacing={1} mb={1}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center"
-        }}
-      >
-        <Tabs value={filterType} onChange={(e, val) => setFilterType(val)} 
-          sx={{"& .MuiTabs-flexContainer": {justifyContent: "center"}, 
-            "& .MuiTab-root": {fontSize: "1.1rem"}
-          }}
-        >
-          <Tab label="Todos" value="ALL" />
-          <Tab label="Primario" value="PRIMARY" />
-          <Tab label="Secundario" value="SECONDARY" />
-          <Tab label="Terciario" value="TERTIARY" />
-          <Tab label="Abdominal" value="ABDOMINAL" />
-        </Tabs>
-
-      </Box>
-      
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center"
-        }}
-       >
-        <Tabs
-          value={filterMuscle}
-          onChange={(e, val) => setFilterMuscle(val)}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            "& .MuiTab-root": {mb:1, fontSize: "1.1rem"}
-          }}
-        >
-          {availableMuscles.map((muscle) => (
-            <Tab
-              key={muscle}
-              value={muscle}
-              label={muscle === "ALL" ? "Todos" : muscleLabels[muscle] || muscle}
-            />
-          ))}
-        </Tabs>
-      </Box>
-    </Stack>
-  )}
-
-
-<Stack spacing={1}>
-{filteredExercises.map((ex)=>{
- const isSelected = selectedExerciseIds.includes(ex.id);
- return (
- <Box
-  key={ex.id}
-  onClick={() => {
-    if (ex.completed) return;
-    toggleSelectedExercise(ex);
-  }}
-  sx={{
-    p: 2,
-    borderRadius: 2,
-    border: `2px solid ${isSelected ? "#4caf50" : "#ddd"}`,
-    cursor: ex.completed ? "not-allowed" : "pointer",
-    opacity: ex.completed ? 0.6 : 1,
-    backgroundColor: isSelected ? "rgba(76, 175, 80, 0.08)" : "#fff",
-
-    position: "relative",
-    display: "flex",
-    alignItems: "flex-start",
-    gap: 2,
-  }}
->
-  <Box
-    component="img"
-    src={getExerciseIconUrl(ex.icon)}
-    alt={ex.exerciseName}
-    sx={{
-      width: 100,
-      height: 100,
-      objectFit: "contain",
-      borderRadius: 2,
-      p: 0.5,
-      flexShrink: 0,
-      transform: "translateX(28px)"
-    }}
-  />
-
-  <Box
-    sx={{
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      mt: 0.5
-    }}
-  >
-    {/* Nombre */}
-    <Typography fontWeight={700} fontSize={"1.4rem"}>
-      {ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}
-    </Typography>
-
-    {/* Tipo */}
-    <Typography color="text.secondary" fontWeight={600} fontSize={"1.05rem"}>
-      {formatExerciseType(ex.type)}
-    </Typography>
-
-    {/* Datos */}
-    <Typography fontSize={"1.1rem"}>
-      Peso: {ex.weight ?? 0} kg • Reps: {reps ?? "-"}
-    </Typography>
-
-    
-  </Box>
-
-  {/* ✔ COMPLETADO */}
-  <Box
-    sx={{
-      minWidth: "120px", // 👈 reserva espacio SIEMPRE
-      display: "flex",
-      justifyContent: "flex-end",
-      alignItems: "flex-start"
-    }}
-  >
-    <Typography
-      sx={{
-        fontWeight: 700,
-        color: "#2e7d32",
-        fontSize: "1.2rem",
-        visibility: ex.completed ? "visible" : "hidden"
+  actions={
+    <Button
+      fullWidth
+      variant="contained"
+      onClick={() => {
+        const chosen = allExercises.filter((ex) =>
+          selectedExerciseIds.includes(ex.id)
+        );
+        setDisplayedExercises(chosen);
+        setSelectedExerciseIds(chosen.map((ex) => ex.id));
+        setIsSelectionModalOpen(false);
       }}
+      sx={{ mt: 1 }}
     >
-      ✔ Completado
-    </Typography>
-  </Box>
-  
- </Box>
- );
-})}
-</Stack>
-</DialogContent>
-
-<DialogActions sx={{p:2, display:"flex", flexDirection:"column", gap:1}}>
-<Button
- fullWidth
- variant="contained"
- onClick={()=>{
-   const chosen = allExercises.filter((ex)=> selectedExerciseIds.includes(ex.id));
-   setDisplayedExercises(chosen);
-   setSelectedExerciseIds(chosen.map((ex)=>ex.id));
-   setIsSelectionModalOpen(false);
- }}
- sx={{mt:1}}
+      Seleccionar ejercicios
+    </Button>
+  }
 >
- Seleccionar ejercicios
-</Button>
-</DialogActions>
+  <Box
+    sx={{
+      maxHeight: "60vh",
+      overflowY: "auto"
+    }}
+  >
 
-</Dialog>
+    {!isAbdominal && (
+      <Stack spacing={1} mb={1}>
+        <Box sx={{ display: "flex", justifyContent: "center" }}>
+          <Tabs
+            value={filterType}
+            onChange={(e, val) => setFilterType(val)}
+            sx={{
+              "& .MuiTabs-flexContainer": { justifyContent: "center" },
+              "& .MuiTab-root": { fontSize: "1.1rem" }
+            }}
+          >
+            <Tab label="Todos" value="ALL" />
+            <Tab label="Primario" value="PRIMARY" />
+            <Tab label="Secundario" value="SECONDARY" />
+            <Tab label="Terciario" value="TERTIARY" />
+            <Tab label="Abdominal" value="ABDOMINAL" />
+          </Tabs>
+        </Box>
+
+        <Box sx={{ display: "flex", justifyContent: "center" }}>
+          <Tabs
+            value={filterMuscle}
+            onChange={(e, val) => setFilterMuscle(val)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              "& .MuiTab-root": { mb: 1, fontSize: "1.1rem" }
+            }}
+          >
+            {availableMuscles.map((muscle) => (
+              <Tab
+                key={muscle}
+                value={muscle}
+                label={
+                  muscle === "ALL"
+                    ? "Todos"
+                    : muscleLabels[muscle] || muscle
+                }
+              />
+            ))}
+          </Tabs>
+        </Box>
+      </Stack>
+    )}
+
+    <Stack spacing={1}>
+      {filteredExercises.map((ex) => {
+        const isSelected = selectedExerciseIds.includes(ex.id);
+
+        return (
+          <Box
+            key={ex.id}
+            onClick={() => {
+              if (ex.completed) return;
+              toggleSelectedExercise(ex);
+            }}
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              border: `2px solid ${isSelected ? "#4caf50" : "#ddd"}`,
+              cursor: ex.completed ? "not-allowed" : "pointer",
+              opacity: ex.completed ? 0.6 : 1,
+              backgroundColor: isSelected
+                ? "rgba(76, 175, 80, 0.08)"
+                : "#fff",
+
+              position: "relative",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 2
+            }}
+          >
+            <Box
+              component="img"
+              src={getExerciseIconUrl(ex.icon)}
+              alt={ex.exerciseName}
+              sx={{
+                width: 100,
+                height: 100,
+                objectFit: "contain",
+                borderRadius: 2,
+                p: 0.5,
+                flexShrink: 0,
+                transform: "translateX(28px)"
+              }}
+            />
+
+            <Box
+              sx={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                mt: 0.5
+              }}
+            >
+              <Typography fontWeight={700} fontSize={"1.4rem"}>
+                {ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}
+              </Typography>
+
+              <Typography
+                color="text.secondary"
+                fontWeight={600}
+                fontSize={"1.05rem"}
+              >
+                {formatExerciseType(ex.type)}
+              </Typography>
+
+              <Typography fontSize={"1.1rem"}>
+                Peso: {ex.weight ?? 0} kg • Reps: {reps ?? "-"}
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                minWidth: "120px",
+                display: "flex",
+                justifyContent: "flex-end",
+                alignItems: "flex-start"
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  color: "#2e7d32",
+                  fontSize: "1.2rem",
+                  visibility: ex.completed ? "visible" : "hidden"
+                }}
+              >
+                ✔ Completado
+              </Typography>
+            </Box>
+          </Box>
+        );
+      })}
+    </Stack>
+  </Box>
+
+</AnimatedDialog>
+
+
+
+
+
+
 
 {/* MODAL ABDOMINALES */}
 
-<Dialog
+<AnimatedDialog
   open={confirmFinish}
   onClose={() => setConfirmFinish(false)}
+  title="Finalizar día"
+  titleSize="2rem"
+  paperSx={{
+    maxWidth: 600, // 👈 ancho tipo modal chico como antes
+    borderRadius: 3
+  }}
 >
-  <DialogTitle sx={{fontWeight:700, position: "relative", textAlign:"center"}}>
-  Finalizar día
-  <CloseButton onClick={() => setConfirmFinish(false)}
-    sx={{
-      position: "absolute",
-      right: 16,
-      top: "50%",
-      transform: "translateY(-50%)",
-    }}
-  />
-  </DialogTitle>
-
-  <DialogContent>
+  {/* CONTENIDO */}
+  <Box sx={{ pb: 2}}>
+    
     <Typography
       sx={{
         fontSize: "1.4rem",
-        fontWeight: 500
+        fontWeight: 500,
+        textAlign: "center",
+        mb: 4 // 🔥 espacio igual al DialogContent original
       }}
     >
       ¿Querés hacer abdominales antes de terminar la rutina?
     </Typography>
-  </DialogContent>
 
-  <DialogActions>
-    <Button onClick={finishDay} variant="outlined">
-      No
-    </Button>
+    {/* BOTONES */}
+    <Stack direction="row" spacing={4} justifyContent="center">
+  
+      <Button
+        onClick={finishDay}
+        variant="outlined"
+        sx={{
+          minWidth: 80,
+          px: 2,
+          py: 1, // 🔥 menos alto
+          fontSize: "1.4rem",
+          textTransform: "none",
+          borderRadius: 2
+        }}
+      >
+        No
+      </Button>
 
-    <Button variant="contained" onClick={finishDayWithAbs}>
-      Sí, agregar abdominales
-    </Button>
-  </DialogActions>
-</Dialog>
+      <Button
+        variant="contained"
+        onClick={finishDayWithAbs}
+        sx={{
+          px: 2.5,
+          py: 1, // 🔥 menos alto
+          fontSize: "1.4rem",
+          fontWeight: 700,
+          textTransform: "none",
+          borderRadius: 2,
+          whiteSpace: "nowrap" // 🔥 evita salto de línea
+        }}
+      >
+        Sí, agregar abdominales
+      </Button>
+
+    </Stack>
+
+  </Box>
+</AnimatedDialog>
 
 
 

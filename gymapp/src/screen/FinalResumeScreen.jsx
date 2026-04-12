@@ -70,10 +70,10 @@ export default function FinalResumeScreen() {
   // ✨ GLOW SUAVE (energía)
   const glow = keyframes`
     0% {
-      text-shadow: 0 0 6px rgba(255,255,255,0.2), 0 0 10px rgba(211,47,47,0.2);
+      text-shadow: 0 0 4px rgba(255,255,255,0.2), 0 0 10px rgba(211,47,47,0.2);
     }
     100% {
-      text-shadow: 0 0 10px rgba(255,255,255,0.4), 0 0 18px rgba(211,47,47,0.7);
+      text-shadow: 0 0 8px rgba(255,255,255,0.4), 0 0 18px rgba(211,47,47,0.7);
     }
   `;
 
@@ -272,17 +272,30 @@ export default function FinalResumeScreen() {
               <Box sx={{ flex: 1, height: "1px", backgroundColor: "rgba(255,255,255,0.8)" }} />
             </Box>
 
-            <Stack spacing={1}>
-              <Stack spacing={1.2}>
-                {muscleVolume.map((m) => (
+            
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 2,
+                justifyContent: "center" // 👈 clave para centrar la última
+              }}
+            >
+              {muscleVolume.map((m) => (
+                <Box
+                  key={m.muscle}
+                  sx={{
+                    width: "calc(50% - 8px)", // 👈 2 por fila (gap compensado)
+                    minWidth: "260px", // opcional para que no se achiquen demasiado
+                  }}
+                >
                   <MuscleVolumeCard
-                    key={m.muscle}
                     muscle={m.muscle}
                     volume={m.volume}
                   />
-                ))}
-              </Stack>
-            </Stack>
+                </Box>
+              ))}
+            </Box>
           </Box>
 
           )}

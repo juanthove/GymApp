@@ -125,95 +125,101 @@ export default function MuscleVolumeCard({ muscle, volume }) {
 
   return (
     <Box
-        sx={{
-            position: "relative",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            px: 2.5,
-            py: 1.5,
-            borderRadius: "14px",
+      sx={{
+        position: "relative",
+        display: "flex",
+        flexDirection: "column", // 👈 vertical
+        alignItems: "center",
+        justifyContent: "space-between",
 
-            background: `linear-gradient(135deg, ${bgColor}, ${bgColorSoft})`,
+        width: "100%",
+        height: 220, // 👈 forma rectangular/cuadrada
+        px: 2,
+        py: 1.5,
+        borderRadius: "16px",
 
-            border: "4px solid rgba(255,255,255,0.8)",
+        background: `linear-gradient(135deg, ${bgColor}, ${bgColorSoft})`,
+        border: "4px solid rgba(255,255,255,0.8)",
+        boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
 
-            boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
-
-            overflow: "hidden" // 👈 importante
-        }}
+        overflow: "hidden",
+      }}
     >
-        <Box
-            sx={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "40%",
-                background: "linear-gradient(to bottom, rgba(255,255,255,0.35), transparent)",
-                pointerEvents: "none"
-            }}
-            />
-        <Box
-            sx={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                width: "100%",
-                height: "30%",
-                background: "linear-gradient(to top, rgba(0,0,0,0.08), transparent)",
-                pointerEvents: "none"
-            }}
-        />
-      {/* IZQUIERDA */}
-      <Box sx={{ position: "relative", display: "flex", alignItems: "center"}}>
-        {Icon && (
-          <>
-            <style>
-              {`
-                .muscle-icon .muscle-main {
-                  fill: currentColor;
-                }
+      {/* brillo arriba */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "35%",
+          background:
+            "linear-gradient(to bottom, rgba(255,255,255,0.35), transparent)",
+          pointerEvents: "none",
+        }}
+      />
 
-                .muscle-icon .muscle-secondary {
-                  fill: color-mix(in srgb, currentColor 65%, black);
-                }
-              `}
-            </style>
-            <Icon
-              className="muscle-icon"
-              style={{
-                left: -6,
-                width: 50,
-                height: 50,
-                color: baseColor, // 🔥 mismo color que usás en la card
-                filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.25))",
-                transform: "scale(1.2)",
-              }}
-            />
-          </>
-        )}
+      {/* sombra abajo */}
+      <Box
+        sx={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          width: "100%",
+          height: "30%",
+          background:
+            "linear-gradient(to top, rgba(0,0,0,0.08), transparent)",
+          pointerEvents: "none",
+        }}
+      />
 
-        <Typography
-          sx={{
-            fontWeight: 600,
-            color: "#444",
-            fontSize: "1.25rem",
-            pl: 4.5
-          }}
-        >
-          {muscleLabels[muscle] || muscle}
-        </Typography>
-      </Box>
-
-      {/* DERECHA (KG animados) */}
+      {/* 🧠 NOMBRE */}
       <Typography
         sx={{
-            fontWeight: 800,
-            fontSize: "1.4rem",
-            color: textColor,
-            textShadow: "0 1px 2px rgba(0,0,0,0.25)",
-            animation: animate ? `${pop} 0.4s ease-out` : "none"
+          fontWeight: 700,
+          fontSize: "1.3rem",
+          color: "#444",
+          textAlign: "center",
+        }}
+      >
+        {muscleLabels[muscle] || muscle}
+      </Typography>
+
+      {/* 💪 ICONO */}
+      {Icon && (
+        <>
+          <style>
+            {`
+              .muscle-icon .muscle-main {
+                fill: color-mix(in srgb, currentColor 65%, black);
+              }
+
+              .muscle-icon .muscle-secondary {
+                fill: currentColor;
+              }
+            `}
+          </style>
+
+          <Icon
+            className="muscle-icon"
+            style={{
+              width: 130,
+              height: 130,
+              color: baseColor,
+              filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.25))",
+            }}
+          />
+        </>
+      )}
+
+      {/* ⚖️ KG */}
+      <Typography
+        sx={{
+          fontWeight: 800,
+          fontSize: "1.3rem",
+          color: textColor,
+          textShadow: "0 1px 2px rgba(0,0,0,0.25)",
+          animation: animate ? `${pop} 0.4s ease-out` : "none",
         }}
       >
         <span ref={countUpRef} />

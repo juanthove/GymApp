@@ -39,6 +39,8 @@ public interface WorkoutDayService {
 
     WorkoutDayResponse startWorkoutDay(Long id);
 
+    WorkoutDayResponse cancelWorkoutDay(Long id);
+
     WorkoutDayResponse completeWorkoutDay(Long id);
 
     WorkoutDayResponse markAbdominalWorkoutDay(Long id);

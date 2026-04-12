@@ -5,7 +5,7 @@ import backgroundImg from "../assets/gymproIcon.png";
 
 import { getUserById, getCurrentWorkout, logoutUser } from "../services/userService";
 import { getWorkoutById } from "../services/workoutService";
-import { startWorkoutDay, getWorkoutDayStatus, getWorkoutDayImageUrl } from "../services/workoutDayService";
+import { startWorkoutDay, cancelWorkoutDay, getWorkoutDayStatus, getWorkoutDayImageUrl } from "../services/workoutDayService";
 import { getRandomPhrase } from "../services/phraseService";
 
 import {
@@ -27,6 +27,7 @@ import GymCard from "../components/GymCard";
 import BackButton from "../components/BackButton";
 import MuscleChips from "../components/MuscleChips";
 import PrimaryButton from "../components/PrimaryButton";
+import AnimatedDialog from "../components/AnimatedDialog";
 
 export default function WorkoutScreen(){
 
@@ -43,7 +44,6 @@ const [hasWorkout,setHasWorkout] = useState(true);
 
 
 const [animatedProgress, setAnimatedProgress] = useState(0);
-
 
 
 useEffect(()=>{
@@ -101,21 +101,35 @@ const openDay=(day)=>{
  setSelectedDay(day);
 };
 
-const startWorkout= async ()=>{
+const handleStartWorkout = async () => {
+  if (!selectedDay) return;
 
- const status = dayStatus[selectedDay.id];
+  try {
+    const currentStatus = dayStatus[selectedDay.id];
 
- if(status === "NOT_STARTED"){
-  await startWorkoutDay(selectedDay.id);
- }
+    if (currentStatus === "NOT_STARTED") {
+      await startWorkoutDay(selectedDay.id);
+    }
 
- navigate(`/exercise/${userId}/${selectedDay.id}`);
+    const newStatus = await getWorkoutDayStatus(selectedDay.id);
 
+    setDayStatus(prev => ({
+      ...prev,
+      [selectedDay.id]: newStatus
+    }));
+
+    navigate(`/exercise/${userId}/${selectedDay.id}`);
+
+  } catch (e) {
+    alert("Error al iniciar el entrenamiento");
+  }
 };
 
 const formatDate = (date) => {
   if (!date) return "-";
-  return new Date(date).toLocaleDateString("es-UY");
+
+  const [year, month, day] = date.split("-");
+  return new Date(year, month - 1, day).toLocaleDateString("es-UY");
 };
 
 const hasDayInProgress = () => {
@@ -209,6 +223,37 @@ useEffect(() => {
 }, [progress]);
 
 const isComplete = completedDays === totalDays;
+
+
+const isAnotherDayInProgress = (dayId) => {
+  return Object.entries(dayStatus).some(
+    ([id, status]) => status === "IN_PROGRESS" && Number(id) !== dayId
+  );
+};
+
+const status = dayStatus[selectedDay?.id];
+const anotherInProgress = isAnotherDayInProgress(selectedDay?.id);
+
+
+const handleCancelWorkoutDay = async () => {
+  if (!selectedDay) return;
+
+  try {
+    await cancelWorkoutDay(selectedDay.id);
+
+    const newStatus = await getWorkoutDayStatus(selectedDay.id);
+
+    setDayStatus(prev => ({
+      ...prev,
+      [selectedDay.id]: newStatus
+    }));
+
+    setSelectedDay(null);
+
+  } catch (e) {
+    alert("Error al cancelar el entrenamiento");
+  }
+};
 
 if (!user) {
   return (
@@ -538,62 +583,83 @@ return(
 
 </Stack>
 
-<Dialog
- open={!!selectedDay}
- onClose={()=>setSelectedDay(null)}
- fullWidth
+<AnimatedDialog
+  open={!!selectedDay}
+  onClose={() => setSelectedDay(null)}
+  title="Músculos que vas a trabajar hoy"
+  titleSize="1.7rem"
+  headerSx={{py: 1.5}}
+  actions={
+    <>
+      {status === "IN_PROGRESS" && (
+        <Button
+          color="error"
+          variant="outlined"
+          onClick={handleCancelWorkoutDay}
+          sx={{
+            flex: 1,
+            fontSize: "1.1rem",
+            py: 1
+          }}
+        >
+          Cancelar día
+        </Button>
+      )}
+
+      <Button
+        variant="contained"
+        onClick={handleStartWorkout}
+        disabled={
+          status === "COMPLETED" || anotherInProgress
+        }
+        sx={{
+          flex: 2,
+          fontSize: "1.1rem",
+          py: 1,
+          whiteSpace: "nowrap"
+        }}
+      >
+        {status === "COMPLETED"
+          ? "Entrenamiento completado"
+          : status === "IN_PROGRESS"
+          ? "Continuar entrenamiento"
+          : anotherInProgress
+          ? "Ya hay un entrenamiento en curso"
+          : "Comenzar entrenamiento"}
+      </Button>
+    </>
+  }
 >
-
-
-<DialogTitle sx={{textAlign:"center"}}>
-Músculos que vas a trabajar hoy
-</DialogTitle>
-
-
-<DialogContent>
-
-<Box display="flex"
+  <Box
+    display="flex"
     flexDirection="column"
     alignItems="center"
     textAlign="center"
     gap={2}
->
+  >
+    <MuscleChips
+      muscles={selectedDay?.muscles}
+      chipSx={{
+        fontWeight: 600,
+        fontSize: "0.9rem",
+        height: 26
+      }}
+    />
 
-<MuscleChips muscles={selectedDay?.muscles} chipSx={{fontWeight: 600,}} />
+    <img
+      src={
+        selectedDay?.muscleImage
+          ? getWorkoutDayImageUrl(selectedDay.muscleImage)
+          : "/body-placeholder.png"
+      }
+      style={{
+        width: "100%",
+        maxWidth: "400px"
+      }}
+    />
+  </Box>
 
-<img
- src={selectedDay?.muscleImage ? getWorkoutDayImageUrl(selectedDay.muscleImage) : "/body-placeholder.png"}
- style={{width:"100%", maxWidth:"500px"}}
-/>
-
-</Box>
-
-</DialogContent>
-
-
-<DialogActions>
-
-<Button onClick={()=>setSelectedDay(null)}>
-Cancelar
-</Button>
-
-<Button
- variant="contained"
- onClick={startWorkout}
- disabled={dayStatus[selectedDay?.id] === "COMPLETED"}
->
-
-{dayStatus[selectedDay?.id] === "NOT_STARTED" && "Comenzar entrenamiento"}
-
-{dayStatus[selectedDay?.id] === "IN_PROGRESS" && "Continuar entrenamiento"}
-
-{dayStatus[selectedDay?.id] === "COMPLETED" && "Entrenamiento completado"}
-
-</Button>
-
-</DialogActions>
-
-</Dialog>
+</AnimatedDialog>
 
 </Container>
 

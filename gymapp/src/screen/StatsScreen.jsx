@@ -150,13 +150,27 @@ export default function StatsScreen() {
           subtotal: 0,
         });
       }
+      
 
       const group = groups.get(key);
       group.rows.push(row);
       group.subtotal += row.currentVolume;
     }
 
-    return Array.from(groups.values());
+    const result = Array.from(groups.values());
+
+    for (const group of result) {
+      const total = group.subtotal; // 👈 ESTE es el total semanal
+
+      for (const row of group.rows) {
+        row.volumeRatio = total > 0
+          ? (row.currentVolume / total) * 100
+          : 0;
+      }
+    }
+
+    return result;
+
   }, [filteredRows]);
 
   const loadStats = async () => {
@@ -336,12 +350,53 @@ export default function StatsScreen() {
 
     <Container maxWidth="md" sx={{ mt: 4, mb: 6, zIndex: 2, position: "relative" }}>
       <Stack spacing={3}>
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ position: "relative" }}>
-          <BackButton to={`/workout/${userId}`} sx={{ position: "absolute", left: 0 }} />
-          <Typography variant="h4" textAlign="center" sx={{ width: "100%" }}>
-            Estadísticas
-          </Typography>
-        </Stack>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mt: 3
+          }}
+        >
+
+          {/* ⬅️ IZQUIERDA */}
+          <Box sx={{ width: 48 }}>
+            <BackButton to={`/workout/${userId}`} />
+          </Box>
+
+          {/* 🎯 CENTRO */}
+          <Box textAlign="center">
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 900,
+                color: "#fff",
+                letterSpacing: "1px",
+                textShadow: `
+                  0 0 10px rgba(255,255,255,0.3),
+                  0 4px 20px rgba(0,0,0,0.6)
+                `
+              }}
+            >
+              Estadísticas
+            </Typography>
+
+            <Box
+              sx={{
+                mt: 1,
+                mx: "auto",
+                width: 80,
+                height: 4,
+                borderRadius: 10,
+                background: "linear-gradient(90deg, #ff2020, #f16744)"
+              }}
+            />
+          </Box>
+
+          {/* 👉 DERECHA (espaciador) */}
+          <Box sx={{ width: 48 }} />
+
+        </Box>
 
         <Card
           sx={{
@@ -523,11 +578,11 @@ export default function StatsScreen() {
                       alignItems="center"
                       sx={{ mb: 2 }}
                     >
-                      <Typography fontWeight={700}>
+                      <Typography sx={{ fontWeight: 700, fontSize: "1.2rem" }}>
                         {group.weekStart} a {group.weekEnd}
                       </Typography>
 
-                      <Typography fontWeight={800}>
+                      <Typography sx={{ fontWeight: 800, fontSize: "1.2rem" }}>
                         {formatVolume(group.subtotal)} kg
                       </Typography>
                     </Stack>
@@ -539,61 +594,91 @@ export default function StatsScreen() {
                           key={`${row.weekStart}-${row.muscle}-${index}`}
                           sx={{
                             display: "flex",
-                            alignItems: "center",
-                            gap: 2
+                            alignItems: "flex-start",
+                            gap: 2,
+                            py: 0.5
                           }}
                         >
-                          {/* músculo */}
-                          <MuscleChips muscles={[row.muscle]} />
 
-                          {/* barra */}
+                          {/* 💪 MUSCLE */}
+                          <Box sx={{ width: 140 }}> {/* 👈 mismo ancho para todos */}
+                          <MuscleChips
+                            muscles={[row.muscle]}
+                            chipSx={{
+                              fontWeight: 700,
+                              fontSize: "1.2rem",
+                              height: 32,
+                              transform: "translateY(11px)"
+                            }}
+                          />
+                          </Box>
+
+                          {/* 📊 DATA */}
                           <Box sx={{ flex: 1 }}>
+
+                            {/* 🔥 TOP ROW */}
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                mb: 0.5
+                              }}
+                            >
+
+                              {/* 🔢 volumen */}
+                              <Typography
+                                sx={{
+                                  fontWeight: 800,
+                                  fontSize: "1.4rem"
+                                }}
+                              >
+                                {formatVolume(row.currentVolume)} kg
+                              </Typography>
+
+                              {/* ➕ delta */}
+                              <Typography
+                                sx={{
+                                  fontWeight: 700,
+                                  fontSize: "1.3rem",
+                                  color: row.delta >= 0 ? "success.main" : "error.main"
+                                }}
+                              >
+                                {row.delta >= 0 ? "+" : ""}
+                                {formatVolume(row.delta)}
+                              </Typography>
+                            </Box>
+
+                            {/* 📈 barra */}
                             <LinearProgress
                               variant="determinate"
                               value={row.volumeRatio}
                               sx={{
-                                height: 8,
+                                height: 10,
                                 borderRadius: 10,
-                                mb: 0.5
+                                mb: 0.3
                               }}
                             />
 
-                            <Typography variant="caption">
-                              {formatVolume(row.currentVolume)} kg
+                            {/* 📊 % */}
+                            <Typography
+                              sx={{
+                                fontSize: "1rem",
+                                textAlign: "right",
+                                color:
+                                  row.percent == null
+                                    ? "text.secondary"
+                                    : row.percent >= 0
+                                    ? "success.main"
+                                    : "error.main"
+                              }}
+                            >
+                              {row.percent == null
+                                ? "-"
+                                : `${row.percent >= 0 ? "+" : ""}${formatVolume(row.percent)}%`}
                             </Typography>
+
                           </Box>
-
-                          {/* delta */}
-                          <Typography
-                            sx={{
-                              minWidth: 70,
-                              textAlign: "right",
-                              fontWeight: 600,
-                              color: row.delta >= 0 ? "success.main" : "error.main"
-                            }}
-                          >
-                            {row.delta >= 0 ? "+" : ""}
-                            {formatVolume(row.delta)}
-                          </Typography>
-
-                          {/* % */}
-                          <Typography
-                            sx={{
-                              minWidth: 70,
-                              textAlign: "right",
-                              fontWeight: 600,
-                              color:
-                                row.percent == null
-                                  ? "text.secondary"
-                                  : row.percent >= 0
-                                  ? "success.main"
-                                  : "error.main"
-                            }}
-                          >
-                            {row.percent == null
-                              ? "-"
-                              : `${row.percent >= 0 ? "+" : ""}${formatVolume(row.percent)}%`}
-                          </Typography>
                         </Box>
                       ))}
                     </Stack>
@@ -609,7 +694,14 @@ export default function StatsScreen() {
 
 
 
-        <Card>
+        <Card
+          sx={{
+            background: "rgba(255, 255, 255, 0.7)",
+            backdropFilter: "blur(6px)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 3
+          }}
+        >
           <CardContent>
             <Typography variant="h6" sx={{ mb: 2 }}>
               Evolución del volumen
@@ -675,7 +767,14 @@ export default function StatsScreen() {
         </Card>
 
 
-        <Card>
+        <Card
+          sx={{
+            background: "rgba(255, 255, 255, 0.7)",
+            backdropFilter: "blur(6px)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 3
+          }}
+        >
           <CardContent>
             <Typography variant="h6" sx={{ mb: 2 }}>
               Frecuencia de entrenamiento

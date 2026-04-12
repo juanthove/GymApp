@@ -12,6 +12,12 @@ export async function startWorkoutDay(id) {
   });
 }
 
+export async function cancelWorkoutDay(id) {
+  return apiRequest(`${DAY_API}/${id}/cancel`, {
+    method: "PATCH"
+  });
+}
+
 export async function completeWorkoutDay(id) {
   return apiRequest(`${DAY_API}/${id}/complete`, {
     method: "PATCH"

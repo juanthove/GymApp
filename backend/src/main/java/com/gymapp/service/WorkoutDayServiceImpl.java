@@ -181,6 +181,15 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
     }
 
     @Override
+    public WorkoutDayResponse cancelWorkoutDay(Long id) {
+        WorkoutDay day = workoutDayRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Workout day not found"));
+        day.setStartedAt(null);
+
+        return toResponse(workoutDayRepository.save(day));
+    }
+
+    @Override
     public WorkoutDayResponse completeWorkoutDay(Long id) {
         WorkoutDay day = workoutDayRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Workout day not found"));

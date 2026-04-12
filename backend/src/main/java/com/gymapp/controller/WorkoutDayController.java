@@ -87,6 +87,11 @@ public class WorkoutDayController {
         return workoutDayService.startWorkoutDay(id);
     }
 
+    @PatchMapping("/{id}/cancel")
+    public WorkoutDayResponse cancelWorkoutDay(@PathVariable Long id) {
+        return workoutDayService.cancelWorkoutDay(id);
+    }
+
     @PatchMapping("/{id}/complete")
     public WorkoutDayResponse completeWorkoutDay(@PathVariable Long id) {
         return workoutDayService.completeWorkoutDay(id);
