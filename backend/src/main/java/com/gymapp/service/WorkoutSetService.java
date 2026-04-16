@@ -6,6 +6,7 @@ import com.gymapp.dto.response.WorkoutSetVolumeResponse;
 import com.gymapp.dto.response.WorkoutSetWeeklyMuscleVolumeResponse;
 import com.gymapp.dto.response.WorkoutVolumeResponse;
 import com.gymapp.model.Granularity;
+import com.gymapp.model.MuscleType;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -20,11 +21,11 @@ public interface WorkoutSetService {
 
     List<WorkoutSetResponse> getWorkoutSetsByUserAndDateRange(Long userId, LocalDate from, LocalDate to);
 
-    WorkoutSetVolumeResponse getTotalVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to);
+    WorkoutSetVolumeResponse getTotalVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to, MuscleType muscle);
 
     List<WorkoutSetWeeklyMuscleVolumeResponse> getWeeklyMuscleVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to);
 
-    WorkoutVolumeResponse getVolumeSeriesByUserAndDateRange(Long userId, LocalDate from, LocalDate to, Granularity granularity);
+    WorkoutVolumeResponse getVolumeSeriesByUserAndDateRange(Long userId, LocalDate from, LocalDate to, Granularity granularity, MuscleType muscle);
 
     List<WorkoutSetResponse> getWorkoutSetsByWorkoutExercise(Long workoutExerciseId);
 

@@ -24,7 +24,9 @@ import java.time.LocalTime;
 import java.time.DayOfWeek;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -81,10 +83,20 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
         return sets.stream().map(this::toResponse).toList();
     }
 
+    private List<WorkoutSet> filterByMuscle(List<WorkoutSet> sets, MuscleType muscle) {
+        if (muscle == null) return sets;
+
+        return sets.stream()
+            .filter(set -> muscle.equals(resolveMuscle(set)))
+            .toList();
+    }
+
     @Override
-    public WorkoutSetVolumeResponse getTotalVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to) {
+    public WorkoutSetVolumeResponse getTotalVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to, MuscleType muscle) {
 
         List<WorkoutSet> sets = getSetsByDateFilter(userId, from, to);
+
+        sets = filterByMuscle(sets, muscle);
 
         double totalVolume = sets.stream()
             .mapToDouble(this::calculateSetVolume)
@@ -93,8 +105,33 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
         return new WorkoutSetVolumeResponse(userId, from, to, totalVolume);
     }
 
+    private Map<MuscleType, Double> getMaxBeforeRange(Long userId, LocalDate from) {
+
+        List<Object[]> rows = workoutSetRepository.findMaxWeeklyVolumeBeforeDateByMuscle(
+            userId,
+            from.atStartOfDay()
+        );
+
+        Map<MuscleType, Double> result = new HashMap<>();
+
+        for (Object[] row : rows) {
+            String muscleStr = (String) row[0];
+            Double max = row[1] != null ? ((Number) row[1]).doubleValue() : 0.0;
+
+            MuscleType muscle = MuscleType.valueOf(muscleStr);
+
+            result.put(muscle, max);
+        }
+
+        return result;
+    }
+
     @Override
-    public List<WorkoutSetWeeklyMuscleVolumeResponse> getWeeklyMuscleVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to) {
+    public List<WorkoutSetWeeklyMuscleVolumeResponse> getWeeklyMuscleVolumeByUserAndDateRange(
+        Long userId,
+        LocalDate from,
+        LocalDate to
+    ) {
 
         List<WorkoutSet> sets = getSetsByDateFilter(userId, from, to);
 
@@ -104,18 +141,43 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
                 Collectors.summingDouble(this::calculateSetVolume)
             ));
 
-        return grouped.entrySet().stream()
-            .map(entry -> new WorkoutSetWeeklyMuscleVolumeResponse(
-                entry.getKey().weekStart(),
-                entry.getKey().weekStart().plusDays(6),
-                entry.getKey().muscle(),
-                entry.getValue()
-            ))
+        List<Map.Entry<WeekMuscleKey, Double>> sorted = grouped.entrySet().stream()
             .sorted(Comparator
-                .comparing(WorkoutSetWeeklyMuscleVolumeResponse::weekStart)
-                .thenComparing(item -> item.muscle() != null ? item.muscle().ordinal() : Integer.MAX_VALUE)
+                .comparing((Map.Entry<WeekMuscleKey, Double> e) -> e.getKey().weekStart())
+                .thenComparing(e -> e.getKey().muscle() != null ? e.getKey().muscle().ordinal() : Integer.MAX_VALUE)
             )
             .toList();
+
+        // 🔥 histórico previo SOLO una vez
+        Map<MuscleType, Double> runningMax =
+            from != null
+                ? new HashMap<>(getMaxBeforeRange(userId, from))
+                : new HashMap<>();
+
+        List<WorkoutSetWeeklyMuscleVolumeResponse> result = new ArrayList<>();
+
+        for (Map.Entry<WeekMuscleKey, Double> entry : sorted) {
+
+            MuscleType muscle = entry.getKey().muscle();
+            double currentVolume = entry.getValue();
+
+            double historicalMax = runningMax.getOrDefault(muscle, 0.0);
+
+            result.add(new WorkoutSetWeeklyMuscleVolumeResponse(
+                entry.getKey().weekStart(),
+                entry.getKey().weekStart().plusDays(6),
+                muscle,
+                currentVolume,
+                historicalMax
+            ));
+
+            // 🔥 actualizo histórico (esto reemplaza llamar query por semana)
+            if (currentVolume > historicalMax) {
+                runningMax.put(muscle, currentVolume);
+            }
+        }
+
+        return result;
     }
 
     private LocalDate resolveDateByGranularity(WorkoutSet set, Granularity granularity) {
@@ -154,9 +216,11 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
 
     @Override
     public WorkoutVolumeResponse getVolumeSeriesByUserAndDateRange(Long userId, LocalDate from, LocalDate to, 
-        Granularity granularity) {
+        Granularity granularity, MuscleType muscle) {
 
         List<WorkoutSet> sets = getSetsByDateFilter(userId, from, to);
+
+        sets = filterByMuscle(sets, muscle);
 
         Granularity resolvedGranularity = resolveGranularity(sets, from, to, granularity);
 

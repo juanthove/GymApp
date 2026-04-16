@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import backgroundImg from "../assets/gymproIcon.png";
@@ -33,6 +33,8 @@ import {
   updateWorkoutSet,
   deleteWorkoutSet
 } from "../services/workoutSetService";
+
+import { checkPersonalRecord } from "../services/personalRecordService";
 
 import GymCard from "../components/GymCard";
 import BackButton from "../components/BackButton";
@@ -77,6 +79,11 @@ const [nextWeight, setNextWeight] = useState("");
 const [pendingExercise, setPendingExercise] = useState(null);
 
 const navigate = useNavigate();
+
+const [savingSets, setSavingSets] = useState({});
+const savingSetsRef = useRef({});
+const lastSaveTimeRef = useRef({});
+const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 const [confirmFinish,setConfirmFinish] = useState(false);
 const [isAbdominal,setIsAbdominal] = useState(false);
@@ -303,8 +310,16 @@ const confirmCompleteWithWeight = async () => {
 
   await toggleCompleteExercise(pendingExercise);
 
-  // 🔥 acá después podrías guardar el nextWeight en backend
-  // (para progreso futuro)
+  const weights = sets
+    .flat()
+    .map(s => Number(s.weight))
+    .filter(w => !isNaN(w) && w > 0);
+
+  if(weights.length > 0){
+    const maxWeight = Math.max(...weights);
+
+    await checkPersonalRecord(userId, pendingExercise.exerciseId, maxWeight);
+  }
 
   setWeightModalOpen(false);
   setPendingExercise(null);
@@ -394,68 +409,108 @@ const deleteSet = async (setIndex) => {
 };
 
 const saveSet = async (setIndex, showMessage = true, existingSets = null) => {
+
+  const now = Date.now();
+
+  // ⛔ evitar doble ejecución muy rápida
+  if (now - (lastSaveTimeRef.current[setIndex] || 0) < 300) {
+    return;
+  }
+
+  lastSaveTimeRef.current[setIndex] = now;
+
+  if (savingSetsRef.current[setIndex]) return;
+
   const blocks = sets[setIndex];
 
-  const existing = existingSets ?? await getWorkoutSetsByWorkoutExercise(selectedExercise.id);
+  const existing =
+    existingSets ??
+    (await getWorkoutSetsByWorkoutExercise(selectedExercise.id));
 
-  const currentIds = blocks.map(b => b.id).filter(Boolean);
+  const setNumber = setIndex + 1;
 
-  const toDelete = existing.filter(
-    s => s.setNumber === setIndex + 1 && !currentIds.includes(s.id)
+  const existingForSet = existing.filter(
+    (s) => s.setNumber === setNumber
   );
 
-  // 🔴 BORRAR LOS QUE SACASTE CON "-"
-  for (const d of toDelete) {
-    await deleteWorkoutSet(d.id);
-  }
+  const currentIds = blocks.map((b) => b.id).filter(Boolean);
 
-  const allEmpty = blocks.every(b => !b.reps && !b.weight);
-  const allFull = blocks.every(b => b.reps && b.weight);
+  const toDelete = existingForSet.filter(
+    (s) => !currentIds.includes(s.id)
+  );
 
-  if (!allEmpty && !allFull) {
-    if (showMessage) {
-      setMessage("Completá todos los bloques de la serie");
-      setMessageType("error");
+  const allEmpty = blocks.every((b) => !b.reps && !b.weight);
+  const allFull = blocks.every((b) => b.reps && b.weight);
+
+  // ❌ mezcla inválida
+  if (!allEmpty && !allFull) return;
+
+  // 🔥 detectar cambios reales
+  const hasChanges =
+    toDelete.length > 0 ||
+    blocks.some((b) => {
+      if (!b.id) return b.reps || b.weight;
+
+      const original = existingForSet.find((s) => s.id === b.id);
+      if (!original) return true;
+
+      return (
+        String(original.reps) !== String(b.reps) ||
+        String(original.weight) !== String(b.weight)
+      );
+    });
+
+  // 🚫 NO HAY CAMBIOS → SALIR SIN MOSTRAR NADA
+  if (!hasChanges) return;
+
+  // 🔥 RECIÉN ACÁ activás loading
+  savingSetsRef.current[setIndex] = true;
+  setSavingSets((prev) => ({ ...prev, [setIndex]: true }));
+
+  try {
+
+    const startTime = Date.now();
+
+    // DELETE
+    for (const d of toDelete) {
+      await deleteWorkoutSet(d.id);
     }
-    return;
-  }
 
-  // 🔴 SI TODO VACÍO → BORRAR TODO
-  if (allEmpty) {
+    // EMPTY
+    if (allEmpty) {
+      for (const b of blocks) {
+        if (b.id) await deleteWorkoutSet(b.id);
+      }
+      return;
+    }
+
+    // SAVE
     for (const b of blocks) {
-      if (b.id) await deleteWorkoutSet(b.id);
-    }
-    if (showMessage) {
-      setMessage("Serie eliminada");
-      setMessageType("info");
-    }
-    return;
-  }
+      if (b.id) {
+        await updateWorkoutSet(b.id, {
+          reps: b.reps,
+          weight: b.weight,
+          setNumber,
+          workoutExerciseId: selectedExercise.id
+        });
+      } else {
+        const created = await createWorkoutSet({
+          reps: b.reps,
+          weight: b.weight,
+          setNumber,
+          workoutExerciseId: selectedExercise.id
+        });
 
-  // 🟢 GUARDAR / UPDATE
-  for (const b of blocks) {
-    if (b.id) {
-      await updateWorkoutSet(b.id, {
-        reps: b.reps,
-        weight: b.weight,
-        setNumber: setIndex + 1,
-        workoutExerciseId: selectedExercise.id
-      });
-    } else {
-      await createWorkoutSet({
-        reps: b.reps,
-        weight: b.weight,
-        setNumber: setIndex + 1,
-        workoutExerciseId: selectedExercise.id
-      });
+        b.id = created.id;
+      }
     }
-  }
 
-  await loadSets();
+    const elapsed = Date.now() - startTime;
+    if (elapsed < 600) await delay(600 - elapsed);
 
-  if (showMessage) {
-    setMessage(`Serie ${setIndex + 1} guardada`);
-    setMessageType("success");
+  } finally {
+    savingSetsRef.current[setIndex] = false;
+    setSavingSets((prev) => ({ ...prev, [setIndex]: false }));
   }
 };
 
@@ -481,6 +536,20 @@ const areSetsValid = () => {
   if (hasAnyData && hasAnyEmpty) return false;
 
   return true;
+};
+
+const handleAutoSave = (setIndex) => {
+  saveSet(setIndex, false);
+};
+
+const handleCloseExerciseModal = async () => {
+  // 🔥 guardar todas las series válidas
+  for (let i = 0; i < sets.length; i++) {
+    if (savingSetsRef.current[i]) continue;
+    await saveSet(i, false);
+  }
+
+  setSelectedExercise(null);
 };
 
 
@@ -744,7 +813,7 @@ displayedExercises.map((ex) => (
 
 <AnimatedDialog
   open={!!selectedExercise}
-  onClose={() => setSelectedExercise(null)}
+  onClose={handleCloseExerciseModal}
   title={selectedExercise?.exercise?.name || selectedExercise?.exerciseName}
   maxWidth={false}
   titleSize="2rem"
@@ -842,6 +911,16 @@ displayedExercises.map((ex) => (
             Serie {setIndex + 1}
           </Typography>
 
+          <Typography
+            sx={{
+              fontSize: "1.4rem",
+              color: "text.secondary",
+              mt: 0.5
+            }}
+          >
+            {savingSets[setIndex] ? "Guardando..." : ""}
+          </Typography>
+
           <Stack spacing={1} mt={1}>
             {set.map((block, blockIndex) => (
               <Stack
@@ -858,6 +937,7 @@ displayedExercises.map((ex) => (
                   onChange={(e) =>
                     handleChange(setIndex, blockIndex, "reps", e.target.value)
                   }
+                  onBlur={() => handleAutoSave(setIndex)}
                   sx={{ width: 100, 
                     // input
                     "& .MuiInputBase-input": {
@@ -890,6 +970,7 @@ displayedExercises.map((ex) => (
                   onChange={(e) =>
                     handleChange(setIndex, blockIndex, "weight", e.target.value)
                   }
+                  onBlur={() => handleAutoSave(setIndex)}
                   sx={{ width: 100,
                     // input
                     "& .MuiInputBase-input": {
@@ -944,28 +1025,16 @@ displayedExercises.map((ex) => (
               </Stack>
             ))}
 
-            <Stack direction="row" spacing={1}>
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={() => saveSet(setIndex)}
-                disabled={allEmpty || isInvalid || selectedExercise?.completed}
-                sx={{fontSize: "1.2rem", py: 1.2}}
-              >
-                Guardar serie {setIndex + 1}
-              </Button>
-
-              <Button
-                fullWidth
-                variant="outlined"
-                color="error"
-                onClick={() => deleteSet(setIndex)}
-                disabled={!hasData || selectedExercise?.completed}
-                sx={{fontSize: "1.2rem", py: 1.2}}
-              >
-                Eliminar
-              </Button>
-            </Stack>
+            <Button
+              fullWidth
+              variant="outlined"
+              color="error"
+              onClick={() => deleteSet(setIndex)}
+              disabled={!hasData || selectedExercise?.completed}
+              sx={{fontSize: "1.2rem", py: 1.2}}
+            >
+              Eliminar
+            </Button>
           </Stack>
         </Box>
       );
@@ -1267,6 +1336,28 @@ displayedExercises.map((ex) => (
       onChange={(e) => setNextWeight(e.target.value)}
       placeholder={`${pendingExercise?.weight ?? 0}`}
       type="number"
+      sx={{
+        // input
+        "& .MuiInputBase-input": {
+          fontSize: "1.5rem",
+          paddingTop: "12px",
+          paddingBottom: "4px"
+        },
+
+        // label normal
+        "& .MuiInputLabel-root": {
+          fontSize: "1.5rem"
+        },
+
+        // 🔥 label cuando sube (con valor)
+        "& .MuiInputLabel-root.MuiInputLabel-shrink": {
+          fontSize: "1.6rem"
+        },
+
+        "& .MuiInputBase-root": {
+          height: 65
+        }
+      }}
     />
   </DialogContent>
 

@@ -47,7 +47,7 @@ export default function MuscleChips({ muscles = [], size = "small", chipSx = {} 
   if (!muscles.length) return null;
 
   return (
-    <Stack direction="row" spacing={1} flexWrap="wrap">
+    <Stack direction="row" spacing={1} flexWrap="wrap" rowGap={1}>
       {muscles.map((m) => {
         const base = colorMap[m] || "#999";
         const light = lightenColor(base, 0.4);

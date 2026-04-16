@@ -8,5 +8,6 @@ public record WorkoutSetWeeklyMuscleVolumeResponse(
         LocalDate weekStart,
         LocalDate weekEnd,
         MuscleType muscle,
-        Double volume
+        Double volume,
+        Double historicalMaxBefore
 ) {}

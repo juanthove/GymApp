@@ -1,5 +1,6 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
+import { useCountUp } from "react-countup";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -92,6 +93,46 @@ export default function StatsScreen() {
   const [frequencyGranularity, setFrequencyGranularity] = useState(null);
   const [error, setError] = useState("");
 
+  const countUpRef = useRef(null);
+  const prevValueRef = useRef(0);
+
+  const computedTotalVolume = useMemo(() => {
+    if (selectedMuscle === "ALL") return totalVolume;
+
+    return weeklyByMuscle
+      .filter(item => item.muscle === selectedMuscle)
+      .reduce((acc, item) => acc + Number(item.volume || 0), 0);
+
+  }, [selectedMuscle, weeklyByMuscle, totalVolume]);
+
+  const { update } = useCountUp({
+    ref: countUpRef,
+    start: prevValueRef.current,
+    end: computedTotalVolume,
+    duration: 0.5,
+    separator: ".",
+    startOnMount: false,
+    useEasing: false, // 🔥 clave
+  });
+
+  useEffect(() => {
+    const diff = Math.abs(prevValueRef.current - computedTotalVolume);
+
+    if (diff < 50) {
+      // 🔥 sin animación
+      prevValueRef.current = computedTotalVolume;
+      update(computedTotalVolume);
+      return;
+    }
+
+    update(computedTotalVolume);
+    prevValueRef.current = computedTotalVolume;
+
+  }, [computedTotalVolume, update]);
+
+  
+
+
   const enhancedRows = useMemo(() => {
     const byWeekAndMuscle = new Map(
       weeklyByMuscle.map((item) => [`${item.weekStart}|${item.muscle || "SIN_MUSCULO"}`, Number(item.volume || 0)])
@@ -99,17 +140,22 @@ export default function StatsScreen() {
 
     const rows = weeklyByMuscle.map((item) => {
       const muscle = item.muscle || "SIN_MUSCULO";
-      const previousWeekStart = shiftDateIso(item.weekStart, -7);
-      const previousVolume = byWeekAndMuscle.get(`${previousWeekStart}|${muscle}`) || 0;
+
       const currentVolume = Number(item.volume || 0);
-      const delta = currentVolume - previousVolume;
-      const percent = previousVolume > 0 ? (delta / previousVolume) * 100 : null;
+      const historicalMax = Number(item.historicalMax || 0);
+
+      const delta = currentVolume - historicalMax;
+
+      const percent =
+        historicalMax > 0
+          ? (delta / historicalMax) * 100
+          : null;
 
       return {
         ...item,
         muscle,
-        previousVolume,
         currentVolume,
+        historicalMax,
         delta,
         percent,
       };
@@ -183,7 +229,7 @@ export default function StatsScreen() {
 
     try {
       const [totalRes, weeklyRes] = await Promise.all([
-        getTotalWorkoutVolumeByUserAndDateRange(userId, from, to),
+        getTotalWorkoutVolumeByUserAndDateRange(userId, from, to, selectedMuscle === "ALL" ? null : selectedMuscle),
         getWeeklyMuscleVolumeByUserAndDateRange(userId, from, to),
       ]);
 
@@ -196,7 +242,7 @@ export default function StatsScreen() {
 
   useEffect(() => {
     loadStats();
-  }, [from, to]);
+  }, [from, to, selectedMuscle]);
 
   useEffect(() => {
     if (!muscleOptions.includes(selectedMuscle)) {
@@ -223,7 +269,8 @@ export default function StatsScreen() {
         userId,
         from,
         to,
-        granularity // podés mandar null también
+        granularity, // podés mandar null también
+        selectedMuscle === "ALL" ? null : selectedMuscle
       );
 
       // 🔥 IMPORTANTE
@@ -294,6 +341,9 @@ export default function StatsScreen() {
 
   useEffect(() => {
     loadChartData();
+  }, [from, to, selectedMuscle]);
+
+  useEffect(() => {
     loadFrequency();
   }, [from, to]);
 
@@ -508,7 +558,7 @@ export default function StatsScreen() {
                   `
                 }}
               >
-                {formatVolume(totalVolume)} kg
+                <span ref={countUpRef} /> kg
               </Typography>
 
               <Box
@@ -637,16 +687,17 @@ export default function StatsScreen() {
                               </Typography>
 
                               {/* ➕ delta */}
-                              <Typography
-                                sx={{
-                                  fontWeight: 700,
-                                  fontSize: "1.3rem",
-                                  color: row.delta >= 0 ? "success.main" : "error.main"
-                                }}
-                              >
-                                {row.delta >= 0 ? "+" : ""}
-                                {formatVolume(row.delta)}
-                              </Typography>
+                              {row.delta > 0 && (
+                                <Typography
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize: "1.3rem",
+                                    color: "success.main"
+                                  }}
+                                >
+                                  +{formatVolume(row.delta)}
+                                </Typography>
+                              )}
                             </Box>
 
                             {/* 📈 barra */}
@@ -665,17 +716,12 @@ export default function StatsScreen() {
                               sx={{
                                 fontSize: "1rem",
                                 textAlign: "right",
-                                color:
-                                  row.percent == null
-                                    ? "text.secondary"
-                                    : row.percent >= 0
-                                    ? "success.main"
-                                    : "error.main"
+                                color: row.percent > 0 ? "success.main" : "text.secondary"
                               }}
                             >
-                              {row.percent == null
-                                ? "-"
-                                : `${row.percent >= 0 ? "+" : ""}${formatVolume(row.percent)}%`}
+                              {row.percent > 0
+                                ? `+${formatVolume(row.percent)}%`
+                                : ""}
                             </Typography>
 
                           </Box>

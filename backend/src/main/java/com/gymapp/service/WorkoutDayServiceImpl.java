@@ -349,7 +349,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
         // 📊 Volumen total
         var totalResponse = workoutSetService
-            .getTotalVolumeByUserAndDateRange(userId, date, date);
+            .getTotalVolumeByUserAndDateRange(userId, date, date, null);
 
         Double totalVolume = totalResponse.totalVolume();
 

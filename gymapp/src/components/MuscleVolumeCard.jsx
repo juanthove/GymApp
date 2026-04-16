@@ -67,6 +67,22 @@ const colorMap = {
   ABDOMINALS: "#ec407a"
 };
 
+const strokeMap = {
+  CHEST: 900,
+  BACK: 1200,
+  SHOULDERS: 900,
+  BICEPS: 4800,
+  TRICEPS: 4200,
+  FOREARMS: 1600,
+  QUADRICEPS: 2100,
+  GLUTES: 2000,
+  HAMSTRINGS: 2100,
+  ADDUCTORS: 2500,
+  ABDUCTORS: 2000,
+  CALVES: 1800,
+  ABDOMINALS: 1100
+};
+
 // 💥 animación pop
 const pop = keyframes`
   0% { transform: scale(1); }
@@ -190,6 +206,7 @@ export default function MuscleVolumeCard({ muscle, volume }) {
         <>
           <style>
             {`
+              /* 🎨 COLOR */
               .muscle-icon .muscle-main {
                 fill: color-mix(in srgb, currentColor 65%, black);
               }
@@ -197,8 +214,46 @@ export default function MuscleVolumeCard({ muscle, volume }) {
               .muscle-icon .muscle-secondary {
                 fill: currentColor;
               }
+
+              /* ✏️ DIBUJO */
+              .muscle-icon #draw-layer path {
+                fill: none;
+                stroke: currentColor;
+                stroke-width: 2;
+
+                stroke-dasharray: var(--stroke-length);
+                stroke-dashoffset: var(--stroke-length);
+
+                animation: draw 1s ease forwards, hideStroke 0.3s ease forwards;
+                animation-delay: 0s, 1s; /* 👈 primero dibuja, después desaparece */
+              }
+
+              @keyframes draw {
+                to {
+                  stroke-dashoffset: 0;
+                }
+              }
+
+              @keyframes hideStroke {
+                to {
+                  opacity: 0;
+                }
+              }
+
+              /* 🎨 COLOR APARECE */
+              .muscle-icon #fill-layer {
+                opacity: 0;
+                animation: fadeIn 0.4s ease forwards;
+                animation-delay: 0.7s; /* 👈 aparece antes de que desaparezca el stroke */
+              }
+
+              @keyframes fadeIn {
+                to {
+                  opacity: 1;
+                }
+              }
             `}
-          </style>
+            </style>
 
           <Icon
             className="muscle-icon"
@@ -206,6 +261,7 @@ export default function MuscleVolumeCard({ muscle, volume }) {
               width: 130,
               height: 130,
               color: baseColor,
+              "--stroke-length": strokeMap[muscle] || 1000,
               filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.25))",
             }}
           />

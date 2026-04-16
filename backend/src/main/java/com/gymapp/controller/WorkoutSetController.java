@@ -6,6 +6,7 @@ import com.gymapp.dto.response.WorkoutSetVolumeResponse;
 import com.gymapp.dto.response.WorkoutSetWeeklyMuscleVolumeResponse;
 import com.gymapp.dto.response.WorkoutVolumeResponse;
 import com.gymapp.model.Granularity;
+import com.gymapp.model.MuscleType;
 import com.gymapp.service.WorkoutSetService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,8 +50,9 @@ public class WorkoutSetController {
     public WorkoutSetVolumeResponse getTotalVolumeByUserAndDateRange(
             @PathVariable Long userId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        return workoutSetService.getTotalVolumeByUserAndDateRange(userId, from, to);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) MuscleType muscle) {
+        return workoutSetService.getTotalVolumeByUserAndDateRange(userId, from, to, muscle);
     }
 
     @GetMapping("/user/{userId}/volume/weekly-by-muscle")
@@ -66,9 +68,10 @@ public class WorkoutSetController {
             @PathVariable Long userId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @RequestParam(required = false) Granularity granularity
+            @RequestParam(required = false) Granularity granularity,
+            @RequestParam(required = false) MuscleType muscle
     ) {
-        return workoutSetService.getVolumeSeriesByUserAndDateRange(userId, from, to, granularity);
+        return workoutSetService.getVolumeSeriesByUserAndDateRange(userId, from, to, granularity, muscle);
     }
 
     @GetMapping("/workout-exercise/{workoutExerciseId}")
