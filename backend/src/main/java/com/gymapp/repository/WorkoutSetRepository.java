@@ -33,24 +33,59 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
     );
 
     @Query(value = """
-        SELECT 
-            e.muscle,
-            MAX(weekly_volume) AS max_volume
-        FROM (
+        WITH weekly AS (
             SELECT 
                 e.muscle,
-                DATE_TRUNC('week', ws.performed_at) AS week,
+                DATE_TRUNC('week', ws.performed_at) AS week_start,
                 SUM(ws.weight * ws.reps) AS weekly_volume
             FROM workout_set ws
-            JOIN exercise e ON ws.exercise_id = e.id
+            JOIN workout_exercise we ON ws.workout_exercise_id = we.id
+            JOIN exercise e ON we.exercise_id = e.id
             WHERE ws.user_id = :userId
-                AND ws.performed_at < :from
-            GROUP BY e.muscle, week
-        ) sub
-        GROUP BY muscle
+            GROUP BY e.muscle, week_start
+        ),
+        with_running_max AS (
+            SELECT
+                muscle,
+                week_start,
+                weekly_volume,
+                MAX(weekly_volume) OVER (
+                    PARTITION BY muscle
+                    ORDER BY week_start
+                    ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+                ) AS historical_max
+            FROM weekly
+        )
+        SELECT 
+            muscle,
+            week_start,
+            weekly_volume,
+            historical_max
+        FROM with_running_max
+        WHERE week_start >= COALESCE(CAST(:from AS timestamp), week_start)
+        AND week_start <= COALESCE(CAST(:to AS timestamp), week_start)
+        ORDER BY 
+            week_start,
+            CASE muscle
+                WHEN 'CHEST' THEN 0
+                WHEN 'BACK' THEN 1
+                WHEN 'SHOULDERS' THEN 2
+                WHEN 'BICEPS' THEN 3
+                WHEN 'TRICEPS' THEN 4
+                WHEN 'FOREARMS' THEN 5
+                WHEN 'QUADRICEPS' THEN 6
+                WHEN 'GLUTES' THEN 7
+                WHEN 'HAMSTRINGS' THEN 8
+                WHEN 'ADDUCTORS' THEN 9
+                WHEN 'ABDUCTORS' THEN 10
+                WHEN 'CALVES' THEN 11
+                WHEN 'ABDOMINALS' THEN 12
+                ELSE 999
+            END
     """, nativeQuery = true)
-    List<Object[]> findMaxWeeklyVolumeBeforeDateByMuscle(
+    List<Object[]> findWeeklyVolumeWithHistoricalMax(
         @Param("userId") Long userId,
-        @Param("from") LocalDateTime from
+        @Param("from") LocalDateTime from,
+        @Param("to") LocalDateTime to
     );
 }

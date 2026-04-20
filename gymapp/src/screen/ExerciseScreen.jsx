@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import backgroundImg from "../assets/gymproIcon.png";
+import { muscleLabels } from "../config/muscleConfig"
 
 import {
   getWorkoutExercises,
@@ -80,6 +81,9 @@ const [pendingExercise, setPendingExercise] = useState(null);
 
 const navigate = useNavigate();
 
+const [alertExercises, setAlertExercises] = useState([]);
+const [alertModalOpen, setAlertModalOpen] = useState(false);
+
 const [savingSets, setSavingSets] = useState({});
 const savingSetsRef = useRef({});
 const lastSaveTimeRef = useRef({});
@@ -113,22 +117,6 @@ const emptySets = [
   [{ reps: "", weight: "", id: null }],
   [{ reps: "", weight: "", id: null }]
 ];
-
-const muscleLabels = {
-  CHEST: "Pecho",
-  BACK: "Espalda",
-  SHOULDERS: "Hombros",
-  BICEPS: "Bíceps",
-  TRICEPS: "Tríceps",
-  FOREARMS: "Antebrazos",
-  QUADRICEPS: "Cuádriceps",
-  GLUTES: "Glúteos",
-  HAMSTRINGS: "Femorales",
-  ADDUCTORS: "Aductores",
-  ABDUCTORS: "Abductores",
-  CALVES: "Gemelos",
-  ABDOMINALS: "Abdominales"
-};
 
 useEffect(()=>{
  loadData();
@@ -178,6 +166,19 @@ const loadData = async () => {
 
   setAllExercises(exercises);
 
+  //Ver ejercicios con alertas
+  const overdueExercises = exercises.filter(
+    ex => ex.alert && ex.alert.overdue && !ex.selected
+  );
+
+  setAlertExercises(overdueExercises);
+
+  //Abrir modal solo si hay
+  if (overdueExercises.length > 0) {
+    setAlertModalOpen(true);
+  }
+
+
   const selectedIds = workoutDayData.selectedExerciseIds ?? [];
 
   //REAR MAPA (PRO)
@@ -192,6 +193,10 @@ const loadData = async () => {
 
 };
 
+const formatDate = (date) => {
+  const [year, month, day] = date.split("-");
+  return `${day}/${month}/${year}`;
+};
 
 const formatExerciseType = (type) => {
   const map = {
@@ -1372,6 +1377,72 @@ displayedExercises.map((ex) => (
   </DialogActions>
 </Dialog>
 
+
+{/*MODAL ALERTAS*/}
+<Dialog
+  open={alertModalOpen}
+  onClose={() => setAlertModalOpen(false)}
+  fullWidth
+  maxWidth="md"
+  PaperProps={{
+    sx: {
+      width: "90%",
+      maxWidth: "900px"
+    }
+  }}
+>
+  <DialogTitle sx={{ fontWeight: 700, textAlign: "center" }}>
+    ⚠️ Hace tiempo que no hacés estos ejercicios
+  </DialogTitle>
+
+  <DialogContent>
+    <Typography
+      sx={{
+        textAlign: "center",
+        mb: 2,
+        fontSize: "1.5rem"
+      }}
+    >
+      Intentalos incluir hoy 💪
+    </Typography>
+
+    <Stack spacing={2}>
+      {alertExercises.map((ex) => (
+        <Box
+          key={ex.id}
+          sx={{
+            p: 2,
+            borderRadius: 2,
+            border: "1px solid #ddd"
+          }}
+        >
+          <Typography fontWeight={700} fontSize="1.7rem">
+            {ex.exerciseName}
+          </Typography>
+
+          <Typography fontSize="1.5rem" color="text.secondary">
+            Última vez: {formatDate(ex.alert.lastPerformedDate)}
+          </Typography>
+
+          <Typography fontSize="1.45rem" color="error">
+            Hace {ex.alert.weeksSinceLastPerformed}{" "}
+            {ex.alert.weeksSinceLastPerformed === 1 ? "semana" : "semanas"} que no lo hacés
+          </Typography>
+        </Box>
+      ))}
+    </Stack>
+  </DialogContent>
+
+  <DialogActions>
+    <Button
+      onClick={() => setAlertModalOpen(false)}
+      fullWidth
+      variant="contained"
+    >
+      Entendido
+    </Button>
+  </DialogActions>
+</Dialog>
 
 </Container>
 

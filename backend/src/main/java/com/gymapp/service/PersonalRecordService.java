@@ -13,6 +13,8 @@ public interface PersonalRecordService {
 
     PersonalRecordResponse createPersonalRecord(PersonalRecordRequest request);
 
+    List<PersonalRecordResponse> getPersonalRecordsByUser(Long userId);
+
     PersonalRecordResponse updatePersonalRecord(Long id, PersonalRecordRequest request);
 
     void deletePersonalRecord(Long id);

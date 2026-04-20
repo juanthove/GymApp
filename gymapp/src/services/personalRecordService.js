@@ -4,6 +4,10 @@ export async function getPersonalRecords() {
   return apiRequest("/api/personal-records");
 }
 
+export async function getPersonalRecordsByUser(userId) {
+  return apiRequest(`/api/personal-records/user/${userId}`);
+}
+
 export async function getPersonalRecordById(id) {
   return apiRequest(`/api/personal-records/${id}`);
 }

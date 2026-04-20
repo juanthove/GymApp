@@ -21,6 +21,11 @@ public class PersonalRecordController {
         return personalRecordService.getAllPersonalRecords();
     }
 
+    @GetMapping("/user/{userId}")
+    public List<PersonalRecordResponse> getPersonalRecordsByUser(@PathVariable Long userId) {
+        return personalRecordService.getPersonalRecordsByUser(userId);
+    }
+
     @GetMapping("/{id}")
     public PersonalRecordResponse getPersonalRecordById(@PathVariable Long id) {
         return personalRecordService.getPersonalRecordById(id);

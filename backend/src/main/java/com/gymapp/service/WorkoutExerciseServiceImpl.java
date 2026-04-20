@@ -123,7 +123,7 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
         ExerciseType type = exercise.getExercise() != null ? exercise.getExercise().getType() : null;
         return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName, exerciseMuscle, type,
                 exercise.getExerciseOrder(), exercise.getWeight(), description, exercise.getComment(), exercise.getCompleted(), 
-                exercise.getNextWeight(), image, video, icon, selected);
+                exercise.getNextWeight(), image, video, icon, selected, null);
     }
 
     @Override

@@ -3,6 +3,9 @@ import { keyframes } from "@mui/system";
 import { useEffect, useRef, useState } from "react";
 import { useCountUp } from "react-countup";
 
+import { muscleLabels, muscleColors} from "../config/muscleConfig"
+import { lightenColor, darkenColor} from "../utils/colorUtils"
+
 import ChestIcon from "../assets/muscles/chest.svg?react";
 import BackIcon from "../assets/muscles/back.svg?react";
 import ShouldersIcon from "../assets/muscles/shoulders.svg?react";
@@ -33,40 +36,6 @@ const muscleIcons = {
   ABDOMINALS: AbsIcon
 };
 
-// 🎨 labels
-const muscleLabels = {
-  CHEST: "Pecho",
-  BACK: "Espalda",
-  SHOULDERS: "Hombros",
-  BICEPS: "Bíceps",
-  TRICEPS: "Tríceps",
-  FOREARMS: "Antebrazos",
-  QUADRICEPS: "Cuádriceps",
-  GLUTES: "Glúteos",
-  HAMSTRINGS: "Femorales",
-  ADDUCTORS: "Aductores",
-  ABDUCTORS: "Abductores",
-  CALVES: "Gemelos",
-  ABDOMINALS: "Abdominales"
-};
-
-// 🎨 colores base
-const colorMap = {
-  CHEST: "#ef5350",
-  BACK: "#42a5f5",
-  SHOULDERS: "#ffb74d",
-  BICEPS: "#66bb6a",
-  TRICEPS: "#26a69a",
-  FOREARMS: "#8d6e63",
-  QUADRICEPS: "#7e57c2",
-  GLUTES: "#ab47bc",
-  HAMSTRINGS: "#5c6bc0",
-  ADDUCTORS: "#8bc34a", 
-  ABDUCTORS: "#4db6ac",
-  CALVES: "#29b6f6",
-  ABDOMINALS: "#ec407a"
-};
-
 const strokeMap = {
   CHEST: 900,
   BACK: 1200,
@@ -91,32 +60,11 @@ const pop = keyframes`
   100% { transform: scale(1); }
 `;
 
-// 🎨 helper para aclarar color
-const lightenColor = (hex, amount = 0.85) => {
-  const num = parseInt(hex.replace("#", ""), 16);
-
-  let r = (num >> 16) + (255 - (num >> 16)) * amount;
-  let g = ((num >> 8) & 0x00ff) + (255 - ((num >> 8) & 0x00ff)) * amount;
-  let b = (num & 0x0000ff) + (255 - (num & 0x0000ff)) * amount;
-
-  return `rgb(${r}, ${g}, ${b})`;
-};
-
-const darkenColor = (hex, amount = 0.25) => {
-  const num = parseInt(hex.replace("#", ""), 16);
-
-  let r = (num >> 16) * (1 - amount);
-  let g = ((num >> 8) & 0x00ff) * (1 - amount);
-  let b = (num & 0x0000ff) * (1 - amount);
-
-  return `rgb(${r}, ${g}, ${b})`;
-};
-
 export default function MuscleVolumeCard({ muscle, volume }) {
   const [animate, setAnimate] = useState(false);
   const countUpRef = useRef(null);
 
-  const baseColor = colorMap[muscle] || "#999";
+  const baseColor = muscleColors[muscle] || "#999";
   const bgColor = lightenColor(baseColor, 0.6);
   const bgColorSoft = lightenColor(baseColor, 0.7);
   const textColor = darkenColor(baseColor, 0.15);

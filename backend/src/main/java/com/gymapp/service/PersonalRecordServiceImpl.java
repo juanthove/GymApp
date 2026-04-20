@@ -33,6 +33,11 @@ public class PersonalRecordServiceImpl implements PersonalRecordService {
     }
 
     @Override
+    public List<PersonalRecordResponse> getPersonalRecordsByUser(Long userId) {
+        return personalRecordRepository.findPRsWithExercise(userId);
+    }
+
+    @Override
     public PersonalRecordResponse getPersonalRecordById(Long id) {
         return toResponse(personalRecordRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("PersonalRecord no encontrado")));
@@ -104,13 +109,18 @@ public class PersonalRecordServiceImpl implements PersonalRecordService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ejercicio no encontrado"));
     }
 
-    private PersonalRecordResponse toResponse(PersonalRecord personalRecord) {
+    private PersonalRecordResponse toResponse(PersonalRecord pr) {
         return new PersonalRecordResponse(
-                personalRecord.getId(),
-                personalRecord.getUser() != null ? personalRecord.getUser().getId() : null,
-                personalRecord.getExercise() != null ? personalRecord.getExercise().getId() : null,
-                personalRecord.getWeight(),
-                personalRecord.getDate()
+            pr.getId(),
+            pr.getUser() != null ? pr.getUser().getId() : null,
+            pr.getExercise() != null ? pr.getExercise().getId() : null,
+            pr.getWeight(),
+            pr.getDate(),
+
+            // 🔥 nuevos campos
+            pr.getExercise() != null ? pr.getExercise().getName() : null,
+            pr.getExercise() != null ? pr.getExercise().getMuscle() : null,
+            pr.getExercise() != null ? pr.getExercise().getIcon() : null
         );
     }
 }

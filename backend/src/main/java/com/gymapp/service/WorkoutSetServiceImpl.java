@@ -21,16 +21,13 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.DayOfWeek;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.stream.Collectors;
-
+import java.sql.Timestamp;
 @Service
 public class WorkoutSetServiceImpl implements WorkoutSetService {
 
@@ -105,26 +102,6 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
         return new WorkoutSetVolumeResponse(userId, from, to, totalVolume);
     }
 
-    private Map<MuscleType, Double> getMaxBeforeRange(Long userId, LocalDate from) {
-
-        List<Object[]> rows = workoutSetRepository.findMaxWeeklyVolumeBeforeDateByMuscle(
-            userId,
-            from.atStartOfDay()
-        );
-
-        Map<MuscleType, Double> result = new HashMap<>();
-
-        for (Object[] row : rows) {
-            String muscleStr = (String) row[0];
-            Double max = row[1] != null ? ((Number) row[1]).doubleValue() : 0.0;
-
-            MuscleType muscle = MuscleType.valueOf(muscleStr);
-
-            result.put(muscle, max);
-        }
-
-        return result;
-    }
 
     @Override
     public List<WorkoutSetWeeklyMuscleVolumeResponse> getWeeklyMuscleVolumeByUserAndDateRange(
@@ -133,50 +110,42 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
         LocalDate to
     ) {
 
-        List<WorkoutSet> sets = getSetsByDateFilter(userId, from, to);
-
-        Map<WeekMuscleKey, Double> grouped = sets.stream()
-            .collect(Collectors.groupingBy(
-                set -> new WeekMuscleKey(resolveWeekStart(set), resolveMuscle(set)),
-                Collectors.summingDouble(this::calculateSetVolume)
-            ));
-
-        List<Map.Entry<WeekMuscleKey, Double>> sorted = grouped.entrySet().stream()
-            .sorted(Comparator
-                .comparing((Map.Entry<WeekMuscleKey, Double> e) -> e.getKey().weekStart())
-                .thenComparing(e -> e.getKey().muscle() != null ? e.getKey().muscle().ordinal() : Integer.MAX_VALUE)
-            )
-            .toList();
-
-        // 🔥 histórico previo SOLO una vez
-        Map<MuscleType, Double> runningMax =
-            from != null
-                ? new HashMap<>(getMaxBeforeRange(userId, from))
-                : new HashMap<>();
+        List<Object[]> rows = workoutSetRepository.findWeeklyVolumeWithHistoricalMax(
+            userId,
+            from != null ? from.atStartOfDay() : null,
+            to != null ? to.atStartOfDay() : null
+        );
 
         List<WorkoutSetWeeklyMuscleVolumeResponse> result = new ArrayList<>();
 
-        for (Map.Entry<WeekMuscleKey, Double> entry : sorted) {
+        for (Object[] row : rows) {
+            String muscleStr = (String) row[0];
+            LocalDateTime weekStart = ((Timestamp) row[1]).toLocalDateTime();
+            Double weeklyVolume = row[2] != null ? ((Number) row[2]).doubleValue() : 0.0;
+            Double historicalMax = row[3] != null ? ((Number) row[3]).doubleValue() : 0.0;
 
-            MuscleType muscle = entry.getKey().muscle();
-            double currentVolume = entry.getValue();
-
-            double historicalMax = runningMax.getOrDefault(muscle, 0.0);
+            MuscleType muscle = MuscleType.valueOf(muscleStr);
 
             result.add(new WorkoutSetWeeklyMuscleVolumeResponse(
-                entry.getKey().weekStart(),
-                entry.getKey().weekStart().plusDays(6),
+                weekStart.toLocalDate(),
+                weekStart.toLocalDate().plusDays(6),
                 muscle,
-                currentVolume,
+                weeklyVolume,
                 historicalMax
             ));
-
-            // 🔥 actualizo histórico (esto reemplaza llamar query por semana)
-            if (currentVolume > historicalMax) {
-                runningMax.put(muscle, currentVolume);
-            }
         }
 
+        result.sort((a, b) -> {
+            // 🔹 1. comparar por semana (desc)
+            int cmpWeek = b.weekStart().compareTo(a.weekStart());
+            if (cmpWeek != 0) return cmpWeek;
+
+            // 🔹 2. comparar por orden del enum
+            return Integer.compare(
+                a.muscle().ordinal(),
+                b.muscle().ordinal()
+            );
+        });
         return result;
     }
 
@@ -322,11 +291,6 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
         return reps * weight;
     }
 
-    private LocalDate resolveWeekStart(WorkoutSet set) {
-        LocalDate date = (set.getPerformedAt() != null ? set.getPerformedAt() : LocalDateTime.now()).toLocalDate();
-        return date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-    }
-
     private MuscleType resolveMuscle(WorkoutSet set) {
         if (set.getExercise() == null || set.getExercise().getExercise() == null) {
             return null;
@@ -334,5 +298,4 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
         return set.getExercise().getExercise().getMuscle();
     }
 
-    private record WeekMuscleKey(LocalDate weekStart, MuscleType muscle) {}
 }

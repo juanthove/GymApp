@@ -19,6 +19,7 @@ public record WorkoutExerciseResponse(
         String image,
         String video,
         String icon,
-        boolean selected
+        boolean selected,
+        ExerciseAlertResponse alert
 
 ) {}
