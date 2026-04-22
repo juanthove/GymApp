@@ -27,10 +27,19 @@ import {
   Typography,
   ToggleButton,
   ToggleButtonGroup,
-  Divider
+  Divider,
+  Skeleton
 } from "@mui/material";
 
 import { keyframes } from "@mui/system";
+
+import dayjs from "dayjs";
+import { DateCalendar, PickerDay } from "@mui/x-date-pickers";
+
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+
+
 
 import {
   LineChart,
@@ -85,6 +94,9 @@ function shiftDateIso(dateIso, days) {
 
 export default function StatsScreen() {
   const { userId } = useParams();
+  const [loadingVolume, setLoadingVolume] = useState(false);
+  const [loadingPR, setLoadingPR] = useState(false);
+  const [loadingFrequency, setLoadingFrequency] = useState(false);
 
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -96,7 +108,10 @@ export default function StatsScreen() {
   const [frequencyData, setFrequencyData] = useState([]);
   const [volumeGranularity, setVolumeGranularity] = useState(null);
   const [frequencyGranularity, setFrequencyGranularity] = useState(null);
-  const [frequencyMode, setFrequencyMode] = useState("AUTO");
+  const [frequencyMode, setFrequencyMode] = useState("WEEK");
+  const [shouldAnimate, setShouldAnimate] = useState(true);
+  const [calendarData, setCalendarData] = useState([]);
+  const [calendarMonth, setCalendarMonth] = useState(dayjs());
 
   const [prs, setPrs] = useState([]);
 
@@ -253,6 +268,7 @@ export default function StatsScreen() {
 
   const loadChartData = async () => {
     try {
+      setLoadingVolume(true);
       const granularity = getGranularity(from, to);
       
       const res = await getVolumeByUserAndDateRange(
@@ -275,31 +291,26 @@ export default function StatsScreen() {
 
     } catch (e) {
       console.error("Error cargando gráfica", e);
+    } finally {
+      setLoadingVolume(false);
     }
   };
 
   const loadFrequency = async () => {
     try {
-      let granularity = null;
-
-      if (frequencyMode === "WEEK") granularity = "WEEK";
-      if (frequencyMode === "MONTH") granularity = "MONTH";
-
-      if (frequencyMode === "AUTO") {
-        granularity = getGranularity(from, to);
-      }
-
+      setLoadingFrequency(true);
       const res = await getWorkoutFrequency(
         userId,
         from,
         to,
-        granularity
+        frequencyMode // 👈 directo
       );
 
       setFrequencyGranularity(res.granularity);
 
       const formatted = (res.data || []).map((item) => ({
-        date: item.date,
+        date: dayjs(item.date).valueOf(), // 🔥 clave
+        originalDate: item.date,          // guardás el string original
         count: item.count,
       }));
 
@@ -307,26 +318,27 @@ export default function StatsScreen() {
 
     } catch (e) {
       console.error("Error frecuencia", e);
+    } finally {
+      setLoadingFrequency(false);
     }
   };
 
   function formatDay(value) {
-    const d = new Date(value);
+    const d = dayjs(value);
 
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.date()).padStart(2, "0");
+    const month = String(d.month() + 1).padStart(2, "0");
 
     return `${day}/${month}`;
   }
 
   function formatWeekRange(value) {
-    const start = new Date(value);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
+    const start = dayjs(value);
+    const end = start.add(6, "day");
 
     const format = (d) => {
-      const day = String(d.getDate()).padStart(2, "0");
-      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.date()).padStart(2, "0");
+      const month = String(d.month() + 1).padStart(2, "0");
       return `${day}/${month}`;
     };
 
@@ -338,7 +350,7 @@ export default function StatsScreen() {
   const formatXAxis = (value, granularity) => {
     if (!granularity) return value;
 
-    const date = new Date(value);
+    const date = dayjs(value);
 
     if (granularity === "DAY") {
       return formatDay(value);
@@ -362,6 +374,7 @@ export default function StatsScreen() {
 
   const loadPRs = async () => {
     try {
+      setLoadingPR(true);
       const prsRes = await getPersonalRecordsByUser(userId);
 
       const formatted = prsRes.map(pr => ({
@@ -375,6 +388,8 @@ export default function StatsScreen() {
 
     } catch (e) {
       console.error("Error cargando PRs", e);
+    } finally {
+      setLoadingPR(false);
     }
   };
 
@@ -440,8 +455,120 @@ export default function StatsScreen() {
     });
   }, [frequencyData]);
 
+  useEffect(() => {
+    setShouldAnimate(true);
+
+    const timeout = setTimeout(() => {
+      setShouldAnimate(false);
+    }, 700); // mismo tiempo que animationDuration
+
+    return () => clearTimeout(timeout);
+  }, [frequencyData, frequencyMode, from, to]);
 
 
+  //CALENDARIO FRECUENCIA DIARIA
+  const trainedDaysSet = useMemo(() => {
+    if (frequencyGranularity !== "DAY") return new Set();
+
+    return new Set(
+      frequencyData
+        .filter(d => d.count > 0)
+        .map(d => dayjs(d.date).format("YYYY-MM-DD"))
+    );
+  }, [frequencyData, frequencyGranularity]);
+
+
+  const loadCalendarData = async () => {
+    try {
+      const res = await getWorkoutFrequency(
+        userId,
+        null,
+        null,
+        "DAY" // 🔥 siempre por día
+      );
+
+      setCalendarData(res.data || []);
+    } catch (e) {
+      console.error("Error calendario", e);
+    }
+  };
+
+  const trainedDaysMap = useMemo(() => {
+    return new Map(
+      calendarData.map(d => [
+        dayjs(d.date).format("YYYY-MM-DD"),
+        d.count
+      ])
+    );
+  }, [calendarData]);
+
+  useEffect(() => {
+    if (activeTab === "frequency") {
+      loadCalendarData();
+    }
+  }, [activeTab]);
+
+
+  function CustomDay(props) {
+    const { day, outsideCurrentMonth, ...other } = props;
+
+    const dateStr = day.format("YYYY-MM-DD");
+    const count = trainedDaysMap.get(dateStr) || 0;
+
+    return (
+      <PickerDay
+        {...other}
+        day={day}
+        outsideCurrentMonth={outsideCurrentMonth}
+        sx={{
+          width: { xs: 40, sm: 48, md: 64 },
+          height: { xs: 40, sm: 48, md: 64 },
+
+          borderRadius: "50%", // 👈 ESTO los hace circulares
+          fontSize: { xs: "1rem", sm: "1.2rem", md: "1.5rem" },
+          fontWeight: 700,
+
+          transform: "scale(0.9)",
+
+          bgcolor: getBarColor(count),
+          color: count > 0 ? "#fff" : "inherit",
+
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+
+          "&.MuiPickersDay-today": {
+            border: "none", // elimina el círculo
+          },
+
+          "&:hover": {
+            backgroundColor: `${getBarColor(count)} !important`,
+          },
+
+          "&:active": {
+            backgroundColor: `${getBarColor(count)} !important`,
+          },
+
+          "&.Mui-selected": {
+            backgroundColor: `${getBarColor(count)} !important`,
+            color: `${count > 0 ? "#fff" : "inherit"} !important`,
+          },
+
+          "&.Mui-focusVisible": {
+            backgroundColor: `${getBarColor(count)} !important`,
+          },
+
+          "&:focus": {
+            outline: "none",
+            backgroundColor: `${getBarColor(count)} !important`,
+          },
+        }}
+      />
+    );
+  }
+
+
+  
 
   //ANIMACIONES
   const glow = keyframes`
@@ -800,7 +927,13 @@ export default function StatsScreen() {
                   />
                 </Stack>
 
-                {chartData.length === 0 ? (
+                {loadingVolume ? (
+                  <Skeleton
+                    variant="rounded"
+                    height={300}
+                    sx={{ borderRadius: 3 }}
+                  />
+                ) : chartData.length === 0 ? (
                   <Typography color="text.secondary">
                     No hay datos para graficar.
                   </Typography>
@@ -886,7 +1019,29 @@ export default function StatsScreen() {
                   />
                 </Stack>
 
-                {filteredRows.length === 0 ? (
+                {loadingVolume ? (
+                  <Stack spacing={2}>
+                    {[1,2,3].map(i => (
+                      <Box
+                        key={i}
+                        sx={{
+                          p: 2,
+                          borderRadius: 3,
+                          background: "rgba(255,255,255,0.05)"
+                        }}
+                      >
+                        <Skeleton width="40%" height={30} />
+                        <Skeleton width="30%" height={25} />
+
+                        <Stack spacing={1} mt={2}>
+                          <Skeleton height={20} />
+                          <Skeleton height={20} />
+                          <Skeleton height={20} />
+                        </Stack>
+                      </Box>
+                    ))}
+                  </Stack>
+                ) : filteredRows.length === 0 ? (
                   <Typography color="text.secondary">
                     No hay datos para ese rango.
                   </Typography>
@@ -1034,7 +1189,33 @@ export default function StatsScreen() {
             }}
           >
             <CardContent>
-              {prs.length === 0 ? (
+              {loadingPR ? (
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      sm: "repeat(2, 1fr)",
+                    },
+                    gap: 3,
+                  }}
+                >
+                  {[1,2,3,4].map(i => (
+                    <Box
+                      key={i}
+                      sx={{
+                        p: 2,
+                        borderRadius: 3,
+                        background: "rgba(255,255,255,0.05)"
+                      }}
+                    >
+                      <Skeleton variant="rounded" height={120} />
+                      <Skeleton width="70%" height={30} sx={{ mt: 1 }} />
+                      <Skeleton width="50%" height={25} />
+                    </Box>
+                  ))}
+                </Box>
+              ) : prs.length === 0 ? (
                 <Box sx={{ textAlign: "center", py: 4 }}>
                   <Typography fontSize="2.1rem">
                     No hay récords personales todavía 💪
@@ -1074,187 +1255,398 @@ export default function StatsScreen() {
         )}
 
         {activeTab === "frequency" && (
-          <Card
-            sx={{
-              background: "rgba(255, 255, 255, 0.7)",
-              backdropFilter: "blur(6px)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: 3
-            }}
-          >
-            <CardContent>
-              {/*Titulo + linea roja*/}
-              <Stack spacing={1} sx={{ mb: 3 }}>
-                <Typography variant="h5" fontWeight={800}>
-                  Frecuencia de entrenamiento
-                </Typography>
+          <>
+            <Card
+              sx={{
+                background: "rgba(255, 255, 255, 0.7)",
+                backdropFilter: "blur(6px)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 3
+              }}
+            >
+              <CardContent>
+                {/*Titulo + linea roja*/}
+                <Stack spacing={1} sx={{ mb: 3 }}>
+                  <Typography variant="h5" fontWeight={800}>
+                    Frecuencia de entrenamiento
+                  </Typography>
 
-                <Box
-                  sx={{
-                    width: 60,
-                    height: 4,
-                    borderRadius: 10,
-                    background: "linear-gradient(90deg, #ff2020, #f16744)"
-                  }}
-                />
-              </Stack>
-
-              {/*Botones de granularidad*/}
-              <Box display="flex" justifyContent="center" sx={{ mb: 3 }}>
-                <Box
-                  sx={{
-                    p: 0.6,
-                    borderRadius: 3,
-                    backdropFilter: "blur(6px)",
-                    boxShadow: "0 4px 15px rgba(0,0,0,0.15)"
-                  }}
-                >
-                  <ToggleButtonGroup
-                    value={frequencyMode}
-                    exclusive
-                    onChange={(e, newValue) => {
-                      if (newValue !== null) setFrequencyMode(newValue);
-                    }}
-                    sx={{
-                      "& .MuiToggleButton-root": {
-                        border: "none",
-                        fontWeight: 700,
-                        px: 2.5,
-                        color: "#333",
-
-                        "&:hover": {
-                          backgroundColor: "rgba(0,0,0,0.05)"
-                        }
-                      },
-
-                      "& .Mui-selected": {
-                        background: "linear-gradient(135deg, #ff2020, #fd2828)",
-                        color: "#fff",
-                        borderRadius: 3,
-                        boxShadow: "0 0 10px rgba(255, 80, 60, 0.6)"
-                      }
-                    }}
-                  >
-                    <ToggleButton value="AUTO">Auto</ToggleButton>
-                    <ToggleButton value="WEEK">Semanal</ToggleButton>
-                    <ToggleButton value="MONTH">Mensual</ToggleButton>
-                  </ToggleButtonGroup>
-                </Box>
-              </Box>
-
-              {frequencyData.length === 0 ? (
-                <Typography color="text.secondary">
-                  No hay datos para mostrar.
-                </Typography>
-              ) : (
-                <Box ref={containerRef} sx={{ width: "100%", overflowX: "auto" }}>
                   <Box
                     sx={{
-                      width: chartWidth,
-                      ml: hasOverflow ? 0 : "auto",
-                      mr: hasOverflow ? 0 : "auto"
+                      width: 60,
+                      height: 4,
+                      borderRadius: 10,
+                      background: "linear-gradient(90deg, #ff2020, #f16744)"
+                    }}
+                  />
+                </Stack>
+
+                {/*Botones de granularidad*/}
+                <Box display="flex" justifyContent="center" sx={{ mb: 3 }}>
+                  <Box
+                    sx={{
+                      p: 0.6,
+                      borderRadius: 3,
+                      backdropFilter: "blur(6px)",
+                      boxShadow: "0 4px 15px rgba(0,0,0,0.15)"
                     }}
                   >
-                    <BarChart
-                      width={chartWidth}
-                      height={300}
-                      data={frequencyData}
-                      margin={{top: 30, right: 20, left: 20, bottom: 25 }}
+                    <ToggleButtonGroup
+                      value={frequencyMode}
+                      exclusive
+                      onChange={(e, newValue) => {
+                        if (newValue !== null) setFrequencyMode(newValue);
+                      }}
+                      sx={{
+                        "& .MuiToggleButton-root": {
+                          border: "none",
+                          fontWeight: 700,
+                          px: 2.5,
+                          color: "#333",
+
+                          "&:hover": {
+                            backgroundColor: "rgba(0,0,0,0.05)"
+                          }
+                        },
+
+                        "& .Mui-selected": {
+                          background: "linear-gradient(135deg, #ff2020, #fd2828)",
+                          color: "#fff",
+                          borderRadius: 3,
+                          boxShadow: "0 0 10px rgba(255, 80, 60, 0.6)"
+                        }
+                      }}
                     >
-                      <XAxis
-                        dataKey="date"
-                        interval={0}
-                        tick={({ x, y, payload }) => {
-                          const formatted = formatXAxis(payload.value, frequencyGranularity);
-                          const lines = formatted.split("\n");
+                      <ToggleButton value="WEEK">Semanal</ToggleButton>
+                      <ToggleButton value="MONTH">Mensual</ToggleButton>
+                    </ToggleButtonGroup>
+                  </Box>
+                </Box>
 
-                          return (
-                            <text
-                              x={x}
-                              y={y}
-                              textAnchor="middle"
-                              fill="#000"
-                              fontSize={20}
-                              fontWeight={600}
-                            >
-                              {lines.map((line, index) => (
-                                <tspan
-                                  key={index}
-                                  x={x}
-                                  dy={index === 0 ? 15 : 22}
-                                >
-                                  {line}
-                                </tspan>
-                              ))}
-                            </text>
-                          );
-                        }}
-                      />
-
-                      <Bar 
-                        key={frequencyData.length}
-                        dataKey="count" 
-                        radius={[8, 8, 0, 0]} 
-                        barSize={200}
-                        animationDuration={600}
-                        animationEasing="ease-out"
-                        animationBegin={0}
+                {loadingFrequency ? (
+                  <Skeleton
+                    variant="rounded"
+                    height={300}
+                    sx={{ borderRadius: 3 }}
+                  />
+                ) : frequencyData.length === 0 ? (
+                  <Typography color="text.secondary">
+                    No hay datos para mostrar.
+                  </Typography>
+                ) : (
+                  <Box ref={containerRef} sx={{ width: "100%", overflowX: "auto" }}>
+                    <Box
+                      sx={{
+                        width: chartWidth,
+                        ml: hasOverflow ? 0 : "auto",
+                        mr: hasOverflow ? 0 : "auto"
+                      }}
+                    >
+                      <BarChart
+                        width={chartWidth}
+                        height={300}
+                        data={frequencyData}
+                        margin={{top: 30, right: 20, left: 20, bottom: 25 }}
                       >
-                        <LabelList
-                          dataKey="count"
-                          position="top"
-                          animationDuration={600}
-                          animationEasing="ease-out"
-                          animationBegin={0}
-                          content={({ x, y, width, value }) => {
-                            if (!value) return null;
-
-                            const centerX = x + width / 2;
+                        <XAxis
+                          dataKey="date"
+                          interval={0}
+                          domain={["dataMin", "dataMax"]}
+                          tickFormatter={(value) => formatXAxis(dayjs(value).format("YYYY-MM-DD"), frequencyGranularity)}
+                          tick={({ x, y, payload }) => {
+                            const formatted = formatXAxis(payload.value, frequencyGranularity);
+                            const lines = formatted.split("\n");
 
                             return (
                               <text
-                                x={centerX}
-                                y={y - 10}
+                                x={x}
+                                y={y}
                                 textAnchor="middle"
                                 fill="#000"
-                                fontSize="25"
-                                fontWeight="900"
+                                fontSize={20}
+                                fontWeight={600}
                               >
-                                {value}
+                                {lines.map((line, index) => (
+                                  <tspan
+                                    key={index}
+                                    x={x}
+                                    dy={index === 0 ? 15 : 22}
+                                  >
+                                    {line}
+                                  </tspan>
+                                ))}
                               </text>
                             );
                           }}
                         />
 
-                        {frequencyData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={getBarColor(entry.count)} />
-                        ))}
-                      </Bar>
-                    </BarChart>
+                        <Bar 
+                          key={frequencyData.length}
+                          dataKey="count" 
+                          radius={[8, 8, 0, 0]} 
+                          barSize={200}
+                          animationDuration={600}
+                          animationEasing="ease-out"
+                          animationBegin={0}
+                          isAnimationActive={shouldAnimate}
+                        >
+                          <LabelList
+                            dataKey="count"
+                            position="top"
+                            animationDuration={600}
+                            animationEasing="ease-out"
+                            animationBegin={0}
+                            content={({ x, y, width, value }) => {
+                              if (!value) return null;
+
+                              const centerX = x + width / 2;
+
+                              return (
+                                <text
+                                  x={centerX}
+                                  y={y - 10}
+                                  textAnchor="middle"
+                                  fill="#000"
+                                  fontSize="25"
+                                  fontWeight="900"
+                                >
+                                  {value}
+                                </text>
+                              );
+                            }}
+                          />
+
+                          {frequencyData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={getBarColor(entry.count)} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </Box>
                   </Box>
-                </Box>
 
-                
-              )}
-              <Divider sx={{ my: 1, opacity: 0.8, borderBottomWidth: 3, bgcolor: "#0000003b"}} />
+                  
+                )}
 
-              <Box sx={{ textAlign: "center", mt: 3 }}>
-                <Typography variant="h3" fontWeight={900}>
-                  {totalDays}
-                </Typography>
+                <Divider sx={{ my: 1, opacity: 0.8, borderBottomWidth: 3, bgcolor: "#0000003b"}} />
 
-                <Typography
+                {loadingFrequency ? (
+                  <Stack alignItems="center">
+                    <Skeleton width={100} height={60} />
+                    <Skeleton width={150} height={30} />
+                  </Stack>
+                ) : ( 
+                  <Box sx={{ textAlign: "center", mt: 3 }}>
+                    <Typography variant="h3" fontWeight={900}>
+                      {totalDays}
+                    </Typography>
+
+                    <Typography
+                      sx={{
+                        fontSize: "1.3rem",
+                        opacity: 0.7,
+                        letterSpacing: 1
+                      }}
+                    >
+                      días entrenados
+                    </Typography>
+                  </Box> 
+                )}
+
+              </CardContent>
+            </Card>
+
+
+
+            <Card
+              sx={{
+                background: "rgba(255, 255, 255, 0.7)",
+                backdropFilter: "blur(6px)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 3
+              }}
+            >
+              <CardContent sx={{height: 620}}>
+                {/*Titulo + linea roja*/}
+                <Stack spacing={1} sx={{ mb: 3 }}>
+                  <Typography variant="h5" fontWeight={800}>
+                    Calendario histórico completo
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      width: 60,
+                      height: 4,
+                      borderRadius: 10,
+                      background: "linear-gradient(90deg, #ff2020, #f16744)"
+                    }}
+                  />
+                </Stack>
+                {loadingFrequency ? (
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(7, 1fr)",
+                      gap: 1,
+                      width: 400,
+                      height: 400,
+                      mt: 13,
+                      mx: "auto"
+                    }}
+                  >
+                    {Array.from({ length: 35 }).map((_, i) => (
+                      <Skeleton
+                        key={i}
+                        variant="circular"
+                        width={35}
+                        height={35}
+                      />
+                    ))}
+                  </Box>
+                ) : (
+                <Box
                   sx={{
-                    fontSize: "1.3rem",
-                    opacity: 0.7,
-                    letterSpacing: 1
+                    position: "relative",
+                    height: "100%", // 👈 clave
+                    display: "flex",
+                    justifyContent: "center"
                   }}
                 >
-                  días entrenados
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
+                  {/* ⬅️ IZQUIERDA */}
+                  <Box
+                    onClick={() => setCalendarMonth(prev => prev.subtract(1, "month"))}
+                    sx={{
+                      position: "absolute",
+                      left: 15, // 👈 separa del calendario
+                      top: "40%",
+                      transform: "translateY(-50%)",
+
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+
+                      width: 60,
+                      height: 60,
+                      borderRadius: "50%",
+
+                      cursor: "pointer",
+                      color: "#fff",
+
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    <ArrowBackIosNewIcon
+                      sx={{
+                        fontSize: 90,
+                        filter: "drop-shadow(0 0 4px rgba(255,255,255,0.8))"
+                      }}
+                    />
+                  </Box>
+
+                  {/* 📅 CALENDARIO */}
+                  <DateCalendar
+                    value={calendarMonth}
+                    onMonthChange={(newMonth) => setCalendarMonth(newMonth)}
+                    referenceDate={calendarMonth}
+                    slots={{ day: CustomDay }}
+                    readOnly
+                    disableHighlightToday
+                    sx={{
+                      width: "fit-content",
+                      height: "auto", // 1. Permite que el componente crezca
+                      maxHeight: 500, // 2. Elimina la restricción de altura
+
+                      "& .MuiDayCalendar-monthContainer": {
+                        position: "relative", // Evita cortes raros en animaciones
+                      },
+
+                      // 🔥 CLAVE: grid fijo de 7 columnas
+                      "& .MuiDayCalendar-weekContainer": {
+                        display: "grid",
+                        gridTemplateColumns: {
+                          xs: "repeat(7, 40px)",
+                          sm: "repeat(7, 48px)",
+                          md: "repeat(7, 64px)"
+                        },
+                        justifyContent: "center",
+                        margin: "2px 0"
+                      },
+                      "& .MuiPickersCalendarHeader-label": {
+                        fontSize: { xs: "1.4rem", sm: "1.6rem", md: "1.8rem" },
+                        fontWeight: 700,
+                      },
+
+                      "& .MuiPickersArrowSwitcher-button": {
+                        transform: { xs: "scale(1)", sm: "scale(1.2)", md: "scale(1.3)" },
+                        display: "none"
+                      },
+
+                      // 🔥 evitar que MUI meta flex raro
+                      "& .MuiDayCalendar-root": {
+                        width: "auto"
+                      },
+
+                      "& .MuiDayCalendar-weekDayLabel": {
+                        width: { xs: 40, sm: 48, md: 64 },
+                        textAlign: "center",
+                        fontSize: { xs: "1rem", sm: "1.1rem", md: "1.2rem" },
+                        fontWeight: 700,
+                      },
+
+                      //Evitar efectos al cliquear
+                      "& .MuiPickersDay-root": {
+                        pointerEvents: "none", // Bloquea clics, hovers y selección
+                        userSelect: "none",    // Evita que se seleccione el texto del número
+                        backgroundColor: "transparent !important", // Evita el fondo azul
+                      },
+
+                      "& .Mui-selected": {
+                        backgroundColor: "transparent !important",
+                        color: "inherit !important",
+                        fontWeight: "inherit !important",
+                      },
+
+                      "& .MuiPickersDay-root:focus": {
+                        outline: "none",
+                        backgroundColor: "transparent !important",
+                      },
+                    }}
+                  />
+
+                  {/* ➡️ DERECHA */}
+                  <Box
+                    onClick={() => setCalendarMonth(prev => prev.add(1, "month"))}
+                    sx={{
+                      position: "absolute",
+                      right: 15,
+                      top: "40%",
+                      transform: "translateY(-50%)",
+
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+
+                      width: 60,
+                      height: 60,
+                      borderRadius: "50%",
+
+                      cursor: "pointer",
+                      color: "#fff",
+
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    <ArrowForwardIosIcon
+                      sx={{
+                        fontSize: 90,
+                        filter: "drop-shadow(0 0 4px rgba(255,255,255,0.8))"
+                      }}
+                    />
+                  </Box>
+                </Box> )}
+
+              </CardContent>
+            </Card>
+          </>
         )}
 
 
