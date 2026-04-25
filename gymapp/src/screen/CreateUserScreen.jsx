@@ -26,7 +26,8 @@ import {
   Dialog,
   DialogContent,
   DialogActions,
-  Slider
+  Slider,
+  Box
 } from "@mui/material";
 
 import BackButton from "../components/BackButton";
@@ -245,10 +246,27 @@ export default function CreateUserScreen() {
 
       <Paper sx={{p:4}}>
 
-        <Stack direction="row" alignItems="center" spacing={1} sx={{mb:2}}>
-          <BackButton to="/admin" />
-          <Typography variant="h4">Usuarios</Typography>
-        </Stack>
+        <Box
+            sx={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mb: 2
+            }}
+          >
+  
+            {/* 🔙 Flecha a la izquierda */}
+            <Box sx={{ position: "absolute", left: 0 }}>
+              <BackButton to="/admin" sx={{color: "black"}}/>
+            </Box>
+  
+            {/* 🧠 Título centrado REAL */}
+            <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
+              Usuarios
+            </Typography>
+  
+          </Box>
 
         <Stack spacing={3}>
 

@@ -33,7 +33,8 @@ AccordionDetails,
 Divider,
 Alert,
 Snackbar,
-Autocomplete
+Autocomplete,
+Box
 } from "@mui/material";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -430,16 +431,27 @@ return(
 <Paper sx={{p:4}}>
 
 
+<Box
+    sx={{
+      position: "relative",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      mb: 2
+    }}
+  >
 
-<Stack direction="row" alignItems="center" spacing={1} sx={{mb:2}}>
-        
-<BackButton to="/admin" />
-          
-<Typography variant="h4" gutterBottom>
-Plantillas
-</Typography>
-        
-</Stack>
+    {/* 🔙 Flecha a la izquierda */}
+    <Box sx={{ position: "absolute", left: 0 }}>
+      <BackButton to="/admin" sx={{color: "black"}}/>
+    </Box>
+
+    {/* 🧠 Título centrado REAL */}
+    <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
+      Plantillas
+    </Typography>
+
+  </Box>
 
 <Stack spacing={3}>
 
