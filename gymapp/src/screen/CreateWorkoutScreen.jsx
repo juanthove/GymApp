@@ -26,7 +26,8 @@ Divider,
 Alert,
 Snackbar,
 Autocomplete,
-LinearProgress
+LinearProgress,
+Box
 } from "@mui/material";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -556,15 +557,27 @@ return(
 
 <Paper sx={{p:4}}>
 
-<Stack direction="row" alignItems="center" spacing={1} sx={{mb:2}}>
+<Box
+  sx={{
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    mb: 2
+  }}
+>
 
-<BackButton to="/admin" />
+  {/* 🔙 Flecha a la izquierda */}
+  <Box sx={{ position: "absolute", left: 0 }}>
+    <BackButton to="/admin" sx={{color: "black"}}/>
+  </Box>
 
-<Typography variant="h4">
-Crear Planilla
-</Typography>
+  {/* 🧠 Título centrado REAL */}
+  <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
+    Crear Planilla
+  </Typography>
 
-</Stack>
+</Box>
 
 <Stack spacing={3}>
 

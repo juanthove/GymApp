@@ -1,4 +1,5 @@
 import CreateUserScreen from "./screen/CreateUserScreen";
+import CreateSystemUserScreen from "./screen/CreateSystemUserScreen";
 import CreateExerciseScreen from "./screen/CreateExerciseScreen";
 import CreateWorkoutTemplateScreen from "./screen/CreateWorkoutTemplateScreen";
 import CreateWorkoutScreen from "./screen/CreateWorkoutScreen";
@@ -14,6 +15,8 @@ import ExerciseScreen from "./screen/ExerciseScreen";
 import FinalResumeScreen from "./screen/FinalResumeScreen";
 import StatsScreen from "./screen/StatsScreen";
 
+import LoginScreen from "./screen/LoginScreen";
+
 
 function App() {
   return (
@@ -27,11 +30,15 @@ function App() {
 
         <Route path="/admin" element={<AdminScreen />} />
         <Route path="/admin/users" element={<CreateUserScreen />} />
+        <Route path="/admin/system-users" element={<CreateSystemUserScreen />} />
         <Route path="/admin/exercises" element={<CreateExerciseScreen />} />
         <Route path="/admin/workout-templates" element={<CreateWorkoutTemplateScreen />} />
         <Route path="/admin/workouts" element={<CreateWorkoutScreen />} />
         <Route path="/admin/phrases" element={<CreatePhraseScreen />} />
         <Route path="/admin/rules" element={<CreateExerciseReminderRule />} />
+
+        <Route path="/login" element={<LoginScreen />} />
+        <Route path="/" element={<LoginScreen />} />
       </Routes>
     </BrowserRouter>
   );
