@@ -18,6 +18,8 @@ import com.gymapp.model.WorkoutExercise;
 import com.gymapp.repository.ExerciseReminderRuleRepository;
 import com.gymapp.repository.WorkoutDayRepository;
 import com.gymapp.repository.WorkoutRepository;
+import com.gymapp.repository.WorkoutExerciseRepository;
+import com.gymapp.repository.WorkoutSetRepository;
 import com.gymapp.repository.projection.WorkoutDayCountProjection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -53,7 +55,10 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
     private WorkoutRepository workoutRepository;
 
     @Autowired
-    private com.gymapp.repository.WorkoutExerciseRepository workoutExerciseRepository;
+    private WorkoutExerciseRepository workoutExerciseRepository;
+
+    @Autowired
+    private WorkoutSetRepository workoutSetRepository;
 
     @Autowired
     private SelectedWorkoutExerciseService selectedWorkoutExerciseService;
@@ -352,22 +357,15 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
             );
         }
 
-        // 📅 Fecha del entrenamiento
-        LocalDate date = day.getStartedAt() != null
-            ? day.getStartedAt().toLocalDate()
-            : LocalDate.now();
-
         // 📊 Volumen total
-        var totalResponse = workoutSetService
-            .getTotalVolumeByUserAndDateRange(userId, date, date, null);
+        Double totalVolume =  workoutSetService.getTotalVolumeByDay(userId, dayId);
 
-        Double totalVolume = totalResponse.totalVolume();
-
-        int totalExercises = workoutExerciseRepository.countByWorkoutDayIdAndCompletedTrue(dayId);
+        //Total de ejercicios
+        int totalExercises = workoutSetRepository.countExercisesByDayCustom(userId, dayId);
 
         // 💪 Volumen por músculo
         var muscleVolumes = workoutSetService
-            .getWeeklyMuscleVolumeByUserAndDateRange(userId, date, date);
+            .getMuscleVolumeByDay(userId, dayId);
 
         return new WorkoutDaySummaryResponse(
             dayId,

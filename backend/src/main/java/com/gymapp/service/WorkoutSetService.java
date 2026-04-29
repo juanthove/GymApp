@@ -1,6 +1,7 @@
 package com.gymapp.service;
 
 import com.gymapp.dto.request.WorkoutSetRequest;
+import com.gymapp.dto.response.WorkoutDayMuscleVolumeResponse;
 import com.gymapp.dto.response.WorkoutSetResponse;
 import com.gymapp.dto.response.WorkoutSetVolumeResponse;
 import com.gymapp.dto.response.WorkoutSetWeeklyMuscleVolumeResponse;
@@ -26,6 +27,12 @@ public interface WorkoutSetService {
     List<WorkoutSetWeeklyMuscleVolumeResponse> getWeeklyMuscleVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to);
 
     WorkoutVolumeResponse getVolumeSeriesByUserAndDateRange(Long userId, LocalDate from, LocalDate to, Granularity granularity, MuscleType muscle);
+
+    Double getTotalVolumeByDay(Long userId, Long dayId);
+
+    int getTotalExercisesByDay(Long userId, Long dayId);
+
+    List<WorkoutDayMuscleVolumeResponse> getMuscleVolumeByDay(Long userId, Long dayId);
 
     List<WorkoutSetResponse> getWorkoutSetsByWorkoutExercise(Long workoutExerciseId);
 

@@ -22,12 +22,17 @@ ListItemAvatar,
 ListItemText,
 Avatar,
 Paper,
-Box
+Box,
+TextField,
+IconButton,
+InputAdornment
 } from "@mui/material";
 
 import AddIcon from "@mui/icons-material/Add";
+import ClearIcon from "@mui/icons-material/Clear";
 
 import UserCard from "../components/UserCard";
+import AnimatedDialog from "../components/AnimatedDialog";
 
 export default function HomeScreen(){
 
@@ -35,6 +40,7 @@ export default function HomeScreen(){
  const [allUsers,setAllUsers] = useState([]);
  const [showModal,setShowModal] = useState(false);
  const [selectedUser,setSelectedUser] = useState(null);
+ const [search, setSearch] = useState("");
 
  const navigate = useNavigate();
 
@@ -220,32 +226,94 @@ export default function HomeScreen(){
 
    {/* MODAL */}
 
-   <Dialog
-    open={showModal}
-    onClose={() => setShowModal(false)}
-    fullWidth
-    maxWidth="xs"
-    PaperProps={{
-      sx: {
-        borderRadius: 4,
-        p: 1
-      }
-    }}
-  >
-    <DialogTitle
-      sx={{
-        fontWeight: 700,
-        textAlign: "center",
-        pb: 1
+   <AnimatedDialog
+      open={showModal}
+      onClose={() => setShowModal(false)}
+      onExited={() => {
+        setSearch("");
+        setSelectedUser(null);
       }}
+      title="Seleccionar usuario"
+      maxWidth="xs"
+      fullWidth
+      titleSize="2rem"
+      headerSx={{py: 1}}
+      paperSx={{
+        borderRadius: 4,
+        maxHeight: "60vh" // 🔥 mantenés EXACTAMENTE el alto
+      }}
+      closeSx={{p: 1, "& svg": {fontSize: 50}}}
+      actions={
+        <Button
+          variant="contained"
+          disabled={!selectedUser}
+          onClick={goWorkout}
+          fullWidth
+          sx={{
+            borderRadius: 5,
+            textTransform: "none",
+            fontWeight: 600,
+            fontSize: "1.5rem",
+            height: 80,
+            backgroundColor: "#202020",
+            "&:hover": {
+              backgroundColor: "#000000"
+            }
+          }}
+        >
+          Seleccionar
+        </Button>
+      }
     >
-      Seleccionar usuario
-    </DialogTitle>
+      <TextField
+        fullWidth
+        placeholder="Buscar usuario..."
+        variant="outlined"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        sx={{
+          mb: 2,
 
-    <DialogContent>
+          // 👇 altura del input
+          "& .MuiOutlinedInput-root": {
+            height: 80,            // 🔥 más alto (probá 60–70)
+            borderRadius: 3,
+          },
+
+          // 👇 texto que escribís
+          "& .MuiInputBase-input": {
+            fontSize: "2rem",    // 🔥 tamaño del texto
+          },
+
+          // 👇 placeholder
+          "& .MuiInputBase-input::placeholder": {
+            fontSize: "2rem",
+            opacity: 0.7
+          }
+        }}
+        InputProps={{
+          endAdornment: search && (
+            <InputAdornment position="end">
+              <IconButton
+                onClick={() => setSearch("")}
+                edge="end"
+              >
+                <ClearIcon sx={{ fontSize: 50 }}/>
+              </IconButton>
+            </InputAdornment>
+          )
+        }}
+      />
+
       <List sx={{ mt: 1 }}>
 
-        {allUsers.map(user => (
+        {allUsers
+          .filter(user =>
+            `${user.name} ${user.surname}`
+              .toLowerCase()
+              .includes(search.toLowerCase())
+          )
+          .map(user => (
           <ListItemButton
             key={user.id}
             selected={selectedUser?.id === user.id}
@@ -253,6 +321,7 @@ export default function HomeScreen(){
             sx={{
               borderRadius: 3,
               mb: 1,
+              py: 2,
               transition: "0.2s",
 
               "&.Mui-selected": {
@@ -265,13 +334,22 @@ export default function HomeScreen(){
             }}
           >
             <ListItemAvatar>
-              <Avatar src={user.image ? getUserImageUrl(user.image) : undefined}>
+              <Avatar 
+                src={user.image ? getUserImageUrl(user.image) : undefined}
+                sx={{
+                  width: 65,     // 🔥 antes ~40
+                  height: 65,
+                  fontSize: "2rem",
+                  mr: 3
+                }}
+              >
                 {user.name?.[0]}
               </Avatar>
             </ListItemAvatar>
             <ListItemText
               primary={`${user.name} ${user.surname}`}
               primaryTypographyProps={{
+                fontSize: "2rem",
                 fontWeight: selectedUser?.id === user.id ? 600 : 400
               }}
             />
@@ -279,47 +357,8 @@ export default function HomeScreen(){
         ))}
 
       </List>
-    </DialogContent>
 
-    <DialogActions
-      sx={{
-        justifyContent: "space-between",
-        px: 3,
-        pb: 2
-      }}
-    >
-      <Button
-        onClick={() => setShowModal(false)}
-        variant="outlined"
-        sx={{
-          borderRadius: 5,
-          px: 3,
-          textTransform: "none",
-          fontWeight: 500
-        }}
-      >
-        Cancelar
-      </Button>
-
-      <Button
-        variant="contained"
-        disabled={!selectedUser}
-        onClick={goWorkout}
-        sx={{
-          borderRadius: 5,
-          px: 4,
-          textTransform: "none",
-          fontWeight: 600,
-          backgroundColor: "#202020",
-          "&:hover": {
-            backgroundColor: "#000000"
-          }
-        }}
-      >
-        Ingresar
-      </Button>
-    </DialogActions>
-  </Dialog>
+  </AnimatedDialog>
 
   </Container>
 

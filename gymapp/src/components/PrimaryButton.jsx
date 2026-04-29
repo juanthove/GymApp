@@ -5,7 +5,8 @@ export default function PrimaryButton({
   label,
   to,
   onClick,
-  disabled = false, // 👈 NUEVO
+  disabled = false,
+  icon = null,
   sx = {}
 }) {
   const navigate = useNavigate();
@@ -19,7 +20,8 @@ export default function PrimaryButton({
   return (
     <Button
       onClick={handleClick}
-      disabled={disabled} // 👈 importante para MUI
+      disabled={disabled}
+      startIcon={icon} 
       sx={{
         px: 4,
         py: 1.5,

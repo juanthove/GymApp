@@ -41,8 +41,8 @@ export default function VolumeCard({ value }) {
     });
 
     useEffect(() => {
-        if (value > 0) {
-        start(); // 🔥 arranca cuando llega el dato real
+        if (value >= 0) {
+        start();
         }
     }, [value, start]);
 
