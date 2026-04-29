@@ -19,7 +19,6 @@ import com.gymapp.repository.ExerciseReminderRuleRepository;
 import com.gymapp.repository.WorkoutDayRepository;
 import com.gymapp.repository.WorkoutRepository;
 import com.gymapp.repository.WorkoutExerciseRepository;
-import com.gymapp.repository.WorkoutSetRepository;
 import com.gymapp.repository.projection.WorkoutDayCountProjection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -56,9 +55,6 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
     @Autowired
     private WorkoutExerciseRepository workoutExerciseRepository;
-
-    @Autowired
-    private WorkoutSetRepository workoutSetRepository;
 
     @Autowired
     private SelectedWorkoutExerciseService selectedWorkoutExerciseService;
@@ -361,7 +357,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         Double totalVolume =  workoutSetService.getTotalVolumeByDay(userId, dayId);
 
         //Total de ejercicios
-        int totalExercises = workoutSetRepository.countExercisesByDayCustom(userId, dayId);
+        int totalExercises = workoutSetService.getTotalExercisesByDay(userId, dayId);
 
         // 💪 Volumen por músculo
         var muscleVolumes = workoutSetService
