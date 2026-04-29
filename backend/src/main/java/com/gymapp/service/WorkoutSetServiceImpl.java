@@ -1,6 +1,7 @@
 package com.gymapp.service;
 
 import com.gymapp.dto.request.WorkoutSetRequest;
+import com.gymapp.dto.response.WorkoutDayMuscleVolumeResponse;
 import com.gymapp.dto.response.WorkoutSetResponse;
 import com.gymapp.dto.response.WorkoutSetVolumeResponse;
 import com.gymapp.dto.response.WorkoutSetWeeklyMuscleVolumeResponse;
@@ -113,7 +114,7 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
         List<Object[]> rows = workoutSetRepository.findWeeklyVolumeWithHistoricalMax(
             userId,
             from != null ? from.atStartOfDay() : null,
-            to != null ? to.atStartOfDay() : null
+            to != null ? to.atTime(LocalTime.MAX) : null
         );
 
         List<WorkoutSetWeeklyMuscleVolumeResponse> result = new ArrayList<>();
@@ -208,6 +209,40 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
                 .toList();
         
         return new WorkoutVolumeResponse(resolvedGranularity, data);
+    }
+
+    @Override
+    public Double getTotalVolumeByDay(Long userId, Long dayId) {
+        Double volume = workoutSetRepository.getTotalVolumeByDay(userId, dayId);
+        return volume != null ? volume : 0.0;
+    }
+
+    @Override
+    public int getTotalExercisesByDay(Long userId, Long dayId) {
+        Integer total = workoutSetRepository.countExercisesByDayCustom(userId, dayId);
+        return total != null ? total : 0;
+    }
+
+    @Override
+    public List<WorkoutDayMuscleVolumeResponse> getMuscleVolumeByDay(
+        Long userId,
+        Long dayId
+    ) {
+        List<Object[]> rows = workoutSetRepository.findVolumeByDayId(userId, dayId);
+
+        List<WorkoutDayMuscleVolumeResponse> result = new ArrayList<>();
+
+        for (Object[] row : rows) {
+            String muscleStr = (String) row[0];
+            Double volume = row[1] != null ? ((Number) row[1]).doubleValue() : 0.0;
+
+            result.add(new WorkoutDayMuscleVolumeResponse(
+                MuscleType.valueOf(muscleStr),
+                volume
+            ));
+        }
+
+        return result;
     }
 
     @Override

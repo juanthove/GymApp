@@ -234,16 +234,46 @@ export default function FinalResumeScreen() {
               label="Duración"
               value={formatDuration(duration)}
             />
-
-            <StatCard
-              label="Ejercicios completados"
-              value={totalExercises} // 🔥 mock por ahora
-            />
+            {muscleVolume.length === 0 ? (
+              <Box></Box>
+            ) : (
+              <StatCard
+                label="Ejercicios completados"
+                value={totalExercises} // 🔥 mock por ahora
+              />
+            )}
           </Stack>
 
           {/* 🟣 VOLUMEN POR MÚSCULO */}
           {muscleVolume.length === 0 ? (
-            <Box></Box>
+            <>
+              <Box sx={{ height: 60 }} />
+              <Box
+                sx={{
+                  mt: 8,
+                  px: 2,
+                  py: 4,
+                  borderRadius: 4,
+                  background: "rgba(0,0,0,0.25)",
+                  backdropFilter: "blur(8px)",
+                  boxShadow: "0 8px 30px rgba(0,0,0,0.35)",
+                  display: "inline-block"
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: "2.5rem", // 🔥 bien grande
+                    fontWeight: 800,
+                    color: "#fff",
+                    textAlign: "center",
+                    textShadow: "0 6px 18px rgba(0,0,0,0.6)",
+                    lineHeight: 1.3
+                  }}
+                >
+                  Registrá tus series para ver tus estadísticas
+                </Typography>
+              </Box>
+            </>
           ) : (
           
           <Box width="75%">

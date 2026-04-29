@@ -37,6 +37,8 @@ import {
 
 import { checkPersonalRecord } from "../services/personalRecordService";
 
+import { getUserById } from "../services/userService";
+
 import GymCard from "../components/GymCard";
 import BackButton from "../components/BackButton";
 import MuscleChips from "../components/MuscleChips";
@@ -61,9 +63,13 @@ import {
   Box
 } from "@mui/material";
 
+import GroupIcon from '@mui/icons-material/Group';
+
 export default function ExerciseScreen(){
 
 const { userId, workoutDayId } = useParams();
+
+const [user, setUser] = useState(null);
 
 const [message, setMessage] = useState("");
 const [messageType, setMessageType] = useState("success");
@@ -146,51 +152,72 @@ const loadSets = async () => {
     });
   });
 
-  const result = [1, 2, 3].map((setNum) => {
-    return grouped[setNum] || [{ reps: "", weight: "", id: null }];
-  });
+  const maxSetNumber = Math.max(
+    ...Object.keys(grouped).map(Number),
+    0
+  );
 
-  setSets(result);
+  const result = [];
+
+  for (let i = 1; i <= maxSetNumber; i++) {
+    result.push(grouped[i] || [{ reps: "", weight: "", id: null }]);
+  }
+
+  // 👉 si no hay nada, arrancás con 3 por defecto
+  if (result.length === 0) {
+    setSets(emptySets);
+  } else {
+    setSets(result);
+  }
+
 };
 
 const loadData = async () => {
+  try {
 
-  const abs = await isAbdominalWorkoutDay(workoutDayId);
-  setIsAbdominal(abs);
+    const [
+      abs,
+      workoutDayData,
+      userData
+    ] = await Promise.all([
+      isAbdominalWorkoutDay(workoutDayId),
+      getWorkoutDayExercises(workoutDayId),
+      getUserById(userId) // 🔥 lo metés acá
+    ]);
 
-  const workoutDayData = await getWorkoutDayExercises(workoutDayId);
+    setIsAbdominal(abs);
+    setUser(userData);
 
-  setReps(workoutDayData.reps ?? null);
+    setReps(workoutDayData.reps ?? null);
 
-  const exercises = workoutDayData.exercises ?? [];
+    const exercises = workoutDayData.exercises ?? [];
+    setAllExercises(exercises);
 
-  setAllExercises(exercises);
+    // 🔴 alertas
+    const overdueExercises = exercises.filter(
+      ex => ex.alert && ex.alert.overdue && !ex.selected
+    );
 
-  //Ver ejercicios con alertas
-  const overdueExercises = exercises.filter(
-    ex => ex.alert && ex.alert.overdue && !ex.selected
-  );
+    setAlertExercises(overdueExercises);
 
-  setAlertExercises(overdueExercises);
+    if (overdueExercises.length > 0) {
+      setAlertModalOpen(true);
+    }
 
-  //Abrir modal solo si hay
-  if (overdueExercises.length > 0) {
-    setAlertModalOpen(true);
+    const selectedIds = workoutDayData.selectedExerciseIds ?? [];
+
+    const exerciseMap = new Map(exercises.map(ex => [ex.id, ex]));
+
+    const selected = selectedIds
+      .map(id => exerciseMap.get(id))
+      .filter(Boolean);
+
+    setSelectedExerciseIds(selectedIds);
+    setDisplayedExercises(selected);
+
+  } catch (error) {
+    console.error("Error cargando datos:", error);
   }
-
-
-  const selectedIds = workoutDayData.selectedExerciseIds ?? [];
-
-  //REAR MAPA (PRO)
-  const exerciseMap = new Map(exercises.map(ex => [ex.id, ex]));
-
-  const selected = selectedIds
-    .map(id => exerciseMap.get(id))
-    .filter(Boolean);
-
-  setSelectedExerciseIds(selectedIds);
-  setDisplayedExercises(selected);
-
 };
 
 const formatDate = (date) => {
@@ -373,6 +400,35 @@ const finishDayWithAbs = async () => {
 
 };
 
+const addSet = () => {
+  setSets(prev => [
+    ...prev,
+    [{ reps: "", weight: "", id: null }]
+  ]);
+};
+
+const removeSet = async (setIndex) => {
+  if (sets.length <= 3) return;
+
+  const setNumber = setIndex + 1;
+
+  // 🔥 borrar en backend si existen
+  const existing = await getWorkoutSetsByWorkoutExercise(selectedExercise.id);
+
+  const toDelete = existing.filter(
+    s => s.setNumber === setNumber
+  );
+
+  for (const s of toDelete) {
+    await deleteWorkoutSet(s.id);
+  }
+
+  // 🔥 actualizar UI
+  const updated = sets.filter((_, i) => i !== setIndex);
+
+  setSets(updated);
+};
+
 const addBlock = (setIndex) => {
   const updated = [...sets];
   updated[setIndex].push({ reps: "", weight: "", id: null });
@@ -444,8 +500,8 @@ const saveSet = async (setIndex, showMessage = true, existingSets = null) => {
     (s) => !currentIds.includes(s.id)
   );
 
-  const allEmpty = blocks.every((b) => !b.reps && !b.weight);
-  const allFull = blocks.every((b) => b.reps && b.weight);
+  const allEmpty = blocks.every((b) => !hasValue(b.reps) && !hasValue(b.weight));
+  const allFull = blocks.every((b) => hasValue(b.reps) && hasValue(b.weight));
 
   // ❌ mezcla inválida
   if (!allEmpty && !allFull) return;
@@ -593,42 +649,76 @@ return(
       }}
     />
 
-<Container maxWidth="sm" sx={{mt:6, mb:15, zIndex:2, position:"relative"}}>
 
+<Box sx={{ position: "relative", minHeight: "100vh", pt: 6}}>
+  <Box
+    sx={{
+      position: "relative",
+      mb: 3,
+      px: 2,
+      py: 1.5,
+      borderRadius: 3,
+      backdropFilter: "blur(10px)",
+      background: "rgba(255,255,255,0.15)",
+      border: "1px solid rgba(255,255,255,0.25)",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
 
-<Box
-  sx={{
-    position: "relative",
-    mb: 3,
-    px: 2,
-    py: 1.5,
-    borderRadius: 3,
-    backdropFilter: "blur(10px)",
-    background: "rgba(255,255,255,0.15)",
-    border: "1px solid rgba(255,255,255,0.25)",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.2)"
-  }}
->
-  <Stack direction="row" alignItems="center">
-    
-    <BackButton to={`/workout/${userId}`} sx={{ position:"absolute", left:10, top:"50%", transform:"translateY(-50%)" }} />
+      width: "100%",
+      maxWidth: "800px",
+      mx: "auto",
+      zIndex: 2
+    }}
+  >
 
-    <Typography
-      textAlign="center"
+    <BackButton to={`/workout/${userId}`} sx={{ position:"absolute", left:80, top:"50%", transform:"translateY(-50%)" }} />
+
+    <Box textAlign="center" sx={{width: "100%"}}>
+      <Typography
+        textAlign="center"
+        sx={{
+          width: "100%",
+          fontWeight: 800,
+          fontSize: "1.9rem",
+          letterSpacing: "0.8px",
+          color: "#fff",
+          textShadow: "0 3px 8px rgba(0,0,0,0.7)"
+        }}
+      >
+        {user?.name} {user?.surname}
+      </Typography>
+      <Typography
+        textAlign="center"
+        sx={{
+          width: "100%",
+          fontWeight: 800,
+          fontSize: "1.5rem",
+          letterSpacing: "0.8px",
+          color: "#fff",
+          textShadow: "0 3px 8px rgba(0,0,0,0.7)"
+        }}
+      >
+        Ejercicios del día
+      </Typography>
+      
+    </Box>
+
+    <PrimaryButton
+      label="Usuarios"
+      to={"/home"}
+      icon={<GroupIcon />} 
       sx={{
-        width: "100%",
-        fontWeight: 800,
-        fontSize: "1.9rem",
-        letterSpacing: "0.8px",
-        color: "#fff",
-        textShadow: "0 3px 8px rgba(0,0,0,0.7)"
+        position:"absolute",
+        right:10,
+        top:"50%",
+        transform:"translateY(-50%)",
+        fontSize:"1.5rem"
       }}
-    >
-      Ejercicios del día
-    </Typography>
+    />
 
-  </Stack>
-</Box>
+  </Box>
+
+
+<Container maxWidth="sm" sx={{mt:6, mb:15, zIndex:2, position:"relative"}}>
 
 <Stack spacing={2}>
 
@@ -898,8 +988,8 @@ displayedExercises.map((ex) => (
 
   <Stack spacing={3} sx={{ mt: 3 }}>
     {sets.map((set, setIndex) => {
-      const allEmpty = set.every(b => !b.reps && !b.weight);
-      const allFull = set.every(b => b.reps && b.weight);
+      const allEmpty = set.every(b => !hasValue(b.reps) && !hasValue(b.weight));
+      const allFull = set.every(b => hasValue(b.reps) && hasValue(b.weight));
       const isInvalid = !allEmpty && !allFull;
       const hasData = set.some(b => b.id);
 
@@ -909,12 +999,25 @@ displayedExercises.map((ex) => (
           sx={{
             border: "1px solid #ddd",
             p: 2,
-            borderRadius: 2
+            borderRadius: 2,
+            position: "relative"
           }}
         >
           <Typography sx={{fontWeight: 700, fontSize: "1.4rem"}}>
             Serie {setIndex + 1}
           </Typography>
+
+          {/* ❌ BOTÓN ELIMINAR SERIE */}
+          {sets.length > 3 && !selectedExercise?.completed && (
+            <CloseButton
+              onClick={() => removeSet(setIndex)}
+              sx={{
+                position: "absolute",
+                top: 8,
+                right: 8
+              }}
+            />
+          )}
 
           <Typography
             sx={{
@@ -938,6 +1041,9 @@ displayedExercises.map((ex) => (
                   label="Reps"
                   size="small"
                   value={block.reps}
+                  type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   disabled={selectedExercise?.completed}
                   onChange={(e) =>
                     handleChange(setIndex, blockIndex, "reps", e.target.value)
@@ -971,6 +1077,9 @@ displayedExercises.map((ex) => (
                   label="Peso"
                   size="small"
                   value={block.weight}
+                  type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   disabled={selectedExercise?.completed}
                   onChange={(e) =>
                     handleChange(setIndex, blockIndex, "weight", e.target.value)
@@ -1044,13 +1153,20 @@ displayedExercises.map((ex) => (
         </Box>
       );
     })}
+
+    <Button
+      fullWidth
+      variant="outlined"
+      onClick={addSet}
+      disabled={selectedExercise?.completed}
+      sx={{ mt: 2, fontSize: "1.3rem", py: 1.2 }}
+    >
+      + Agregar serie
+    </Button>
+
   </Stack>
 
 </AnimatedDialog>
-
-
-
-
 
 
 
@@ -1445,6 +1561,8 @@ displayedExercises.map((ex) => (
 </Dialog>
 
 </Container>
+
+</Box>
 
 </Box>
 

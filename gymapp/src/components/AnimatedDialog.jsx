@@ -16,6 +16,7 @@ const Transition = forwardRef(function Transition(props, ref) {
 export default function AnimatedDialog({
   open,
   onClose,
+  onExited,
   title,
   children,
   actions,
@@ -23,7 +24,8 @@ export default function AnimatedDialog({
   fullWidth = true,
   titleSize = "1.3rem",
   headerSx = {},
-  paperSx = {} // 👈 🔥 clave
+  paperSx = {},
+  closeSx = {}
 }) {
   return (
     <Dialog
@@ -35,6 +37,9 @@ export default function AnimatedDialog({
         transition: Transition
       }}
       slotProps={{
+        transition: {
+          onExited: onExited
+        },
         paper: {
           sx: {
             borderRadius: 3,
@@ -71,7 +76,7 @@ export default function AnimatedDialog({
           {title}
         </Typography>
 
-        <CloseButton onClick={onClose} />
+        <CloseButton onClick={onClose} sx={closeSx} />
       </Box>
 
       {/* CONTENT */}

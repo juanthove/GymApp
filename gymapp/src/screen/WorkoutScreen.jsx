@@ -299,16 +299,16 @@ return(
   />
 
   {/* 📦 CONTENIDO */}
-  <Container
-    maxWidth="sm"
-    sx={{
-      position: "relative",
-      zIndex: 2, // 👈 CLAVE
-      mt: 6
-    }}
-  >
+  <Box
+  sx={{
+    position: "relative",
+    zIndex: 2,
+    mt: 6
+  }}
+>
+  
 
-<Stack spacing={4}>
+
 
 <Box sx={{ position: "relative", mb: 2 }}>
 
@@ -327,17 +327,21 @@ return(
       backdropFilter: "blur(10px)",
       background: "rgba(255,255,255,0.15)",
       border: "1px solid rgba(255,255,255,0.25)",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.2)"
+      boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+
+      width: "100%",
+      maxWidth: "800px",
+      mx: "auto",
     }}
   >
-    <BackButton to="/home" />
+    <BackButton to="/home"  sx={{ ml: 8 }} />
 
     <PrimaryButton
       label="Cerrar sesión"
       onClick={handleLogout}
       disabled={hasDayInProgress()}
       sx={{
-        fontSize: "1.2rem",
+        fontSize: "1.5rem",
         px: 1.2,
         py: 0.2,
         background: "linear-gradient(145deg, #ff6b6b, #c62828)",
@@ -364,6 +368,17 @@ return(
   </Typography>
 
 </Box>
+
+<Container
+    maxWidth="sm"
+    sx={{
+      position: "relative",
+      zIndex: 2, // 👈 CLAVE
+      mt: 6
+    }}
+  >
+
+<Stack spacing={4} sx={{ mb: 5}}>
 
 {workout && (
   <Box
@@ -663,6 +678,7 @@ return(
 
 </Container>
 
+</Box>
 </Box>
 
 );
