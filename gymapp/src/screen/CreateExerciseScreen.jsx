@@ -19,43 +19,42 @@ import {
   Stack,
   Checkbox,
   FormControlLabel,
-  Alert,
-  Snackbar,
   Box
 } from "@mui/material";
 
 import BackButton from "../components/BackButton";
 import FileUploadField from "../components/FileUploadField";
+import AppSnackbar from "../components/AppSnackbar";
 
-export default function CreateExerciseScreen(){
+export default function CreateExerciseScreen() {
 
-  const [exercises,setExercises] = useState([]);
-  const [selectedId,setSelectedId] = useState("new");
+  const [exercises, setExercises] = useState([]);
+  const [selectedId, setSelectedId] = useState("new");
 
-  const [name,setName] = useState("");
-  const [description,setDescription] = useState("");
-  const [muscle,setMuscle] = useState("");
-  const [type,setType] = useState("PRIMARY");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [muscle, setMuscle] = useState("");
+  const [type, setType] = useState("PRIMARY");
 
-  const [image,setImage] = useState(null);
-  const [video,setVideo] = useState(null);
-  const [icon,setIcon] = useState(null);
+  const [image, setImage] = useState(null);
+  const [video, setVideo] = useState(null);
+  const [icon, setIcon] = useState(null);
   const [iconPreview, setIconPreview] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [videoPreview, setVideoPreview] = useState(null);
 
-  const [deleteImage,setDeleteImage] = useState(false);
-  const [deleteVideo,setDeleteVideo] = useState(false);
-  const [deleteIcon,setDeleteIcon] = useState(false);
+  const [deleteImage, setDeleteImage] = useState(false);
+  const [deleteVideo, setDeleteVideo] = useState(false);
+  const [deleteIcon, setDeleteIcon] = useState(false);
 
-  const [currentExercise,setCurrentExercise] = useState(null);
+  const [currentExercise, setCurrentExercise] = useState(null);
 
-  const [message,setMessage] = useState("");
-  const [messageType,setMessageType] = useState("info");
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("info");
 
-  const [fileKey,setFileKey] = useState(0);
+  const [fileKey, setFileKey] = useState(0);
 
-   useEffect(() => {
+  useEffect(() => {
     return () => {
       if (iconPreview) URL.revokeObjectURL(iconPreview);
       if (imagePreview) URL.revokeObjectURL(imagePreview);
@@ -79,16 +78,16 @@ export default function CreateExerciseScreen(){
     { value: "ABDOMINALS", label: "Abdominales" }
   ];
 
-  useEffect(()=>{
+  useEffect(() => {
     loadExercises();
-  },[]);
+  }, []);
 
-  const loadExercises = async ()=>{
+  const loadExercises = async () => {
     const data = await getExercises();
     setExercises(data);
   };
 
-  const resetForm = ()=>{
+  const resetForm = () => {
     setSelectedId("new");
     setName("");
     setDescription("");
@@ -104,32 +103,32 @@ export default function CreateExerciseScreen(){
     setDeleteVideo(false);
     setDeleteIcon(false);
     setCurrentExercise(null);
-    setFileKey(prev=>prev+3);
+    setFileKey(prev => prev + 3);
   };
 
-  const formatExerciseType = (type)=>{
+  const formatExerciseType = (type) => {
 
-  const map = {
-    PRIMARY:"Primario",
-    SECONDARY:"Secundario",
-    TERTIARY:"Terciario",
-    ABDOMINAL:"Abdominal"
+    const map = {
+      PRIMARY: "Primario",
+      SECONDARY: "Secundario",
+      TERTIARY: "Terciario",
+      ABDOMINAL: "Abdominal"
+    };
+
+    return map[type] || type;
+
   };
 
-  return map[type] || type;
-
-};
-
-  const handleSelect = (id)=>{
+  const handleSelect = (id) => {
 
     setSelectedId(id);
 
-    if(id==="new"){
+    if (id === "new") {
       resetForm();
       return;
     }
 
-    const ex = exercises.find(e=>e.id===Number(id));
+    const ex = exercises.find(e => e.id === Number(id));
 
     setCurrentExercise(ex);
     setName(ex.name);
@@ -146,24 +145,24 @@ export default function CreateExerciseScreen(){
     setDeleteIcon(false);
   };
 
-  const handleSubmit = async (e)=>{
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if(!name.trim()){
+    if (!name.trim()) {
       setMessage("El nombre del ejercicio es obligatorio");
       setMessageType("warning");
       return;
     }
 
-    if(!muscle){
+    if (!muscle) {
       setMessage("El músculo es obligatorio");
       setMessageType("warning");
       return;
     }
 
-    try{
+    try {
 
-      if(selectedId==="new"){
+      if (selectedId === "new") {
 
         await createExercise({
           name,
@@ -178,9 +177,9 @@ export default function CreateExerciseScreen(){
         setMessage("Ejercicio registrado correctamente");
         setMessageType("success");
 
-      }else{
+      } else {
 
-        await updateExercise(selectedId,{
+        await updateExercise(selectedId, {
           name,
           description,
           muscle,
@@ -200,7 +199,7 @@ export default function CreateExerciseScreen(){
       resetForm();
       loadExercises();
 
-    }catch(err){
+    } catch (err) {
 
       setMessage("Error al guardar el ejercicio");
       setMessageType("error");
@@ -209,11 +208,11 @@ export default function CreateExerciseScreen(){
 
   };
 
-  const handleDelete = async ()=>{
+  const handleDelete = async () => {
 
-    if(!window.confirm("¿Eliminar ejercicio?")) return;
+    if (!window.confirm("¿Eliminar ejercicio?")) return;
 
-    try{
+    try {
 
       await deleteExercise(selectedId);
 
@@ -223,7 +222,7 @@ export default function CreateExerciseScreen(){
       resetForm();
       loadExercises();
 
-    }catch{
+    } catch {
 
       setMessage("Error al eliminar ejercicio");
       setMessageType("error");
@@ -234,9 +233,9 @@ export default function CreateExerciseScreen(){
 
   return (
 
-    <Container maxWidth="md" sx={{mt:4,mb:6}}>
+    <Container maxWidth="md" sx={{ mt: 4, mb: 6 }}>
 
-      <Paper sx={{p:4}}>
+      <Paper sx={{ p: 4 }}>
 
         <Box
           sx={{
@@ -250,7 +249,7 @@ export default function CreateExerciseScreen(){
 
           {/* 🔙 Flecha a la izquierda */}
           <Box sx={{ position: "absolute", left: 0 }}>
-            <BackButton to="/admin" sx={{color: "black"}}/>
+            <BackButton to="/admin" sx={{ color: "black" }} />
           </Box>
 
           {/* 🧠 Título centrado REAL */}
@@ -266,12 +265,12 @@ export default function CreateExerciseScreen(){
             select
             label="Seleccionar ejercicio"
             value={selectedId}
-            onChange={(e)=>handleSelect(e.target.value)}
+            onChange={(e) => handleSelect(e.target.value)}
           >
 
             <MenuItem value="new">Nuevo ejercicio</MenuItem>
 
-            {exercises.map(ex=>(
+            {exercises.map(ex => (
               <MenuItem key={ex.id} value={ex.id}>
                 {ex.name} ({formatExerciseType(ex.type)})
               </MenuItem>
@@ -282,7 +281,7 @@ export default function CreateExerciseScreen(){
           <TextField
             label="Nombre"
             value={name}
-            onChange={(e)=>setName(e.target.value)}
+            onChange={(e) => setName(e.target.value)}
           />
 
           <TextField
@@ -290,14 +289,14 @@ export default function CreateExerciseScreen(){
             multiline
             minRows={3}
             value={description}
-            onChange={(e)=>setDescription(e.target.value)}
+            onChange={(e) => setDescription(e.target.value)}
           />
 
           <TextField
             select
             label="Músculo trabajado"
             value={muscle}
-            onChange={(e)=>setMuscle(e.target.value)}
+            onChange={(e) => setMuscle(e.target.value)}
           >
 
             {muscleOptions.map((m) => (
@@ -314,7 +313,7 @@ export default function CreateExerciseScreen(){
             select
             label="Tipo de ejercicio"
             value={type}
-            onChange={(e)=>setType(e.target.value)}
+            onChange={(e) => setType(e.target.value)}
           >
 
             <MenuItem value="PRIMARY">
@@ -347,8 +346,8 @@ export default function CreateExerciseScreen(){
             existingUrl={currentExercise?.icon && `/api/exercises/icon/${currentExercise.icon}`}
             deleteFlag={deleteIcon}
             setDeleteFlag={setDeleteIcon}
-            renderPreview={(src)=>(
-              <img src={src} style={{ maxWidth:"100px", borderRadius:"8px" }} />
+            renderPreview={(src) => (
+              <img src={src} style={{ maxWidth: "100px", borderRadius: "8px" }} />
             )}
           />
 
@@ -364,8 +363,8 @@ export default function CreateExerciseScreen(){
             existingUrl={currentExercise?.image && getExerciseImageUrl(currentExercise.image)}
             deleteFlag={deleteImage}
             setDeleteFlag={setDeleteImage}
-            renderPreview={(src)=>(
-              <img src={src} style={{ maxWidth:"300px", borderRadius:"8px" }} />
+            renderPreview={(src) => (
+              <img src={src} style={{ maxWidth: "300px", borderRadius: "8px" }} />
             )}
           />
 
@@ -381,25 +380,20 @@ export default function CreateExerciseScreen(){
             existingUrl={currentExercise?.video && getExerciseVideoUrl(currentExercise.video)}
             deleteFlag={deleteVideo}
             setDeleteFlag={setDeleteVideo}
-            renderPreview={(src)=>(
-              <video src={src} controls style={{ maxWidth:"400px" }} />
+            renderPreview={(src) => (
+              <video src={src} controls style={{ maxWidth: "400px" }} />
             )}
           />
 
-          <Snackbar
-            open={!!message}
-            autoHideDuration={3000}
-            onClose={()=>setMessage("")}
-            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-          >
-            <Alert severity={messageType} sx={{ width: "100%" }}>
-              {message}
-            </Alert>
-          </Snackbar>
+          <AppSnackbar
+            message={message}
+            type={messageType}
+            onClose={() => setMessage("")}
+          />
 
           <Stack direction="row" spacing={2}>
 
-            {selectedId!=="new" &&
+            {selectedId !== "new" &&
               <Button
                 variant="contained"
                 color="error"
@@ -414,7 +408,7 @@ export default function CreateExerciseScreen(){
               color="success"
               onClick={handleSubmit}
             >
-              {selectedId==="new"
+              {selectedId === "new"
                 ? "Registrar ejercicio"
                 : "Actualizar ejercicio"}
             </Button>

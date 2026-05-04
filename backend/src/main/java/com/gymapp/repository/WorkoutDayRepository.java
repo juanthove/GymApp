@@ -26,6 +26,4 @@ public interface WorkoutDayRepository extends JpaRepository<WorkoutDay, Long> {
         ORDER BY CAST(wd.finishedAt AS date)
     """)
     List<WorkoutDayCountProjection> countWorkoutDaysByDate(Long userId);
-
-
 }

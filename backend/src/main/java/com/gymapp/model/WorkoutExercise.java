@@ -1,7 +1,11 @@
 package com.gymapp.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 public class WorkoutExercise {
 
@@ -26,68 +30,4 @@ public class WorkoutExercise {
     private String comment;
 
     private Double nextWeight;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public WorkoutDay getWorkoutDay() {
-        return workoutDay;
-    }
-
-    public void setWorkoutDay(WorkoutDay workoutDay) {
-        this.workoutDay = workoutDay;
-    }
-
-    public Exercise getExercise() {
-        return exercise;
-    }
-
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
-    }
-
-    public Integer getExerciseOrder() {
-        return exerciseOrder;
-    }
-
-    public void setExerciseOrder(Integer exerciseOrder) {
-        this.exerciseOrder = exerciseOrder;
-    }
-
-    public Double getWeight() {
-        return weight;
-    }
-
-    public void setWeight(Double weight) {
-        this.weight = weight;
-    }
-
-    public boolean getCompleted() {
-        return completed;
-    }
-
-    public void setCompleted(boolean completed) {
-        this.completed = completed;
-    }
-
-    public String getComment() {
-        return comment;
-    }
-
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    public Double getNextWeight() {
-        return nextWeight;
-    }
-
-    public void setNextWeight(Double nextWeight) {
-        this.nextWeight = nextWeight;
-    }
 }

@@ -184,22 +184,22 @@ export default function FinalResumeScreen() {
                 🎉
               </Box>
               Felicitaciones{" "}
-            <Box
-              component="span"
-              sx={{
-                fontWeight: 900,
-                background: "linear-gradient(90deg, #ffd54f, #ffd36c)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                textShadow: "0 4px 12px rgba(0, 0, 0, 0.06)",
-                animation: `
+              <Box
+                component="span"
+                sx={{
+                  fontWeight: 900,
+                  background: "linear-gradient(90deg, #ffd54f, #ffd36c)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  textShadow: "0 4px 12px rgba(0, 0, 0, 0.06)",
+                  animation: `
                   ${fadeScale} 0.6s ease-out,
                   ${glow} 2s ease-in-out 0.6s infinite alternate
                 `
-              }}
-            >
-              {user.name}
-            </Box>
+                }}
+              >
+                {user.name}
+              </Box>
             </Typography>
 
             <Box
@@ -221,7 +221,7 @@ export default function FinalResumeScreen() {
           ) : (
             <VolumeCard value={totalVolume} />
           )}
-          
+
 
           {/* Estadisticas */}
           <Stack
@@ -275,58 +275,58 @@ export default function FinalResumeScreen() {
               </Box>
             </>
           ) : (
-          
-          <Box width="75%">
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                width: "100%",
-                my: 2
-              }}
-            >
-              <Box sx={{ flex: 1, height: "1px", backgroundColor: "rgba(255, 255, 255, 0.8)" }} />
 
-              <Typography
+            <Box width="75%">
+              <Box
                 sx={{
-                  mx: 2,
-                  fontWeight: 600,
-                  fontSize: "1.8rem",
-                  color: 'white',
-                  whiteSpace: "nowrap"
+                  display: "flex",
+                  alignItems: "center",
+                  width: "100%",
+                  my: 2
                 }}
               >
-                Volumen por músculo
-              </Typography>
+                <Box sx={{ flex: 1, height: "1px", backgroundColor: "rgba(255, 255, 255, 0.8)" }} />
 
-              <Box sx={{ flex: 1, height: "1px", backgroundColor: "rgba(255,255,255,0.8)" }} />
-            </Box>
-
-            
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 2,
-                justifyContent: "center" // 👈 clave para centrar la última
-              }}
-            >
-              {muscleVolume.map((m) => (
-                <Box
-                  key={m.muscle}
+                <Typography
                   sx={{
-                    width: "calc(50% - 8px)", // 👈 2 por fila (gap compensado)
-                    minWidth: "260px", // opcional para que no se achiquen demasiado
+                    mx: 2,
+                    fontWeight: 600,
+                    fontSize: "1.8rem",
+                    color: 'white',
+                    whiteSpace: "nowrap"
                   }}
                 >
-                  <MuscleVolumeCard
-                    muscle={m.muscle}
-                    volume={m.volume}
-                  />
-                </Box>
-              ))}
+                  Volumen por músculo
+                </Typography>
+
+                <Box sx={{ flex: 1, height: "1px", backgroundColor: "rgba(255,255,255,0.8)" }} />
+              </Box>
+
+
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 2,
+                  justifyContent: "center" // 👈 clave para centrar la última
+                }}
+              >
+                {muscleVolume.map((m) => (
+                  <Box
+                    key={m.muscle}
+                    sx={{
+                      width: "calc(50% - 8px)", // 👈 2 por fila (gap compensado)
+                      minWidth: "260px", // opcional para que no se achiquen demasiado
+                    }}
+                  >
+                    <MuscleVolumeCard
+                      muscle={m.muscle}
+                      volume={m.volume}
+                    />
+                  </Box>
+                ))}
+              </Box>
             </Box>
-          </Box>
 
           )}
 
@@ -351,7 +351,7 @@ export default function FinalResumeScreen() {
           </Box>
         </Stack>
 
-        
+
       </Container>
     </Box>
   );

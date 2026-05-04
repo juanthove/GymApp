@@ -3,7 +3,11 @@ package com.gymapp.model;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "workout_set")
 public class WorkoutSet {
@@ -27,61 +31,4 @@ public class WorkoutSet {
     private Double weight;
 
     private LocalDateTime performedAt;
-
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public WorkoutExercise getExercise() {
-        return workoutExercise;
-    }
-
-    public void setExercise(WorkoutExercise workoutExercise) {
-        this.workoutExercise = workoutExercise;
-    }
-
-    public Integer getSetNumber() {
-        return setNumber;
-    }
-
-    public void setSetNumber(Integer setNumber) {
-        this.setNumber = setNumber;
-    }
-
-    public Integer getReps() {
-        return reps;
-    }
-
-    public void setReps(Integer reps) {
-        this.reps = reps;
-    }
-
-    public Double getWeight() {
-        return weight;
-    }
-
-    public void setWeight(Double weight) {
-        this.weight = weight;
-    }
-
-    public LocalDateTime getPerformedAt() {
-        return performedAt;
-    }
-
-    public void setPerformedAt(LocalDateTime performedAt) {
-        this.performedAt = performedAt;
-    }
 }

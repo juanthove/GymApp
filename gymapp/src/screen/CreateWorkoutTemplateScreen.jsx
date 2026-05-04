@@ -15,26 +15,24 @@ import {
 } from "../services/workoutTemplateService";
 
 import {
-Container,
-Paper,
-Typography,
-TextField,
-MenuItem,
-Button,
-Stack,
-Card,
-CardContent,
-IconButton,
-FormControlLabel,
-Checkbox,
-Accordion,
-AccordionSummary,
-AccordionDetails,
-Divider,
-Alert,
-Snackbar,
-Autocomplete,
-Box
+  Container,
+  Paper,
+  Typography,
+  TextField,
+  MenuItem,
+  Button,
+  Stack,
+  Card,
+  CardContent,
+  IconButton,
+  FormControlLabel,
+  Checkbox,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Divider,
+  Autocomplete,
+  Box
 } from "@mui/material";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -46,654 +44,696 @@ import FileCopyIcon from "@mui/icons-material/FileCopy";
 import BackButton from "../components/BackButton";
 import MuscleChips from "../components/MuscleChips";
 import FileUploadField from "../components/FileUploadField";
+import AppSnackbar from "../components/AppSnackbar";
+import SortableList from "../components/sortable/SortableList";
+import SortableItem from "../components/sortable/SortableItem";
 
-export default function CreateWorkoutTemplateScreen(){
+export default function CreateWorkoutTemplateScreen() {
 
-const [templates,setTemplates] = useState([]);
-const [exercises,setExercises] = useState([]);
+  const [templates, setTemplates] = useState([]);
+  const [exercises, setExercises] = useState([]);
 
-const [selectedTemplateId,setSelectedTemplateId] = useState("");
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
 
-const [name,setName] = useState("");
-const [description,setDescription] = useState("");
-const [days,setDays] = useState([]);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [days, setDays] = useState([]);
 
-const [message,setMessage] = useState("");
-const [messageType,setMessageType] = useState("info");
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("info");
 
-useEffect(()=>{
- loadTemplates();
- loadExercises();
-},[]);
+  useEffect(() => {
+    loadTemplates();
+    loadExercises();
+  }, []);
 
-const loadTemplates = async()=>{
- const data = await getWorkoutTemplates();
- setTemplates(data);
-};
+  const loadTemplates = async () => {
+    const data = await getWorkoutTemplates();
+    setTemplates(data);
+  };
 
-const loadExercises = async()=>{
- const data = await getExercises();
- setExercises(data);
-};
+  const loadExercises = async () => {
+    const data = await getExercises();
+    setExercises(data);
+  };
 
-const calculateDayMuscles = (dayExercises) => {
+  const calculateDayMuscles = (dayExercises) => {
 
-  const musclesSet = new Set();
+    const musclesSet = new Set();
 
-  dayExercises.forEach(ex => {
-    const fullExercise = exercises.find(e => e.id === ex.exerciseId);
+    dayExercises.forEach(ex => {
+      const fullExercise = exercises.find(e => e.id === ex.exerciseId);
 
-    if (fullExercise?.muscle) {
-      musclesSet.add(fullExercise.muscle);
+      if (fullExercise?.muscle) {
+        musclesSet.add(fullExercise.muscle);
+      }
+    });
+
+    return Array.from(musclesSet);
+  };
+
+  const resetForm = () => {
+    setSelectedTemplateId("");
+    setName("");
+    setDescription("");
+    setDays([]);
+  };
+
+  const validateTemplate = () => {
+
+    if (!name.trim()) {
+      setMessage("La plantilla debe tener nombre");
+      setMessageType("warning");
+      return false;
     }
-  });
 
-  return Array.from(musclesSet);
-};
+    if (days.length === 0) {
+      setMessage("Debes agregar al menos un día");
+      setMessageType("warning");
+      return false;
+    }
 
-const resetForm = ()=>{
- setSelectedTemplateId("");
- setName("");
- setDescription("");
- setDays([]);
-};
+    for (let d = 0; d < days.length; d++) {
 
-const validateTemplate = ()=>{
+      const day = days[d];
 
- if(!name.trim()){
-  setMessage("La plantilla debe tener nombre");
-  setMessageType("warning");
-  return false;
- }
+      if (!day.name.trim()) {
+        setMessage(`El día ${d + 1} debe tener nombre`);
+        setMessageType("warning");
+        return false;
+      }
 
- if(days.length===0){
-  setMessage("Debes agregar al menos un día");
-  setMessageType("warning");
-  return false;
- }
+      if (day.exercises.length === 0) {
+        setMessage(`El día ${d + 1} debe tener al menos un ejercicio`);
+        setMessageType("warning");
+        return false;
+      }
 
- for(let d=0; d<days.length; d++){
+    }
 
-  const day=days[d];
+    setMessage("");
+    return true;
 
-  if(!day.name.trim()){
-   setMessage(`El día ${d+1} debe tener nombre`);
-   setMessageType("warning");
-   return false;
-  }
+  };
 
-  if(day.exercises.length===0){
-   setMessage(`El día ${d+1} debe tener al menos un ejercicio`);
-   setMessageType("warning");
-   return false;
-  }
+  const loadTemplateData = async (id) => {
 
- }
+    if (!id) {
+      resetForm();
+      return;
+    }
 
- setMessage("");
- return true;
+    const template = await getWorkoutTemplateById(id);
 
-};
+    setName(template.name || "");
+    setDescription(template.description || "");
 
-const loadTemplateData = async (id) => {
+    const loadedDays = template.days.map(day => ({
 
-  if (!id) {
-    resetForm();
-    return;
-  }
+      id: day.id, // 🔥 importante
 
-  const template = await getWorkoutTemplateById(id);
+      name: day.name,
+      muscles: day.muscles || [],
+      isDirty: false,
+      dayOrder: day.dayOrder,
 
-  setName(template.name || "");
-  setDescription(template.description || "");
+      exercises: day.exercises.map(ex => ({
+        exerciseId: ex.exerciseId,
+        exerciseName: ex.exerciseName,
+        order: ex.order
+      })),
 
-  const loadedDays = template.days.map(day => ({
+      selectedExercise: null,
 
-    id: day.id, // 🔥 importante
+      image: null,
+      deleteImage: false,
 
-    name: day.name,
-    muscles: day.muscles || [],
-    isDirty: false,
-    dayOrder: day.dayOrder,
+      // 🔥 clave: armar URL desde filename
+      preview: day.muscleImage
+        ? getWorkoutTemplateDayImageUrl(day.muscleImage)
+        : null
 
-    exercises: day.exercises.map(ex => ({
-      exerciseId: ex.exerciseId,
-      exerciseName: ex.exerciseName,
-      order: ex.order
-    })),
+    }));
 
-    selectedExercise: null,
+    setDays(loadedDays);
+  };
 
-    image: null,
-    deleteImage: false,
+  const addDay = () => {
 
-    // 🔥 clave: armar URL desde filename
-    preview: day.muscleImage
-      ? getWorkoutTemplateDayImageUrl(day.muscleImage)
-      : null
+    setDays([
+      ...days,
+      {
+        id: null,
+        name: `Día ${days.length + 1}`,
+        muscles: [],
+        exercises: [],
+        selectedExercise: null,
+        image: null,
+        deleteImage: false,
+        preview: null
+      }
+    ]);
 
-  }));
+  };
 
-  setDays(loadedDays);
-};
+  const removeDay = (index) => {
 
-const addDay=()=>{
+    const updated = [...days];
+    updated.splice(index, 1);
 
- setDays([
-  ...days,
-  {
-   id: null,
-   name:`Día ${days.length+1}`,
-   muscles: [],
-   exercises:[],
-   selectedExercise:null,
-   image:null,
-   deleteImage:false,
-   preview:null
-  }
- ]);
+    setDays(updated);
 
-};
+  };
 
-const removeDay=(index)=>{
+  const moveDay = (index, direction) => {
 
- const updated=[...days];
- updated.splice(index,1);
+    const updated = [...days];
 
- setDays(updated);
+    const newIndex = index + direction;
 
-};
+    if (newIndex < 0 || newIndex >= updated.length) return;
 
-const moveDay=(index,direction)=>{
+    [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
 
- const updated=[...days];
+    setDays(updated);
 
- const newIndex=index+direction;
+  };
 
- if(newIndex<0 || newIndex>=updated.length) return;
+  const updateDayField = (index, field, value) => {
 
- [updated[index],updated[newIndex]]=[updated[newIndex],updated[index]];
+    const updated = [...days];
+    updated[index][field] = value;
 
- setDays(updated);
+    setDays(updated);
 
-};
+  };
 
-const updateDayField=(index,field,value)=>{
+  const addExerciseToDay = (dayIndex) => {
 
- const updated=[...days];
- updated[index][field]=value;
+    const selected = days[dayIndex].selectedExercise;
+    if (!selected) return;
 
- setDays(updated);
+    const updated = [...days];
 
-};
+    updated[dayIndex].exercises.push({
+      exerciseId: selected.id,
+      exerciseName: selected.name,
+      order: updated[dayIndex].exercises.length + 1
+    });
 
-const addExerciseToDay = (dayIndex) => {
+    updated[dayIndex].muscles = calculateDayMuscles(updated[dayIndex].exercises);
 
-  const selected = days[dayIndex].selectedExercise;
-  if(!selected) return;
+    updated[dayIndex].selectedExercise = null;
 
-  const updated = [...days];
+    setDays(updated);
+  };
 
-  updated[dayIndex].exercises.push({
-    exerciseId: selected.id,
-    exerciseName: selected.name,
-    order: updated[dayIndex].exercises.length + 1
-  });
+  const removeExerciseFromDay = (dayIndex, exIndex) => {
 
-  updated[dayIndex].muscles = calculateDayMuscles(updated[dayIndex].exercises);
+    const updated = [...days];
 
-  updated[dayIndex].selectedExercise = null;
+    updated[dayIndex].exercises.splice(exIndex, 1);
 
-  setDays(updated);
-};
+    updated[dayIndex].exercises =
+      updated[dayIndex].exercises.map((ex, i) => ({
+        ...ex,
+        order: i + 1
+      }));
 
-const removeExerciseFromDay=(dayIndex,exIndex)=>{
+    updated[dayIndex].muscles = calculateDayMuscles(updated[dayIndex].exercises);
 
- const updated=[...days];
+    setDays(updated);
 
- updated[dayIndex].exercises.splice(exIndex,1);
+  };
 
- updated[dayIndex].exercises=
- updated[dayIndex].exercises.map((ex,i)=>({
-  ...ex,
-  order:i+1
- }));
+  const moveExercise = (dayIndex, exIndex, direction) => {
 
- updated[dayIndex].muscles = calculateDayMuscles(updated[dayIndex].exercises);
+    const updated = [...days];
 
- setDays(updated);
+    const exercises = updated[dayIndex].exercises;
 
-};
+    const newIndex = exIndex + direction;
 
-const moveExercise=(dayIndex,exIndex,direction)=>{
+    if (newIndex < 0 || newIndex >= exercises.length) return;
 
- const updated=[...days];
+    [exercises[exIndex], exercises[newIndex]] = [exercises[newIndex], exercises[exIndex]];
 
- const exercises=updated[dayIndex].exercises;
+    exercises.forEach((ex, i) => ex.order = i + 1);
 
- const newIndex=exIndex+direction;
+    updated[dayIndex].muscles = calculateDayMuscles(updated[dayIndex].exercises);
 
- if(newIndex<0 || newIndex>=exercises.length) return;
+    setDays(updated);
 
- [exercises[exIndex],exercises[newIndex]]=[exercises[newIndex],exercises[exIndex]];
+  };
 
- exercises.forEach((ex,i)=>ex.order=i+1);
+  const duplicateDay = (index) => {
 
- updated[dayIndex].muscles = calculateDayMuscles(updated[dayIndex].exercises);
+    const dayToCopy = days[index];
 
- setDays(updated);
-
-};
-
-const duplicateDay = (index) => {
-
- const dayToCopy = days[index];
-
- const newDay = {
-  id: null, // 🔥 nuevo día
-  name: dayToCopy.name + " copia",
-  exercises: dayToCopy.exercises.map(ex => ({ ...ex })),
-  selectedExercise: null,
-  image: null,
-  deleteImage: false,
-  preview: null // 🔥 NO copiar imagen
- };
-
- const updated = [...days];
- updated.splice(index + 1, 0, newDay);
-
- setDays(updated);
-
-};
-
-const handleSubmit = async () => {
-
-  if (!validateTemplate()) return;
-
-  try {
-
-    const templateData = {
-      name,
-      description,
-      days: days.map((day, index) => ({
-        name: day.name,
-        dayOrder: index + 1,
-        exercises: day.exercises.map((ex, i) => ({
-          exerciseId: ex.exerciseId,
-          order: i + 1
-        }))
-      }))
+    const newDay = {
+      id: null, // 🔥 nuevo día
+      name: dayToCopy.name + " copia",
+      exercises: dayToCopy.exercises.map(ex => ({ ...ex })),
+      selectedExercise: null,
+      image: null,
+      deleteImage: false,
+      preview: null // 🔥 NO copiar imagen
     };
 
-    let templateId;
+    const updated = [...days];
+    updated.splice(index + 1, 0, newDay);
 
-    let oldImages = [];
+    setDays(updated);
 
-    if (selectedTemplateId) {
-      const existing = await getWorkoutTemplateById(selectedTemplateId);
+  };
 
-      oldImages = existing.days
-        .map(d => d.muscleImage)
-        .filter(Boolean);
+  const handleSubmit = async () => {
+
+    if (!validateTemplate()) return;
+
+    try {
+
+      const templateData = {
+        name,
+        description,
+        days: days.map((day, index) => ({
+          name: day.name,
+          dayOrder: index + 1,
+          exercises: day.exercises.map((ex, i) => ({
+            exerciseId: ex.exerciseId,
+            order: i + 1
+          }))
+        }))
+      };
+
+      let templateId;
+
+      let oldImages = [];
+
+      if (selectedTemplateId) {
+        const existing = await getWorkoutTemplateById(selectedTemplateId);
+
+        oldImages = existing.days
+          .map(d => d.muscleImage)
+          .filter(Boolean);
+      }
+
+      // 1️⃣ CREAR o ACTUALIZAR (FULL)
+      if (selectedTemplateId) {
+
+        await updateWorkoutTemplate(selectedTemplateId, templateData);
+        templateId = selectedTemplateId;
+
+        setMessage("Template actualizado correctamente");
+        setMessageType("success");
+
+      } else {
+
+        const res = await createWorkoutTemplate(templateData);
+        templateId = res.id;
+
+        setMessage("Template creado correctamente");
+        setMessageType("success");
+      }
+
+      // 2️⃣ TRAER TEMPLATE CON IDS REALES
+      const fullTemplate = await getWorkoutTemplateById(templateId);
+
+      // 3️⃣ MANEJO DE IMÁGENES
+      for (let i = 0; i < fullTemplate.days.length; i++) {
+
+        const backendDay = fullTemplate.days[i];
+        const frontDay = days[i];
+
+        if (frontDay.image) {
+          await uploadWorkoutTemplateDayImage(backendDay.id, frontDay.image);
+        }
+
+        else if (frontDay.deleteImage) {
+          await deleteWorkoutTemplateDayImage(backendDay.id);
+        }
+
+        else if (frontDay.preview && !frontDay.image && !frontDay.deleteImage) {
+
+          const res = await fetch(frontDay.preview);
+          const blob = await res.blob();
+
+          const file = new File([blob], "image.jpg", { type: blob.type });
+
+          await uploadWorkoutTemplateDayImage(backendDay.id, file);
+        }
+      }
+
+      for (const img of oldImages) {
+        deleteWorkoutTemplateDayImageByFilename(img);
+      }
+
+      // 4️⃣ RESET
+      resetForm();
+      loadTemplates();
+
+    } catch (e) {
+
+      setMessage(e.message);
+      setMessageType("error");
+
     }
+  };
 
-    // 1️⃣ CREAR o ACTUALIZAR (FULL)
-    if (selectedTemplateId) {
+  const handleDelete = async () => {
 
-      await updateWorkoutTemplate(selectedTemplateId, templateData);
-      templateId = selectedTemplateId;
+    if (!selectedTemplateId) return;
 
-      setMessage("Template actualizado correctamente");
+    if (!window.confirm("Eliminar este template?")) return;
+
+    try {
+
+      await deleteWorkoutTemplate(selectedTemplateId);
+
+      setMessage("Template eliminado");
       setMessageType("success");
 
-    } else {
+      resetForm();
+      loadTemplates();
 
-      const res = await createWorkoutTemplate(templateData);
-      templateId = res.id;
+    } catch (e) {
 
-      setMessage("Template creado correctamente");
-      setMessageType("success");
+      setMessage(e.message);
+      setMessageType("error");
+
     }
 
-    // 2️⃣ TRAER TEMPLATE CON IDS REALES
-    const fullTemplate = await getWorkoutTemplateById(templateId);
-
-    // 3️⃣ MANEJO DE IMÁGENES
-    for (let i = 0; i < fullTemplate.days.length; i++) {
-
-      const backendDay = fullTemplate.days[i];
-      const frontDay = days[i];
-
-      if (frontDay.image) {
-        await uploadWorkoutTemplateDayImage(backendDay.id, frontDay.image);
-      }
-
-      else if (frontDay.deleteImage) {
-        await deleteWorkoutTemplateDayImage(backendDay.id);
-      }
-
-      else if (frontDay.preview && !frontDay.image && !frontDay.deleteImage) {
-
-        const res = await fetch(frontDay.preview);
-        const blob = await res.blob();
-
-        const file = new File([blob], "image.jpg", { type: blob.type });
-
-        await uploadWorkoutTemplateDayImage(backendDay.id, file);
-      }
-    }
-
-    for (const img of oldImages) {
-      deleteWorkoutTemplateDayImageByFilename(img);
-    }
-
-    // 4️⃣ RESET
-    resetForm();
-    loadTemplates();
-
-  } catch (e) {
-
-    setMessage(e.message);
-    setMessageType("error");
-
-  }
-};
-
-const handleDelete = async()=>{
-
- if(!selectedTemplateId) return;
-
- if(!window.confirm("Eliminar este template?")) return;
-
- try{
-
-  await deleteWorkoutTemplate(selectedTemplateId);
-
-  setMessage("Template eliminado");
-  setMessageType("success");
-
-  resetForm();
-  loadTemplates();
-
- }catch(e){
-
-  setMessage(e.message);
-  setMessageType("error");
-
- }
-
-};
-
-return(
-
-<Container maxWidth="md" sx={{mt:4,mb:6}}>
-
-<Paper sx={{p:4}}>
-
-
-<Box
-    sx={{
-      position: "relative",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      mb: 2
-    }}
-  >
-
-    {/* 🔙 Flecha a la izquierda */}
-    <Box sx={{ position: "absolute", left: 0 }}>
-      <BackButton to="/admin" sx={{color: "black"}}/>
-    </Box>
-
-    {/* 🧠 Título centrado REAL */}
-    <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
-      Plantillas
-    </Typography>
-
-  </Box>
-
-<Stack spacing={3}>
-
-<TextField
-select
-label="Seleccionar plantilla"
-value={selectedTemplateId}
-onChange={(e)=>{
- const id=e.target.value;
- setSelectedTemplateId(id);
- loadTemplateData(id);
-}}
->
-
-<MenuItem value="">
-Nueva plantilla
-</MenuItem>
-
-{templates.map(t=>(
-<MenuItem key={t.id} value={t.id}>
-{t.name}
-</MenuItem>
-))}
-
-</TextField>
-
-<TextField
-label="Nombre de la plantilla"
-value={name}
-onChange={(e)=>setName(e.target.value)}
-/>
-
-<TextField
-label="Descripción"
-multiline
-minRows={3}
-value={description}
-onChange={(e)=>setDescription(e.target.value)}
-/>
-
-
-{days.map((day,dayIndex)=>(
-
-<Accordion key={dayIndex}>
-
-<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
-
-<Typography>
-Día {dayIndex+1} - {day.name}
-</Typography>
-
-</AccordionSummary>
-
-<AccordionDetails>
-
-<Stack spacing={2}>
-
-<Stack direction="row" justifyContent="space-between">
-
-<Typography variant="h6">
-Configuración del día
-</Typography>
-
-<Stack direction="row">
-
-<IconButton onClick={()=>moveDay(dayIndex,-1)}>
-<ArrowUpwardIcon/>
-</IconButton>
-
-<IconButton onClick={()=>moveDay(dayIndex,1)}>
-<ArrowDownwardIcon/>
-</IconButton>
-
-<IconButton onClick={()=>duplicateDay(dayIndex)}>
-<FileCopyIcon/>
-</IconButton>
-
-<IconButton onClick={()=>removeDay(dayIndex)}>
-<DeleteIcon color="error"/>
-</IconButton>
-
-</Stack>
-
-</Stack>
-
-<TextField
-label="Nombre del día"
-value={day.name}
-onChange={(e)=>updateDayField(dayIndex,"name",e.target.value)}
-/>
-
-<MuscleChips muscles={day.muscles} />
-
-<FileUploadField
-  label="Imagen del día"
-  accept="image/*"
-  setFile={(file) => {
-    const updated = [...days];
-    updated[dayIndex].image = file;
-    setDays(updated);
-  }}
-  preview={day.preview}
-  setPreview={(preview) => {
-    const updated = [...days];
-    updated[dayIndex].preview = preview;
-    setDays(updated);
-  }}
-  existingUrl={
-    day.preview && !day.preview.startsWith("blob:")
-      ? day.preview
-      : null
-  }
-  deleteFlag={day.deleteImage}
-  setDeleteFlag={(value) => {
-    const updated = [...days];
-    updated[dayIndex].deleteImage = value;
-
-    if (value) {
-      updated[dayIndex].image = null;
-    }
-
-    setDays(updated);
-  }}
-  renderPreview={(src) => (
-    <img
-      src={src}
-      style={{
-        maxWidth: "300px",
-        borderRadius: "8px"
-      }}
-    />
-  )}
-/>
-
-<Autocomplete
-options={exercises}
-getOptionLabel={(option)=>option.name}
-value={day.selectedExercise}
-onChange={(event,value)=>updateDayField(dayIndex,"selectedExercise",value)}
-renderInput={(params)=>
-<TextField {...params} label="Seleccionar ejercicio"/>
-}
-/>
-
-<Button
-variant="contained"
-color="success"
-onClick={()=>addExerciseToDay(dayIndex)}
->
-Agregar ejercicio
-</Button>
-
-<Divider/>
-
-{day.exercises.map((ex,i)=>(
-
-<Card key={i}>
-
-<CardContent>
-
-<Stack direction="row" spacing={2} alignItems="center">
-
-<Typography sx={{width:220}}>
-{ex.order}. {ex.exerciseName}
-</Typography>
-
-<IconButton onClick={()=>moveExercise(dayIndex,i,-1)}>
-<ArrowUpwardIcon/>
-</IconButton>
-
-<IconButton onClick={()=>moveExercise(dayIndex,i,1)}>
-<ArrowDownwardIcon/>
-</IconButton>
-
-<IconButton onClick={()=>removeExerciseFromDay(dayIndex,i)}>
-<DeleteIcon color="error"/>
-</IconButton>
-
-</Stack>
-
-</CardContent>
-
-</Card>
-
-))}
-
-</Stack>
-
-</AccordionDetails>
-
-</Accordion>
-
-))}
-
-<Button
-variant="contained"
-color="success"
-onClick={addDay}
->
-Agregar día
-</Button>
-
-<Snackbar
-            open={!!message}
-            autoHideDuration={3000}
-            onClose={()=>setMessage("")}
-            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+  };
+
+  return (
+
+    <Container maxWidth="md" sx={{ mt: 4, mb: 6 }}>
+
+      <Paper sx={{ p: 4 }}>
+
+
+        <Box
+          sx={{
+            position: "relative",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            mb: 2
+          }}
+        >
+
+          {/* 🔙 Flecha a la izquierda */}
+          <Box sx={{ position: "absolute", left: 0 }}>
+            <BackButton to="/admin" sx={{ color: "black" }} />
+          </Box>
+
+          {/* 🧠 Título centrado REAL */}
+          <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
+            Plantillas
+          </Typography>
+
+        </Box>
+
+        <Stack spacing={3}>
+
+          <TextField
+            select
+            label="Seleccionar plantilla"
+            value={selectedTemplateId}
+            onChange={(e) => {
+              const id = e.target.value;
+              setSelectedTemplateId(id);
+              loadTemplateData(id);
+            }}
           >
-            <Alert severity={messageType} sx={{ width: "100%" }}>
-              {message}
-            </Alert>
-          </Snackbar>
 
-<Stack direction="row" spacing={2}>
+            <MenuItem value="">
+              Nueva plantilla
+            </MenuItem>
 
-{selectedTemplateId && (
+            {templates.map(t => (
+              <MenuItem key={t.id} value={t.id}>
+                {t.name}
+              </MenuItem>
+            ))}
 
-<Button
-variant="contained"
-color="error"
-onClick={handleDelete}
->
-Eliminar Plantilla
-</Button>
+          </TextField>
 
-)}
+          <TextField
+            label="Nombre de la plantilla"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
 
-<Button
-variant="contained"
-color="success"
-onClick={handleSubmit}
->
-{selectedTemplateId ? "Actualizar Plantilla" : "Guardar Plantilla"}
-</Button>
+          <TextField
+            label="Descripción"
+            multiline
+            minRows={3}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
 
-</Stack>
 
-</Stack>
+          {days.map((day, dayIndex) => (
 
-</Paper>
+            <Accordion key={dayIndex}>
 
-</Container>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
 
-);
+                <Typography>
+                  Día {dayIndex + 1} - {day.name}
+                </Typography>
+
+              </AccordionSummary>
+
+              <AccordionDetails>
+
+                <Stack spacing={2}>
+
+                  <Stack direction="row" justifyContent="space-between">
+
+                    <Typography variant="h6">
+                      Configuración del día
+                    </Typography>
+
+                    <Stack direction="row">
+
+                      <IconButton onClick={() => moveDay(dayIndex, -1)}>
+                        <ArrowUpwardIcon />
+                      </IconButton>
+
+                      <IconButton onClick={() => moveDay(dayIndex, 1)}>
+                        <ArrowDownwardIcon />
+                      </IconButton>
+
+                      <IconButton onClick={() => duplicateDay(dayIndex)}>
+                        <FileCopyIcon />
+                      </IconButton>
+
+                      <IconButton onClick={() => removeDay(dayIndex)}>
+                        <DeleteIcon color="error" />
+                      </IconButton>
+
+                    </Stack>
+
+                  </Stack>
+
+                  <TextField
+                    label="Nombre del día"
+                    value={day.name}
+                    onChange={(e) => updateDayField(dayIndex, "name", e.target.value)}
+                  />
+
+                  <MuscleChips muscles={day.muscles} />
+
+                  <FileUploadField
+                    label="Imagen del día"
+                    accept="image/*"
+                    setFile={(file) => {
+                      const updated = [...days];
+                      updated[dayIndex].image = file;
+                      setDays(updated);
+                    }}
+                    preview={day.preview}
+                    setPreview={(preview) => {
+                      const updated = [...days];
+                      updated[dayIndex].preview = preview;
+                      setDays(updated);
+                    }}
+                    existingUrl={
+                      day.preview && !day.preview.startsWith("blob:")
+                        ? day.preview
+                        : null
+                    }
+                    deleteFlag={day.deleteImage}
+                    setDeleteFlag={(value) => {
+                      const updated = [...days];
+                      updated[dayIndex].deleteImage = value;
+
+                      if (value) {
+                        updated[dayIndex].image = null;
+                      }
+
+                      setDays(updated);
+                    }}
+                    renderPreview={(src) => (
+                      <img
+                        src={src}
+                        style={{
+                          maxWidth: "300px",
+                          borderRadius: "8px"
+                        }}
+                      />
+                    )}
+                  />
+
+                  <Autocomplete
+                    options={exercises}
+                    getOptionLabel={(option) => option.name}
+                    value={day.selectedExercise}
+                    onChange={(event, value) => updateDayField(dayIndex, "selectedExercise", value)}
+                    renderInput={(params) =>
+                      <TextField {...params} label="Seleccionar ejercicio" />
+                    }
+                  />
+
+                  <Button
+                    variant="contained"
+                    color="success"
+                    onClick={() => addExerciseToDay(dayIndex)}
+                  >
+                    Agregar ejercicio
+                  </Button>
+
+                  <Divider />
+
+                  <SortableList
+                    items={day.exercises}
+                    getId={(item) => `${item.exerciseId}-${item.order}`}
+                    setItems={(newItems) => {
+                      const updated = [...days];
+
+                      updated[dayIndex].exercises = newItems.map((ex, i) => ({
+                        ...ex,
+                        order: i + 1
+                      }));
+
+                      updated[dayIndex].muscles = calculateDayMuscles(updated[dayIndex].exercises);
+
+                      setDays(updated);
+                    }}
+                  >
+                    {day.exercises.map((ex, i) => (
+                      <SortableItem key={`${ex.exerciseId}-${ex.order}`} id={`${ex.exerciseId}-${ex.order}`}>
+
+                        <Card>
+                          <CardContent>
+
+                            <Stack
+                              direction="row"
+                              alignItems="center"
+                              justifyContent="space-between"
+                              sx={{ width: "100%" }}
+                            >
+
+                              {/* IZQUIERDA */}
+                              <Stack direction="row" spacing={2} alignItems="center">
+
+                                <Typography sx={{ width: 220 }}>
+                                  {i + 1}. {ex.exerciseName}
+                                </Typography>
+
+                                <IconButton onClick={() => removeExerciseFromDay(dayIndex, i)}>
+                                  <DeleteIcon color="error" />
+                                </IconButton>
+
+                              </Stack>
+
+                              {/* DERECHA (HANDLE) */}
+                              <Box
+                                sx={{
+                                  display: "grid",
+                                  gridTemplateColumns: "repeat(2, 8px)",
+                                  gap: "5px",
+                                  p: 0.5,
+                                  cursor: "grab",
+                                  mr: 1.5,
+                                  "&:active": { cursor: "grabbing" }
+                                }}
+                              >
+                                {[...Array(6)].map((_, idx) => (
+                                  <Box
+                                    key={idx}
+                                    sx={{
+                                      width: 6,
+                                      height: 6,
+                                      backgroundColor: "#888",
+                                      borderRadius: "50%"
+                                    }}
+                                  />
+                                ))}
+                              </Box>
+
+                            </Stack>
+
+                          </CardContent>
+                        </Card>
+
+                      </SortableItem>
+                    ))}
+                  </SortableList>
+
+                </Stack>
+
+              </AccordionDetails>
+
+            </Accordion>
+
+          ))}
+
+          <Button
+            variant="contained"
+            color="success"
+            onClick={addDay}
+          >
+            Agregar día
+          </Button>
+
+          <AppSnackbar
+            message={message}
+            type={messageType}
+            onClose={() => setMessage("")}
+          />
+
+          <Stack direction="row" spacing={2}>
+
+            {selectedTemplateId && (
+
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleDelete}
+              >
+                Eliminar Plantilla
+              </Button>
+
+            )}
+
+            <Button
+              variant="contained"
+              color="success"
+              onClick={handleSubmit}
+            >
+              {selectedTemplateId ? "Actualizar Plantilla" : "Guardar Plantilla"}
+            </Button>
+
+          </Stack>
+
+        </Stack>
+
+      </Paper>
+
+    </Container>
+
+  );
 }

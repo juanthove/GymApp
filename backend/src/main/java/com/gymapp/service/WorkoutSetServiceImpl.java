@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.sql.Timestamp;
+
 @Service
 public class WorkoutSetServiceImpl implements WorkoutSetService {
 
@@ -58,16 +59,13 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
     private List<WorkoutSet> getSetsByDateFilter(Long userId, LocalDate from, LocalDate to) {
         if (from != null && to != null) {
             return workoutSetRepository.findByUserIdAndPerformedAtBetweenOrderByPerformedAtAscSetNumberAsc(
-                userId, from.atStartOfDay(), to.atTime(LocalTime.MAX)
-            );
+                    userId, from.atStartOfDay(), to.atTime(LocalTime.MAX));
         } else if (from != null) {
             return workoutSetRepository.findByUserIdAndPerformedAtAfterOrderByPerformedAtAscSetNumberAsc(
-                userId, from.atStartOfDay()
-            );
+                    userId, from.atStartOfDay());
         } else if (to != null) {
             return workoutSetRepository.findByUserIdAndPerformedAtBeforeOrderByPerformedAtAscSetNumberAsc(
-                userId, to.atTime(LocalTime.MAX)
-            );
+                    userId, to.atTime(LocalTime.MAX));
         } else {
             return workoutSetRepository.findByUserIdOrderByPerformedAtAscSetNumberAsc(userId);
         }
@@ -82,40 +80,39 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
     }
 
     private List<WorkoutSet> filterByMuscle(List<WorkoutSet> sets, MuscleType muscle) {
-        if (muscle == null) return sets;
+        if (muscle == null)
+            return sets;
 
         return sets.stream()
-            .filter(set -> muscle.equals(resolveMuscle(set)))
-            .toList();
+                .filter(set -> muscle.equals(resolveMuscle(set)))
+                .toList();
     }
 
     @Override
-    public WorkoutSetVolumeResponse getTotalVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to, MuscleType muscle) {
+    public WorkoutSetVolumeResponse getTotalVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to,
+            MuscleType muscle) {
 
         List<WorkoutSet> sets = getSetsByDateFilter(userId, from, to);
 
         sets = filterByMuscle(sets, muscle);
 
         double totalVolume = sets.stream()
-            .mapToDouble(this::calculateSetVolume)
-            .sum();
+                .mapToDouble(this::calculateSetVolume)
+                .sum();
 
         return new WorkoutSetVolumeResponse(userId, from, to, totalVolume);
     }
 
-
     @Override
     public List<WorkoutSetWeeklyMuscleVolumeResponse> getWeeklyMuscleVolumeByUserAndDateRange(
-        Long userId,
-        LocalDate from,
-        LocalDate to
-    ) {
+            Long userId,
+            LocalDate from,
+            LocalDate to) {
 
         List<Object[]> rows = workoutSetRepository.findWeeklyVolumeWithHistoricalMax(
-            userId,
-            from != null ? from.atStartOfDay() : null,
-            to != null ? to.atTime(LocalTime.MAX) : null
-        );
+                userId,
+                from != null ? from.atStartOfDay() : null,
+                to != null ? to.atTime(LocalTime.MAX) : null);
 
         List<WorkoutSetWeeklyMuscleVolumeResponse> result = new ArrayList<>();
 
@@ -128,24 +125,23 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
             MuscleType muscle = MuscleType.valueOf(muscleStr);
 
             result.add(new WorkoutSetWeeklyMuscleVolumeResponse(
-                weekStart.toLocalDate(),
-                weekStart.toLocalDate().plusDays(6),
-                muscle,
-                weeklyVolume,
-                historicalMax
-            ));
+                    weekStart.toLocalDate(),
+                    weekStart.toLocalDate().plusDays(6),
+                    muscle,
+                    weeklyVolume,
+                    historicalMax));
         }
 
         result.sort((a, b) -> {
             // 🔹 1. comparar por semana (desc)
             int cmpWeek = b.weekStart().compareTo(a.weekStart());
-            if (cmpWeek != 0) return cmpWeek;
+            if (cmpWeek != 0)
+                return cmpWeek;
 
             // 🔹 2. comparar por orden del enum
             return Integer.compare(
-                a.muscle().ordinal(),
-                b.muscle().ordinal()
-            );
+                    a.muscle().ordinal(),
+                    b.muscle().ordinal());
         });
         return result;
     }
@@ -176,8 +172,10 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
 
             long days = ChronoUnit.DAYS.between(minDate, maxDate);
 
-            if (days <= 30) return Granularity.DAY;
-            if (days <= 180) return Granularity.WEEK;
+            if (days <= 30)
+                return Granularity.DAY;
+            if (days <= 180)
+                return Granularity.WEEK;
             return Granularity.MONTH;
         }
 
@@ -185,8 +183,8 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
     }
 
     @Override
-    public WorkoutVolumeResponse getVolumeSeriesByUserAndDateRange(Long userId, LocalDate from, LocalDate to, 
-        Granularity granularity, MuscleType muscle) {
+    public WorkoutVolumeResponse getVolumeSeriesByUserAndDateRange(Long userId, LocalDate from, LocalDate to,
+            Granularity granularity, MuscleType muscle) {
 
         List<WorkoutSet> sets = getSetsByDateFilter(userId, from, to);
 
@@ -197,17 +195,15 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
         Map<LocalDate, Double> grouped = sets.stream()
                 .collect(Collectors.groupingBy(
                         set -> resolveDateByGranularity(set, resolvedGranularity),
-                        Collectors.summingDouble(this::calculateSetVolume)
-                ));
+                        Collectors.summingDouble(this::calculateSetVolume)));
 
         List<WorkoutSetVolumePointResponse> data = grouped.entrySet().stream()
                 .map(entry -> new WorkoutSetVolumePointResponse(
                         entry.getKey(),
-                        entry.getValue()
-                ))
+                        entry.getValue()))
                 .sorted(Comparator.comparing(WorkoutSetVolumePointResponse::date))
                 .toList();
-        
+
         return new WorkoutVolumeResponse(resolvedGranularity, data);
     }
 
@@ -225,9 +221,8 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
 
     @Override
     public List<WorkoutDayMuscleVolumeResponse> getMuscleVolumeByDay(
-        Long userId,
-        Long dayId
-    ) {
+            Long userId,
+            Long dayId) {
         List<Object[]> rows = workoutSetRepository.findVolumeByDayId(userId, dayId);
 
         List<WorkoutDayMuscleVolumeResponse> result = new ArrayList<>();
@@ -237,9 +232,8 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
             Double volume = row[1] != null ? ((Number) row[1]).doubleValue() : 0.0;
 
             result.add(new WorkoutDayMuscleVolumeResponse(
-                MuscleType.valueOf(muscleStr),
-                volume
-            ));
+                    MuscleType.valueOf(muscleStr),
+                    volume));
         }
 
         return result;
@@ -260,7 +254,7 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
 
         WorkoutSet workoutSet = new WorkoutSet();
         workoutSet.setUser(user);
-        workoutSet.setExercise(workoutExercise);
+        workoutSet.setWorkoutExercise(workoutExercise);
         workoutSet.setSetNumber(request.setNumber());
         workoutSet.setReps(request.reps());
         workoutSet.setWeight(request.weight());
@@ -280,7 +274,7 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
         User user = resolveUserFromWorkoutExercise(workoutExercise);
 
         workoutSet.setUser(user);
-        workoutSet.setExercise(workoutExercise);
+        workoutSet.setWorkoutExercise(workoutExercise);
         workoutSet.setSetNumber(request.setNumber());
         workoutSet.setReps(request.reps());
         workoutSet.setWeight(request.weight());
@@ -298,7 +292,8 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
 
     private WorkoutSetResponse toResponse(WorkoutSet workoutSet) {
         Long userId = workoutSet.getUser() != null ? workoutSet.getUser().getId() : null;
-        Long workoutExerciseId = workoutSet.getExercise() != null ? workoutSet.getExercise().getId() : null;
+        Long workoutExerciseId = workoutSet.getWorkoutExercise() != null ? workoutSet.getWorkoutExercise().getId()
+                : null;
 
         return new WorkoutSetResponse(
                 workoutSet.getId(),
@@ -307,8 +302,7 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
                 workoutSet.getSetNumber(),
                 workoutSet.getReps(),
                 workoutSet.getWeight(),
-                workoutSet.getPerformedAt()
-        );
+                workoutSet.getPerformedAt());
     }
 
     private User resolveUserFromWorkoutExercise(WorkoutExercise workoutExercise) {
@@ -327,10 +321,10 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
     }
 
     private MuscleType resolveMuscle(WorkoutSet set) {
-        if (set.getExercise() == null || set.getExercise().getExercise() == null) {
+        if (set.getWorkoutExercise() == null || set.getWorkoutExercise().getExercise() == null) {
             return null;
         }
-        return set.getExercise().getExercise().getMuscle();
+        return set.getWorkoutExercise().getExercise().getMuscle();
     }
 
 }

@@ -12,11 +12,11 @@ import {
   Stack,
   TextField,
   Typography,
-  Alert,
-  Snackbar
 } from "@mui/material";
 
 import { loginSystemUser } from "../services/systemUserService";
+
+import AppSnackbar from "../components/AppSnackbar";
 
 export default function LoginScreen() {
   const navigate = useNavigate();
@@ -127,7 +127,7 @@ export default function LoginScreen() {
             <Stack sx={{ height: "100%" }}>
 
               {/* 🧠 TÍTULO */}
-              <Box textAlign="center" sx={{p: 2}}>
+              <Box textAlign="center" sx={{ p: 2 }}>
                 <Typography
                   variant="h2"
                   fontWeight={900}
@@ -144,8 +144,8 @@ export default function LoginScreen() {
                   Iniciar sesión
                 </Typography>
               </Box>
-              
-              
+
+
               <Stack spacing={3} sx={{ mt: 9 }}>
                 {/* 👤 USER */}
                 <TextField
@@ -159,7 +159,7 @@ export default function LoginScreen() {
 
                       "&.MuiInputLabel-shrink": {
                         fontSize: "1.6rem",
-                        transform: "translate(11px, -18px) scale(1)" 
+                        transform: "translate(11px, -18px) scale(1)"
                       }
                     }
                   }}
@@ -184,7 +184,7 @@ export default function LoginScreen() {
 
                       "&.MuiInputLabel-shrink": {
                         fontSize: "1.6rem",
-                        transform: "translate(11px, -18px) scale(1)" 
+                        transform: "translate(11px, -18px) scale(1)"
                       }
                     }
                   }}
@@ -198,7 +198,7 @@ export default function LoginScreen() {
 
                 {/* 🔘 BOTÓN */}
                 <Button
-                size="lg"
+                  size="lg"
                   variant="contained"
                   onClick={handleLogin}
                   disabled={loading}
@@ -219,32 +219,24 @@ export default function LoginScreen() {
         </Card>
 
         {/* ⚠️ ERROR */}
-        <Snackbar
-          open={!!error}
-          autoHideDuration={3000}
+        <AppSnackbar
+          message={error}
+          type="error"
           onClose={() => setError("")}
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        >
-          <Alert
-            severity="error"
-            sx={{
-              width: "100%",
-              fontSize: "1.8rem",     // 👈 texto más grande
-              px: 3,
-              py: 1.5,
-              borderRadius: 2,
-              "& .MuiAlert-icon": {
-                fontSize: "1.8rem", // 👈 agranda el ícono
-                alignItems: "center",
-                marginTop: "2px"
-              }
-            }}
-          >
-            {error}
-          </Alert>
-        </Snackbar>
+          alertSx={{
+            fontSize: "1.8rem",
+            px: 3,
+            py: 1.5,
+            borderRadius: 2,
+            "& .MuiAlert-icon": {
+              fontSize: "1.8rem",
+              alignItems: "center",
+              marginTop: "2px"
+            }
+          }}
+        />
       </Container>
-      
+
     </Box>
   );
 }

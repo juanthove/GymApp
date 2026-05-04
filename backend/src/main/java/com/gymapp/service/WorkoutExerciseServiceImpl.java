@@ -47,7 +47,7 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
         WorkoutDay day = workoutDayRepository.findById(dayId)
                 .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found"));
 
-        if (day.getAbdominal()) {
+        if (day.isAbdominal()) {
             return workoutExerciseRepository
                     .findByWorkoutDayIdAndExercise_TypeOrderByExerciseOrder(dayId, ExerciseType.ABDOMINAL)
                     .stream().map(this::toResponse).toList();
@@ -122,7 +122,7 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
         boolean selected = dayId != null && exercise.getId() != null && selectedWorkoutExerciseService.isSelected(dayId, exercise.getId());
         ExerciseType type = exercise.getExercise() != null ? exercise.getExercise().getType() : null;
         return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName, exerciseMuscle, type,
-                exercise.getExerciseOrder(), exercise.getWeight(), description, exercise.getComment(), exercise.getCompleted(), 
+                exercise.getExerciseOrder(), exercise.getWeight(), description, exercise.getComment(), exercise.isCompleted(), 
                 exercise.getNextWeight(), image, video, icon, selected, null);
     }
 

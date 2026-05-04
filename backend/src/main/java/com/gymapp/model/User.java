@@ -1,7 +1,13 @@
 package com.gymapp.model;
 
-import jakarta.persistence.*;
+import java.time.LocalDate;
 
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 @Entity
 @Table(name = "users", uniqueConstraints = {@UniqueConstraint(columnNames = {"name", "surname"})})
 public class User {
@@ -26,59 +32,16 @@ public class User {
     @JoinColumn(name = "current_workout_id")
     private Workout currentWorkout;
 
-    public Long getId() {
-        return id;
-    }
+    @ManyToOne
+    @JoinColumn(name = "user_level_id")
+    private UserLevel userLevel;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    private int totalWorkoutDays = 0;
 
-    public String getName() {
-        return name;
-    }
+    private int currentWeekWorkoutCount = 0;
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    private LocalDate streakStartDate;
 
-    public String getSurname() {
-        return surname;
-    }
+    private LocalDate lastWorkoutDate;
 
-    public void setSurname(String surname) {
-        this.surname = surname;
-    }
-
-    public boolean getLogged() {
-        return logged;
-    }
-
-    public void setLogged(boolean logged) {
-        this.logged = logged;
-    }
-
-    public Integer getGymDaysPerWeek() {
-        return gymDaysPerWeek;
-    }
-
-    public void setGymDaysPerWeek(Integer gymDaysPerWeek) {
-        this.gymDaysPerWeek = gymDaysPerWeek;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
-    }
-
-    public Workout getCurrentWorkout() {
-        return currentWorkout;
-    }
-
-    public void setCurrentWorkout(Workout currentWorkout) {
-        this.currentWorkout = currentWorkout;
-    }
 }

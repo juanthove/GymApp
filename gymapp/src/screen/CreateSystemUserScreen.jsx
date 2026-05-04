@@ -15,12 +15,11 @@ import {
   MenuItem,
   Button,
   Stack,
-  Alert,
-  Snackbar,
   Box
 } from "@mui/material";
 
 import BackButton from "../components/BackButton";
+import AppSnackbar from "../components/AppSnackbar";
 
 export default function CreateSystemUserScreen() {
 
@@ -90,37 +89,37 @@ export default function CreateSystemUserScreen() {
     if (!validateForm()) return;
 
     try {
-        if (selectedId === "new") {
+      if (selectedId === "new") {
 
         await createSystemUser({
-            username,
-            password,
-            role
+          username,
+          password,
+          role
         });
 
         setMessage("Usuario del sistema creado correctamente");
         setMessageType("success");
 
-        } else {
+      } else {
 
         await updateSystemUser(selectedId, {
-            username,
-            password: password || null, // 👈 clave
-            role
+          username,
+          password: password || null, // 👈 clave
+          role
         });
 
         setMessage("Usuario actualizado correctamente");
         setMessageType("success");
-        }
+      }
 
-        resetForm();
-        loadUsers();
+      resetForm();
+      loadUsers();
 
     } catch (error) {
-        setMessage("Error: " + error.message);
-        setMessageType("error");
+      setMessage("Error: " + error.message);
+      setMessageType("error");
     }
-    };
+  };
 
   const handleDelete = async () => {
     if (!currentUser) return;
@@ -160,7 +159,7 @@ export default function CreateSystemUserScreen() {
 
           {/* 🔙 Flecha a la izquierda */}
           <Box sx={{ position: "absolute", left: 0 }}>
-            <BackButton to="/admin" sx={{color: "black"}}/>
+            <BackButton to="/admin" sx={{ color: "black" }} />
           </Box>
 
           {/* 🧠 Título centrado REAL */}
@@ -220,16 +219,11 @@ export default function CreateSystemUserScreen() {
           </TextField>
 
           {/* 🔔 MENSAJES */}
-          <Snackbar
-            open={!!message}
-            autoHideDuration={3000}
+          <AppSnackbar
+            message={message}
+            type={messageType}
             onClose={() => setMessage("")}
-            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-          >
-            <Alert severity={messageType} sx={{ width: "100%" }}>
-              {message}
-            </Alert>
-          </Snackbar>
+          />
 
           {/* 🔘 BOTONES */}
           <Stack direction="row" spacing={2}>

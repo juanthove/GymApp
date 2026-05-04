@@ -72,7 +72,7 @@ public class CopyLastWorkoutsScript implements CommandLineRunner {
                 newDay.setName(oldDay.getName());
                 newDay.setDayOrder(oldDay.getDayOrder());
                 newDay.setMuscleImage(oldDay.getMuscleImage());
-                newDay.setAbdominal(oldDay.getAbdominal());
+                newDay.setAbdominal(oldDay.isAbdominal());
                 newDay.setWorkout(newWorkout);
                 newDay = workoutDayRepository.save(newDay);
 

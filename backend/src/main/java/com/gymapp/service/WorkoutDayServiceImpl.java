@@ -9,6 +9,7 @@ import com.gymapp.dto.response.WorkoutDaySummaryResponse;
 import com.gymapp.dto.response.WorkoutExerciseResponse;
 import com.gymapp.dto.response.WorkoutFrequencyResponse;
 import com.gymapp.exception.ResourceNotFoundException;
+import com.gymapp.model.User;
 import com.gymapp.model.ExerciseType;
 import com.gymapp.model.Granularity;
 import com.gymapp.model.MuscleType;
@@ -67,6 +68,12 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
     @Autowired
     private ExerciseReminderRuleRepository exerciseReminderRuleRepository;
+
+    @Autowired
+    private UserAchievementService userAchievementService;
+
+    @Autowired
+    private UserService userService;
 
     @Override
     public List<WorkoutDayResponse> getAllWorkoutDays() {
@@ -204,6 +211,15 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         //Eliminar json con ejercicios seleccionados
         selectedWorkoutExerciseService.deleteSelectedFile(id);
 
+        // 🔹 3. Obtener usuario (asumiendo relación)
+        User user = day.getWorkout().getUser();
+
+        // 🔹 4. Actualizar stats del usuario (streak, totalDays, etc)
+        userService.updateUserStats(user, LocalDate.now());
+
+        // 🔹 5. Actualizar achievements
+        userAchievementService.updateAchievements(user, id);
+
         return toResponse(workoutDayRepository.save(day));
     }
 
@@ -219,7 +235,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
     public boolean isAbdominalDay(Long id) {
         WorkoutDay day = workoutDayRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found"));
-        return day.getAbdominal();
+        return day.isAbdominal();
     }
 
     @Override
@@ -446,13 +462,13 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         boolean selected = dayId != null && exercise.getId() != null && selectedWorkoutExerciseService.isSelected(dayId, exercise.getId());
         ExerciseType type = exercise.getExercise() != null ? exercise.getExercise().getType() : null;
         return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName, exerciseMuscle, type,
-                exercise.getExerciseOrder(), exercise.getWeight(), description, exercise.getComment(), exercise.getCompleted(), 
+                exercise.getExerciseOrder(), exercise.getWeight(), description, exercise.getComment(), exercise.isCompleted(), 
                 exercise.getNextWeight(), image, video, icon, selected, alert);
     }
 
     private WorkoutDayResponse toResponse(WorkoutDay day) {
         Long workoutId = day.getWorkout() != null ? day.getWorkout().getId() : null;
         return new WorkoutDayResponse(day.getId(), day.getName(), muscleService.getMusclesFromWorkoutDay(day), day.getDayOrder(),
-                day.getMuscleImage(), day.getAbdominal(), day.getStartedAt(), day.getFinishedAt(), day.getStatus(), workoutId);
+                day.getMuscleImage(), day.isAbdominal(), day.getStartedAt(), day.getFinishedAt(), day.getStatus(), workoutId);
     }
 }

@@ -6,9 +6,11 @@ import com.gymapp.dto.response.WorkoutResponse;
 import com.gymapp.exception.ConflictException;
 import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.User;
+import com.gymapp.model.UserLevel;
 import com.gymapp.model.Workout;
 import com.gymapp.repository.UserRepository;
 import com.gymapp.repository.WorkoutRepository;
+import com.gymapp.repository.UserLevelRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -24,6 +26,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
+import java.time.temporal.WeekFields;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,6 +41,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private WorkoutRepository workoutRepository;
+
+    @Autowired
+    private UserLevelRepository userLevelRepository;
 
     @Override
     public List<UserResponse> getAllUsers() {
@@ -76,6 +83,9 @@ public class UserServiceImpl implements UserService {
             user.setName(request.name());
             user.setSurname(request.surname());
             user.setGymDaysPerWeek(request.gymDaysPerWeek());
+            UserLevel level = userLevelRepository.findById(request.userLevelId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Nivel no encontrado"));
+            user.setUserLevel(level);
             return toResponse(userRepository.save(user));
         } catch (DataIntegrityViolationException e) {
             throw new ConflictException("Ya existe un usuario con ese nombre y apellido");
@@ -88,9 +98,13 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
+        UserLevel level = userLevelRepository.findById(request.userLevelId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Nivel no encontrado"));
+
         user.setName(request.name());
         user.setSurname(request.surname());
         user.setGymDaysPerWeek(request.gymDaysPerWeek());
+        user.setUserLevel(level);
 
         return toResponse(userRepository.save(user));
     }
@@ -212,10 +226,104 @@ public class UserServiceImpl implements UserService {
         return toWorkoutResponse(user.getCurrentWorkout());
     }
 
+    //Actualizar las stats del usuario para los logros
+    @Override
+    public void updateUserStats(User user, LocalDate workoutDate) {
+
+        LocalDate lastDate = user.getLastWorkoutDate();
+
+        // 🔹 Siempre suma total
+        user.setTotalWorkoutDays(user.getTotalWorkoutDays() + 1);
+
+        if (lastDate == null) {
+            // 🟢 Primer entrenamiento
+            user.setCurrentWeekWorkoutCount(1);
+            user.setStreakStartDate(workoutDate);
+            user.setLastWorkoutDate(workoutDate);
+            return;
+        }
+
+        WeekFields weekFields = WeekFields.ISO;
+
+        int currentWeek = workoutDate.get(weekFields.weekOfWeekBasedYear());
+        int lastWeek = lastDate.get(weekFields.weekOfWeekBasedYear());
+
+        int currentYear = workoutDate.getYear();
+        int lastYear = lastDate.getYear();
+
+        boolean sameWeek = currentWeek == lastWeek && currentYear == lastYear;
+
+        if (sameWeek) {
+
+            // 🔹 Sigue en la misma semana
+            user.setCurrentWeekWorkoutCount(
+                    user.getCurrentWeekWorkoutCount() + 1
+            );
+
+        } else {
+
+            // 🔹 Cambió de semana → validar semana anterior
+            if (user.getCurrentWeekWorkoutCount() >= user.getGymDaysPerWeek()) {
+
+                // ✅ streak continúa → NO tocás la fecha
+
+            } else {
+
+                // ❌ streak roto → reinicia desde hoy
+                user.setStreakStartDate(workoutDate);
+            }
+
+            // 🔹 nueva semana arranca en 1
+            user.setCurrentWeekWorkoutCount(1);
+        }
+
+        user.setLastWorkoutDate(workoutDate);
+    }
+
+    //Actualizar las stats del usuario para cuando entre a ver los logros
+    @Override
+    public void updateUserStreakState(User user) {
+
+        LocalDate today = LocalDate.now();
+        LocalDate lastDate = user.getLastWorkoutDate();
+
+        if (lastDate == null) return;
+
+        WeekFields weekFields = WeekFields.ISO;
+
+        int currentWeek = today.get(weekFields.weekOfWeekBasedYear());
+        int lastWeek = lastDate.get(weekFields.weekOfWeekBasedYear());
+
+        int currentYear = today.getYear();
+        int lastYear = lastDate.getYear();
+
+        boolean sameWeek = currentWeek == lastWeek && currentYear == lastYear;
+
+        if (sameWeek) return;
+
+        // 🔹 Cambió la semana → validar semana anterior
+        if (user.getCurrentWeekWorkoutCount() >= user.getGymDaysPerWeek()) {
+
+            // ✅ cumplió → mantiene streak
+            // no tocamos streakStartDate
+
+        } else {
+
+            // ❌ no cumplió → reset streak
+            user.setStreakStartDate(null);
+        }
+
+        // 🔹 reset semana actual (todavía no entrenó esta semana)
+        user.setCurrentWeekWorkoutCount(0);
+
+        userRepository.save(user);
+    }
+
     private UserResponse toResponse(User user) {
         Long currentWorkoutId = user.getCurrentWorkout() != null ? user.getCurrentWorkout().getId() : null;
-        return new UserResponse(user.getId(), user.getName(), user.getSurname(), user.getLogged(),
-                user.getGymDaysPerWeek(), user.getImage(), currentWorkoutId);
+        Long userLevelId = user.getUserLevel() != null ? user.getUserLevel().getId() : null;
+        return new UserResponse(user.getId(), user.getName(), user.getSurname(), user.isLogged(),
+                user.getGymDaysPerWeek(), user.getImage(), currentWorkoutId, userLevelId);
     }
 
     private WorkoutResponse toWorkoutResponse(Workout workout) {
