@@ -1,8 +1,10 @@
 package com.gymapp.controller;
 
 import com.gymapp.dto.request.UserRequest;
+import com.gymapp.dto.response.UserAchievementResponse;
 import com.gymapp.dto.response.UserResponse;
 import com.gymapp.dto.response.WorkoutResponse;
+import com.gymapp.service.UserAchievementService;
 import com.gymapp.service.UserService;
 import jakarta.validation.Valid;
 
@@ -21,6 +23,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserAchievementService userAchievementService;
 
     @GetMapping
     public List<UserResponse> getAllUsers() {
@@ -101,6 +106,11 @@ public class UserController {
     @GetMapping("/{id}/current-workout")
     public WorkoutResponse getCurrentWorkout(@PathVariable Long id) {
         return userService.getCurrentWorkout(id);
+    }
+
+    @GetMapping("/{userId}/achievements")
+    public List<UserAchievementResponse> getUserAchievements(@PathVariable Long userId) {
+        return userAchievementService.getUserAchievements(userId);
     }
 
 }

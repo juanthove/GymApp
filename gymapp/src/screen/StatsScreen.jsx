@@ -134,7 +134,7 @@ export default function StatsScreen() {
       .reduce((acc, item) => acc + Number(item.volume || 0), 0);
 
   }, [selectedMuscle, weeklyByMuscle, totalVolume]);
-  
+
 
 
   const enhancedRows = useMemo(() => {
@@ -201,7 +201,7 @@ export default function StatsScreen() {
           subtotal: 0,
         });
       }
-      
+
 
       const group = groups.get(key);
       group.rows.push(row);
@@ -270,7 +270,7 @@ export default function StatsScreen() {
     try {
       setLoadingVolume(true);
       const granularity = getGranularity(from, to);
-      
+
       const res = await getVolumeByUserAndDateRange(
         userId,
         from,
@@ -345,7 +345,7 @@ export default function StatsScreen() {
     return `${format(start)}\n${format(end)}`;
   }
 
-  
+
 
   const formatXAxis = (value, granularity) => {
     if (!granularity) return value;
@@ -568,7 +568,7 @@ export default function StatsScreen() {
   }
 
 
-  
+
 
   //ANIMACIONES
   const glow = keyframes`
@@ -600,399 +600,586 @@ export default function StatsScreen() {
   return (
 
     <Box
+      sx={{
+        position: "relative",
+        minHeight: "100vh",
+        overflow: "hidden"
+      }}
+    >
+
+      {/* 🖼️ BACKGROUND */}
+      <Box
         sx={{
-          position: "relative",
-          minHeight: "100vh",
-          overflow: "hidden"
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `url(${backgroundImg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          backgroundAttachment: "fixed",
+          zIndex: 0
         }}
-      >
-      
-        {/* 🖼️ BACKGROUND */}
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage: `url(${backgroundImg})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-            backgroundAttachment: "fixed",
-            zIndex: 0
-          }}
-        />
-      
-        {/* 🌑 OVERLAY */}
-        <Box
-          sx={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(44, 44, 44, 0.4)",
-            backdropFilter: "blur(6px)",
-            zIndex: 1
-          }}
-        />
+      />
 
-    <Container maxWidth="md" sx={{ mt: 4, mb: 6, zIndex: 2, position: "relative" }}>
-      <Stack spacing={3}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            mt: 3
-          }}
-        >
+      {/* 🌑 OVERLAY */}
+      <Box
+        sx={{
+          position: "fixed",
+          inset: 0,
+          backgroundColor: "rgba(44, 44, 44, 0.4)",
+          backdropFilter: "blur(6px)",
+          zIndex: 1
+        }}
+      />
 
-          {/* ⬅️ IZQUIERDA */}
-          <Box sx={{ width: 48 }}>
-            <BackButton to={`/workout/${userId}`} />
-          </Box>
+      <Container maxWidth="md" sx={{ mt: 4, mb: 6, zIndex: 2, position: "relative" }}>
+        <Stack spacing={3}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mt: 3
+            }}
+          >
 
-          {/* 🎯 CENTRO */}
-          <Box textAlign="center">
-            <Typography
-              variant="h3"
-              sx={{
-                fontWeight: 900,
-                color: "#fff",
-                letterSpacing: "1px",
-                textShadow: `
+            {/* ⬅️ IZQUIERDA */}
+            <Box sx={{ width: 48 }}>
+              <BackButton to={`/workout/${userId}`} />
+            </Box>
+
+            {/* 🎯 CENTRO */}
+            <Box textAlign="center">
+              <Typography
+                variant="h3"
+                sx={{
+                  fontWeight: 900,
+                  color: "#fff",
+                  letterSpacing: "1px",
+                  textShadow: `
                   0 0 10px rgba(255,255,255,0.3),
                   0 4px 20px rgba(0,0,0,0.6)
                 `
-              }}
-            >
-              Estadísticas
-            </Typography>
+                }}
+              >
+                Estadísticas
+              </Typography>
 
-            <Box
-              sx={{
-                mt: 1,
-                mx: "auto",
-                width: 80,
-                height: 4,
-                borderRadius: 10,
-                background: "linear-gradient(90deg, #ff2020, #f16744)"
-              }}
-            />
+              <Box
+                sx={{
+                  mt: 1,
+                  mx: "auto",
+                  width: 80,
+                  height: 4,
+                  borderRadius: 10,
+                  background: "linear-gradient(90deg, #ff2020, #f16744)"
+                }}
+              />
+            </Box>
+
+            {/* 👉 DERECHA (espaciador) */}
+            <Box sx={{ width: 48 }} />
+
           </Box>
 
-          {/* 👉 DERECHA (espaciador) */}
-          <Box sx={{ width: 48 }} />
-
-        </Box>
-
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            width: "100%"
-          }}
-        >
           <Box
             sx={{
-              position: "relative",
-              width: "fit-content",
-              borderRadius: 3,
-              background: "rgba(0,0,0,0.35)",
+              display: "flex",
+              justifyContent: "center",
+              width: "100%"
             }}
           >
-            <ToggleButtonGroup
-              ref={tabsRef}
-              value={activeTab}
-              exclusive
-              onChange={(e, newValue) => {
-                if (newValue !== null) setActiveTab(newValue);
-              }}
-              sx={{
-                position: "relative",
-                background: "rgba(0,0,0,0.35)", // 👈 más oscuro
-                borderRadius: 3,
-                p: 0.5,
-                backdropFilter: "blur(6px)",
-
-                //Botones
-                "& .MuiToggleButton-root.MuiToggleButton-root": {
-                  color: "#fff",
-                  fontWeight: 700,
-                  textShadow: "0 2px 6px rgba(0, 0, 0, 0.8)",
-                  zIndex: 2,
-
-                  "&:hover": {
-                    backgroundColor: "rgba(255,255,255,0.1)"
-                  }
-                },
-
-                //Botones seleccionados
-                "& .Mui-selected": {
-                  background: "linear-gradient(135deg, #ff0000, #fd2828)",
-                  color: "#fff",
-                  borderRadius: 3,
-                  boxShadow: "0 0 12px rgba(255, 80, 60, 0.8)"
-                }
-              }}
-            >
-              <ToggleButton value="volume">Volumen</ToggleButton>
-              <ToggleButton value="pr">Record Personal</ToggleButton>
-              <ToggleButton value="frequency">Frecuencia</ToggleButton>
-            </ToggleButtonGroup>
-
             <Box
               sx={{
-                position: "absolute",
-                bottom: 6,
-                height: 4,
-                borderRadius: 10,
-                background: "rgba(255,255,255,0.6)",
-
-                left: `calc(${sliderStyle.left}px + 6px)`,
-                width: `calc(${sliderStyle.width}px - 12px)`,
-
-                transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)"
+                position: "relative",
+                width: "fit-content",
+                borderRadius: 3,
+                background: "rgba(0,0,0,0.35)",
               }}
-            />
+            >
+              <ToggleButtonGroup
+                ref={tabsRef}
+                value={activeTab}
+                exclusive
+                onChange={(e, newValue) => {
+                  if (newValue !== null) setActiveTab(newValue);
+                }}
+                sx={{
+                  position: "relative",
+                  background: "rgba(0,0,0,0.35)", // 👈 más oscuro
+                  borderRadius: 3,
+                  p: 0.5,
+                  backdropFilter: "blur(6px)",
+
+                  //Botones
+                  "& .MuiToggleButton-root.MuiToggleButton-root": {
+                    color: "#fff",
+                    fontWeight: 700,
+                    textShadow: "0 2px 6px rgba(0, 0, 0, 0.8)",
+                    zIndex: 2,
+
+                    "&:hover": {
+                      backgroundColor: "rgba(255,255,255,0.1)"
+                    }
+                  },
+
+                  //Botones seleccionados
+                  "& .Mui-selected": {
+                    background: "linear-gradient(135deg, #ff0000, #fd2828)",
+                    color: "#fff",
+                    borderRadius: 3,
+                    boxShadow: "0 0 12px rgba(255, 80, 60, 0.8)"
+                  }
+                }}
+              >
+                <ToggleButton value="volume">Volumen</ToggleButton>
+                <ToggleButton value="pr">Record Personal</ToggleButton>
+                <ToggleButton value="frequency">Frecuencia</ToggleButton>
+              </ToggleButtonGroup>
+
+              <Box
+                sx={{
+                  position: "absolute",
+                  bottom: 6,
+                  height: 4,
+                  borderRadius: 10,
+                  background: "rgba(255,255,255,0.6)",
+
+                  left: `calc(${sliderStyle.left}px + 6px)`,
+                  width: `calc(${sliderStyle.width}px - 12px)`,
+
+                  transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)"
+                }}
+              />
+            </Box>
+
           </Box>
 
-        </Box>
+          {activeTab !== "pr" && (
+            <>
+              <Card
+                sx={{
+                  background: "rgba(255, 255, 255, 0.7)",
+                  backdropFilter: "blur(6px)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 3
+                }}
+              >
+                <CardContent>
 
-        {activeTab !== "pr" && (
-          <>
-            <Card
-              sx={{
-                background: "rgba(255, 255, 255, 0.7)",
-                backdropFilter: "blur(6px)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 3
-              }}
-            >
-              <CardContent>
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={2}
+                    alignItems="center"
+                    flexWrap="wrap"
+                  >
 
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={2}
-                  alignItems="center"
-                  flexWrap="wrap"
-                >
-
-                  {/* 📅 Desde */}
-                  <TextField
-                    type="date"
-                    label="Desde"
-                    InputLabelProps={{ shrink: true }}
-                    value={from}
-                    onChange={(e) => setFrom(e.target.value)}
-                    sx={{ width: 150 }}
-                  />
-
-                  {/* 📅 Hasta */}
-                  <TextField
-                    type="date"
-                    label="Hasta"
-                    InputLabelProps={{ shrink: true }}
-                    value={to}
-                    onChange={(e) => setTo(e.target.value)}
-                    sx={{ width: 150 }}
-                  />
-
-                  {/* 💪 Músculo */}
-                  {activeTab === "volume" && (
+                    {/* 📅 Desde */}
                     <TextField
-                      select
-                      label="Músculo"
-                      value={selectedMuscle}
-                      onChange={(e) => setSelectedMuscle(e.target.value)}
+                      type="date"
+                      label="Desde"
+                      InputLabelProps={{ shrink: true }}
+                      value={from}
+                      onChange={(e) => setFrom(e.target.value)}
+                      sx={{ width: 150 }}
+                    />
+
+                    {/* 📅 Hasta */}
+                    <TextField
+                      type="date"
+                      label="Hasta"
+                      InputLabelProps={{ shrink: true }}
+                      value={to}
+                      onChange={(e) => setTo(e.target.value)}
+                      sx={{ width: 150 }}
+                    />
+
+                    {/* 💪 Músculo */}
+                    {activeTab === "volume" && (
+                      <TextField
+                        select
+                        label="Músculo"
+                        value={selectedMuscle}
+                        onChange={(e) => setSelectedMuscle(e.target.value)}
+                        sx={{
+                          minWidth: 180,
+                          maxWidth: 260,
+                          flexGrow: 1
+                        }}
+                      >
+                        {muscleOptions.map((muscle) => (
+                          <MenuItem key={muscle} value={muscle}>
+                            {muscle === "ALL" ? "Todos" : muscleLabels[muscle] || muscle}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    )}
+
+                    {/* 🧱 SPACER */}
+                    {activeTab !== "volume" && (
+                      <Box sx={{ flexGrow: 1 }} />
+                    )}
+
+                    {/* 🔄 Reset */}
+                    <Button
+                      //variant="contained"
+                      variant="outlined"
+                      onClick={() => {
+                        setFrom("");
+                        setTo("");
+                        setSelectedMuscle("ALL");
+                      }}
                       sx={{
-                        minWidth: 180,
-                        maxWidth: 260,
-                        flexGrow: 1
+                        height: 40,
+                        whiteSpace: "nowrap"
                       }}
                     >
-                      {muscleOptions.map((muscle) => (
-                        <MenuItem key={muscle} value={muscle}>
-                          {muscle === "ALL" ? "Todos" : muscleLabels[muscle] || muscle}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  )}
+                      Resetear filtros
+                    </Button>
 
-                  {/* 🧱 SPACER */}
-                  {activeTab !== "volume" && (
-                    <Box sx={{ flexGrow: 1 }} />
-                  )}
-                  
-                  {/* 🔄 Reset */}
-                  <Button
-                    //variant="contained"
-                    variant="outlined"
-                    onClick={() => {
-                      setFrom("");
-                      setTo("");
-                      setSelectedMuscle("ALL");
-                    }}
-                    sx={{
-                      height: 40,
-                      whiteSpace: "nowrap"
-                    }}
-                  >
-                    Resetear filtros
-                  </Button>
+                  </Stack>
 
-                </Stack>
+                </CardContent>
+              </Card>
 
-              </CardContent>
-            </Card>
+              {error && <Alert severity="error">{error}</Alert>}
+            </>
+          )}
 
-            {error && <Alert severity="error">{error}</Alert>}
-          </>
-        )}
+          {activeTab === "volume" && (
+            <>
 
-        {activeTab === "volume" && (
-          <>
+              <Card
+                sx={{
+                  background: "rgba(255, 255, 255, 0.7)",
+                  backdropFilter: "blur(6px)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 3
+                }}
+              >
+                <CardContent>
+                  <Stack alignItems="center" spacing={1.5}>
 
-            <Card
-              sx={{
-                background: "rgba(255, 255, 255, 0.7)",
-                backdropFilter: "blur(6px)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 3
-              }}
-            >
-              <CardContent>
-                <Stack alignItems="center" spacing={1.5}>
+                    <Typography
+                      variant="body1"
+                      sx={{ opacity: 0.7, letterSpacing: 1 }}
+                    >
+                      VOLUMEN TOTAL
+                    </Typography>
 
-                  <Typography
-                    variant="body1"
-                    sx={{ opacity: 0.7, letterSpacing: 1 }}
-                  >
-                    VOLUMEN TOTAL
-                  </Typography>
-
-                  <Typography
-                    variant="h2"
-                    sx={{
-                      fontWeight: 800,
-                      background: "linear-gradient(135deg, #ff2020, #f16744)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      animation: `
+                    <Typography
+                      variant="h2"
+                      sx={{
+                        fontWeight: 800,
+                        background: "linear-gradient(135deg, #ff2020, #f16744)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        animation: `
                         ${glow} 2.2s ease-in-out infinite alternate
                       `
-                    }}
-                  >
-                    <CountUp
-                      key={activeTab} // 👈 importante
-                      end={computedTotalVolume}
-                      duration={0.5}
-                      separator="."
-                      preserveValue
-                    />{" "}
-                    kg
-                  </Typography>
+                      }}
+                    >
+                      <CountUp
+                        key={activeTab} // 👈 importante
+                        end={computedTotalVolume}
+                        duration={0.5}
+                        separator="."
+                        preserveValue
+                      />{" "}
+                      kg
+                    </Typography>
 
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 4,
-                      borderRadius: 10,
-                      background: "linear-gradient(90deg, #42a5f5, #66bb6a)"
-                    }}
-                  />
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 4,
+                        borderRadius: 10,
+                        background: "linear-gradient(90deg, #42a5f5, #66bb6a)"
+                      }}
+                    />
 
-                </Stack>
-              </CardContent>
-            </Card>
+                  </Stack>
+                </CardContent>
+              </Card>
 
 
-            <Card
-              sx={{
-                background: "rgba(255, 255, 255, 0.7)",
-                backdropFilter: "blur(6px)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 3
-              }}
-            >
-              <CardContent>
-                <Stack spacing={1} sx={{ mb: 3 }}>
-                  <Typography variant="h5" fontWeight={800}>
-                    Evolución del volumen
-                  </Typography>
+              <Card
+                sx={{
+                  background: "rgba(255, 255, 255, 0.7)",
+                  backdropFilter: "blur(6px)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 3
+                }}
+              >
+                <CardContent>
+                  <Stack spacing={1} sx={{ mb: 3 }}>
+                    <Typography variant="h5" fontWeight={800}>
+                      Evolución del volumen
+                    </Typography>
 
-                  <Box
-                    sx={{
-                      width: 60,
-                      height: 4,
-                      borderRadius: 10,
-                      background: "linear-gradient(90deg, #ff2020, #f16744)"
-                    }}
-                  />
-                </Stack>
+                    <Box
+                      sx={{
+                        width: 60,
+                        height: 4,
+                        borderRadius: 10,
+                        background: "linear-gradient(90deg, #ff2020, #f16744)"
+                      }}
+                    />
+                  </Stack>
 
-                {loadingVolume ? (
-                  <Skeleton
-                    variant="rounded"
-                    height={300}
-                    sx={{ borderRadius: 3 }}
-                  />
-                ) : chartData.length === 0 ? (
-                  <Typography color="text.secondary">
-                    No hay datos para graficar.
-                  </Typography>
-                ) : (
-                  <Box sx={{ width: "100%", height: 300}}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
+                  {loadingVolume ? (
+                    <Skeleton
+                      variant="rounded"
+                      height={300}
+                      sx={{ borderRadius: 3 }}
+                    />
+                  ) : chartData.length === 0 ? (
+                    <Typography color="text.secondary">
+                      No hay datos para graficar.
+                    </Typography>
+                  ) : (
+                    <Box sx={{ width: "100%", height: 300 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" />
 
-                        <XAxis
-                          dataKey="date"
-                          tickFormatter={(value) => formatXAxis(value, volumeGranularity)}
-                        />
+                          <XAxis
+                            dataKey="date"
+                            tickFormatter={(value) => formatXAxis(value, volumeGranularity)}
+                          />
 
-                        <YAxis />
+                          <YAxis />
 
-                        <Tooltip
-                          trigger="click"
-                          content={({ active, payload, label }) => {
-                            if (!active || !payload || payload.length === 0) return null;
+                          <Tooltip
+                            trigger="click"
+                            content={({ active, payload, label }) => {
+                              if (!active || !payload || payload.length === 0) return null;
 
-                            const value = payload[0].value;
+                              const value = payload[0].value;
 
-                            return (
+                              return (
+                                <Box
+                                  sx={{
+                                    bgcolor: "background.paper",
+                                    p: 1.5,
+                                    borderRadius: 2,
+                                    boxShadow: 3,
+                                  }}
+                                >
+                                  <Typography variant="body2">
+                                    Fecha: {label}
+                                  </Typography>
+
+                                  <Typography variant="body2" fontWeight={600}>
+                                    {formatVolume(value)} kg
+                                  </Typography>
+                                </Box>
+                              );
+                            }}
+                          />
+
+                          <Line
+                            type="monotone"
+                            dataKey="volume"
+                            stroke="#1976d2"
+                            strokeWidth={3}
+                            dot={false}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+
+
+              <Card
+                sx={{
+                  background: "rgba(255, 255, 255, 0.7)",
+                  backdropFilter: "blur(6px)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 3
+                }}
+              >
+                <CardContent>
+
+                  {/* 🔥 TÍTULO ÚNICO */}
+                  <Stack spacing={1} sx={{ mb: 3 }}>
+                    <Typography variant="h5" fontWeight={800}>
+                      Volumen semanal por músculo
+                    </Typography>
+
+                    <Box
+                      sx={{
+                        width: 60,
+                        height: 4,
+                        borderRadius: 10,
+                        background: "linear-gradient(90deg, #ff2020, #f16744)"
+                      }}
+                    />
+                  </Stack>
+
+                  {loadingVolume ? (
+                    <Stack spacing={2}>
+                      {[1, 2, 3].map(i => (
+                        <Box
+                          key={i}
+                          sx={{
+                            p: 2,
+                            borderRadius: 3,
+                            background: "rgba(255,255,255,0.05)"
+                          }}
+                        >
+                          <Skeleton width="40%" height={30} />
+                          <Skeleton width="30%" height={25} />
+
+                          <Stack spacing={1} mt={2}>
+                            <Skeleton height={20} />
+                            <Skeleton height={20} />
+                            <Skeleton height={20} />
+                          </Stack>
+                        </Box>
+                      ))}
+                    </Stack>
+                  ) : filteredRows.length === 0 ? (
+                    <Typography color="text.secondary">
+                      No hay datos para ese rango.
+                    </Typography>
+                  ) : (
+                    <Stack spacing={2}>
+
+                      {weeklyGroups.map((group) => (
+                        <Box
+                          key={`${group.weekStart}-${group.weekEnd}`}
+                          sx={{
+                            p: 2,
+                            borderRadius: 3,
+                            background: "rgba(255,255,255,0.04)",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                            borderLeft: "4px solid #ff2020"
+                          }}
+                        >
+
+                          {/* 📅 HEADER SEMANA */}
+                          <Stack
+                            direction="row"
+                            justifyContent="space-between"
+                            alignItems="center"
+                            sx={{ mb: 2 }}
+                          >
+                            <Typography sx={{ fontWeight: 700, fontSize: "1.2rem" }}>
+                              {group.weekStart} a {group.weekEnd}
+                            </Typography>
+
+                            <Typography sx={{ fontWeight: 800, fontSize: "1.2rem" }}>
+                              {formatVolume(group.subtotal)} kg
+                            </Typography>
+                          </Stack>
+
+                          {/* 💪 MÚSCULOS */}
+                          <Stack spacing={1.2}>
+                            {group.rows.map((row, index) => (
                               <Box
+                                key={`${row.weekStart}-${row.muscle}-${index}`}
                                 sx={{
-                                  bgcolor: "background.paper",
-                                  p: 1.5,
-                                  borderRadius: 2,
-                                  boxShadow: 3,
+                                  display: "flex",
+                                  alignItems: "flex-start",
+                                  gap: 2,
+                                  py: 0.5
                                 }}
                               >
-                                <Typography variant="body2">
-                                  Fecha: {label}
-                                </Typography>
 
-                                <Typography variant="body2" fontWeight={600}>
-                                  {formatVolume(value)} kg
-                                </Typography>
+                                {/* 💪 MUSCLE */}
+                                <Box sx={{ width: 140 }}> {/* 👈 mismo ancho para todos */}
+                                  <MuscleChips
+                                    muscles={[row.muscle]}
+                                    chipSx={{
+                                      fontWeight: 700,
+                                      fontSize: "1.2rem",
+                                      height: 32,
+                                      transform: "translateY(11px)"
+                                    }}
+                                  />
+                                </Box>
+
+                                {/* 📊 DATA */}
+                                <Box sx={{ flex: 1 }}>
+
+                                  {/* 🔥 TOP ROW */}
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      alignItems: "center",
+                                      mb: 0.5
+                                    }}
+                                  >
+
+                                    {/* 🔢 volumen */}
+                                    <Typography
+                                      sx={{
+                                        fontWeight: 800,
+                                        fontSize: "1.4rem"
+                                      }}
+                                    >
+                                      {formatVolume(row.currentVolume)} kg
+                                    </Typography>
+
+                                    {/* ➕ delta */}
+                                    {row.delta > 0 && (
+                                      <Typography
+                                        sx={{
+                                          fontWeight: 700,
+                                          fontSize: "1.3rem",
+                                          color: "success.main"
+                                        }}
+                                      >
+                                        +{formatVolume(row.delta)}
+                                      </Typography>
+                                    )}
+                                  </Box>
+
+                                  {/* 📈 barra */}
+                                  <LinearProgress
+                                    variant="determinate"
+                                    value={row.volumeRatio}
+                                    sx={{
+                                      height: 10,
+                                      borderRadius: 10,
+                                      mb: 0.3
+                                    }}
+                                  />
+
+                                  {/* 📊 % */}
+                                  <Typography
+                                    sx={{
+                                      fontSize: "1rem",
+                                      textAlign: "right",
+                                      color: row.percent > 0 ? "success.main" : "text.secondary"
+                                    }}
+                                  >
+                                    {row.percent > 0
+                                      ? `+${formatVolume(row.percent)}%`
+                                      : ""}
+                                  </Typography>
+
+                                </Box>
                               </Box>
-                            );
-                          }}
-                        />
+                            ))}
+                          </Stack>
 
-                        <Line
-                          type="monotone"
-                          dataKey="volume"
-                          stroke="#1976d2"
-                          strokeWidth={3}
-                          dot={false}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </Box>
-                )}
-              </CardContent>
-            </Card>
+                        </Box>
+                      ))}
 
+                    </Stack>
+                  )}
 
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {activeTab === "pr" && (
             <Card
               sx={{
                 background: "rgba(255, 255, 255, 0.7)",
@@ -1002,26 +1189,18 @@ export default function StatsScreen() {
               }}
             >
               <CardContent>
-
-                {/* 🔥 TÍTULO ÚNICO */}
-                <Stack spacing={1} sx={{ mb: 3 }}>
-                  <Typography variant="h5" fontWeight={800}>
-                    Volumen semanal por músculo
-                  </Typography>
-
+                {loadingPR ? (
                   <Box
                     sx={{
-                      width: 60,
-                      height: 4,
-                      borderRadius: 10,
-                      background: "linear-gradient(90deg, #ff2020, #f16744)"
+                      display: "grid",
+                      gridTemplateColumns: {
+                        xs: "1fr",
+                        sm: "repeat(2, 1fr)",
+                      },
+                      gap: 3,
                     }}
-                  />
-                </Stack>
-
-                {loadingVolume ? (
-                  <Stack spacing={2}>
-                    {[1,2,3].map(i => (
+                  >
+                    {[1, 2, 3, 4].map(i => (
                       <Box
                         key={i}
                         sx={{
@@ -1030,628 +1209,449 @@ export default function StatsScreen() {
                           background: "rgba(255,255,255,0.05)"
                         }}
                       >
-                        <Skeleton width="40%" height={30} />
-                        <Skeleton width="30%" height={25} />
-
-                        <Stack spacing={1} mt={2}>
-                          <Skeleton height={20} />
-                          <Skeleton height={20} />
-                          <Skeleton height={20} />
-                        </Stack>
+                        <Skeleton variant="rounded" height={120} />
+                        <Skeleton width="70%" height={30} sx={{ mt: 1 }} />
+                        <Skeleton width="50%" height={25} />
                       </Box>
                     ))}
-                  </Stack>
-                ) : filteredRows.length === 0 ? (
-                  <Typography color="text.secondary">
-                    No hay datos para ese rango.
-                  </Typography>
+                  </Box>
+                ) : prs.length === 0 ? (
+                  <Box sx={{ textAlign: "center", py: 4 }}>
+                    <Typography fontSize="2.1rem">
+                      No hay récords personales todavía 💪
+                    </Typography>
+
+                    <Typography fontSize="1.5rem">
+                      Registrá tus series para empezar a ver tus records.
+                    </Typography>
+                  </Box>
                 ) : (
-                  <Stack spacing={2}>
-
-                    {weeklyGroups.map((group) => (
-                      <Box
-                        key={`${group.weekStart}-${group.weekEnd}`}
-                        sx={{
-                          p: 2,
-                          borderRadius: 3,
-                          background: "rgba(255,255,255,0.04)",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                          borderLeft: "4px solid #ff2020"
-                        }}
-                      >
-
-                        {/* 📅 HEADER SEMANA */}
-                        <Stack
-                          direction="row"
-                          justifyContent="space-between"
-                          alignItems="center"
-                          sx={{ mb: 2 }}
-                        >
-                          <Typography sx={{ fontWeight: 700, fontSize: "1.2rem" }}>
-                            {group.weekStart} a {group.weekEnd}
-                          </Typography>
-
-                          <Typography sx={{ fontWeight: 800, fontSize: "1.2rem" }}>
-                            {formatVolume(group.subtotal)} kg
-                          </Typography>
-                        </Stack>
-
-                        {/* 💪 MÚSCULOS */}
-                        <Stack spacing={1.2}>
-                          {group.rows.map((row, index) => (
-                            <Box
-                              key={`${row.weekStart}-${row.muscle}-${index}`}
-                              sx={{
-                                display: "flex",
-                                alignItems: "flex-start",
-                                gap: 2,
-                                py: 0.5
-                              }}
-                            >
-
-                              {/* 💪 MUSCLE */}
-                              <Box sx={{ width: 140 }}> {/* 👈 mismo ancho para todos */}
-                              <MuscleChips
-                                muscles={[row.muscle]}
-                                chipSx={{
-                                  fontWeight: 700,
-                                  fontSize: "1.2rem",
-                                  height: 32,
-                                  transform: "translateY(11px)"
-                                }}
-                              />
-                              </Box>
-
-                              {/* 📊 DATA */}
-                              <Box sx={{ flex: 1 }}>
-
-                                {/* 🔥 TOP ROW */}
-                                <Box
-                                  sx={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                    mb: 0.5
-                                  }}
-                                >
-
-                                  {/* 🔢 volumen */}
-                                  <Typography
-                                    sx={{
-                                      fontWeight: 800,
-                                      fontSize: "1.4rem"
-                                    }}
-                                  >
-                                    {formatVolume(row.currentVolume)} kg
-                                  </Typography>
-
-                                  {/* ➕ delta */}
-                                  {row.delta > 0 && (
-                                    <Typography
-                                      sx={{
-                                        fontWeight: 700,
-                                        fontSize: "1.3rem",
-                                        color: "success.main"
-                                      }}
-                                    >
-                                      +{formatVolume(row.delta)}
-                                    </Typography>
-                                  )}
-                                </Box>
-
-                                {/* 📈 barra */}
-                                <LinearProgress
-                                  variant="determinate"
-                                  value={row.volumeRatio}
-                                  sx={{
-                                    height: 10,
-                                    borderRadius: 10,
-                                    mb: 0.3
-                                  }}
-                                />
-
-                                {/* 📊 % */}
-                                <Typography
-                                  sx={{
-                                    fontSize: "1rem",
-                                    textAlign: "right",
-                                    color: row.percent > 0 ? "success.main" : "text.secondary"
-                                  }}
-                                >
-                                  {row.percent > 0
-                                    ? `+${formatVolume(row.percent)}%`
-                                    : ""}
-                                </Typography>
-
-                              </Box>
-                            </Box>
-                          ))}
-                        </Stack>
-
-                      </Box>
-                    ))}
-
-                  </Stack>
-                )}
-
-              </CardContent>
-            </Card>
-          </>
-        )}
-
-        {activeTab === "pr" && (
-          <Card
-            sx={{
-              background: "rgba(255, 255, 255, 0.7)",
-              backdropFilter: "blur(6px)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: 3
-            }}
-          >
-            <CardContent>
-              {loadingPR ? (
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: {
-                      xs: "1fr",
-                      sm: "repeat(2, 1fr)",
-                    },
-                    gap: 3,
-                  }}
-                >
-                  {[1,2,3,4].map(i => (
-                    <Box
-                      key={i}
-                      sx={{
-                        p: 2,
-                        borderRadius: 3,
-                        background: "rgba(255,255,255,0.05)"
-                      }}
-                    >
-                      <Skeleton variant="rounded" height={120} />
-                      <Skeleton width="70%" height={30} sx={{ mt: 1 }} />
-                      <Skeleton width="50%" height={25} />
-                    </Box>
-                  ))}
-                </Box>
-              ) : prs.length === 0 ? (
-                <Box sx={{ textAlign: "center", py: 4 }}>
-                  <Typography fontSize="2.1rem">
-                    No hay récords personales todavía 💪
-                  </Typography>
-
-                  <Typography fontSize="1.5rem">
-                    Registrá tus series para empezar a ver tus records.
-                  </Typography>
-                </Box>
-              ) : (
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: {
-                      xs: "1fr",
-                      sm: "repeat(2, 1fr)",
-                    },
-                    rowGap: 3,
-                    justifyItems: "center",
-                  }}
-                >
-                  {prs.map((row) => (
-                    <Box
-                      key={row.id}
-                      sx={{
-                        width: "100%",
-                        maxWidth: 320,
-                      }}
-                    >
-                      <PRCard row={row} />
-                    </Box>
-                  ))}
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {activeTab === "frequency" && (
-          <>
-            <Card
-              sx={{
-                background: "rgba(255, 255, 255, 0.7)",
-                backdropFilter: "blur(6px)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 3
-              }}
-            >
-              <CardContent>
-                {/*Titulo + linea roja*/}
-                <Stack spacing={1} sx={{ mb: 3 }}>
-                  <Typography variant="h5" fontWeight={800}>
-                    Frecuencia de entrenamiento
-                  </Typography>
-
                   <Box
                     sx={{
-                      width: 60,
-                      height: 4,
-                      borderRadius: 10,
-                      background: "linear-gradient(90deg, #ff2020, #f16744)"
-                    }}
-                  />
-                </Stack>
-
-                {/*Botones de granularidad*/}
-                <Box display="flex" justifyContent="center" sx={{ mb: 3 }}>
-                  <Box
-                    sx={{
-                      p: 0.6,
-                      borderRadius: 3,
-                      backdropFilter: "blur(6px)",
-                      boxShadow: "0 4px 15px rgba(0,0,0,0.15)"
+                      display: "grid",
+                      gridTemplateColumns: {
+                        xs: "1fr",
+                        sm: "repeat(2, 1fr)",
+                      },
+                      rowGap: 3,
+                      justifyItems: "center",
                     }}
                   >
-                    <ToggleButtonGroup
-                      value={frequencyMode}
-                      exclusive
-                      onChange={(e, newValue) => {
-                        if (newValue !== null) setFrequencyMode(newValue);
-                      }}
-                      sx={{
-                        "& .MuiToggleButton-root": {
-                          border: "none",
-                          fontWeight: 700,
-                          px: 2.5,
-                          color: "#333",
-
-                          "&:hover": {
-                            backgroundColor: "rgba(0,0,0,0.05)"
-                          }
-                        },
-
-                        "& .Mui-selected": {
-                          background: "linear-gradient(135deg, #ff2020, #fd2828)",
-                          color: "#fff",
-                          borderRadius: 3,
-                          boxShadow: "0 0 10px rgba(255, 80, 60, 0.6)"
-                        }
-                      }}
-                    >
-                      <ToggleButton value="WEEK">Semanal</ToggleButton>
-                      <ToggleButton value="MONTH">Mensual</ToggleButton>
-                    </ToggleButtonGroup>
+                    {prs.map((row) => (
+                      <Box
+                        key={row.id}
+                        sx={{
+                          width: "100%",
+                          maxWidth: 320,
+                        }}
+                      >
+                        <PRCard row={row} />
+                      </Box>
+                    ))}
                   </Box>
-                </Box>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
-                {loadingFrequency ? (
-                  <Skeleton
-                    variant="rounded"
-                    height={300}
-                    sx={{ borderRadius: 3 }}
-                  />
-                ) : frequencyData.length === 0 ? (
-                  <Typography color="text.secondary">
-                    No hay datos para mostrar.
-                  </Typography>
-                ) : (
-                  <Box ref={containerRef} sx={{ width: "100%", overflowX: "auto" }}>
+          {activeTab === "frequency" && (
+            <>
+              <Card
+                sx={{
+                  background: "rgba(255, 255, 255, 0.7)",
+                  backdropFilter: "blur(6px)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 3
+                }}
+              >
+                <CardContent>
+                  {/*Titulo + linea roja*/}
+                  <Stack spacing={1} sx={{ mb: 3 }}>
+                    <Typography variant="h5" fontWeight={800}>
+                      Frecuencia de entrenamiento
+                    </Typography>
+
                     <Box
                       sx={{
-                        width: chartWidth,
-                        ml: hasOverflow ? 0 : "auto",
-                        mr: hasOverflow ? 0 : "auto"
+                        width: 60,
+                        height: 4,
+                        borderRadius: 10,
+                        background: "linear-gradient(90deg, #ff2020, #f16744)"
+                      }}
+                    />
+                  </Stack>
+
+                  {/*Botones de granularidad*/}
+                  <Box display="flex" justifyContent="center" sx={{ mb: 3 }}>
+                    <Box
+                      sx={{
+                        p: 0.6,
+                        borderRadius: 3,
+                        backdropFilter: "blur(6px)",
+                        boxShadow: "0 4px 15px rgba(0,0,0,0.15)"
                       }}
                     >
-                      <BarChart
-                        width={chartWidth}
-                        height={300}
-                        data={frequencyData}
-                        margin={{top: 30, right: 20, left: 20, bottom: 25 }}
+                      <ToggleButtonGroup
+                        value={frequencyMode}
+                        exclusive
+                        onChange={(e, newValue) => {
+                          if (newValue !== null) setFrequencyMode(newValue);
+                        }}
+                        sx={{
+                          "& .MuiToggleButton-root": {
+                            border: "none",
+                            fontWeight: 700,
+                            px: 2.5,
+                            color: "#333",
+
+                            "&:hover": {
+                              backgroundColor: "rgba(0,0,0,0.05)"
+                            }
+                          },
+
+                          "& .Mui-selected": {
+                            background: "linear-gradient(135deg, #ff2020, #fd2828)",
+                            color: "#fff",
+                            borderRadius: 3,
+                            boxShadow: "0 0 10px rgba(255, 80, 60, 0.6)"
+                          }
+                        }}
                       >
-                        <XAxis
-                          dataKey="date"
-                          interval={0}
-                          domain={["dataMin", "dataMax"]}
-                          tickFormatter={(value) => formatXAxis(dayjs(value).format("YYYY-MM-DD"), frequencyGranularity)}
-                          tick={({ x, y, payload }) => {
-                            const formatted = formatXAxis(payload.value, frequencyGranularity);
-                            const lines = formatted.split("\n");
+                        <ToggleButton value="WEEK">Semanal</ToggleButton>
+                        <ToggleButton value="MONTH">Mensual</ToggleButton>
+                      </ToggleButtonGroup>
+                    </Box>
+                  </Box>
 
-                            return (
-                              <text
-                                x={x}
-                                y={y}
-                                textAnchor="middle"
-                                fill="#000"
-                                fontSize={20}
-                                fontWeight={600}
-                              >
-                                {lines.map((line, index) => (
-                                  <tspan
-                                    key={index}
-                                    x={x}
-                                    dy={index === 0 ? 15 : 22}
-                                  >
-                                    {line}
-                                  </tspan>
-                                ))}
-                              </text>
-                            );
-                          }}
-                        />
-
-                        <Bar 
-                          key={frequencyData.length}
-                          dataKey="count" 
-                          radius={[8, 8, 0, 0]} 
-                          barSize={200}
-                          animationDuration={600}
-                          animationEasing="ease-out"
-                          animationBegin={0}
-                          isAnimationActive={shouldAnimate}
+                  {loadingFrequency ? (
+                    <Skeleton
+                      variant="rounded"
+                      height={300}
+                      sx={{ borderRadius: 3 }}
+                    />
+                  ) : frequencyData.length === 0 ? (
+                    <Typography color="text.secondary">
+                      No hay datos para mostrar.
+                    </Typography>
+                  ) : (
+                    <Box ref={containerRef} sx={{ width: "100%", overflowX: "auto" }}>
+                      <Box
+                        sx={{
+                          width: chartWidth,
+                          ml: hasOverflow ? 0 : "auto",
+                          mr: hasOverflow ? 0 : "auto"
+                        }}
+                      >
+                        <BarChart
+                          width={chartWidth}
+                          height={300}
+                          data={frequencyData}
+                          margin={{ top: 30, right: 20, left: 20, bottom: 25 }}
                         >
-                          <LabelList
-                            dataKey="count"
-                            position="top"
-                            animationDuration={600}
-                            animationEasing="ease-out"
-                            animationBegin={0}
-                            content={({ x, y, width, value }) => {
-                              if (!value) return null;
-
-                              const centerX = x + width / 2;
+                          <XAxis
+                            dataKey="date"
+                            interval={0}
+                            domain={["dataMin", "dataMax"]}
+                            tickFormatter={(value) => formatXAxis(dayjs(value).format("YYYY-MM-DD"), frequencyGranularity)}
+                            tick={({ x, y, payload }) => {
+                              const formatted = formatXAxis(payload.value, frequencyGranularity);
+                              const lines = formatted.split("\n");
 
                               return (
                                 <text
-                                  x={centerX}
-                                  y={y - 10}
+                                  x={x}
+                                  y={y}
                                   textAnchor="middle"
                                   fill="#000"
-                                  fontSize="25"
-                                  fontWeight="900"
+                                  fontSize={20}
+                                  fontWeight={600}
                                 >
-                                  {value}
+                                  {lines.map((line, index) => (
+                                    <tspan
+                                      key={index}
+                                      x={x}
+                                      dy={index === 0 ? 15 : 22}
+                                    >
+                                      {line}
+                                    </tspan>
+                                  ))}
                                 </text>
                               );
                             }}
                           />
 
-                          {frequencyData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={getBarColor(entry.count)} />
-                          ))}
-                        </Bar>
-                      </BarChart>
+                          <Bar
+                            key={frequencyData.length}
+                            dataKey="count"
+                            radius={[8, 8, 0, 0]}
+                            barSize={200}
+                            animationDuration={600}
+                            animationEasing="ease-out"
+                            animationBegin={0}
+                            isAnimationActive={shouldAnimate}
+                          >
+                            <LabelList
+                              dataKey="count"
+                              position="top"
+                              animationDuration={600}
+                              animationEasing="ease-out"
+                              animationBegin={0}
+                              content={({ x, y, width, value }) => {
+                                if (!value) return null;
+
+                                const centerX = x + width / 2;
+
+                                return (
+                                  <text
+                                    x={centerX}
+                                    y={y - 10}
+                                    textAnchor="middle"
+                                    fill="#000"
+                                    fontSize="25"
+                                    fontWeight="900"
+                                  >
+                                    {value}
+                                  </text>
+                                );
+                              }}
+                            />
+
+                            {frequencyData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={getBarColor(entry.count)} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </Box>
                     </Box>
-                  </Box>
 
-                  
-                )}
 
-                <Divider sx={{ my: 1, opacity: 0.8, borderBottomWidth: 3, bgcolor: "#0000003b"}} />
+                  )}
 
-                {loadingFrequency ? (
-                  <Stack alignItems="center">
-                    <Skeleton width={100} height={60} />
-                    <Skeleton width={150} height={30} />
-                  </Stack>
-                ) : ( 
-                  <Box sx={{ textAlign: "center", mt: 3 }}>
-                    <Typography variant="h3" fontWeight={900}>
-                      {totalDays}
+                  <Divider sx={{ my: 1, opacity: 0.8, borderBottomWidth: 3, bgcolor: "#0000003b" }} />
+
+                  {loadingFrequency ? (
+                    <Stack alignItems="center">
+                      <Skeleton width={100} height={60} />
+                      <Skeleton width={150} height={30} />
+                    </Stack>
+                  ) : (
+                    <Box sx={{ textAlign: "center", mt: 3 }}>
+                      <Typography variant="h3" fontWeight={900}>
+                        {totalDays}
+                      </Typography>
+
+                      <Typography
+                        sx={{
+                          fontSize: "1.3rem",
+                          opacity: 0.7,
+                          letterSpacing: 1
+                        }}
+                      >
+                        días entrenados
+                      </Typography>
+                    </Box>
+                  )}
+
+                </CardContent>
+              </Card>
+
+
+
+              <Card
+                sx={{
+                  background: "rgba(255, 255, 255, 0.7)",
+                  backdropFilter: "blur(6px)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 3
+                }}
+              >
+                <CardContent sx={{ height: 620 }}>
+                  {/*Titulo + linea roja*/}
+                  <Stack spacing={1} sx={{ mb: 3 }}>
+                    <Typography variant="h5" fontWeight={800}>
+                      Calendario histórico completo
                     </Typography>
 
-                    <Typography
+                    <Box
                       sx={{
-                        fontSize: "1.3rem",
-                        opacity: 0.7,
-                        letterSpacing: 1
+                        width: 60,
+                        height: 4,
+                        borderRadius: 10,
+                        background: "linear-gradient(90deg, #ff2020, #f16744)"
+                      }}
+                    />
+                  </Stack>
+                  {loadingFrequency ? (
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(7, 1fr)",
+                        gap: 1,
+                        width: 400,
+                        height: 400,
+                        mt: 13,
+                        mx: "auto"
                       }}
                     >
-                      días entrenados
-                    </Typography>
-                  </Box> 
-                )}
+                      {Array.from({ length: 35 }).map((_, i) => (
+                        <Skeleton
+                          key={i}
+                          variant="circular"
+                          width={35}
+                          height={35}
+                        />
+                      ))}
+                    </Box>
+                  ) : (
+                    <Box
+                      sx={{
+                        position: "relative",
+                        height: "100%", // 👈 clave
+                        display: "flex",
+                        justifyContent: "center"
+                      }}
+                    >
+                      {/* ⬅️ IZQUIERDA */}
+                      <Box
+                        onClick={() => setCalendarMonth(prev => prev.subtract(1, "month"))}
+                        sx={{
+                          position: "absolute",
+                          left: 15, // 👈 separa del calendario
+                          top: "40%",
+                          transform: "translateY(-50%)",
 
-              </CardContent>
-            </Card>
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
 
+                          width: 60,
+                          height: 60,
+                          borderRadius: "50%",
 
+                          cursor: "pointer",
+                          color: "#fff",
 
-            <Card
-              sx={{
-                background: "rgba(255, 255, 255, 0.7)",
-                backdropFilter: "blur(6px)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 3
-              }}
-            >
-              <CardContent sx={{height: 620}}>
-                {/*Titulo + linea roja*/}
-                <Stack spacing={1} sx={{ mb: 3 }}>
-                  <Typography variant="h5" fontWeight={800}>
-                    Calendario histórico completo
-                  </Typography>
+                          transition: "all 0.2s ease",
+                        }}
+                      >
+                        <ArrowBackIosNewIcon
+                          sx={{
+                            fontSize: 90,
+                            filter: "drop-shadow(0 0 4px rgba(255,255,255,0.8))"
+                          }}
+                        />
+                      </Box>
 
-                  <Box
-                    sx={{
-                      width: 60,
-                      height: 4,
-                      borderRadius: 10,
-                      background: "linear-gradient(90deg, #ff2020, #f16744)"
-                    }}
-                  />
-                </Stack>
-                {loadingFrequency ? (
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(7, 1fr)",
-                      gap: 1,
-                      width: 400,
-                      height: 400,
-                      mt: 13,
-                      mx: "auto"
-                    }}
-                  >
-                    {Array.from({ length: 35 }).map((_, i) => (
-                      <Skeleton
-                        key={i}
-                        variant="circular"
-                        width={35}
-                        height={35}
+                      {/* 📅 CALENDARIO */}
+                      <DateCalendar
+                        value={calendarMonth}
+                        onMonthChange={(newMonth) => setCalendarMonth(newMonth)}
+                        referenceDate={calendarMonth}
+                        slots={{ day: CustomDay }}
+                        readOnly
+                        disableHighlightToday
+                        sx={{
+                          width: "fit-content",
+                          height: "auto", // 1. Permite que el componente crezca
+                          maxHeight: 500, // 2. Elimina la restricción de altura
+
+                          "& .MuiDayCalendar-monthContainer": {
+                            position: "relative", // Evita cortes raros en animaciones
+                          },
+
+                          // 🔥 CLAVE: grid fijo de 7 columnas
+                          "& .MuiDayCalendar-weekContainer": {
+                            display: "grid",
+                            gridTemplateColumns: {
+                              xs: "repeat(7, 40px)",
+                              sm: "repeat(7, 48px)",
+                              md: "repeat(7, 64px)"
+                            },
+                            justifyContent: "center",
+                            margin: "2px 0"
+                          },
+                          "& .MuiPickersCalendarHeader-label": {
+                            fontSize: { xs: "1.4rem", sm: "1.6rem", md: "1.8rem" },
+                            fontWeight: 700,
+                          },
+
+                          "& .MuiPickersArrowSwitcher-button": {
+                            transform: { xs: "scale(1)", sm: "scale(1.2)", md: "scale(1.3)" },
+                            display: "none"
+                          },
+
+                          // 🔥 evitar que MUI meta flex raro
+                          "& .MuiDayCalendar-root": {
+                            width: "auto"
+                          },
+
+                          "& .MuiDayCalendar-weekDayLabel": {
+                            width: { xs: 40, sm: 48, md: 64 },
+                            textAlign: "center",
+                            fontSize: { xs: "1rem", sm: "1.1rem", md: "1.2rem" },
+                            fontWeight: 700,
+                          },
+
+                          //Evitar efectos al cliquear
+                          "& .MuiPickersDay-root": {
+                            pointerEvents: "none", // Bloquea clics, hovers y selección
+                            userSelect: "none",    // Evita que se seleccione el texto del número
+                            backgroundColor: "transparent !important", // Evita el fondo azul
+                          },
+
+                          "& .Mui-selected": {
+                            backgroundColor: "transparent !important",
+                            color: "inherit !important",
+                            fontWeight: "inherit !important",
+                          },
+
+                          "& .MuiPickersDay-root:focus": {
+                            outline: "none",
+                            backgroundColor: "transparent !important",
+                          },
+                        }}
                       />
-                    ))}
-                  </Box>
-                ) : (
-                <Box
-                  sx={{
-                    position: "relative",
-                    height: "100%", // 👈 clave
-                    display: "flex",
-                    justifyContent: "center"
-                  }}
-                >
-                  {/* ⬅️ IZQUIERDA */}
-                  <Box
-                    onClick={() => setCalendarMonth(prev => prev.subtract(1, "month"))}
-                    sx={{
-                      position: "absolute",
-                      left: 15, // 👈 separa del calendario
-                      top: "40%",
-                      transform: "translateY(-50%)",
 
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      {/* ➡️ DERECHA */}
+                      <Box
+                        onClick={() => setCalendarMonth(prev => prev.add(1, "month"))}
+                        sx={{
+                          position: "absolute",
+                          right: 15,
+                          top: "40%",
+                          transform: "translateY(-50%)",
 
-                      width: 60,
-                      height: 60,
-                      borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
 
-                      cursor: "pointer",
-                      color: "#fff",
+                          width: 60,
+                          height: 60,
+                          borderRadius: "50%",
 
-                      transition: "all 0.2s ease",
-                    }}
-                  >
-                    <ArrowBackIosNewIcon
-                      sx={{
-                        fontSize: 90,
-                        filter: "drop-shadow(0 0 4px rgba(255,255,255,0.8))"
-                      }}
-                    />
-                  </Box>
+                          cursor: "pointer",
+                          color: "#fff",
 
-                  {/* 📅 CALENDARIO */}
-                  <DateCalendar
-                    value={calendarMonth}
-                    onMonthChange={(newMonth) => setCalendarMonth(newMonth)}
-                    referenceDate={calendarMonth}
-                    slots={{ day: CustomDay }}
-                    readOnly
-                    disableHighlightToday
-                    sx={{
-                      width: "fit-content",
-                      height: "auto", // 1. Permite que el componente crezca
-                      maxHeight: 500, // 2. Elimina la restricción de altura
+                          transition: "all 0.2s ease",
+                        }}
+                      >
+                        <ArrowForwardIosIcon
+                          sx={{
+                            fontSize: 90,
+                            filter: "drop-shadow(0 0 4px rgba(255,255,255,0.8))"
+                          }}
+                        />
+                      </Box>
+                    </Box>)}
 
-                      "& .MuiDayCalendar-monthContainer": {
-                        position: "relative", // Evita cortes raros en animaciones
-                      },
-
-                      // 🔥 CLAVE: grid fijo de 7 columnas
-                      "& .MuiDayCalendar-weekContainer": {
-                        display: "grid",
-                        gridTemplateColumns: {
-                          xs: "repeat(7, 40px)",
-                          sm: "repeat(7, 48px)",
-                          md: "repeat(7, 64px)"
-                        },
-                        justifyContent: "center",
-                        margin: "2px 0"
-                      },
-                      "& .MuiPickersCalendarHeader-label": {
-                        fontSize: { xs: "1.4rem", sm: "1.6rem", md: "1.8rem" },
-                        fontWeight: 700,
-                      },
-
-                      "& .MuiPickersArrowSwitcher-button": {
-                        transform: { xs: "scale(1)", sm: "scale(1.2)", md: "scale(1.3)" },
-                        display: "none"
-                      },
-
-                      // 🔥 evitar que MUI meta flex raro
-                      "& .MuiDayCalendar-root": {
-                        width: "auto"
-                      },
-
-                      "& .MuiDayCalendar-weekDayLabel": {
-                        width: { xs: 40, sm: 48, md: 64 },
-                        textAlign: "center",
-                        fontSize: { xs: "1rem", sm: "1.1rem", md: "1.2rem" },
-                        fontWeight: 700,
-                      },
-
-                      //Evitar efectos al cliquear
-                      "& .MuiPickersDay-root": {
-                        pointerEvents: "none", // Bloquea clics, hovers y selección
-                        userSelect: "none",    // Evita que se seleccione el texto del número
-                        backgroundColor: "transparent !important", // Evita el fondo azul
-                      },
-
-                      "& .Mui-selected": {
-                        backgroundColor: "transparent !important",
-                        color: "inherit !important",
-                        fontWeight: "inherit !important",
-                      },
-
-                      "& .MuiPickersDay-root:focus": {
-                        outline: "none",
-                        backgroundColor: "transparent !important",
-                      },
-                    }}
-                  />
-
-                  {/* ➡️ DERECHA */}
-                  <Box
-                    onClick={() => setCalendarMonth(prev => prev.add(1, "month"))}
-                    sx={{
-                      position: "absolute",
-                      right: 15,
-                      top: "40%",
-                      transform: "translateY(-50%)",
-
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-
-                      width: 60,
-                      height: 60,
-                      borderRadius: "50%",
-
-                      cursor: "pointer",
-                      color: "#fff",
-
-                      transition: "all 0.2s ease",
-                    }}
-                  >
-                    <ArrowForwardIosIcon
-                      sx={{
-                        fontSize: 90,
-                        filter: "drop-shadow(0 0 4px rgba(255,255,255,0.8))"
-                      }}
-                    />
-                  </Box>
-                </Box> )}
-
-              </CardContent>
-            </Card>
-          </>
-        )}
+                </CardContent>
+              </Card>
+            </>
+          )}
 
 
-      </Stack>
-    </Container>
+        </Stack>
+      </Container>
     </Box>
   );
 }

@@ -1,6 +1,6 @@
 import { Chip, Stack } from "@mui/material";
 
-import { muscleLabels, muscleColors} from "../config/muscleConfig"
+import { muscleLabels, muscleColors } from "../config/muscleConfig"
 import { lightenColor } from "../utils/colorUtils"
 
 export default function MuscleChips({ muscles = [], size = "small", chipSx = {} }) {

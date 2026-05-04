@@ -3,8 +3,8 @@ import { keyframes } from "@mui/system";
 import { useEffect, useRef, useState } from "react";
 import { useCountUp } from "react-countup";
 
-import { muscleLabels, muscleColors} from "../config/muscleConfig"
-import { lightenColor, darkenColor} from "../utils/colorUtils"
+import { muscleLabels, muscleColors } from "../config/muscleConfig"
+import { lightenColor, darkenColor } from "../utils/colorUtils"
 
 import ChestIcon from "../assets/muscles/chest.svg?react";
 import BackIcon from "../assets/muscles/back.svg?react";
@@ -201,7 +201,7 @@ export default function MuscleVolumeCard({ muscle, volume }) {
                 }
               }
             `}
-            </style>
+          </style>
 
           <Icon
             className="muscle-icon"

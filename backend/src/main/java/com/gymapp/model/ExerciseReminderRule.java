@@ -1,7 +1,11 @@
 package com.gymapp.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 public class ExerciseReminderRule {
     
@@ -15,29 +19,4 @@ public class ExerciseReminderRule {
 
     @Column(nullable = false)
     private Integer weeks;
-
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Exercise getExercise() {
-        return exercise;
-    }
-
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
-    }
-
-    public Integer getWeeks() {
-        return weeks;
-    }
-
-    public void setWeeks(Integer weeks) {
-        this.weeks = weeks;
-    }
 }

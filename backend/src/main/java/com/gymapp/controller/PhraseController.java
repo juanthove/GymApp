@@ -36,8 +36,7 @@ public class PhraseController {
     @PutMapping("/{id}")
     public PhraseResponse update(
             @PathVariable Long id,
-            @Valid @RequestBody PhraseRequest request
-    ) {
+            @Valid @RequestBody PhraseRequest request) {
         return phraseService.updatePhrase(id, request);
     }
 

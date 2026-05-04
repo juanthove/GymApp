@@ -9,5 +9,6 @@ import jakarta.validation.constraints.Size;
 public record UserRequest(
         @NotBlank @Size(max = 100) String name,
         @NotBlank @Size(max = 100) String surname,
-        @NotNull @Min(1) @Max(7) Integer gymDaysPerWeek
+        @NotNull @Min(1) @Max(7) Integer gymDaysPerWeek,
+        @NotNull Long userLevelId
 ) {}

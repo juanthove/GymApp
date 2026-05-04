@@ -19,12 +19,11 @@ import {
   MenuItem,
   Button,
   Stack,
-  Alert,
-  Snackbar,
   Box
 } from "@mui/material";
 
 import BackButton from "../components/BackButton";
+import AppSnackbar from "../components/AppSnackbar";
 
 export default function CreateExerciseReminderRuleScreen() {
 
@@ -160,17 +159,17 @@ export default function CreateExerciseReminderRuleScreen() {
             mb: 2
           }}
         >
-        
+
           {/* 🔙 Flecha a la izquierda */}
           <Box sx={{ position: "absolute", left: 0 }}>
-            <BackButton to="/admin" sx={{color: "black"}}/>
+            <BackButton to="/admin" sx={{ color: "black" }} />
           </Box>
-        
+
           {/* 🧠 Título centrado REAL */}
           <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
             Avisos de ejercicios
           </Typography>
-        
+
         </Box>
 
         <Stack spacing={3}>
@@ -246,16 +245,11 @@ export default function CreateExerciseReminderRuleScreen() {
       </Paper>
 
       {/* SNACKBAR */}
-      <Snackbar
-        open={!!message}
-        autoHideDuration={3000}
+      <AppSnackbar
+        message={message}
+        type={messageType}
         onClose={() => setMessage("")}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert severity={messageType} sx={{ width: "100%" }}>
-          {message}
-        </Alert>
-      </Snackbar>
+      />
 
     </Container>
   );

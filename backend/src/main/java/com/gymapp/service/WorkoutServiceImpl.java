@@ -106,11 +106,11 @@ public class WorkoutServiceImpl implements WorkoutService {
             List<WorkoutFullResponse.ExerciseItem> exerciseList = exercises.stream()
                     .map(ex -> new WorkoutFullResponse.ExerciseItem(
                             ex.getId(), ex.getExercise().getId(), ex.getExercise().getName(),
-                            ex.getExerciseOrder(), ex.getWeight(), ex.getComment(), ex.getCompleted()))
+                            ex.getExerciseOrder(), ex.getWeight(), ex.getComment(), ex.isCompleted()))
                     .toList();
             dayList.add(new WorkoutFullResponse.DayItem(
                     day.getId(), day.getName(), muscleService.getMusclesFromWorkoutDay(day), day.getDayOrder(), day.getMuscleImage(),
-                    day.getAbdominal(), day.getStartedAt(), day.getFinishedAt(), day.getStatus(), exerciseList));
+                    day.isAbdominal(), day.getStartedAt(), day.getFinishedAt(), day.getStatus(), exerciseList));
         }
 
         Long userId = workout.getUser() != null ? workout.getUser().getId() : null;

@@ -4,7 +4,9 @@ import CreateExerciseScreen from "./screen/CreateExerciseScreen";
 import CreateWorkoutTemplateScreen from "./screen/CreateWorkoutTemplateScreen";
 import CreateWorkoutScreen from "./screen/CreateWorkoutScreen";
 import CreatePhraseScreen from "./screen/CreatePhraseScreen";
-import CreateExerciseReminderRule from "./screen/CreateExerciseReminderRule";
+import CreateExerciseReminderRule from "./screen/CreateExerciseReminderRuleScreen";
+import CreateUserLevelScreen from "./screen/CreateUserLevelScreen";
+import CreateAchievementScreen from "./screen/CreateAchievementScreen";
 import AdminScreen from "./screen/AdminScreen";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
@@ -14,6 +16,7 @@ import WorkoutScreen from "./screen/WorkoutScreen";
 import ExerciseScreen from "./screen/ExerciseScreen";
 import FinalResumeScreen from "./screen/FinalResumeScreen";
 import StatsScreen from "./screen/StatsScreen";
+import AchievementsScreen from "./screen/AchievementsScreen";
 
 import LoginScreen from "./screen/LoginScreen";
 
@@ -27,6 +30,7 @@ function App() {
         <Route path="/exercise/:userId/:workoutDayId" element={<ExerciseScreen />} />
         <Route path="/final/:userId/:workoutDayId" element={<FinalResumeScreen />} />
         <Route path="/stats/:userId" element={<StatsScreen />} />
+        <Route path="/achievements/:userId" element={<AchievementsScreen />} />
 
         <Route path="/admin" element={<AdminScreen />} />
         <Route path="/admin/users" element={<CreateUserScreen />} />
@@ -36,6 +40,8 @@ function App() {
         <Route path="/admin/workouts" element={<CreateWorkoutScreen />} />
         <Route path="/admin/phrases" element={<CreatePhraseScreen />} />
         <Route path="/admin/rules" element={<CreateExerciseReminderRule />} />
+        <Route path="/admin/user-level" element={<CreateUserLevelScreen />} />
+        <Route path="/admin/achievements" element={<CreateAchievementScreen />} />
 
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/" element={<LoginScreen />} />

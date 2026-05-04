@@ -98,3 +98,8 @@ export async function setCurrentWorkout(userId, workoutId) {
   });
 }
 
+// Obtener todos los logros del usuario (bloqueados y desbloqueados)
+export async function getUserAchievements(userId) {
+  return apiRequest(`${USER_API}/${userId}/achievements`);
+}
+
