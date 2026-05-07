@@ -26,6 +26,8 @@ public class Achievement {
 
     private Double requiredValue; // Valor requerido, dependiendo el tipo es lo que representa
 
+    private String image;
+
     @Enumerated(EnumType.STRING)
     private MuscleType muscle;
 

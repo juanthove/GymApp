@@ -10,7 +10,8 @@ public record AchievementResponse(
         Long levelId,
         String levelName,
         Double requiredValue,
+        String image,
         MuscleType muscle,
         Long exerciseId,
-        String exerciseName
-) {}
+        String exerciseName) {
+}

@@ -1,14 +1,7 @@
 import { Chip } from "@mui/material";
 import { lightenColor } from "../utils/colorUtils";
 
-export default function AchievementChip({
-  label,
-  color = "#999",
-  icon = null,
-  size = "medium",
-  sx = {}
-}) {
-
+export default function AchievementChip({ label, color = "#999", icon = null, size = "medium", sx = {} }) {
   const light = lightenColor(color, 0.4);
 
   return (
@@ -16,9 +9,9 @@ export default function AchievementChip({
       label={label}
       icon={icon}
       sx={{
-        height: 32,
+        height: 58,
         px: 1.2,
-        py: 2.2,
+        py: 2.5,
 
         // 🔥 gradiente sutil (clave para profundidad)
         background: `linear-gradient(135deg, ${light}, ${color})`,
@@ -39,13 +32,14 @@ export default function AchievementChip({
         // 🔥 texto
         "& .MuiChip-label": {
           color: "#fff !important",
-          fontSize: "1.3rem",
+          fontSize: "2rem",
+          ml: 1,
         },
 
         // 🔥 icono
         "& .MuiChip-icon": {
           color: "#fff !important",
-          fontSize: 27,
+          fontSize: 40,
         },
 
         // 💫 hover más pro
@@ -58,7 +52,7 @@ export default function AchievementChip({
           `,
         },
 
-        ...sx
+        ...sx,
       }}
     />
   );

@@ -4,7 +4,7 @@ import {
   getAchievements,
   createAchievement,
   updateAchievement,
-  deleteAchievement
+  deleteAchievement,
 } from "../services/achievementService";
 
 import { getUserLevels } from "../services/userLevelService";
@@ -25,7 +25,7 @@ import {
   AccordionDetails,
   IconButton,
   Divider,
-  Box
+  Box,
 } from "@mui/material";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -33,11 +33,15 @@ import DeleteIcon from "@mui/icons-material/Delete";
 
 import BackButton from "../components/BackButton";
 import AppSnackbar from "../components/AppSnackbar";
+import FileUploadField from "../components/FileUploadField";
 
 export default function CreateAchievementScreen() {
-
   const [levels, setLevels] = useState([]);
   const [exercises, setExercises] = useState([]);
+
+  const [images, setImages] = useState({});
+  const [imagePreviews, setImagePreviews] = useState({});
+  const [deleteImages, setDeleteImages] = useState({});
 
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("info");
@@ -52,18 +56,18 @@ export default function CreateAchievementScreen() {
     const [levelsData, achievementsData, exercisesData] = await Promise.all([
       getUserLevels(),
       getAchievements(),
-      getExercises()
+      getExercises(),
     ]);
 
     // agrupar logros por nivel
-    const levelsWithAchievements = levelsData.map(level => ({
+    const levelsWithAchievements = levelsData.map((level) => ({
       ...level,
       achievements: achievementsData
-        .filter(a => a.levelId === level.id)
-        .map(a => ({
+        .filter((a) => a.levelId === level.id)
+        .map((a) => ({
           ...a,
-          exercise: exercisesData.find(ex => ex.id === a.exerciseId) || null
-        }))
+          exercise: exercisesData.find((ex) => ex.id === a.exerciseId) || null,
+        })),
     }));
 
     setLevels(levelsWithAchievements);
@@ -71,18 +75,17 @@ export default function CreateAchievementScreen() {
   };
 
   const updateAchievementField = (levelIndex, achIndex, field, value) => {
-    setLevels(prev => {
-
+    setLevels((prev) => {
       const updated = [...prev];
 
       updated[levelIndex] = {
         ...updated[levelIndex],
-        achievements: [...updated[levelIndex].achievements]
+        achievements: [...updated[levelIndex].achievements],
       };
 
       updated[levelIndex].achievements[achIndex] = {
         ...updated[levelIndex].achievements[achIndex],
-        [field]: value
+        [field]: value,
       };
 
       return updated;
@@ -94,11 +97,12 @@ export default function CreateAchievementScreen() {
 
     updated[levelIndex].achievements.push({
       id: null,
+      tempId: crypto.randomUUID(), // 🔥 clave única
       name: "",
       type: "VOLUME",
       requiredValue: "",
       muscle: "",
-      exercise: null
+      exercise: null,
     });
 
     setLevels(updated);
@@ -112,6 +116,26 @@ export default function CreateAchievementScreen() {
       await deleteAchievement(ach.id);
     }
 
+    const key = getKey(ach);
+
+    setImages((prev) => {
+      const copy = { ...prev };
+      delete copy[key];
+      return copy;
+    });
+
+    setImagePreviews((prev) => {
+      const copy = { ...prev };
+      delete copy[key];
+      return copy;
+    });
+
+    setDeleteImages((prev) => {
+      const copy = { ...prev };
+      delete copy[key];
+      return copy;
+    });
+
     updated[levelIndex].achievements.splice(achIndex, 1);
     setLevels(updated);
   };
@@ -120,10 +144,10 @@ export default function CreateAchievementScreen() {
     if (!validateAchievements()) return;
 
     try {
-
       for (const level of levels) {
-
-        for (const ach of level.achievements) {
+        for (let i = 0; i < level.achievements.length; i++) {
+          const ach = level.achievements[i];
+          const key = getKey(ach);
 
           const payload = {
             name: ach.name,
@@ -131,7 +155,9 @@ export default function CreateAchievementScreen() {
             levelId: level.id,
             requiredValue: Number(ach.requiredValue),
             muscle: ach.muscle || null,
-            exerciseId: ach.exercise ? ach.exercise.id : null
+            exerciseId: ach.exercise ? ach.exercise.id : null,
+            image: images[key] || null,
+            deleteImage: deleteImages[key] || false,
           };
 
           if (ach.id) {
@@ -139,9 +165,7 @@ export default function CreateAchievementScreen() {
           } else {
             await createAchievement(payload);
           }
-
         }
-
       }
 
       setMessage("Logros guardados correctamente");
@@ -149,6 +173,9 @@ export default function CreateAchievementScreen() {
 
       loadData();
 
+      setImages({});
+      setImagePreviews({});
+      setDeleteImages({});
     } catch (e) {
       setMessage("Error: " + e.message);
       setMessageType("error");
@@ -156,19 +183,18 @@ export default function CreateAchievementScreen() {
   };
 
   const handleTypeChange = (levelIndex, achIndex, newType) => {
-    setLevels(prev => {
-
+    setLevels((prev) => {
       const updated = [...prev];
 
       updated[levelIndex] = {
         ...updated[levelIndex],
-        achievements: [...updated[levelIndex].achievements]
+        achievements: [...updated[levelIndex].achievements],
       };
 
       const ach = {
         ...updated[levelIndex].achievements[achIndex],
         type: newType,
-        requiredValue: null // limpiar valor al cambiar tipo
+        requiredValue: null, // limpiar valor al cambiar tipo
       };
 
       updated[levelIndex].achievements[achIndex] = ach;
@@ -178,13 +204,10 @@ export default function CreateAchievementScreen() {
   };
 
   const validateAchievements = () => {
-
     const seen = new Set(); // 🔥 para evitar duplicados
 
     for (const level of levels) {
-
       for (const ach of level.achievements) {
-
         // 🔹 Nombre
         if (!ach.name?.trim()) {
           setMessage("Todos los logros deben tener nombre");
@@ -209,18 +232,15 @@ export default function CreateAchievementScreen() {
         // 🔥 VALIDACIONES POR TIPO
 
         if (ach.type === "VOLUME") {
-
           // ❗ opcional: evitar mezcla
           if (ach.exercise && ach.muscle) {
             setMessage(`El logro "${ach.name}" no puede tener ejercicio y músculo al mismo tiempo`);
             setMessageType("warning");
             return false;
           }
-
         }
 
         if (ach.type === "CONSISTENCY" || ach.type === "STREAK") {
-
           if (ach.exercise) {
             setMessage(`El logro "${ach.name}" no debe tener ejercicio`);
             setMessageType("warning");
@@ -232,7 +252,6 @@ export default function CreateAchievementScreen() {
             setMessageType("warning");
             return false;
           }
-
         }
 
         // 🔥 DUPLICADOS (MUY RECOMENDADO)
@@ -248,19 +267,17 @@ export default function CreateAchievementScreen() {
         }
 
         seen.add(key);
-
       }
-
     }
 
     return true;
   };
 
+  const getKey = (ach) => ach.id ?? ach.tempId;
+
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 6 }}>
-
       <Paper sx={{ p: 4 }}>
-
         <Box sx={{ position: "relative", mb: 2 }}>
           <Box sx={{ position: "absolute", left: 0 }}>
             <BackButton to="/admin" sx={{ color: "black" }} />
@@ -272,34 +289,24 @@ export default function CreateAchievementScreen() {
         </Box>
 
         <Stack spacing={3}>
-
           {levels.map((level, levelIndex) => (
-
             <Accordion key={level.id}>
-
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography>{level.name}</Typography>
               </AccordionSummary>
 
               <AccordionDetails>
-
                 <Stack spacing={2}>
-
                   {level.achievements.map((ach, achIndex) => (
-
                     <Accordion key={ach.id || ach.tempId}>
-
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-
                         <Stack
                           direction="row"
                           justifyContent="space-between"
                           alignItems="center"
                           sx={{ width: "100%" }}
                         >
-                          <Typography>
-                            {ach.name || `Logro ${achIndex + 1}`}
-                          </Typography>
+                          <Typography>{ach.name || `Logro ${achIndex + 1}`}</Typography>
 
                           <IconButton
                             onClick={(e) => {
@@ -310,28 +317,21 @@ export default function CreateAchievementScreen() {
                             <DeleteIcon color="error" />
                           </IconButton>
                         </Stack>
-
                       </AccordionSummary>
 
                       <AccordionDetails>
-
                         <Stack spacing={2}>
-
                           <TextField
                             label="Nombre"
                             value={ach.name || ""}
-                            onChange={(e) =>
-                              updateAchievementField(levelIndex, achIndex, "name", e.target.value)
-                            }
+                            onChange={(e) => updateAchievementField(levelIndex, achIndex, "name", e.target.value)}
                           />
 
                           <TextField
                             select
                             label="Tipo"
                             value={ach.type || ""}
-                            onChange={(e) =>
-                              handleTypeChange(levelIndex, achIndex, e.target.value)
-                            }
+                            onChange={(e) => handleTypeChange(levelIndex, achIndex, e.target.value)}
                           >
                             <MenuItem value="VOLUME">Volumen</MenuItem>
                             <MenuItem value="CONSISTENCY">Consistencia</MenuItem>
@@ -357,9 +357,7 @@ export default function CreateAchievementScreen() {
                             select
                             label="Músculo"
                             value={ach.muscle || ""}
-                            onChange={(e) =>
-                              updateAchievementField(levelIndex, achIndex, "muscle", e.target.value)
-                            }
+                            onChange={(e) => updateAchievementField(levelIndex, achIndex, "muscle", e.target.value)}
                           >
                             <MenuItem value="">Ninguno</MenuItem>
 
@@ -375,40 +373,62 @@ export default function CreateAchievementScreen() {
                             label="Ejercicio"
                             value={ach.exercise?.id || ""}
                             onChange={(e) => {
-                              const ex = exercises.find(x => x.id === e.target.value);
+                              const ex = exercises.find((x) => x.id === e.target.value);
                               updateAchievementField(levelIndex, achIndex, "exercise", ex);
                             }}
                           >
                             <MenuItem value="">Ninguno</MenuItem>
 
-                            {exercises.map(ex => (
+                            {exercises.map((ex) => (
                               <MenuItem key={ex.id} value={ex.id}>
                                 {ex.name}
                               </MenuItem>
                             ))}
                           </TextField>
 
+                          <FileUploadField
+                            label="Imagen del logro"
+                            accept="image/png,image/webp"
+                            setFile={(file) => {
+                              const key = getKey(ach);
+                              setImages((prev) => ({ ...prev, [key]: file }));
+                            }}
+                            preview={imagePreviews[getKey(ach)]}
+                            setPreview={(preview) => {
+                              const key = getKey(ach);
+                              setImagePreviews((prev) => ({ ...prev, [key]: preview }));
+                            }}
+                            existingUrl={ach.image ? `/api/achievements/image/${ach.image}` : null}
+                            deleteFlag={deleteImages[getKey(ach)] || false}
+                            setDeleteFlag={(value) => {
+                              const key = getKey(ach);
+                              setDeleteImages((prev) => ({ ...prev, [key]: value }));
+                            }}
+                            renderPreview={(src) => (
+                              <img
+                                src={src}
+                                style={{
+                                  width: "80px",
+                                  height: "80px",
+                                  objectFit: "contain",
+                                  background: "#f5f5f5",
+                                  borderRadius: "10px",
+                                  padding: "6px",
+                                }}
+                              />
+                            )}
+                          />
                         </Stack>
-
                       </AccordionDetails>
-
                     </Accordion>
-
                   ))}
 
-                  <Button
-                    variant="contained"
-                    onClick={() => addAchievement(levelIndex)}
-                  >
+                  <Button variant="contained" onClick={() => addAchievement(levelIndex)}>
                     Agregar logro
                   </Button>
-
                 </Stack>
-
               </AccordionDetails>
-
             </Accordion>
-
           ))}
 
           <Divider />
@@ -417,16 +437,9 @@ export default function CreateAchievementScreen() {
             Guardar todos los logros
           </Button>
 
-          <AppSnackbar
-            message={message}
-            type={messageType}
-            onClose={() => setMessage("")}
-          />
-
+          <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
         </Stack>
-
       </Paper>
-
     </Container>
   );
 }

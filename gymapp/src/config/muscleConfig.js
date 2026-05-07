@@ -11,7 +11,7 @@ export const muscleLabels = {
   ADDUCTORS: "Aductores",
   ABDUCTORS: "Abductores",
   CALVES: "Gemelos",
-  ABDOMINALS: "Abdominales"
+  ABDOMINALS: "Abdominales",
 };
 
 export const muscleColors = {
@@ -27,5 +27,23 @@ export const muscleColors = {
   ADDUCTORS: "#8bc34a",
   ABDUCTORS: "#4db6ac",
   CALVES: "#29b6f6",
-  ABDOMINALS: "#ec407a"
+  ABDOMINALS: "#ec407a",
+};
+
+export const muscleGroups = {
+  CHEST: "CHEST",
+  BACK: "CHEST",
+  ABDOMINALS: "CHEST",
+
+  SHOULDERS: "ARM",
+  BICEPS: "ARM",
+  TRICEPS: "ARM",
+  FOREARMS: "ARM",
+
+  QUADRICEPS: "LEG",
+  GLUTES: "LEG",
+  HAMSTRINGS: "LEG",
+  ADDUCTORS: "LEG",
+  ABDUCTORS: "LEG",
+  CALVES: "LEG",
 };

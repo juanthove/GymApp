@@ -3,29 +3,23 @@ import { useParams } from "react-router-dom";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
-import {
-  Box,
-  Container,
-  Typography,
-  Stack,
-  Card,
-  CardContent,
-  Skeleton
-} from "@mui/material";
+import { Box, Container, Typography, Stack, Card, CardContent, Skeleton, Modal } from "@mui/material";
 
 import BackButton from "../components/BackButton";
 import AchievementCard from "../components/AchievementCard";
+import AchievementMiniCard from "../components/AchievementMiniCard";
 
 import { getUserById, getUserAchievements } from "../services/userService";
+import { getAchievementImageUrl } from "../services/achievementService";
 
 export default function AchievementsScreen() {
-
   const { userId } = useParams();
 
   const [loading, setLoading] = useState(true);
 
   const [user, setUser] = useState(null);
   const [achievements, setAchievements] = useState([]);
+  const [selectedAchievement, setSelectedAchievement] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -35,14 +29,10 @@ export default function AchievementsScreen() {
     try {
       setLoading(true);
 
-      const [userRes, achievementsRes] = await Promise.all([
-        getUserById(userId),
-        getUserAchievements(userId)
-      ]);
+      const [userRes, achievementsRes] = await Promise.all([getUserById(userId), getUserAchievements(userId)]);
 
       setUser(userRes);
       setAchievements(achievementsRes);
-
     } catch (e) {
       console.error("Error cargando logros", e);
     } finally {
@@ -55,8 +45,12 @@ export default function AchievementsScreen() {
     if (!user) return [];
 
     return achievements
-      .filter(a => a.levelId >= user.userLevelId)
-      .sort((a, b) => a.levelId - b.levelId);
+      .filter((a) => a.levelId >= user.userLevelId)
+      .sort((a, b) => a.levelId - b.levelId)
+      .map((a) => ({
+        ...a,
+        imageUrl: a.image ? getAchievementImageUrl(a.image) : null,
+      }));
   }, [achievements, user]);
 
   return (
@@ -64,7 +58,7 @@ export default function AchievementsScreen() {
       sx={{
         position: "relative",
         minHeight: "100vh",
-        overflow: "hidden"
+        overflow: "hidden",
       }}
     >
       {/* 🖼️ BACKGROUND */}
@@ -76,7 +70,7 @@ export default function AchievementsScreen() {
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundAttachment: "fixed",
-          zIndex: 0
+          zIndex: 0,
         }}
       />
 
@@ -87,23 +81,19 @@ export default function AchievementsScreen() {
           inset: 0,
           backgroundColor: "rgba(44, 44, 44, 0.4)",
           backdropFilter: "blur(6px)",
-          zIndex: 1
+          zIndex: 1,
         }}
       />
 
-      <Container
-        maxWidth="md"
-        sx={{ mt: 4, mb: 6, zIndex: 2, position: "relative" }}
-      >
+      <Container maxWidth="md" sx={{ mt: 4, mb: 6, zIndex: 2, position: "relative" }}>
         <Stack spacing={3}>
-
           {/* 🔝 HEADER */}
           <Box
             sx={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              mt: 3
+              mt: 3,
             }}
           >
             <Box sx={{ width: 48 }}>
@@ -120,7 +110,7 @@ export default function AchievementsScreen() {
                   textShadow: `
                     0 0 10px rgba(255,255,255,0.3),
                     0 4px 20px rgba(0,0,0,0.6)
-                  `
+                  `,
                 }}
               >
                 Logros
@@ -133,7 +123,7 @@ export default function AchievementsScreen() {
                   width: 80,
                   height: 4,
                   borderRadius: 10,
-                  background: "linear-gradient(90deg, #ff2020, #f16744)"
+                  background: "linear-gradient(90deg, #ff2020, #f16744)",
                 }}
               />
             </Box>
@@ -146,56 +136,64 @@ export default function AchievementsScreen() {
             sx={{
               background: "rgba(255, 255, 255, 0.7)",
               backdropFilter: "blur(6px)",
-              borderRadius: 3
+              borderRadius: 3,
             }}
           >
             <CardContent>
-
               {loading ? (
                 <Box
                   sx={{
                     display: "grid",
                     gridTemplateColumns: {
-                      xs: "1fr",
-                      sm: "repeat(2, 1fr)"
+                      xs: "repeat(2, 1fr)",
+                      sm: "repeat(3, 1fr)",
+                      md: "repeat(4, 1fr)",
                     },
-                    gap: 3
+                    gap: 3,
                   }}
                 >
-                  {[1, 2, 3, 4].map(i => (
+                  {Array.from({ length: 12 }).map((_, i) => (
                     <Skeleton key={i} variant="rounded" height={200} />
                   ))}
                 </Box>
               ) : filteredAchievements.length === 0 ? (
                 <Box sx={{ textAlign: "center", py: 4 }}>
-                  <Typography fontSize="1.8rem">
-                    No hay logros disponibles todavía 🏆
-                  </Typography>
+                  <Typography fontSize="1.8rem">No hay logros disponibles todavía 🏆</Typography>
                 </Box>
               ) : (
                 <Box
                   sx={{
                     display: "grid",
                     gridTemplateColumns: {
-                      xs: "1fr",
-                      sm: "repeat(2, 1fr)"
+                      xs: "repeat(2, 1fr)",
+                      sm: "repeat(3, 1fr)",
+                      md: "repeat(4, 1fr)", // 🔥 4 por fila
                     },
-                    gap: 3
+                    gap: 3,
                   }}
                 >
                   {filteredAchievements.map((ach) => (
-                    <AchievementCard
-                      key={ach.id}
-                      achievement={ach}
-                    />
+                    <AchievementMiniCard key={ach.id} achievement={ach} onClick={() => setSelectedAchievement(ach)} />
                   ))}
                 </Box>
               )}
-
             </CardContent>
           </Card>
-
         </Stack>
+        <Modal open={!!selectedAchievement} onClose={() => setSelectedAchievement(null)}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              outline: "none",
+              display: "flex",
+            }}
+          >
+            {selectedAchievement && <AchievementCard achievement={selectedAchievement} />}
+          </Box>
+        </Modal>
       </Container>
     </Box>
   );
