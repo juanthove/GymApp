@@ -25,7 +25,7 @@ import {
   Box,
   TextField,
   IconButton,
-  InputAdornment
+  InputAdornment,
 } from "@mui/material";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -35,7 +35,6 @@ import UserCard from "../components/UserCard";
 import AnimatedDialog from "../components/AnimatedDialog";
 
 export default function HomeScreen() {
-
   const [users, setUsers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -73,20 +72,17 @@ export default function HomeScreen() {
 
   const goWorkout = async () => {
     try {
-
       if (!selectedUser) return;
 
       await loginUser(selectedUser.id);
 
       navigate(`/workout/${selectedUser.id}`);
-
     } catch (error) {
       console.error("Error logueando usuario:", error);
     }
   };
 
   return (
-
     <Box
       sx={{
         minHeight: "100vh",
@@ -94,14 +90,13 @@ export default function HomeScreen() {
         overflowX: "hidden",
         position: "relative",
         backgroundImage: `url(${backgroundImg})`,
-        backgroundSize: "cover",
+        backgroundSize: "contain",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
         backgroundAttachment: "fixed",
-        pt: 6
+        pt: 6,
       }}
     >
-
       {/* OVERLAY (para transparencia) */}
       <Box
         sx={{
@@ -109,35 +104,31 @@ export default function HomeScreen() {
           inset: 0,
           backgroundColor: "rgba(44, 44, 44, 0.4)",
           backdropFilter: "blur(6px)",
-          zIndex: 1
+          zIndex: 1,
         }}
       />
 
       {/* CONTENIDO */}
       <Box sx={{ position: "relative", zIndex: 1 }}>
-
-
         <Container maxWidth="lg" sx={{ pb: 6 }}>
-
-          <Box sx={{ textAlign: "center" }}>
+          <Box sx={{ textAlign: "center", mb: 2 }}>
             <Typography
               variant="h3"
               sx={{
-                mb: 5,
-                fontWeight: 700,
+                fontWeight: 900,
+                color: "#fff",
                 display: "inline-block",
-                lineHeight: 0.55
+                lineHeight: 0.55,
+                letterSpacing: "1px",
+                textShadow: `
+                  0 0 10px rgba(255,255,255,0.3),
+                  0 4px 20px rgba(0,0,0,0.6)
+                `,
               }}
             >
               Usuarios activos
-
               <Box sx={{ width: "150%", ml: "-25%" }}>
-                <svg
-                  width="100%"
-                  height="6"
-                  viewBox="0 0 100 6"
-                  preserveAspectRatio="none"
-                >
+                <svg width="100%" height="6" viewBox="0 0 100 6" preserveAspectRatio="none">
                   <defs>
                     <filter id="blur">
                       <feGaussianBlur stdDeviation="0.4" />
@@ -149,11 +140,7 @@ export default function HomeScreen() {
                     <stop offset="90%" stopColor="#e53935" stopOpacity="1" />
                     <stop offset="100%" stopColor="#e53935" stopOpacity="0" />
                   </linearGradient>
-                  <path
-                    d="M0 3 Q 50 6 100 3 Q 50 0 0 3"
-                    fill="url(#grad)"
-                    filter="url(#blur)"
-                  />
+                  <path d="M0 3 Q 50 6 100 3 Q 50 0 0 3" fill="url(#grad)" filter="url(#blur)" />
                 </svg>
               </Box>
             </Typography>
@@ -162,26 +149,38 @@ export default function HomeScreen() {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)", // 🔥 SIEMPRE 3
-              gap: 4,
+              gridTemplateColumns: {
+                xs: "repeat(2, 1fr)", // celulares/tablets chicas
+                md: "repeat(3, 1fr)", // ipad pro y grandes
+              },
+              gap: {
+                xs: 2,
+                md: 4,
+              },
               maxWidth: "1100px",
               margin: "0 auto",
-              px: 3,
+              px: {
+                xs: 1.5,
+                md: 3,
+              },
               boxSizing: "border-box",
-              width: "100%"
+              width: "100%",
+              justifyItems: "center",
             }}
           >
-
-            {users.map(user => (
-
+            {users.map((user) => (
               <UserCard
                 key={user.id}
                 title={`${user.name} ${user.surname}`}
                 imageUrl={user.image ? getUserImageUrl(user.image) : null}
                 onClick={() => goWorkoutWithUser(user)}
-                sx={{ width: "100%" }}
+                sx={{
+                  width: {
+                    xs: "90%",
+                    md: "100%",
+                  },
+                }}
               />
-
             ))}
 
             {/* BOTÓN + */}
@@ -193,10 +192,9 @@ export default function HomeScreen() {
                 alignItems: "center",
                 justifyContent: "center",
                 width: "100%",
-                height: "100%"
+                height: "100%",
               }}
             >
-
               <Card
                 onClick={openModal}
                 sx={{
@@ -211,17 +209,13 @@ export default function HomeScreen() {
                   border: "2px solid #d32f2f",
                   "&:hover": {
                     transform: "scale(1.1)",
-                    boxShadow: 6
-                  }
+                    boxShadow: 6,
+                  },
                 }}
               >
-
                 <AddIcon sx={{ fontSize: 70, color: "mainRed.hover" }} />
-
               </Card>
-
             </Box>
-
           </Box>
 
           {/* MODAL */}
@@ -240,7 +234,7 @@ export default function HomeScreen() {
             headerSx={{ py: 1 }}
             paperSx={{
               borderRadius: 4,
-              maxHeight: "60vh" // 🔥 mantenés EXACTAMENTE el alto
+              maxHeight: "60vh", // 🔥 mantenés EXACTAMENTE el alto
             }}
             closeSx={{ p: 1, "& svg": { fontSize: 50 } }}
             actions={
@@ -257,8 +251,8 @@ export default function HomeScreen() {
                   height: 80,
                   backgroundColor: "#202020",
                   "&:hover": {
-                    backgroundColor: "#000000"
-                  }
+                    backgroundColor: "#000000",
+                  },
                 }}
               >
                 Seleccionar
@@ -276,44 +270,36 @@ export default function HomeScreen() {
 
                 // 👇 altura del input
                 "& .MuiOutlinedInput-root": {
-                  height: 80,            // 🔥 más alto (probá 60–70)
+                  height: 80, // 🔥 más alto (probá 60–70)
                   borderRadius: 3,
                 },
 
                 // 👇 texto que escribís
                 "& .MuiInputBase-input": {
-                  fontSize: "2rem",    // 🔥 tamaño del texto
+                  fontSize: "2rem", // 🔥 tamaño del texto
                 },
 
                 // 👇 placeholder
                 "& .MuiInputBase-input::placeholder": {
                   fontSize: "2rem",
-                  opacity: 0.7
-                }
+                  opacity: 0.7,
+                },
               }}
               InputProps={{
                 endAdornment: search && (
                   <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setSearch("")}
-                      edge="end"
-                    >
+                    <IconButton onClick={() => setSearch("")} edge="end">
                       <ClearIcon sx={{ fontSize: 50 }} />
                     </IconButton>
                   </InputAdornment>
-                )
+                ),
               }}
             />
 
             <List sx={{ mt: 1 }}>
-
               {allUsers
-                .filter(user =>
-                  `${user.name} ${user.surname}`
-                    .toLowerCase()
-                    .includes(search.toLowerCase())
-                )
-                .map(user => (
+                .filter((user) => `${user.name} ${user.surname}`.toLowerCase().includes(search.toLowerCase()))
+                .map((user) => (
                   <ListItemButton
                     key={user.id}
                     selected={selectedUser?.id === user.id}
@@ -328,19 +314,19 @@ export default function HomeScreen() {
                         backgroundColor: "mainRed.main",
                         color: "#fff",
                         "&:hover": {
-                          backgroundColor: "mainRed.hover"
-                        }
-                      }
+                          backgroundColor: "mainRed.hover",
+                        },
+                      },
                     }}
                   >
                     <ListItemAvatar>
                       <Avatar
                         src={user.image ? getUserImageUrl(user.image) : undefined}
                         sx={{
-                          width: 65,     // 🔥 antes ~40
+                          width: 65, // 🔥 antes ~40
                           height: 65,
                           fontSize: "2rem",
-                          mr: 3
+                          mr: 3,
                         }}
                       >
                         {user.name?.[0]}
@@ -350,21 +336,15 @@ export default function HomeScreen() {
                       primary={`${user.name} ${user.surname}`}
                       primaryTypographyProps={{
                         fontSize: "2rem",
-                        fontWeight: selectedUser?.id === user.id ? 600 : 400
+                        fontWeight: selectedUser?.id === user.id ? 600 : 400,
                       }}
                     />
                   </ListItemButton>
                 ))}
-
             </List>
-
           </AnimatedDialog>
-
         </Container>
-
       </Box>
-
     </Box>
-
   );
 }

@@ -5,7 +5,7 @@ import CountUpImport from "react-countup";
 const CountUp = CountUpImport?.default || CountUpImport;
 
 import backgroundImg from "../assets/gymproIcon.png";
-import { muscleLabels } from "../config/muscleConfig"
+import { muscleLabels } from "../config/muscleConfig";
 
 import {
   Alert,
@@ -28,7 +28,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Divider,
-  Skeleton
+  Skeleton,
 } from "@mui/material";
 
 import { keyframes } from "@mui/system";
@@ -38,8 +38,6 @@ import { DateCalendar, PickerDay } from "@mui/x-date-pickers";
 
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-
-
 
 import {
   LineChart,
@@ -52,7 +50,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   LabelList,
-  Cell
+  Cell,
 } from "recharts";
 
 import BackButton from "../components/BackButton";
@@ -65,19 +63,11 @@ import {
   getVolumeByUserAndDateRange,
 } from "../services/workoutSetService";
 
-import {
-  getWorkoutFrequency,
-} from "../services/workoutDayService";
+import { getWorkoutFrequency } from "../services/workoutDayService";
 
-import {
-  getPersonalRecordsByUser,
-} from "../services/personalRecordService";
+import { getPersonalRecordsByUser } from "../services/personalRecordService";
 
-import {
-  getExerciseIconUrl,
-} from "../services/exerciseService";
-
-
+import { getExerciseIconUrl } from "../services/exerciseService";
 
 function formatVolume(value) {
   return Number(value || 0).toLocaleString("es-UY", {
@@ -123,23 +113,20 @@ export default function StatsScreen() {
   const tabsRef = useRef(null);
   const [sliderStyle, setSliderStyle] = useState({
     left: 0,
-    width: 0
+    width: 0,
   });
 
   const computedTotalVolume = useMemo(() => {
     if (selectedMuscle === "ALL") return totalVolume;
 
     return weeklyByMuscle
-      .filter(item => item.muscle === selectedMuscle)
+      .filter((item) => item.muscle === selectedMuscle)
       .reduce((acc, item) => acc + Number(item.volume || 0), 0);
-
   }, [selectedMuscle, weeklyByMuscle, totalVolume]);
-
-
 
   const enhancedRows = useMemo(() => {
     const byWeekAndMuscle = new Map(
-      weeklyByMuscle.map((item) => [`${item.weekStart}|${item.muscle || "SIN_MUSCULO"}`, Number(item.volume || 0)])
+      weeklyByMuscle.map((item) => [`${item.weekStart}|${item.muscle || "SIN_MUSCULO"}`, Number(item.volume || 0)]),
     );
 
     const rows = weeklyByMuscle.map((item) => {
@@ -150,10 +137,7 @@ export default function StatsScreen() {
 
       const delta = currentVolume - historicalMax;
 
-      const percent =
-        historicalMax > 0
-          ? (delta / historicalMax) * 100
-          : null;
+      const percent = historicalMax > 0 ? (delta / historicalMax) * 100 : null;
 
       return {
         ...item,
@@ -175,7 +159,7 @@ export default function StatsScreen() {
 
   const muscleOptions = useMemo(() => {
     const muscles = new Set(enhancedRows.map((row) => row.muscle));
-    const orderedMuscles = Object.keys(muscleLabels).filter(muscle => muscles.has(muscle));
+    const orderedMuscles = Object.keys(muscleLabels).filter((muscle) => muscles.has(muscle));
     return ["ALL", ...orderedMuscles];
   }, [enhancedRows]);
 
@@ -202,7 +186,6 @@ export default function StatsScreen() {
         });
       }
 
-
       const group = groups.get(key);
       group.rows.push(row);
       group.subtotal += row.currentVolume;
@@ -214,14 +197,11 @@ export default function StatsScreen() {
       const total = group.subtotal; // 👈 ESTE es el total semanal
 
       for (const row of group.rows) {
-        row.volumeRatio = total > 0
-          ? (row.currentVolume / total) * 100
-          : 0;
+        row.volumeRatio = total > 0 ? (row.currentVolume / total) * 100 : 0;
       }
     }
 
     return result;
-
   }, [filteredRows]);
 
   const loadStats = async () => {
@@ -255,7 +235,6 @@ export default function StatsScreen() {
     }
   }, [muscleOptions, selectedMuscle]);
 
-
   function getGranularity(from, to) {
     if (!from || !to) return null; // default
 
@@ -276,7 +255,7 @@ export default function StatsScreen() {
         from,
         to,
         granularity, // podés mandar null también
-        selectedMuscle === "ALL" ? null : selectedMuscle
+        selectedMuscle === "ALL" ? null : selectedMuscle,
       );
 
       // 🔥 IMPORTANTE
@@ -288,7 +267,6 @@ export default function StatsScreen() {
       }));
 
       setChartData(formatted);
-
     } catch (e) {
       console.error("Error cargando gráfica", e);
     } finally {
@@ -303,19 +281,18 @@ export default function StatsScreen() {
         userId,
         from,
         to,
-        frequencyMode // 👈 directo
+        frequencyMode, // 👈 directo
       );
 
       setFrequencyGranularity(res.granularity);
 
       const formatted = (res.data || []).map((item) => ({
         date: dayjs(item.date).valueOf(), // 🔥 clave
-        originalDate: item.date,          // guardás el string original
+        originalDate: item.date, // guardás el string original
         count: item.count,
       }));
 
       setFrequencyData(formatted);
-
     } catch (e) {
       console.error("Error frecuencia", e);
     } finally {
@@ -345,8 +322,6 @@ export default function StatsScreen() {
     return `${format(start)}\n${format(end)}`;
   }
 
-
-
   const formatXAxis = (value, granularity) => {
     if (!granularity) return value;
 
@@ -363,7 +338,7 @@ export default function StatsScreen() {
     if (granularity === "MONTH") {
       const formatted = new Intl.DateTimeFormat("es-ES", {
         year: "numeric",
-        month: "short"
+        month: "short",
       }).format(new Date(value)); // "abr 2026"
 
       return formatted.charAt(0).toUpperCase() + formatted.slice(1);
@@ -377,7 +352,7 @@ export default function StatsScreen() {
       setLoadingPR(true);
       const prsRes = await getPersonalRecordsByUser(userId);
 
-      const formatted = prsRes.map(pr => ({
+      const formatted = prsRes.map((pr) => ({
         ...pr,
         imageUrl: getExerciseIconUrl(pr.icon),
       }));
@@ -385,14 +360,12 @@ export default function StatsScreen() {
       formatted.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       setPrs(formatted);
-
     } catch (e) {
       console.error("Error cargando PRs", e);
     } finally {
       setLoadingPR(false);
     }
   };
-
 
   useEffect(() => {
     if (activeTab === "volume") {
@@ -412,7 +385,6 @@ export default function StatsScreen() {
     }
   }, [from, to, activeTab, frequencyMode]);
 
-
   //GRAFICA FRECUENCIA
   const getBarColor = (count) => {
     if (count === 0) return "#e0e0e0";
@@ -422,20 +394,16 @@ export default function StatsScreen() {
     return "#00b80c";
   };
 
-  const totalDays = frequencyData.reduce(
-    (acc, item) => acc + (item.count || 0),
-    0
-  );
+  const totalDays = frequencyData.reduce((acc, item) => acc + (item.count || 0), 0);
 
   const shouldRotate = frequencyData.length > 6;
 
-  const BAR_WIDTH = 100;
-  const MIN_CHART_WIDTH = 800;
+  const isSmallScreen = containerWidth <= 900;
 
-  const chartWidth = Math.max(
-    frequencyData.length * BAR_WIDTH,
-    MIN_CHART_WIDTH
-  );
+  const BAR_WIDTH = 100;
+  const MIN_CHART_WIDTH = isSmallScreen ? 500 : 800;
+
+  const chartWidth = Math.max(frequencyData.length * BAR_WIDTH, MIN_CHART_WIDTH);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -465,18 +433,12 @@ export default function StatsScreen() {
     return () => clearTimeout(timeout);
   }, [frequencyData, frequencyMode, from, to]);
 
-
   //CALENDARIO FRECUENCIA DIARIA
   const trainedDaysSet = useMemo(() => {
     if (frequencyGranularity !== "DAY") return new Set();
 
-    return new Set(
-      frequencyData
-        .filter(d => d.count > 0)
-        .map(d => dayjs(d.date).format("YYYY-MM-DD"))
-    );
+    return new Set(frequencyData.filter((d) => d.count > 0).map((d) => dayjs(d.date).format("YYYY-MM-DD")));
   }, [frequencyData, frequencyGranularity]);
-
 
   const loadCalendarData = async () => {
     try {
@@ -484,7 +446,7 @@ export default function StatsScreen() {
         userId,
         null,
         null,
-        "DAY" // 🔥 siempre por día
+        "DAY", // 🔥 siempre por día
       );
 
       setCalendarData(res.data || []);
@@ -494,12 +456,7 @@ export default function StatsScreen() {
   };
 
   const trainedDaysMap = useMemo(() => {
-    return new Map(
-      calendarData.map(d => [
-        dayjs(d.date).format("YYYY-MM-DD"),
-        d.count
-      ])
-    );
+    return new Map(calendarData.map((d) => [dayjs(d.date).format("YYYY-MM-DD"), d.count]));
   }, [calendarData]);
 
   useEffect(() => {
@@ -507,7 +464,6 @@ export default function StatsScreen() {
       loadCalendarData();
     }
   }, [activeTab]);
-
 
   function CustomDay(props) {
     const { day, outsideCurrentMonth, ...other } = props;
@@ -533,13 +489,12 @@ export default function StatsScreen() {
           bgcolor: getBarColor(count),
           color: count > 0 ? "#fff" : "inherit",
 
+          opacity: "1 !important",
+          visibility: "visible",
+
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-
-          "&.MuiPickersDay-today": {
-            border: "none", // elimina el círculo
-          },
 
           "&:hover": {
             backgroundColor: `${getBarColor(count)} !important`,
@@ -567,9 +522,6 @@ export default function StatsScreen() {
     );
   }
 
-
-
-
   //ANIMACIONES
   const glow = keyframes`
     0% {
@@ -592,32 +544,30 @@ export default function StatsScreen() {
     if (activeButton) {
       setSliderStyle({
         left: activeButton.offsetLeft,
-        width: activeButton.offsetWidth
+        width: activeButton.offsetWidth,
       });
     }
   }, [activeTab]);
 
   return (
-
     <Box
       sx={{
         position: "relative",
         minHeight: "100vh",
-        overflow: "hidden"
+        overflow: "hidden",
       }}
     >
-
       {/* 🖼️ BACKGROUND */}
       <Box
         sx={{
           position: "absolute",
           inset: 0,
           backgroundImage: `url(${backgroundImg})`,
-          backgroundSize: "cover",
+          backgroundSize: "contain",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
           backgroundAttachment: "fixed",
-          zIndex: 0
+          zIndex: 0,
         }}
       />
 
@@ -628,7 +578,7 @@ export default function StatsScreen() {
           inset: 0,
           backgroundColor: "rgba(44, 44, 44, 0.4)",
           backdropFilter: "blur(6px)",
-          zIndex: 1
+          zIndex: 1,
         }}
       />
 
@@ -639,10 +589,9 @@ export default function StatsScreen() {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              mt: 3
+              mt: 3,
             }}
           >
-
             {/* ⬅️ IZQUIERDA */}
             <Box sx={{ width: 48 }}>
               <BackButton to={`/workout/${userId}`} />
@@ -659,7 +608,7 @@ export default function StatsScreen() {
                   textShadow: `
                   0 0 10px rgba(255,255,255,0.3),
                   0 4px 20px rgba(0,0,0,0.6)
-                `
+                `,
                 }}
               >
                 Estadísticas
@@ -672,21 +621,20 @@ export default function StatsScreen() {
                   width: 80,
                   height: 4,
                   borderRadius: 10,
-                  background: "linear-gradient(90deg, #ff2020, #f16744)"
+                  background: "linear-gradient(90deg, #ff2020, #f16744)",
                 }}
               />
             </Box>
 
             {/* 👉 DERECHA (espaciador) */}
             <Box sx={{ width: 48 }} />
-
           </Box>
 
           <Box
             sx={{
               display: "flex",
               justifyContent: "center",
-              width: "100%"
+              width: "100%",
             }}
           >
             <Box
@@ -719,8 +667,8 @@ export default function StatsScreen() {
                     zIndex: 2,
 
                     "&:hover": {
-                      backgroundColor: "rgba(255,255,255,0.1)"
-                    }
+                      backgroundColor: "rgba(255,255,255,0.1)",
+                    },
                   },
 
                   //Botones seleccionados
@@ -728,8 +676,8 @@ export default function StatsScreen() {
                     background: "linear-gradient(135deg, #ff0000, #fd2828)",
                     color: "#fff",
                     borderRadius: 3,
-                    boxShadow: "0 0 12px rgba(255, 80, 60, 0.8)"
-                  }
+                    boxShadow: "0 0 12px rgba(255, 80, 60, 0.8)",
+                  },
                 }}
               >
                 <ToggleButton value="volume">Volumen</ToggleButton>
@@ -748,11 +696,10 @@ export default function StatsScreen() {
                   left: `calc(${sliderStyle.left}px + 6px)`,
                   width: `calc(${sliderStyle.width}px - 12px)`,
 
-                  transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)"
+                  transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               />
             </Box>
-
           </Box>
 
           {activeTab !== "pr" && (
@@ -762,18 +709,18 @@ export default function StatsScreen() {
                   background: "rgba(255, 255, 255, 0.7)",
                   backdropFilter: "blur(6px)",
                   border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 3
+                  borderRadius: 3,
                 }}
               >
                 <CardContent>
-
-                  <Stack
-                    direction={{ xs: "column", sm: "row" }}
-                    spacing={2}
-                    alignItems="center"
-                    flexWrap="wrap"
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 2,
+                      alignItems: "flex-end",
+                    }}
                   >
-
                     {/* 📅 Desde */}
                     <TextField
                       type="date"
@@ -804,7 +751,7 @@ export default function StatsScreen() {
                         sx={{
                           minWidth: 180,
                           maxWidth: 260,
-                          flexGrow: 1
+                          flexGrow: 1,
                         }}
                       >
                         {muscleOptions.map((muscle) => (
@@ -817,28 +764,42 @@ export default function StatsScreen() {
 
                     {/* 🧱 SPACER */}
                     {activeTab !== "volume" && (
-                      <Box sx={{ flexGrow: 1 }} />
+                      <Box
+                        sx={{
+                          flexGrow: 1,
+                          display: {
+                            xs: "none",
+                            sm: "block",
+                          },
+                        }}
+                      />
                     )}
 
                     {/* 🔄 Reset */}
-                    <Button
-                      //variant="contained"
-                      variant="outlined"
-                      onClick={() => {
-                        setFrom("");
-                        setTo("");
-                        setSelectedMuscle("ALL");
-                      }}
+                    <Box
                       sx={{
-                        height: 40,
-                        whiteSpace: "nowrap"
+                        ml: "auto",
+                        display: "flex",
+                        alignSelf: "flex-end",
                       }}
                     >
-                      Resetear filtros
-                    </Button>
-
-                  </Stack>
-
+                      <Button
+                        variant="outlined"
+                        onClick={() => {
+                          setFrom("");
+                          setTo("");
+                          setSelectedMuscle("ALL");
+                        }}
+                        sx={{
+                          height: 40,
+                          whiteSpace: "nowrap",
+                          mb: { md: 1 },
+                        }}
+                      >
+                        Resetear filtros
+                      </Button>
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
 
@@ -848,22 +809,17 @@ export default function StatsScreen() {
 
           {activeTab === "volume" && (
             <>
-
               <Card
                 sx={{
                   background: "rgba(255, 255, 255, 0.7)",
                   backdropFilter: "blur(6px)",
                   border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 3
+                  borderRadius: 3,
                 }}
               >
                 <CardContent>
                   <Stack alignItems="center" spacing={1.5}>
-
-                    <Typography
-                      variant="body1"
-                      sx={{ opacity: 0.7, letterSpacing: 1 }}
-                    >
+                    <Typography variant="body1" sx={{ opacity: 0.7, letterSpacing: 1 }}>
                       VOLUMEN TOTAL
                     </Typography>
 
@@ -876,7 +832,7 @@ export default function StatsScreen() {
                         WebkitTextFillColor: "transparent",
                         animation: `
                         ${glow} 2.2s ease-in-out infinite alternate
-                      `
+                      `,
                       }}
                     >
                       <CountUp
@@ -894,21 +850,19 @@ export default function StatsScreen() {
                         width: 40,
                         height: 4,
                         borderRadius: 10,
-                        background: "linear-gradient(90deg, #42a5f5, #66bb6a)"
+                        background: "linear-gradient(90deg, #42a5f5, #66bb6a)",
                       }}
                     />
-
                   </Stack>
                 </CardContent>
               </Card>
-
 
               <Card
                 sx={{
                   background: "rgba(255, 255, 255, 0.7)",
                   backdropFilter: "blur(6px)",
                   border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 3
+                  borderRadius: 3,
                 }}
               >
                 <CardContent>
@@ -922,31 +876,22 @@ export default function StatsScreen() {
                         width: 60,
                         height: 4,
                         borderRadius: 10,
-                        background: "linear-gradient(90deg, #ff2020, #f16744)"
+                        background: "linear-gradient(90deg, #ff2020, #f16744)",
                       }}
                     />
                   </Stack>
 
                   {loadingVolume ? (
-                    <Skeleton
-                      variant="rounded"
-                      height={300}
-                      sx={{ borderRadius: 3 }}
-                    />
+                    <Skeleton variant="rounded" height={300} sx={{ borderRadius: 3 }} />
                   ) : chartData.length === 0 ? (
-                    <Typography color="text.secondary">
-                      No hay datos para graficar.
-                    </Typography>
+                    <Typography color="text.secondary">No hay datos para graficar.</Typography>
                   ) : (
                     <Box sx={{ width: "100%", height: 300 }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" />
 
-                          <XAxis
-                            dataKey="date"
-                            tickFormatter={(value) => formatXAxis(value, volumeGranularity)}
-                          />
+                          <XAxis dataKey="date" tickFormatter={(value) => formatXAxis(value, volumeGranularity)} />
 
                           <YAxis />
 
@@ -966,9 +911,7 @@ export default function StatsScreen() {
                                     boxShadow: 3,
                                   }}
                                 >
-                                  <Typography variant="body2">
-                                    Fecha: {label}
-                                  </Typography>
+                                  <Typography variant="body2">Fecha: {label}</Typography>
 
                                   <Typography variant="body2" fontWeight={600}>
                                     {formatVolume(value)} kg
@@ -978,13 +921,7 @@ export default function StatsScreen() {
                             }}
                           />
 
-                          <Line
-                            type="monotone"
-                            dataKey="volume"
-                            stroke="#1976d2"
-                            strokeWidth={3}
-                            dot={false}
-                          />
+                          <Line type="monotone" dataKey="volume" stroke="#1976d2" strokeWidth={3} dot={false} />
                         </LineChart>
                       </ResponsiveContainer>
                     </Box>
@@ -992,17 +929,15 @@ export default function StatsScreen() {
                 </CardContent>
               </Card>
 
-
               <Card
                 sx={{
                   background: "rgba(255, 255, 255, 0.7)",
                   backdropFilter: "blur(6px)",
                   border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 3
+                  borderRadius: 3,
                 }}
               >
                 <CardContent>
-
                   {/* 🔥 TÍTULO ÚNICO */}
                   <Stack spacing={1} sx={{ mb: 3 }}>
                     <Typography variant="h5" fontWeight={800}>
@@ -1014,20 +949,20 @@ export default function StatsScreen() {
                         width: 60,
                         height: 4,
                         borderRadius: 10,
-                        background: "linear-gradient(90deg, #ff2020, #f16744)"
+                        background: "linear-gradient(90deg, #ff2020, #f16744)",
                       }}
                     />
                   </Stack>
 
                   {loadingVolume ? (
                     <Stack spacing={2}>
-                      {[1, 2, 3].map(i => (
+                      {[1, 2, 3].map((i) => (
                         <Box
                           key={i}
                           sx={{
                             p: 2,
                             borderRadius: 3,
-                            background: "rgba(255,255,255,0.05)"
+                            background: "rgba(255,255,255,0.05)",
                           }}
                         >
                           <Skeleton width="40%" height={30} />
@@ -1042,12 +977,9 @@ export default function StatsScreen() {
                       ))}
                     </Stack>
                   ) : filteredRows.length === 0 ? (
-                    <Typography color="text.secondary">
-                      No hay datos para ese rango.
-                    </Typography>
+                    <Typography color="text.secondary">No hay datos para ese rango.</Typography>
                   ) : (
                     <Stack spacing={2}>
-
                       {weeklyGroups.map((group) => (
                         <Box
                           key={`${group.weekStart}-${group.weekEnd}`}
@@ -1056,17 +988,11 @@ export default function StatsScreen() {
                             borderRadius: 3,
                             background: "rgba(255,255,255,0.04)",
                             border: "1px solid rgba(255,255,255,0.08)",
-                            borderLeft: "4px solid #ff2020"
+                            borderLeft: "4px solid #ff2020",
                           }}
                         >
-
                           {/* 📅 HEADER SEMANA */}
-                          <Stack
-                            direction="row"
-                            justifyContent="space-between"
-                            alignItems="center"
-                            sx={{ mb: 2 }}
-                          >
+                          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                             <Typography sx={{ fontWeight: 700, fontSize: "1.2rem" }}>
                               {group.weekStart} a {group.weekEnd}
                             </Typography>
@@ -1085,41 +1011,40 @@ export default function StatsScreen() {
                                   display: "flex",
                                   alignItems: "flex-start",
                                   gap: 2,
-                                  py: 0.5
+                                  py: 0.5,
                                 }}
                               >
-
                                 {/* 💪 MUSCLE */}
-                                <Box sx={{ width: 140 }}> {/* 👈 mismo ancho para todos */}
+                                <Box sx={{ width: 140 }}>
+                                  {" "}
+                                  {/* 👈 mismo ancho para todos */}
                                   <MuscleChips
                                     muscles={[row.muscle]}
                                     chipSx={{
                                       fontWeight: 700,
                                       fontSize: "1.2rem",
                                       height: 32,
-                                      transform: "translateY(11px)"
+                                      transform: "translateY(11px)",
                                     }}
                                   />
                                 </Box>
 
                                 {/* 📊 DATA */}
                                 <Box sx={{ flex: 1 }}>
-
                                   {/* 🔥 TOP ROW */}
                                   <Box
                                     sx={{
                                       display: "flex",
                                       justifyContent: "space-between",
                                       alignItems: "center",
-                                      mb: 0.5
+                                      mb: 0.5,
                                     }}
                                   >
-
                                     {/* 🔢 volumen */}
                                     <Typography
                                       sx={{
                                         fontWeight: 800,
-                                        fontSize: "1.4rem"
+                                        fontSize: "1.4rem",
                                       }}
                                     >
                                       {formatVolume(row.currentVolume)} kg
@@ -1131,7 +1056,7 @@ export default function StatsScreen() {
                                         sx={{
                                           fontWeight: 700,
                                           fontSize: "1.3rem",
-                                          color: "success.main"
+                                          color: "success.main",
                                         }}
                                       >
                                         +{formatVolume(row.delta)}
@@ -1146,7 +1071,7 @@ export default function StatsScreen() {
                                     sx={{
                                       height: 10,
                                       borderRadius: 10,
-                                      mb: 0.3
+                                      mb: 0.3,
                                     }}
                                   />
 
@@ -1155,25 +1080,19 @@ export default function StatsScreen() {
                                     sx={{
                                       fontSize: "1rem",
                                       textAlign: "right",
-                                      color: row.percent > 0 ? "success.main" : "text.secondary"
+                                      color: row.percent > 0 ? "success.main" : "text.secondary",
                                     }}
                                   >
-                                    {row.percent > 0
-                                      ? `+${formatVolume(row.percent)}%`
-                                      : ""}
+                                    {row.percent > 0 ? `+${formatVolume(row.percent)}%` : ""}
                                   </Typography>
-
                                 </Box>
                               </Box>
                             ))}
                           </Stack>
-
                         </Box>
                       ))}
-
                     </Stack>
                   )}
-
                 </CardContent>
               </Card>
             </>
@@ -1185,7 +1104,7 @@ export default function StatsScreen() {
                 background: "rgba(255, 255, 255, 0.7)",
                 backdropFilter: "blur(6px)",
                 border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 3
+                borderRadius: 3,
               }}
             >
               <CardContent>
@@ -1200,13 +1119,13 @@ export default function StatsScreen() {
                       gap: 3,
                     }}
                   >
-                    {[1, 2, 3, 4].map(i => (
+                    {[1, 2, 3, 4].map((i) => (
                       <Box
                         key={i}
                         sx={{
                           p: 2,
                           borderRadius: 3,
-                          background: "rgba(255,255,255,0.05)"
+                          background: "rgba(255,255,255,0.05)",
                         }}
                       >
                         <Skeleton variant="rounded" height={120} />
@@ -1217,13 +1136,9 @@ export default function StatsScreen() {
                   </Box>
                 ) : prs.length === 0 ? (
                   <Box sx={{ textAlign: "center", py: 4 }}>
-                    <Typography fontSize="2.1rem">
-                      No hay récords personales todavía 💪
-                    </Typography>
+                    <Typography fontSize="2.1rem">No hay récords personales todavía 💪</Typography>
 
-                    <Typography fontSize="1.5rem">
-                      Registrá tus series para empezar a ver tus records.
-                    </Typography>
+                    <Typography fontSize="1.5rem">Registrá tus series para empezar a ver tus records.</Typography>
                   </Box>
                 ) : (
                   <Box
@@ -1241,7 +1156,10 @@ export default function StatsScreen() {
                       <Box
                         key={row.id}
                         sx={{
-                          width: "100%",
+                          width: {
+                            xs: "90%",
+                            md: "100%",
+                          },
                           maxWidth: 320,
                         }}
                       >
@@ -1261,7 +1179,7 @@ export default function StatsScreen() {
                   background: "rgba(255, 255, 255, 0.7)",
                   backdropFilter: "blur(6px)",
                   border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 3
+                  borderRadius: 3,
                 }}
               >
                 <CardContent>
@@ -1276,7 +1194,7 @@ export default function StatsScreen() {
                         width: 60,
                         height: 4,
                         borderRadius: 10,
-                        background: "linear-gradient(90deg, #ff2020, #f16744)"
+                        background: "linear-gradient(90deg, #ff2020, #f16744)",
                       }}
                     />
                   </Stack>
@@ -1288,7 +1206,7 @@ export default function StatsScreen() {
                         p: 0.6,
                         borderRadius: 3,
                         backdropFilter: "blur(6px)",
-                        boxShadow: "0 4px 15px rgba(0,0,0,0.15)"
+                        boxShadow: "0 4px 15px rgba(0,0,0,0.15)",
                       }}
                     >
                       <ToggleButtonGroup
@@ -1305,16 +1223,16 @@ export default function StatsScreen() {
                             color: "#333",
 
                             "&:hover": {
-                              backgroundColor: "rgba(0,0,0,0.05)"
-                            }
+                              backgroundColor: "rgba(0,0,0,0.05)",
+                            },
                           },
 
                           "& .Mui-selected": {
                             background: "linear-gradient(135deg, #ff2020, #fd2828)",
                             color: "#fff",
                             borderRadius: 3,
-                            boxShadow: "0 0 10px rgba(255, 80, 60, 0.6)"
-                          }
+                            boxShadow: "0 0 10px rgba(255, 80, 60, 0.6)",
+                          },
                         }}
                       >
                         <ToggleButton value="WEEK">Semanal</ToggleButton>
@@ -1324,22 +1242,16 @@ export default function StatsScreen() {
                   </Box>
 
                   {loadingFrequency ? (
-                    <Skeleton
-                      variant="rounded"
-                      height={300}
-                      sx={{ borderRadius: 3 }}
-                    />
+                    <Skeleton variant="rounded" height={300} sx={{ borderRadius: 3 }} />
                   ) : frequencyData.length === 0 ? (
-                    <Typography color="text.secondary">
-                      No hay datos para mostrar.
-                    </Typography>
+                    <Typography color="text.secondary">No hay datos para mostrar.</Typography>
                   ) : (
                     <Box ref={containerRef} sx={{ width: "100%", overflowX: "auto" }}>
                       <Box
                         sx={{
                           width: chartWidth,
                           ml: hasOverflow ? 0 : "auto",
-                          mr: hasOverflow ? 0 : "auto"
+                          mr: hasOverflow ? 0 : "auto",
                         }}
                       >
                         <BarChart
@@ -1352,26 +1264,17 @@ export default function StatsScreen() {
                             dataKey="date"
                             interval={0}
                             domain={["dataMin", "dataMax"]}
-                            tickFormatter={(value) => formatXAxis(dayjs(value).format("YYYY-MM-DD"), frequencyGranularity)}
+                            tickFormatter={(value) =>
+                              formatXAxis(dayjs(value).format("YYYY-MM-DD"), frequencyGranularity)
+                            }
                             tick={({ x, y, payload }) => {
                               const formatted = formatXAxis(payload.value, frequencyGranularity);
                               const lines = formatted.split("\n");
 
                               return (
-                                <text
-                                  x={x}
-                                  y={y}
-                                  textAnchor="middle"
-                                  fill="#000"
-                                  fontSize={20}
-                                  fontWeight={600}
-                                >
+                                <text x={x} y={y} textAnchor="middle" fill="#000" fontSize={20} fontWeight={600}>
                                   {lines.map((line, index) => (
-                                    <tspan
-                                      key={index}
-                                      x={x}
-                                      dy={index === 0 ? 15 : 22}
-                                    >
+                                    <tspan key={index} x={x} dy={index === 0 ? 15 : 22}>
                                       {line}
                                     </tspan>
                                   ))}
@@ -1384,7 +1287,7 @@ export default function StatsScreen() {
                             key={frequencyData.length}
                             dataKey="count"
                             radius={[8, 8, 0, 0]}
-                            barSize={200}
+                            barSize={isSmallScreen ? 150 : 200}
                             animationDuration={600}
                             animationEasing="ease-out"
                             animationBegin={0}
@@ -1423,8 +1326,6 @@ export default function StatsScreen() {
                         </BarChart>
                       </Box>
                     </Box>
-
-
                   )}
 
                   <Divider sx={{ my: 1, opacity: 0.8, borderBottomWidth: 3, bgcolor: "#0000003b" }} />
@@ -1444,28 +1345,25 @@ export default function StatsScreen() {
                         sx={{
                           fontSize: "1.3rem",
                           opacity: 0.7,
-                          letterSpacing: 1
+                          letterSpacing: 1,
                         }}
                       >
                         días entrenados
                       </Typography>
                     </Box>
                   )}
-
                 </CardContent>
               </Card>
-
-
 
               <Card
                 sx={{
                   background: "rgba(255, 255, 255, 0.7)",
                   backdropFilter: "blur(6px)",
                   border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 3
+                  borderRadius: 3,
                 }}
               >
-                <CardContent sx={{ height: 620 }}>
+                <CardContent sx={{ height: { xs: 520, md: 620 } }}>
                   {/*Titulo + linea roja*/}
                   <Stack spacing={1} sx={{ mb: 3 }}>
                     <Typography variant="h5" fontWeight={800}>
@@ -1477,7 +1375,7 @@ export default function StatsScreen() {
                         width: 60,
                         height: 4,
                         borderRadius: 10,
-                        background: "linear-gradient(90deg, #ff2020, #f16744)"
+                        background: "linear-gradient(90deg, #ff2020, #f16744)",
                       }}
                     />
                   </Stack>
@@ -1490,16 +1388,11 @@ export default function StatsScreen() {
                         width: 400,
                         height: 400,
                         mt: 13,
-                        mx: "auto"
+                        mx: "auto",
                       }}
                     >
                       {Array.from({ length: 35 }).map((_, i) => (
-                        <Skeleton
-                          key={i}
-                          variant="circular"
-                          width={35}
-                          height={35}
-                        />
+                        <Skeleton key={i} variant="circular" width={35} height={35} />
                       ))}
                     </Box>
                   ) : (
@@ -1508,12 +1401,12 @@ export default function StatsScreen() {
                         position: "relative",
                         height: "100%", // 👈 clave
                         display: "flex",
-                        justifyContent: "center"
+                        justifyContent: "center",
                       }}
                     >
                       {/* ⬅️ IZQUIERDA */}
                       <Box
-                        onClick={() => setCalendarMonth(prev => prev.subtract(1, "month"))}
+                        onClick={() => setCalendarMonth((prev) => prev.subtract(1, "month"))}
                         sx={{
                           position: "absolute",
                           left: 15, // 👈 separa del calendario
@@ -1536,8 +1429,11 @@ export default function StatsScreen() {
                       >
                         <ArrowBackIosNewIcon
                           sx={{
-                            fontSize: 90,
-                            filter: "drop-shadow(0 0 4px rgba(255,255,255,0.8))"
+                            fontSize: {
+                              xs: 70,
+                              md: 90,
+                            },
+                            filter: "drop-shadow(0 0 4px rgba(255,255,255,0.8))",
                           }}
                         />
                       </Box>
@@ -1547,8 +1443,14 @@ export default function StatsScreen() {
                         value={calendarMonth}
                         onMonthChange={(newMonth) => setCalendarMonth(newMonth)}
                         referenceDate={calendarMonth}
+                        views={["year", "month", "day"]}
+                        openTo="day"
+                        onChange={(newValue) => {
+                          if (newValue) {
+                            setCalendarMonth(newValue);
+                          }
+                        }}
                         slots={{ day: CustomDay }}
-                        readOnly
                         disableHighlightToday
                         sx={{
                           width: "fit-content",
@@ -1565,10 +1467,14 @@ export default function StatsScreen() {
                             gridTemplateColumns: {
                               xs: "repeat(7, 40px)",
                               sm: "repeat(7, 48px)",
-                              md: "repeat(7, 64px)"
+                              md: "repeat(7, 64px)",
                             },
                             justifyContent: "center",
-                            margin: "2px 0"
+                            margin: "2px 0",
+                            overflow: "visible !important",
+                          },
+                          "& .MuiPickersSlideTransition-root": {
+                            overflow: "visible !important",
                           },
                           "& .MuiPickersCalendarHeader-label": {
                             fontSize: { xs: "1.4rem", sm: "1.6rem", md: "1.8rem" },
@@ -1577,16 +1483,16 @@ export default function StatsScreen() {
 
                           "& .MuiPickersArrowSwitcher-button": {
                             transform: { xs: "scale(1)", sm: "scale(1.2)", md: "scale(1.3)" },
-                            display: "none"
+                            display: "none",
                           },
 
                           // 🔥 evitar que MUI meta flex raro
                           "& .MuiDayCalendar-root": {
-                            width: "auto"
+                            width: "auto",
                           },
 
                           "& .MuiDayCalendar-weekDayLabel": {
-                            width: { xs: 40, sm: 48, md: 64 },
+                            width: { xs: 40, sm: 44, md: 60 },
                             textAlign: "center",
                             fontSize: { xs: "1rem", sm: "1.1rem", md: "1.2rem" },
                             fontWeight: 700,
@@ -1595,7 +1501,7 @@ export default function StatsScreen() {
                           //Evitar efectos al cliquear
                           "& .MuiPickersDay-root": {
                             pointerEvents: "none", // Bloquea clics, hovers y selección
-                            userSelect: "none",    // Evita que se seleccione el texto del número
+                            userSelect: "none", // Evita que se seleccione el texto del número
                             backgroundColor: "transparent !important", // Evita el fondo azul
                           },
 
@@ -1609,12 +1515,20 @@ export default function StatsScreen() {
                             outline: "none",
                             backgroundColor: "transparent !important",
                           },
+
+                          "& .MuiDayCalendar-slideTransition": {
+                            overflow: "visible !important",
+                          },
+
+                          "& .MuiDayCalendar-monthContainer": {
+                            overflow: "visible !important",
+                          },
                         }}
                       />
 
                       {/* ➡️ DERECHA */}
                       <Box
-                        onClick={() => setCalendarMonth(prev => prev.add(1, "month"))}
+                        onClick={() => setCalendarMonth((prev) => prev.add(1, "month"))}
                         sx={{
                           position: "absolute",
                           right: 15,
@@ -1637,19 +1551,20 @@ export default function StatsScreen() {
                       >
                         <ArrowForwardIosIcon
                           sx={{
-                            fontSize: 90,
-                            filter: "drop-shadow(0 0 4px rgba(255,255,255,0.8))"
+                            fontSize: {
+                              xs: 70,
+                              md: 90,
+                            },
+                            filter: "drop-shadow(0 0 4px rgba(255,255,255,0.8))",
                           }}
                         />
                       </Box>
-                    </Box>)}
-
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
             </>
           )}
-
-
         </Stack>
       </Container>
     </Box>

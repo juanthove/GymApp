@@ -9,7 +9,7 @@ import CreateUserLevelScreen from "./screen/CreateUserLevelScreen";
 import CreateAchievementScreen from "./screen/CreateAchievementScreen";
 import AdminScreen from "./screen/AdminScreen";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import ScrollToTop from "./components/ScrollToTop";
 
 import HomeScreen from "./screen/HomeScreen";
 import WorkoutScreen from "./screen/WorkoutScreen";
@@ -20,10 +20,10 @@ import AchievementsScreen from "./screen/AchievementsScreen";
 
 import LoginScreen from "./screen/LoginScreen";
 
-
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/home" element={<HomeScreen />} />
         <Route path="/workout/:userId" element={<WorkoutScreen />} />

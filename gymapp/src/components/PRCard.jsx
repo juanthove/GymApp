@@ -2,11 +2,10 @@ import { Box, Typography } from "@mui/material";
 import { useCountUp } from "react-countup";
 import { useEffect, useRef } from "react";
 
-import { muscleColors} from "../config/muscleConfig"
-import { lightenColor, darkenColor} from "../utils/colorUtils"
+import { muscleColors } from "../config/muscleConfig";
+import { lightenColor, darkenColor } from "../utils/colorUtils";
 
 export default function PRCard({ row }) {
-
   const countUpRef = useRef(null);
 
   const baseColor = muscleColors[row.muscle] || "#999";
@@ -36,7 +35,10 @@ export default function PRCard({ row }) {
         alignItems: "center",
         justifyContent: "space-between",
 
-        height: 270,
+        height: {
+          xs: 250,
+          md: 310,
+        },
         px: 2,
         py: 2,
         borderRadius: 4,
@@ -59,8 +61,7 @@ export default function PRCard({ row }) {
           left: 0,
           width: "100%",
           height: "35%",
-          background:
-            "linear-gradient(to bottom, rgba(255,255,255,0.35), transparent)",
+          background: "linear-gradient(to bottom, rgba(255,255,255,0.35), transparent)",
           pointerEvents: "none",
         }}
       />
@@ -69,8 +70,21 @@ export default function PRCard({ row }) {
       <Typography
         sx={{
           fontWeight: 800,
-          fontSize: "1.6rem",
+          fontSize: {
+            xs: "1.2rem",
+            md: "1.6rem",
+          },
           color: "#000000",
+          minHeight: {
+            xs: "2.8rem",
+            md: "3.8rem",
+          },
+
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+
+          lineHeight: 1.2,
         }}
       >
         {row.name}
@@ -79,25 +93,28 @@ export default function PRCard({ row }) {
       {/* 🖼️ Imagen */}
       <Box
         sx={{
-            height: 110,
-            width: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+          height: {
+            xs: 90,
+            md: 110,
+          },
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
-        >
+      >
         {row.imageUrl && (
-            <Box
+          <Box
             component="img"
             src={row.imageUrl}
             alt={row.name}
             sx={{
-                maxHeight: "100%",
-                maxWidth: "100%",
-                objectFit: "contain",
-                filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))"
+              maxHeight: "100%",
+              maxWidth: "100%",
+              objectFit: "contain",
+              filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))",
             }}
-            />
+          />
         )}
       </Box>
 
@@ -105,7 +122,10 @@ export default function PRCard({ row }) {
       <Typography
         sx={{
           fontWeight: 900,
-          fontSize: "1.5rem",
+          fontSize: {
+            xs: "1.3rem",
+            md: "1.5rem",
+          },
           color: textColor,
           textShadow: "0 2px 4px rgba(0,0,0,0.25)",
         }}
@@ -116,7 +136,11 @@ export default function PRCard({ row }) {
       {/* 📅 Fecha */}
       <Typography
         sx={{
-          fontSize: "1.3rem",
+          fontSize: {
+            xs: "1.2rem",
+            md: "1.3rem",
+          },
+          color: "#000000",
           opacity: 0.8,
           fontWeight: 500,
         }}

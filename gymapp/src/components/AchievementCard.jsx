@@ -80,8 +80,14 @@ export default function AchievementCard({ achievement }) {
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        height: 800,
-        width: 650,
+        height: {
+          xs: 700,
+          md: 800,
+        },
+        width: {
+          xs: 500,
+          md: 650,
+        },
         margin: "0 auto",
         px: 2,
         py: 2,

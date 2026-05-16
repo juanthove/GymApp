@@ -2,27 +2,23 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import backgroundImg from "../assets/gymproIcon.png";
-import { muscleLabels } from "../config/muscleConfig"
+import { muscleLabels } from "../config/muscleConfig";
 
 import {
   getWorkoutExercises,
   completeWorkoutExercise,
   uncompleteWorkoutExercise,
   markWorkoutExerciseSelected,
-  unmarkWorkoutExerciseSelected
+  unmarkWorkoutExerciseSelected,
 } from "../services/workoutExerciseService";
 
-import {
-  getExerciseImageUrl,
-  getExerciseVideoUrl,
-  getExerciseIconUrl,
-} from "../services/exerciseService";
+import { getExerciseImageUrl, getExerciseVideoUrl, getExerciseIconUrl } from "../services/exerciseService";
 
 import {
   completeWorkoutDay,
   markAbdominalWorkoutDay,
   isAbdominalWorkoutDay,
-  getWorkoutDayExercises
+  getWorkoutDayExercises,
 } from "../services/workoutDayService";
 
 import {
@@ -32,7 +28,7 @@ import {
   getWorkoutSetsByWorkoutExercise,
   createWorkoutSet,
   updateWorkoutSet,
-  deleteWorkoutSet
+  deleteWorkoutSet,
 } from "../services/workoutSetService";
 
 import { checkPersonalRecord } from "../services/personalRecordService";
@@ -59,13 +55,12 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Box
+  Box,
 } from "@mui/material";
 
-import GroupIcon from '@mui/icons-material/Group';
+import GroupIcon from "@mui/icons-material/Group";
 
 export default function ExerciseScreen() {
-
   const { userId, workoutDayId } = useParams();
 
   const [user, setUser] = useState(null);
@@ -100,27 +95,18 @@ export default function ExerciseScreen() {
   const [filterType, setFilterType] = useState("ALL");
   const [filterMuscle, setFilterMuscle] = useState("ALL");
 
-  const availableMuscles = [
-    "ALL",
-    ...Array.from(
-      new Set(
-        allExercises
-          .map(ex => ex.exerciseMuscle)
-          .filter(Boolean)
-      )
-    )
-  ];
+  const availableMuscles = ["ALL", ...Array.from(new Set(allExercises.map((ex) => ex.exerciseMuscle).filter(Boolean)))];
 
   const [sets, setSets] = useState([
     [{ reps: "", weight: "", id: null }],
     [{ reps: "", weight: "", id: null }],
-    [{ reps: "", weight: "", id: null }]
+    [{ reps: "", weight: "", id: null }],
   ]);
 
   const emptySets = [
     [{ reps: "", weight: "", id: null }],
     [{ reps: "", weight: "", id: null }],
-    [{ reps: "", weight: "", id: null }]
+    [{ reps: "", weight: "", id: null }],
   ];
 
   useEffect(() => {
@@ -138,23 +124,25 @@ export default function ExerciseScreen() {
 
     const data = await getWorkoutSetsByWorkoutExercise(selectedExercise.id);
 
-    if (!data || data.length === 0) return;
+    if (!data || data.length === 0) {
+      setSets(emptySets);
+      return;
+    }
 
     const grouped = {};
 
-    data.forEach(s => {
+    data.forEach((s) => {
       if (!grouped[s.setNumber]) grouped[s.setNumber] = [];
+
       grouped[s.setNumber].push({
         id: s.id,
         reps: s.reps,
-        weight: s.weight
+        weight: s.weight,
       });
     });
 
-    const maxSetNumber = Math.max(
-      ...Object.keys(grouped).map(Number),
-      0
-    );
+    // 🔥 mínimo 3 series
+    const maxSetNumber = Math.max(...Object.keys(grouped).map(Number), 3);
 
     const result = [];
 
@@ -162,26 +150,15 @@ export default function ExerciseScreen() {
       result.push(grouped[i] || [{ reps: "", weight: "", id: null }]);
     }
 
-    // 👉 si no hay nada, arrancás con 3 por defecto
-    if (result.length === 0) {
-      setSets(emptySets);
-    } else {
-      setSets(result);
-    }
-
+    setSets(result);
   };
 
   const loadData = async () => {
     try {
-
-      const [
-        abs,
-        workoutDayData,
-        userData
-      ] = await Promise.all([
+      const [abs, workoutDayData, userData] = await Promise.all([
         isAbdominalWorkoutDay(workoutDayId),
         getWorkoutDayExercises(workoutDayId),
-        getUserById(userId) // 🔥 lo metés acá
+        getUserById(userId), // 🔥 lo metés acá
       ]);
 
       setIsAbdominal(abs);
@@ -193,9 +170,7 @@ export default function ExerciseScreen() {
       setAllExercises(exercises);
 
       // 🔴 alertas
-      const overdueExercises = exercises.filter(
-        ex => ex.alert && ex.alert.overdue && !ex.selected
-      );
+      const overdueExercises = exercises.filter((ex) => ex.alert && ex.alert.overdue && !ex.selected);
 
       setAlertExercises(overdueExercises);
 
@@ -205,15 +180,12 @@ export default function ExerciseScreen() {
 
       const selectedIds = workoutDayData.selectedExerciseIds ?? [];
 
-      const exerciseMap = new Map(exercises.map(ex => [ex.id, ex]));
+      const exerciseMap = new Map(exercises.map((ex) => [ex.id, ex]));
 
-      const selected = selectedIds
-        .map(id => exerciseMap.get(id))
-        .filter(Boolean);
+      const selected = selectedIds.map((id) => exerciseMap.get(id)).filter(Boolean);
 
       setSelectedExerciseIds(selectedIds);
       setDisplayedExercises(selected);
-
     } catch (error) {
       console.error("Error cargando datos:", error);
     }
@@ -231,13 +203,12 @@ export default function ExerciseScreen() {
       PRIMARY: "Primario",
       SECONDARY: "Secundario",
       TERTIARY: "Terciario",
-      ABDOMINAL: "Abdominal"
+      ABDOMINAL: "Abdominal",
     };
     return map[type] || type;
   };
 
   const filteredExercises = allExercises.filter((ex) => {
-
     // 🔴 día abdominal
     if (isAbdominal && ex.type !== "ABDOMINAL") return false;
 
@@ -250,8 +221,6 @@ export default function ExerciseScreen() {
     return true;
   });
 
-
-
   const toggleSelectedExercise = async (ex) => {
     const isSelected = selectedExerciseIds.includes(ex.id);
 
@@ -259,30 +228,25 @@ export default function ExerciseScreen() {
 
     if (isSelected) {
       await unmarkWorkoutExerciseSelected(workoutDayId, ex.id);
-      newSelectedIds = selectedExerciseIds.filter(id => id !== ex.id);
+      newSelectedIds = selectedExerciseIds.filter((id) => id !== ex.id);
     } else {
       await markWorkoutExerciseSelected(workoutDayId, ex.id);
       newSelectedIds = [...selectedExerciseIds, ex.id];
     }
 
-    const updatedAll = allExercises.map((item) =>
-      item.id === ex.id ? { ...item, selected: !isSelected } : item
-    );
+    const updatedAll = allExercises.map((item) => (item.id === ex.id ? { ...item, selected: !isSelected } : item));
 
     //ESTADOS
     setSelectedExerciseIds(newSelectedIds);
     setAllExercises(updatedAll);
 
     //USAR ORDEN
-    const ordered = newSelectedIds
-      .map(id => updatedAll.find(ex => ex.id === id))
-      .filter(Boolean);
+    const ordered = newSelectedIds.map((id) => updatedAll.find((ex) => ex.id === id)).filter(Boolean);
 
     setDisplayedExercises(ordered);
   };
 
   const toggleCompleteExercise = async (ex) => {
-
     if (!areSetsValid()) {
       setMessage("Tenés series incompletas");
       setMessageType("error");
@@ -290,7 +254,6 @@ export default function ExerciseScreen() {
     }
 
     if (!ex.completed) {
-
       const existing = await getWorkoutSetsByWorkoutExercise(selectedExercise.id);
 
       for (let i = 0; i < sets.length; i++) {
@@ -322,7 +285,6 @@ export default function ExerciseScreen() {
     setAllExercises(updatedAll);
     setDisplayedExercises(updatedDisplayed);
     setSelectedExercise(updatedDisplayed.find((e) => e.id === updated.id) || null);
-
   };
 
   const handleCompleteClick = (ex) => {
@@ -345,8 +307,8 @@ export default function ExerciseScreen() {
 
     const weights = sets
       .flat()
-      .map(s => Number(s.weight))
-      .filter(w => !isNaN(w) && w > 0);
+      .map((s) => Number(s.weight))
+      .filter((w) => !isNaN(w) && w > 0);
 
     if (weights.length > 0) {
       const maxWeight = Math.max(...weights);
@@ -362,11 +324,10 @@ export default function ExerciseScreen() {
   const areAllExercisesCompleted = () => {
     if (displayedExercises.length === 0) return false;
 
-    return displayedExercises.every(ex => ex.completed);
+    return displayedExercises.every((ex) => ex.completed);
   };
 
   const handleFinishClick = () => {
-
     if (!areAllExercisesCompleted()) {
       setMessage("Tenés ejercicios sin completar");
       setMessageType("error");
@@ -378,34 +339,26 @@ export default function ExerciseScreen() {
     } else {
       setConfirmFinish(true);
     }
-
   };
 
   const finishDay = async () => {
-
     await completeWorkoutDay(workoutDayId);
 
     setConfirmFinish(false);
 
     navigate(`/final/${userId}/${workoutDayId}`);
-
   };
 
   const finishDayWithAbs = async () => {
-
     await markAbdominalWorkoutDay(workoutDayId);
 
     setConfirmFinish(false);
 
     await loadData();
-
   };
 
   const addSet = () => {
-    setSets(prev => [
-      ...prev,
-      [{ reps: "", weight: "", id: null }]
-    ]);
+    setSets((prev) => [...prev, [{ reps: "", weight: "", id: null }]]);
   };
 
   const removeSet = async (setIndex) => {
@@ -416,9 +369,7 @@ export default function ExerciseScreen() {
     // 🔥 borrar en backend si existen
     const existing = await getWorkoutSetsByWorkoutExercise(selectedExercise.id);
 
-    const toDelete = existing.filter(
-      s => s.setNumber === setNumber
-    );
+    const toDelete = existing.filter((s) => s.setNumber === setNumber);
 
     for (const s of toDelete) {
       await deleteWorkoutSet(s.id);
@@ -453,9 +404,7 @@ export default function ExerciseScreen() {
 
     const existing = await getWorkoutSetsByWorkoutExercise(selectedExercise.id);
 
-    const toDelete = existing.filter(
-      s => s.setNumber === setNumber
-    );
+    const toDelete = existing.filter((s) => s.setNumber === setNumber);
 
     for (const s of toDelete) {
       await deleteWorkoutSet(s.id);
@@ -471,7 +420,6 @@ export default function ExerciseScreen() {
   };
 
   const saveSet = async (setIndex, showMessage = true, existingSets = null) => {
-
     const now = Date.now();
 
     // ⛔ evitar doble ejecución muy rápida
@@ -485,21 +433,15 @@ export default function ExerciseScreen() {
 
     const blocks = sets[setIndex];
 
-    const existing =
-      existingSets ??
-      (await getWorkoutSetsByWorkoutExercise(selectedExercise.id));
+    const existing = existingSets ?? (await getWorkoutSetsByWorkoutExercise(selectedExercise.id));
 
     const setNumber = setIndex + 1;
 
-    const existingForSet = existing.filter(
-      (s) => s.setNumber === setNumber
-    );
+    const existingForSet = existing.filter((s) => s.setNumber === setNumber);
 
     const currentIds = blocks.map((b) => b.id).filter(Boolean);
 
-    const toDelete = existingForSet.filter(
-      (s) => !currentIds.includes(s.id)
-    );
+    const toDelete = existingForSet.filter((s) => !currentIds.includes(s.id));
 
     const allEmpty = blocks.every((b) => !hasValue(b.reps) && !hasValue(b.weight));
     const allFull = blocks.every((b) => hasValue(b.reps) && hasValue(b.weight));
@@ -516,10 +458,7 @@ export default function ExerciseScreen() {
         const original = existingForSet.find((s) => s.id === b.id);
         if (!original) return true;
 
-        return (
-          String(original.reps) !== String(b.reps) ||
-          String(original.weight) !== String(b.weight)
-        );
+        return String(original.reps) !== String(b.reps) || String(original.weight) !== String(b.weight);
       });
 
     // 🚫 NO HAY CAMBIOS → SALIR SIN MOSTRAR NADA
@@ -530,7 +469,6 @@ export default function ExerciseScreen() {
     setSavingSets((prev) => ({ ...prev, [setIndex]: true }));
 
     try {
-
       const startTime = Date.now();
 
       // DELETE
@@ -553,14 +491,14 @@ export default function ExerciseScreen() {
             reps: b.reps,
             weight: b.weight,
             setNumber,
-            workoutExerciseId: selectedExercise.id
+            workoutExerciseId: selectedExercise.id,
           });
         } else {
           const created = await createWorkoutSet({
             reps: b.reps,
             weight: b.weight,
             setNumber,
-            workoutExerciseId: selectedExercise.id
+            workoutExerciseId: selectedExercise.id,
           });
 
           b.id = created.id;
@@ -569,13 +507,11 @@ export default function ExerciseScreen() {
 
       const elapsed = Date.now() - startTime;
       if (elapsed < 600) await delay(600 - elapsed);
-
     } finally {
       savingSetsRef.current[setIndex] = false;
       setSavingSets((prev) => ({ ...prev, [setIndex]: false }));
     }
   };
-
 
   const hasValue = (v) => v !== null && v !== "" && v !== undefined;
 
@@ -584,8 +520,8 @@ export default function ExerciseScreen() {
     let hasAnyEmpty = false;
 
     for (const set of sets) {
-      const allEmpty = set.every(b => !hasValue(b.reps) && !hasValue(b.weight));
-      const allFull = set.every(b => hasValue(b.reps) && hasValue(b.weight));
+      const allEmpty = set.every((b) => !hasValue(b.reps) && !hasValue(b.weight));
+      const allFull = set.every((b) => hasValue(b.reps) && hasValue(b.weight));
 
       // ❌ serie inválida (mezcla interna)
       if (!allEmpty && !allFull) return false;
@@ -614,28 +550,25 @@ export default function ExerciseScreen() {
     setSelectedExercise(null);
   };
 
-
   return (
-
     <Box
       sx={{
         position: "relative",
         minHeight: "100vh",
-        overflow: "hidden"
+        overflow: "hidden",
       }}
     >
-
       {/* 🖼️ BACKGROUND */}
       <Box
         sx={{
           position: "absolute",
           inset: 0,
           backgroundImage: `url(${backgroundImg})`,
-          backgroundSize: "cover",
+          backgroundSize: "contain",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
           backgroundAttachment: "fixed",
-          zIndex: 0
+          zIndex: 0,
         }}
       />
 
@@ -646,10 +579,9 @@ export default function ExerciseScreen() {
           inset: 0,
           backgroundColor: "rgba(44, 44, 44, 0.4)",
           backdropFilter: "blur(6px)",
-          zIndex: 1
+          zIndex: 1,
         }}
       />
-
 
       <Box sx={{ position: "relative", minHeight: "100vh", pt: 6 }}>
         <Box
@@ -664,14 +596,19 @@ export default function ExerciseScreen() {
             border: "1px solid rgba(255,255,255,0.25)",
             boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
 
-            width: "100%",
+            width: {
+              xs: "90%",
+              md: "100%",
+            },
             maxWidth: "800px",
             mx: "auto",
-            zIndex: 2
+            zIndex: 2,
           }}
         >
-
-          <BackButton to={`/workout/${userId}`} sx={{ position: "absolute", left: 80, top: "50%", transform: "translateY(-50%)" }} />
+          <BackButton
+            to={`/workout/${userId}`}
+            sx={{ position: "absolute", left: { xs: 50, md: 80 }, top: "50%", transform: "translateY(-50%)" }}
+          />
 
           <Box textAlign="center" sx={{ width: "100%" }}>
             <Typography
@@ -679,10 +616,13 @@ export default function ExerciseScreen() {
               sx={{
                 width: "100%",
                 fontWeight: 800,
-                fontSize: "1.9rem",
+                fontSize: {
+                  xs: "1.5rem",
+                  md: "1.9rem",
+                },
                 letterSpacing: "0.8px",
                 color: "#fff",
-                textShadow: "0 3px 8px rgba(0,0,0,0.7)"
+                textShadow: "0 3px 8px rgba(0,0,0,0.7)",
               }}
             >
               {user?.name} {user?.surname}
@@ -692,15 +632,17 @@ export default function ExerciseScreen() {
               sx={{
                 width: "100%",
                 fontWeight: 800,
-                fontSize: "1.5rem",
+                fontSize: {
+                  xs: "1.2rem",
+                  md: "1.5rem",
+                },
                 letterSpacing: "0.8px",
                 color: "#fff",
-                textShadow: "0 3px 8px rgba(0,0,0,0.7)"
+                textShadow: "0 3px 8px rgba(0,0,0,0.7)",
               }}
             >
               Ejercicios del día
             </Typography>
-
           </Box>
 
           <PrimaryButton
@@ -712,33 +654,32 @@ export default function ExerciseScreen() {
               right: 10,
               top: "50%",
               transform: "translateY(-50%)",
-              fontSize: "1.5rem"
+              fontSize: {
+                xs: "1rem",
+                md: "1.5rem",
+              },
+              py: { xs: 1, md: 1.5 },
+              px: { xs: 1.6, md: 4 },
             }}
           />
-
         </Box>
 
-
         <Container maxWidth="sm" sx={{ mt: 6, mb: 15, zIndex: 2, position: "relative" }}>
-
-          <Stack spacing={2}>
-
+          <Stack spacing={2} alignItems="center">
             {selectedExerciseIds.length === 0 ? (
-
-              <Typography textAlign="center"
+              <Typography
+                textAlign="center"
                 sx={{
                   color: "#fff",
                   fontSize: "1.7rem",
                   fontWeight: 600,
                   textShadow: "0 2px 6px rgba(0,0,0,0.7)",
-                  letterSpacing: "0.5px"
+                  letterSpacing: "0.5px",
                 }}
               >
                 No hay ejercicios seleccionados
               </Typography>
-
             ) : (
-
               displayedExercises.map((ex) => (
                 <GymCard
                   key={ex.id}
@@ -749,20 +690,16 @@ export default function ExerciseScreen() {
                     display: "flex",
                     alignItems: "center",
                     px: 2,
+                    width: { xs: "100%", md: 650 },
                   }}
                 >
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={2}
-                    sx={{ width: "100%" }}
-                  >
+                  <Stack direction="row" alignItems="center" spacing={2} sx={{ width: "100%" }}>
                     {/* 🖼️ ICONO */}
                     {ex.icon && (
                       <Box
                         sx={{
-                          width: 110,
-                          height: 110,
+                          width: { xs: 90, md: 110 },
+                          height: { xs: 90, md: 110 },
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -782,17 +719,12 @@ export default function ExerciseScreen() {
 
                     {/* 📊 CONTENIDO */}
                     <Box sx={{ flex: 1 }}>
-
                       {/* 🔝 FILA: NOMBRE + PESO/REPS */}
-                      <Stack
-                        direction="row"
-                        justifyContent="space-between"
-                        alignItems="center"
-                      >
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Typography
-                          fontWeight={700}
+                          fontWeight={600}
                           sx={{
-                            fontSize: "1.5rem",
+                            fontSize: { xs: "1.4rem", md: "1.6rem" },
                             lineHeight: 1.2,
                           }}
                         >
@@ -801,10 +733,12 @@ export default function ExerciseScreen() {
 
                         <Typography
                           sx={{
-                            fontSize: "1.1rem",
+                            fontSize: { xs: "1.2rem", md: "1.4rem" },
+                            ml: 1,
                             color: "text.secondary",
                             fontWeight: 500,
-                            whiteSpace: "nowrap"
+                            whiteSpace: "nowrap",
+                            letterSpacing: "-0.5px",
                           }}
                         >
                           Peso: {ex.weight ?? 0} kg • Reps: {reps ?? "-"}
@@ -822,31 +756,27 @@ export default function ExerciseScreen() {
                       />
 
                       {/* ✅ COMPLETADO */}
-                      {ex.completed && (
-                        <Typography
-                          sx={{
-                            fontWeight: 700,
-                            color: "#2e7d32",
-                            fontSize: "1.1rem",
-                          }}
-                        >
-                          ✔ Completado
-                        </Typography>
-                      )}
+                      <Box sx={{ height: 30 }}>
+                        {ex.completed && (
+                          <Typography
+                            sx={{
+                              fontWeight: 700,
+                              color: "#2e7d32",
+                              fontSize: "1.4rem",
+                            }}
+                          >
+                            ✔ Completado
+                          </Typography>
+                        )}
+                      </Box>
                     </Box>
                   </Stack>
                 </GymCard>
               ))
-
             )}
-
           </Stack>
 
-          <AppSnackbar
-            message={message}
-            type={messageType}
-            onClose={() => setMessage("")}
-          />
+          <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
 
           {/* BOTON FINALIZAR */}
 
@@ -866,22 +796,20 @@ export default function ExerciseScreen() {
 
               boxShadow: "0 -4px 20px rgba(0,0,0,0.15)",
 
-              zIndex: 5
+              zIndex: 5,
             }}
           >
-
             <Stack direction="row" spacing={1}>
-
-
               <PrimaryButton
                 label="Seleccionar ejercicios"
                 onClick={() => setIsSelectionModalOpen(true)}
                 sx={{
                   width: "100%",
                   fontWeight: 700,
-                  fontSize: "2rem",
-                  py: 0.7,
-                  background: "linear-gradient(145deg, #c35aff, #ba20e9)"
+                  fontSize: { xs: "1.5rem", md: "2rem" },
+                  px: { xs: 1.5 },
+                  py: { xs: 0.2, md: 0.7 },
+                  background: "linear-gradient(145deg, #c35aff, #ba20e9)",
                 }}
               />
 
@@ -892,12 +820,12 @@ export default function ExerciseScreen() {
                 sx={{
                   width: "100%",
                   fontWeight: 700,
-                  fontSize: "2rem",
-                  py: 0.7
+                  fontSize: { xs: "1.5rem", md: "2rem" },
+                  px: { xs: 1.5 },
+                  py: { xs: 0.2, md: 0.7 },
                 }}
               />
             </Stack>
-
           </Box>
 
           {/* MODAL EJERCICIO */}
@@ -908,7 +836,7 @@ export default function ExerciseScreen() {
             title={selectedExercise?.exercise?.name || selectedExercise?.exerciseName}
             maxWidth={false}
             titleSize="2rem"
-            headerSx={{ py: 1.5 }}
+            headerSx={{ py: { xs: 0.5, md: 1.5 } }}
             paperSx={{ width: { xs: "95%", md: "80%" }, maxWidth: "900px" }}
             actions={
               <Button
@@ -917,16 +845,13 @@ export default function ExerciseScreen() {
                 variant="contained"
                 color={selectedExercise?.completed ? "error" : "success"}
                 onClick={() => handleCompleteClick(selectedExercise)}
-                sx={{ fontWeight: 700 }}
+                sx={{ fontWeight: 700, fontSize: "1.3rem", py: { xs: 1, md: 1.7 } }}
                 disabled={!areSetsValid()}
               >
-                {selectedExercise?.completed
-                  ? "Quitar completado"
-                  : "Marcar como completado"}
+                {selectedExercise?.completed ? "Quitar completado" : "Marcar como completado"}
               </Button>
             }
           >
-
             {/* MEDIA */}
             {selectedExercise?.video ? (
               <video
@@ -937,7 +862,7 @@ export default function ExerciseScreen() {
                   maxHeight: "260px",
                   objectFit: "contain",
                   background: "#000",
-                  borderRadius: "8px"
+                  borderRadius: "8px",
                 }}
               />
             ) : selectedExercise?.image ? (
@@ -948,7 +873,7 @@ export default function ExerciseScreen() {
                   maxHeight: "260px",
                   objectFit: "contain",
                   background: "#000",
-                  borderRadius: "8px"
+                  borderRadius: "8px",
                 }}
               />
             ) : null}
@@ -970,7 +895,7 @@ export default function ExerciseScreen() {
                     fontSize: "1.4rem",
                     fontWeight: 700,
                     height: 36,
-                    px: 1.5
+                    px: 1.5,
                   }}
                 />
               )}
@@ -984,10 +909,10 @@ export default function ExerciseScreen() {
 
             <Stack spacing={3} sx={{ mt: 3 }}>
               {sets.map((set, setIndex) => {
-                const allEmpty = set.every(b => !hasValue(b.reps) && !hasValue(b.weight));
-                const allFull = set.every(b => hasValue(b.reps) && hasValue(b.weight));
+                const allEmpty = set.every((b) => !hasValue(b.reps) && !hasValue(b.weight));
+                const allFull = set.every((b) => hasValue(b.reps) && hasValue(b.weight));
                 const isInvalid = !allEmpty && !allFull;
-                const hasData = set.some(b => b.id);
+                const hasData = set.some((b) => b.id);
 
                 return (
                   <Box
@@ -996,12 +921,10 @@ export default function ExerciseScreen() {
                       border: "1px solid #ddd",
                       p: 2,
                       borderRadius: 2,
-                      position: "relative"
+                      position: "relative",
                     }}
                   >
-                    <Typography sx={{ fontWeight: 700, fontSize: "1.4rem" }}>
-                      Serie {setIndex + 1}
-                    </Typography>
+                    <Typography sx={{ fontWeight: 700, fontSize: "1.4rem" }}>Serie {setIndex + 1}</Typography>
 
                     {/* ❌ BOTÓN ELIMINAR SERIE */}
                     {sets.length > 3 && !selectedExercise?.completed && (
@@ -1010,7 +933,7 @@ export default function ExerciseScreen() {
                         sx={{
                           position: "absolute",
                           top: 8,
-                          right: 8
+                          right: 8,
                         }}
                       />
                     )}
@@ -1019,7 +942,7 @@ export default function ExerciseScreen() {
                       sx={{
                         fontSize: "1.4rem",
                         color: "text.secondary",
-                        mt: 0.5
+                        mt: 0.5,
                       }}
                     >
                       {savingSets[setIndex] ? "Guardando..." : ""}
@@ -1027,12 +950,7 @@ export default function ExerciseScreen() {
 
                     <Stack spacing={1} mt={1}>
                       {set.map((block, blockIndex) => (
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          key={blockIndex}
-                          alignItems="center"
-                        >
+                        <Stack direction="row" spacing={1} key={blockIndex} alignItems="center">
                           <TextField
                             label="Reps"
                             size="small"
@@ -1041,9 +959,7 @@ export default function ExerciseScreen() {
                             inputMode="numeric"
                             pattern="[0-9]*"
                             disabled={selectedExercise?.completed}
-                            onChange={(e) =>
-                              handleChange(setIndex, blockIndex, "reps", e.target.value)
-                            }
+                            onChange={(e) => handleChange(setIndex, blockIndex, "reps", e.target.value)}
                             onBlur={() => handleAutoSave(setIndex)}
                             sx={{
                               width: 100,
@@ -1051,22 +967,22 @@ export default function ExerciseScreen() {
                               "& .MuiInputBase-input": {
                                 fontSize: "1.5rem",
                                 paddingTop: "12px",
-                                paddingBottom: "4px"
+                                paddingBottom: "4px",
                               },
 
                               // label normal
                               "& .MuiInputLabel-root": {
-                                fontSize: "1.5rem"
+                                fontSize: "1.5rem",
                               },
 
                               // 🔥 label cuando sube (con valor)
                               "& .MuiInputLabel-root.MuiInputLabel-shrink": {
-                                fontSize: "1.6rem"
+                                fontSize: "1.6rem",
                               },
 
                               "& .MuiInputBase-root": {
-                                height: 65
-                              }
+                                height: 65,
+                              },
                             }}
                           />
 
@@ -1078,9 +994,7 @@ export default function ExerciseScreen() {
                             inputMode="numeric"
                             pattern="[0-9]*"
                             disabled={selectedExercise?.completed}
-                            onChange={(e) =>
-                              handleChange(setIndex, blockIndex, "weight", e.target.value)
-                            }
+                            onChange={(e) => handleChange(setIndex, blockIndex, "weight", e.target.value)}
                             onBlur={() => handleAutoSave(setIndex)}
                             sx={{
                               width: 100,
@@ -1088,22 +1002,22 @@ export default function ExerciseScreen() {
                               "& .MuiInputBase-input": {
                                 fontSize: "1.5rem",
                                 paddingTop: "12px",
-                                paddingBottom: "4px"
+                                paddingBottom: "4px",
                               },
 
                               // label normal
                               "& .MuiInputLabel-root": {
-                                fontSize: "1.5rem"
+                                fontSize: "1.5rem",
                               },
 
                               // 🔥 label cuando sube (con valor)
                               "& .MuiInputLabel-root.MuiInputLabel-shrink": {
-                                fontSize: "1.6rem"
+                                fontSize: "1.6rem",
                               },
 
                               "& .MuiInputBase-root": {
-                                height: 65
-                              }
+                                height: 65,
+                              },
                             }}
                           />
 
@@ -1114,7 +1028,7 @@ export default function ExerciseScreen() {
                               fontSize: "1.8rem",
                               minWidth: 40,
                               height: 57,
-                              lineHeight: 1
+                              lineHeight: 1,
                             }}
                           >
                             +
@@ -1128,7 +1042,7 @@ export default function ExerciseScreen() {
                                 fontSize: "2rem",
                                 minWidth: 40,
                                 height: 57,
-                                lineHeight: 1
+                                lineHeight: 1,
                               }}
                             >
                               -
@@ -1157,38 +1071,31 @@ export default function ExerciseScreen() {
                 variant="outlined"
                 onClick={addSet}
                 disabled={selectedExercise?.completed}
-                sx={{ mt: 2, fontSize: "1.3rem", py: 1.2 }}
+                sx={{ mt: 2, fontSize: "1.3rem", py: { xs: 1, md: 1.2 } }}
               >
                 + Agregar serie
               </Button>
-
             </Stack>
-
           </AnimatedDialog>
 
-
-
           {/* MODAL DE SELECCIÓN DE EJERCICIOS */}
-
           <AnimatedDialog
             open={isSelectionModalOpen}
             onClose={() => setIsSelectionModalOpen(false)}
             title="Seleccionar ejercicios"
             titleSize="2rem"
-            headerSx={{ py: 1.5 }}
+            headerSx={{ py: { xs: 0.4, md: 1.5 } }}
             maxWidth={false}
             paperSx={{
               width: { xs: "95%", md: "80%" },
-              maxWidth: "900px"
+              maxWidth: "900px",
             }}
             actions={
               <Button
                 fullWidth
                 variant="contained"
                 onClick={() => {
-                  const chosen = allExercises.filter((ex) =>
-                    selectedExerciseIds.includes(ex.id)
-                  );
+                  const chosen = allExercises.filter((ex) => selectedExerciseIds.includes(ex.id));
                   setDisplayedExercises(chosen);
                   setSelectedExerciseIds(chosen.map((ex) => ex.id));
                   setIsSelectionModalOpen(false);
@@ -1202,19 +1109,19 @@ export default function ExerciseScreen() {
             <Box
               sx={{
                 maxHeight: "60vh",
-                overflowY: "auto"
+                overflowY: "auto",
               }}
             >
-
               {!isAbdominal && (
                 <Stack spacing={1} mb={1}>
                   <Box sx={{ display: "flex", justifyContent: "center" }}>
                     <Tabs
                       value={filterType}
                       onChange={(e, val) => setFilterType(val)}
+                      variant="scrollable"
+                      scrollButtons="auto"
                       sx={{
-                        "& .MuiTabs-flexContainer": { justifyContent: "center" },
-                        "& .MuiTab-root": { fontSize: "1.1rem" }
+                        "& .MuiTab-root": { fontSize: { xs: "0.9rem", md: "1.1rem" } },
                       }}
                     >
                       <Tab label="Todos" value="ALL" />
@@ -1232,18 +1139,14 @@ export default function ExerciseScreen() {
                       variant="scrollable"
                       scrollButtons="auto"
                       sx={{
-                        "& .MuiTab-root": { mb: 1, fontSize: "1.1rem" }
+                        "& .MuiTab-root": { mb: { xs: 0.6, md: 1 }, fontSize: { xs: "0.9rem", md: "1.1rem" } },
                       }}
                     >
                       {availableMuscles.map((muscle) => (
                         <Tab
                           key={muscle}
                           value={muscle}
-                          label={
-                            muscle === "ALL"
-                              ? "Todos"
-                              : muscleLabels[muscle] || muscle
-                          }
+                          label={muscle === "ALL" ? "Todos" : muscleLabels[muscle] || muscle}
                         />
                       ))}
                     </Tabs>
@@ -1268,14 +1171,12 @@ export default function ExerciseScreen() {
                         border: `2px solid ${isSelected ? "#4caf50" : "#ddd"}`,
                         cursor: ex.completed ? "not-allowed" : "pointer",
                         opacity: ex.completed ? 0.6 : 1,
-                        backgroundColor: isSelected
-                          ? "rgba(76, 175, 80, 0.08)"
-                          : "#fff",
+                        backgroundColor: isSelected ? "rgba(76, 175, 80, 0.08)" : "#fff",
 
                         position: "relative",
                         display: "flex",
                         alignItems: "flex-start",
-                        gap: 2
+                        gap: 2,
                       }}
                     >
                       <Box
@@ -1283,13 +1184,14 @@ export default function ExerciseScreen() {
                         src={getExerciseIconUrl(ex.icon)}
                         alt={ex.exerciseName}
                         sx={{
-                          width: 100,
-                          height: 100,
+                          width: { xs: 80, md: 100 },
+                          height: { xs: 80, md: 100 },
                           objectFit: "contain",
                           borderRadius: 2,
                           p: 0.5,
+                          mr: 2.5,
                           flexShrink: 0,
-                          transform: "translateX(28px)"
+                          transform: { xs: "translateX(20px)", md: "translateX(30px)" },
                         }}
                       />
 
@@ -1299,40 +1201,36 @@ export default function ExerciseScreen() {
                           display: "flex",
                           flexDirection: "column",
                           justifyContent: "center",
-                          mt: 0.5
+                          mt: 0.5,
                         }}
                       >
-                        <Typography fontWeight={700} fontSize={"1.4rem"}>
+                        <Typography sx={{ fontWeight: 700, fontSize: { xs: "1.2rem", md: "1.5rem" } }}>
                           {ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}
                         </Typography>
 
-                        <Typography
-                          color="text.secondary"
-                          fontWeight={600}
-                          fontSize={"1.05rem"}
-                        >
+                        <Typography color="text.secondary" fontWeight={600} fontSize={{ xs: "1rem", md: "1.2rem" }}>
                           {formatExerciseType(ex.type)}
                         </Typography>
 
-                        <Typography fontSize={"1.1rem"}>
+                        <Typography fontSize={{ xs: "1rem", md: "1.3rem" }}>
                           Peso: {ex.weight ?? 0} kg • Reps: {reps ?? "-"}
                         </Typography>
                       </Box>
 
                       <Box
                         sx={{
-                          minWidth: "120px",
+                          minWidth: { xs: "90px", md: "120px" },
                           display: "flex",
                           justifyContent: "flex-end",
-                          alignItems: "flex-start"
+                          alignItems: "flex-start",
                         }}
                       >
                         <Typography
                           sx={{
                             fontWeight: 700,
                             color: "#2e7d32",
-                            fontSize: "1.2rem",
-                            visibility: ex.completed ? "visible" : "hidden"
+                            fontSize: { xs: "1rem", md: "1.5rem" },
+                            visibility: ex.completed ? "visible" : "hidden",
                           }}
                         >
                           ✔ Completado
@@ -1343,14 +1241,7 @@ export default function ExerciseScreen() {
                 })}
               </Stack>
             </Box>
-
           </AnimatedDialog>
-
-
-
-
-
-
 
           {/* MODAL ABDOMINALES */}
 
@@ -1361,18 +1252,17 @@ export default function ExerciseScreen() {
             titleSize="2rem"
             paperSx={{
               maxWidth: 600, // 👈 ancho tipo modal chico como antes
-              borderRadius: 3
+              borderRadius: 3,
             }}
           >
             {/* CONTENIDO */}
             <Box sx={{ pb: 2 }}>
-
               <Typography
                 sx={{
                   fontSize: "1.4rem",
                   fontWeight: 500,
                   textAlign: "center",
-                  mb: 4 // 🔥 espacio igual al DialogContent original
+                  mb: 4, // 🔥 espacio igual al DialogContent original
                 }}
               >
                 ¿Querés hacer abdominales antes de terminar la rutina?
@@ -1380,7 +1270,6 @@ export default function ExerciseScreen() {
 
               {/* BOTONES */}
               <Stack direction="row" spacing={4} justifyContent="center">
-
                 <Button
                   onClick={finishDay}
                   variant="outlined"
@@ -1390,7 +1279,7 @@ export default function ExerciseScreen() {
                     py: 1, // 🔥 menos alto
                     fontSize: "1.4rem",
                     textTransform: "none",
-                    borderRadius: 2
+                    borderRadius: 2,
                   }}
                 >
                   No
@@ -1406,28 +1295,20 @@ export default function ExerciseScreen() {
                     fontWeight: 700,
                     textTransform: "none",
                     borderRadius: 2,
-                    whiteSpace: "nowrap" // 🔥 evita salto de línea
+                    whiteSpace: "nowrap", // 🔥 evita salto de línea
                   }}
                 >
                   Sí, agregar abdominales
                 </Button>
-
               </Stack>
-
             </Box>
           </AnimatedDialog>
 
-
-
-          <Dialog
-            open={weightModalOpen}
-            onClose={() => setWeightModalOpen(false)}
-            fullWidth
-            maxWidth="xs"
-          >
+          <Dialog open={weightModalOpen} onClose={() => setWeightModalOpen(false)} fullWidth maxWidth="xs">
             <DialogTitle sx={{ fontWeight: 700, position: "relative", textAlign: "center" }}>
               Próxima semana 💪
-              <CloseButton onClick={() => setWeightModalOpen(false)}
+              <CloseButton
+                onClick={() => setWeightModalOpen(false)}
                 sx={{
                   position: "absolute",
                   right: 16,
@@ -1442,7 +1323,7 @@ export default function ExerciseScreen() {
                 sx={{
                   fontSize: "1.3rem",
                   textAlign: "center",
-                  mb: 2
+                  mb: 2,
                 }}
               >
                 ¿Cuánto peso querés usar la próxima semana?
@@ -1460,37 +1341,32 @@ export default function ExerciseScreen() {
                   "& .MuiInputBase-input": {
                     fontSize: "1.5rem",
                     paddingTop: "12px",
-                    paddingBottom: "4px"
+                    paddingBottom: "4px",
                   },
 
                   // label normal
                   "& .MuiInputLabel-root": {
-                    fontSize: "1.5rem"
+                    fontSize: "1.5rem",
                   },
 
                   // 🔥 label cuando sube (con valor)
                   "& .MuiInputLabel-root.MuiInputLabel-shrink": {
-                    fontSize: "1.6rem"
+                    fontSize: "1.6rem",
                   },
 
                   "& .MuiInputBase-root": {
-                    height: 65
-                  }
+                    height: 65,
+                  },
                 }}
               />
             </DialogContent>
 
             <DialogActions sx={{ p: 2 }}>
-              <Button
-                onClick={confirmCompleteWithWeight}
-                variant="contained"
-                fullWidth
-              >
+              <Button onClick={confirmCompleteWithWeight} variant="contained" fullWidth>
                 Guardar y completar
               </Button>
             </DialogActions>
           </Dialog>
-
 
           {/*MODAL ALERTAS*/}
           <Dialog
@@ -1501,11 +1377,11 @@ export default function ExerciseScreen() {
             PaperProps={{
               sx: {
                 width: "90%",
-                maxWidth: "900px"
-              }
+                maxWidth: "900px",
+              },
             }}
           >
-            <DialogTitle sx={{ fontWeight: 700, textAlign: "center" }}>
+            <DialogTitle sx={{ fontWeight: 700, textAlign: "center", fontSize: { xs: "1.8rem", md: "2.3rem" } }}>
               ⚠️ Hace tiempo que no hacés estos ejercicios
             </DialogTitle>
 
@@ -1514,7 +1390,7 @@ export default function ExerciseScreen() {
                 sx={{
                   textAlign: "center",
                   mb: 2,
-                  fontSize: "1.5rem"
+                  fontSize: { xs: "1.5rem", md: "1.9rem" },
                 }}
               >
                 Intentalos incluir hoy 💪
@@ -1527,18 +1403,18 @@ export default function ExerciseScreen() {
                     sx={{
                       p: 2,
                       borderRadius: 2,
-                      border: "1px solid #ddd"
+                      border: "1px solid #ddd",
                     }}
                   >
-                    <Typography fontWeight={700} fontSize="1.7rem">
+                    <Typography sx={{ fontWeight: 700, fontSize: { xs: "1.4rem", md: "1.8rem" } }}>
                       {ex.exerciseName}
                     </Typography>
 
-                    <Typography fontSize="1.5rem" color="text.secondary">
+                    <Typography sx={{ fontSize: { xs: "1.3rem", md: "1.6rem" }, color: "text.secondary" }}>
                       Última vez: {formatDate(ex.alert.lastPerformedDate)}
                     </Typography>
 
-                    <Typography fontSize="1.45rem" color="error">
+                    <Typography sx={{ fontSize: { xs: "1.2rem", md: "1.5rem" } }} color="error">
                       Hace {ex.alert.weeksSinceLastPerformed}{" "}
                       {ex.alert.weeksSinceLastPerformed === 1 ? "semana" : "semanas"} que no lo hacés
                     </Typography>
@@ -1552,18 +1428,14 @@ export default function ExerciseScreen() {
                 onClick={() => setAlertModalOpen(false)}
                 fullWidth
                 variant="contained"
+                sx={{ fontSize: { xs: "1.2rem", md: "1.5rem" }, py: 1.5 }}
               >
                 Entendido
               </Button>
             </DialogActions>
           </Dialog>
-
         </Container>
-
       </Box>
-
     </Box>
-
   );
-
 }

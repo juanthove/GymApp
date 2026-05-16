@@ -5,7 +5,12 @@ import backgroundImg from "../assets/gymproIcon.png";
 
 import { getUserById, getCurrentWorkout, logoutUser } from "../services/userService";
 import { getWorkoutById } from "../services/workoutService";
-import { startWorkoutDay, cancelWorkoutDay, getWorkoutDayStatus, getWorkoutDayImageUrl } from "../services/workoutDayService";
+import {
+  startWorkoutDay,
+  cancelWorkoutDay,
+  getWorkoutDayStatus,
+  getWorkoutDayImageUrl,
+} from "../services/workoutDayService";
 import { getRandomPhrase } from "../services/phraseService";
 
 import {
@@ -18,10 +23,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress
+  CircularProgress,
 } from "@mui/material";
 
-import { keyframes } from "@mui/system";
+import { fontSize, keyframes } from "@mui/system";
 
 import GymCard from "../components/GymCard";
 import BackButton from "../components/BackButton";
@@ -30,7 +35,6 @@ import PrimaryButton from "../components/PrimaryButton";
 import AnimatedDialog from "../components/AnimatedDialog";
 
 export default function WorkoutScreen() {
-
   const { userId } = useParams();
   const navigate = useNavigate();
 
@@ -42,16 +46,13 @@ export default function WorkoutScreen() {
   const [dayStatus, setDayStatus] = useState({});
   const [hasWorkout, setHasWorkout] = useState(true);
 
-
   const [animatedProgress, setAnimatedProgress] = useState(0);
-
 
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
-
     const u = await getUserById(userId);
     setUser(u);
 
@@ -65,7 +66,6 @@ export default function WorkoutScreen() {
     }
 
     if (current) {
-
       const w = await getWorkoutById(current.id);
 
       const statuses = {};
@@ -78,7 +78,6 @@ export default function WorkoutScreen() {
       setDayStatus(statuses);
       setWorkout(w);
     }
-
   };
 
   useEffect(() => {
@@ -113,13 +112,12 @@ export default function WorkoutScreen() {
 
       const newStatus = await getWorkoutDayStatus(selectedDay.id);
 
-      setDayStatus(prev => ({
+      setDayStatus((prev) => ({
         ...prev,
-        [selectedDay.id]: newStatus
+        [selectedDay.id]: newStatus,
       }));
 
       navigate(`/exercise/${userId}/${selectedDay.id}`);
-
     } catch (e) {
       alert("Error al iniciar el entrenamiento");
     }
@@ -133,11 +131,10 @@ export default function WorkoutScreen() {
   };
 
   const hasDayInProgress = () => {
-    return Object.values(dayStatus).some(status => status === "IN_PROGRESS");
+    return Object.values(dayStatus).some((status) => status === "IN_PROGRESS");
   };
 
   const handleLogout = () => {
-
     if (hasDayInProgress()) {
       alert("No podés cerrar sesión mientras hay un entrenamiento en curso");
       return;
@@ -150,25 +147,22 @@ export default function WorkoutScreen() {
 
   const sortedDays = workout?.days
     ? [...workout.days].sort((a, b) => {
+        const order = {
+          IN_PROGRESS: 0,
+          NOT_STARTED: 1,
+          COMPLETED: 2,
+        };
 
-      const order = {
-        IN_PROGRESS: 0,
-        NOT_STARTED: 1,
-        COMPLETED: 2
-      };
+        const statusA = dayStatus[a.id] || "NOT_STARTED";
+        const statusB = dayStatus[b.id] || "NOT_STARTED";
 
-      const statusA = dayStatus[a.id] || "NOT_STARTED";
-      const statusB = dayStatus[b.id] || "NOT_STARTED";
+        if (order[statusA] !== order[statusB]) {
+          return order[statusA] - order[statusB];
+        }
 
-      if (order[statusA] !== order[statusB]) {
-        return order[statusA] - order[statusB];
-      }
-
-      return a.dayOrder - b.dayOrder;
-
-    })
+        return a.dayOrder - b.dayOrder;
+      })
     : [];
-
 
   const glow = keyframes`
   0% {
@@ -196,9 +190,7 @@ export default function WorkoutScreen() {
 
   const totalDays = workout?.days?.length || 0;
 
-  const completedDays = Object.values(dayStatus).filter(
-    status => status === "COMPLETED"
-  ).length;
+  const completedDays = Object.values(dayStatus).filter((status) => status === "COMPLETED").length;
 
   const progress = totalDays > 0 ? (completedDays / totalDays) * 100 : 0;
 
@@ -224,16 +216,12 @@ export default function WorkoutScreen() {
 
   const isComplete = completedDays === totalDays;
 
-
   const isAnotherDayInProgress = (dayId) => {
-    return Object.entries(dayStatus).some(
-      ([id, status]) => status === "IN_PROGRESS" && Number(id) !== dayId
-    );
+    return Object.entries(dayStatus).some(([id, status]) => status === "IN_PROGRESS" && Number(id) !== dayId);
   };
 
   const status = dayStatus[selectedDay?.id];
   const anotherInProgress = isAnotherDayInProgress(selectedDay?.id);
-
 
   const handleCancelWorkoutDay = async () => {
     if (!selectedDay) return;
@@ -243,13 +231,12 @@ export default function WorkoutScreen() {
 
       const newStatus = await getWorkoutDayStatus(selectedDay.id);
 
-      setDayStatus(prev => ({
+      setDayStatus((prev) => ({
         ...prev,
-        [selectedDay.id]: newStatus
+        [selectedDay.id]: newStatus,
       }));
 
       setSelectedDay(null);
-
     } catch (e) {
       alert("Error al cancelar el entrenamiento");
     }
@@ -257,33 +244,39 @@ export default function WorkoutScreen() {
 
   if (!user) {
     return (
-      <Box sx={{ minHeight: "100vh", backgroundColor: "#2c2c2c", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          backgroundColor: "#2c2c2c",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <Typography color="white">Cargando...</Typography>
       </Box>
     );
   }
 
   return (
-
     <Box
       sx={{
         position: "relative",
         minHeight: "100vh",
-        overflow: "hidden"
+        overflow: "hidden",
       }}
     >
-
       {/* 🖼️ BACKGROUND */}
       <Box
         sx={{
           position: "absolute",
           inset: 0,
           backgroundImage: `url(${backgroundImg})`,
-          backgroundSize: "cover",
+          backgroundSize: "contain",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
           backgroundAttachment: "fixed",
-          zIndex: 0
+          zIndex: 0,
         }}
       />
 
@@ -294,7 +287,7 @@ export default function WorkoutScreen() {
           inset: 0,
           backgroundColor: "rgba(44, 44, 44, 0.4)",
           backdropFilter: "blur(6px)",
-          zIndex: 1
+          zIndex: 1,
         }}
       />
 
@@ -303,15 +296,10 @@ export default function WorkoutScreen() {
         sx={{
           position: "relative",
           zIndex: 2,
-          mt: 6
+          mt: 6,
         }}
       >
-
-
-
-
         <Box sx={{ position: "relative", mb: 2 }}>
-
           {/* 🔝 TOP BAR */}
           <Box
             sx={{
@@ -329,12 +317,15 @@ export default function WorkoutScreen() {
               border: "1px solid rgba(255,255,255,0.25)",
               boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
 
-              width: "100%",
+              width: {
+                xs: "90%",
+                md: "100%",
+              },
               maxWidth: "800px",
               mx: "auto",
             }}
           >
-            <BackButton to="/home" sx={{ ml: 8 }} />
+            <BackButton to="/home" sx={{ ml: { xs: 4, md: 8 } }} />
 
             <PrimaryButton
               label="Cerrar sesión"
@@ -361,12 +352,11 @@ export default function WorkoutScreen() {
 
               textShadow: "0 4px 20px rgba(0,0,0,0.6)",
 
-              letterSpacing: "0.5px"
+              letterSpacing: "0.5px",
             }}
           >
             Hola {user.name}
           </Typography>
-
         </Box>
 
         <Container
@@ -374,27 +364,24 @@ export default function WorkoutScreen() {
           sx={{
             position: "relative",
             zIndex: 2, // 👈 CLAVE
-            mt: 6
+            mt: 6,
           }}
         >
-
           <Stack spacing={4} sx={{ mb: 5 }}>
-
             {workout && (
               <Box
                 sx={{
                   textAlign: "center",
-                  mt: 1
+                  mt: 1,
                 }}
               >
-
                 <Typography
                   sx={{
                     fontSize: "1.5rem",
                     fontWeight: 600,
                     color: "#fff",
                     textShadow: "0 4px 15px rgba(0,0,0,0.6)",
-                    mt: 0.5
+                    mt: 0.5,
                   }}
                 >
                   {formatDate(workout.startDate)} - {formatDate(workout.endDate)}
@@ -402,9 +389,7 @@ export default function WorkoutScreen() {
               </Box>
             )}
 
-
             <Box sx={{ position: "relative", display: "inline-block" }}>
-
               {/* BASE (SIEMPRE visible) */}
               <Typography
                 textAlign="center"
@@ -446,7 +431,6 @@ export default function WorkoutScreen() {
               >
                 {phrase}
               </Typography>
-
             </Box>
 
             <Box
@@ -455,11 +439,10 @@ export default function WorkoutScreen() {
                 justifyContent: "center",
                 alignItems: "center",
                 mt: 2,
-                mb: 1
+                mb: 1,
               }}
             >
               <Box sx={{ position: "relative", display: "inline-flex", bodrderRadius: "50%", overflow: "hidden" }}>
-
                 <Box
                   sx={{
                     position: "absolute",
@@ -470,18 +453,17 @@ export default function WorkoutScreen() {
                     height: 180,
                     borderRadius: "50%",
                     background: "radial-gradient(circle, rgba(0, 0, 0, 0.7) 0%, transparent 70%)",
-                    zIndex: 0
+                    zIndex: 0,
                   }}
                 />
 
                 <Box sx={{ position: "relative", zIndex: 1, borderRadius: "50%", overflow: "hidden" }}>
-
                   {/* SVG GRADIENT DEFINICIÓN */}
                   <svg width={0} height={0}>
                     <defs>
                       <linearGradient id="gradientProgress" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#ff4343" />   {/* amarillo claro */}
-                        <stop offset="50%" stopColor="#ff1f1f" />  {/* amarillo */}
+                        <stop offset="0%" stopColor="#ff4343" /> {/* amarillo claro */}
+                        <stop offset="50%" stopColor="#ff1f1f" /> {/* amarillo */}
                         <stop offset="100%" stopColor="#ff0000" /> {/* dorado */}
                       </linearGradient>
                     </defs>
@@ -494,7 +476,7 @@ export default function WorkoutScreen() {
                     size={180}
                     thickness={4}
                     sx={{
-                      color: "rgba(255,255,255,0.15)"
+                      color: "rgba(255,255,255,0.15)",
                     }}
                   />
 
@@ -514,8 +496,8 @@ export default function WorkoutScreen() {
                       "& .MuiCircularProgress-circle": {
                         stroke: "url(#gradientProgress)",
                         strokeLinecap: "round",
-                        filter: "drop-shadow(0 0 8px rgba(255, 59, 59, 0.6))"
-                      }
+                        filter: "drop-shadow(0 0 8px rgba(255, 59, 59, 0.6))",
+                      },
                     }}
                   />
 
@@ -530,7 +512,7 @@ export default function WorkoutScreen() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      flexDirection: "column"
+                      flexDirection: "column",
                     }}
                   >
                     <Typography
@@ -538,7 +520,7 @@ export default function WorkoutScreen() {
                         fontWeight: 900,
                         fontSize: "1.6rem",
                         color: "#fff",
-                        textShadow: "0 2px 8px rgba(0,0,0,0.9)"
+                        textShadow: "0 2px 8px rgba(0,0,0,0.9)",
                       }}
                     >
                       {completedDays}/{totalDays}
@@ -560,42 +542,31 @@ export default function WorkoutScreen() {
               </Box>
             </Box>
 
-            {!hasWorkout &&
+            {!hasWorkout && (
               <Typography textAlign="center" color="white">
                 Este usuario no tiene planilla asignada actualmente.
               </Typography>
-            }
+            )}
 
-            {workout && sortedDays.map(day => {
+            {workout &&
+              sortedDays.map((day) => {
+                const status = dayStatus[day.id];
 
-              const status = dayStatus[day.id];
+                return (
+                  <GymCard
+                    key={day.id}
+                    title={day.name}
+                    subtitle={<MuscleChips muscles={day.muscles} chipSx={{ fontWeight: 600, fontSize: "1.05rem" }} />}
+                    onClick={() => openDay(day)}
+                    status={status}
+                    showArrow={true}
+                  />
+                );
+              })}
 
-              return (
+            <PrimaryButton label="📊 Estadísticas" to={`/stats/${userId}`} sx={{ fontSize: "1.2rem" }} />
 
-                <GymCard
-                  key={day.id}
-                  title={day.name}
-                  subtitle={<MuscleChips muscles={day.muscles} chipSx={{ fontWeight: 600, fontSize: "1.05rem" }} />}
-                  onClick={() => openDay(day)}
-                  status={status}
-                  showArrow={true}
-                />
-
-              );
-
-            })}
-
-
-            <PrimaryButton
-              label="📊 Estadísticas"
-              to={`/stats/${userId}`}
-            />
-
-            <PrimaryButton
-              label="🏆 Logros"
-              to={`/achievements/${userId}`}
-            />
-
+            <PrimaryButton label="🏆 Logros" to={`/achievements/${userId}`} sx={{ fontSize: "1.2rem" }} />
           </Stack>
 
           <AnimatedDialog
@@ -613,8 +584,12 @@ export default function WorkoutScreen() {
                     onClick={handleCancelWorkoutDay}
                     sx={{
                       flex: 1,
-                      fontSize: "1.1rem",
-                      py: 1
+                      fontSize: {
+                        xs: "1rem",
+                        md: "1.1rem",
+                      },
+                      px: 1.5,
+                      py: 1,
                     }}
                   >
                     Cancelar día
@@ -624,14 +599,16 @@ export default function WorkoutScreen() {
                 <Button
                   variant="contained"
                   onClick={handleStartWorkout}
-                  disabled={
-                    status === "COMPLETED" || anotherInProgress
-                  }
+                  disabled={status === "COMPLETED" || anotherInProgress}
                   sx={{
                     flex: 2,
-                    fontSize: "1.1rem",
+                    fontSize: {
+                      xs: "1rem",
+                      md: "1.1rem",
+                    },
+                    px: 1.5,
                     py: 1,
-                    whiteSpace: "nowrap"
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {status === "COMPLETED"
@@ -645,42 +622,29 @@ export default function WorkoutScreen() {
               </>
             }
           >
-            <Box
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              textAlign="center"
-              gap={2}
-            >
+            <Box display="flex" flexDirection="column" alignItems="center" textAlign="center" gap={2}>
               <MuscleChips
                 muscles={selectedDay?.muscles}
                 chipSx={{
                   fontWeight: 600,
-                  fontSize: "0.9rem",
-                  height: 26
+                  fontSize: "1.4rem",
+                  height: 30,
                 }}
               />
 
               <img
                 src={
-                  selectedDay?.muscleImage
-                    ? getWorkoutDayImageUrl(selectedDay.muscleImage)
-                    : "/body-placeholder.png"
+                  selectedDay?.muscleImage ? getWorkoutDayImageUrl(selectedDay.muscleImage) : "/body-placeholder.png"
                 }
                 style={{
                   width: "100%",
-                  maxWidth: "400px"
+                  maxWidth: "400px",
                 }}
               />
             </Box>
-
           </AnimatedDialog>
-
         </Container>
-
       </Box>
     </Box>
-
   );
-
 }

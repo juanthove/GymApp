@@ -1,13 +1,23 @@
 import { Chip, Stack } from "@mui/material";
 
-import { muscleLabels, muscleColors } from "../config/muscleConfig"
-import { lightenColor } from "../utils/colorUtils"
+import { muscleLabels, muscleColors } from "../config/muscleConfig";
+import { lightenColor } from "../utils/colorUtils";
 
 export default function MuscleChips({ muscles = [], size = "small", chipSx = {} }) {
   if (!muscles.length) return null;
 
   return (
-    <Stack direction="row" spacing={1} flexWrap="wrap" rowGap={1}>
+    <Stack
+      direction="row"
+      spacing={1}
+      flexWrap="wrap"
+      rowGap={1}
+      justifyContent="center"
+      alignItems="center"
+      sx={{
+        width: "100%",
+      }}
+    >
       {muscles.map((m) => {
         const base = muscleColors[m] || "#999";
         const light = lightenColor(base, 0.4);
@@ -39,10 +49,10 @@ export default function MuscleChips({ muscles = [], size = "small", chipSx = {} 
               // 💫 hover suave
               transition: "0.2s",
               "&:hover": {
-                transform: "scale(1.05)"
+                transform: "scale(1.05)",
               },
 
-              ...chipSx
+              ...chipSx,
             }}
           />
         );

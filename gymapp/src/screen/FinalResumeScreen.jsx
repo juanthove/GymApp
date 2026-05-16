@@ -5,20 +5,11 @@ import { getUserById } from "../services/userService";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
-import {
-  getWorkoutDaySummary
-} from "../services/workoutDayService";
+import { getWorkoutDaySummary } from "../services/workoutDayService";
 
-import {
-  Container,
-  Typography,
-  Stack,
-  Button,
-  Box
-} from "@mui/material";
+import { Container, Typography, Stack, Button, Box } from "@mui/material";
 
 import { keyframes } from "@mui/system";
-
 
 import VolumeCard from "../components/VolumeCard";
 import PrimaryButton from "../components/PrimaryButton";
@@ -26,7 +17,6 @@ import MuscleVolumeCard from "../components/MuscleVolumeCard";
 import StatCard from "../components/StatCard";
 
 export default function FinalResumeScreen() {
-
   const { userId, workoutDayId } = useParams();
 
   const [user, setUser] = useState(null);
@@ -38,7 +28,6 @@ export default function FinalResumeScreen() {
   useEffect(() => {
     loadData();
   }, []);
-
 
   const loadData = async () => {
     const u = await getUserById(userId);
@@ -108,22 +97,20 @@ export default function FinalResumeScreen() {
         position: "relative",
         minHeight: "100vh",
         backgroundColor: "#f5f5f5",
-        overflow: "hidden"
+        overflow: "hidden",
       }}
     >
-
-
       {/* 🖼️ IMAGEN DE FONDO (parte inferior) */}
       <Box
         sx={{
           position: "absolute",
           inset: 0,
           backgroundImage: `url(${backgroundImg})`,
-          backgroundSize: "cover",
+          backgroundSize: "contain",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
           backgroundAttachment: "fixed",
-          zIndex: 0
+          zIndex: 0,
         }}
       />
 
@@ -134,7 +121,7 @@ export default function FinalResumeScreen() {
           inset: 0,
           backgroundColor: "rgba(44, 44, 44, 0.4)",
           backdropFilter: "blur(6px)",
-          zIndex: 1
+          zIndex: 1,
         }}
       />
 
@@ -148,7 +135,7 @@ export default function FinalResumeScreen() {
           height: "50vh",
           background: `linear-gradient(135deg, #e02020 0%, #f13838 25%, #f55182 80%)`,
           clipPath: "polygon(0 0, 100% 0, 100% 40%, 50% 50%, 0 40%)",
-          zIndex: 2
+          zIndex: 2,
         }}
       />
 
@@ -158,11 +145,10 @@ export default function FinalResumeScreen() {
         sx={{
           position: "relative",
           zIndex: 3,
-          mt: 6
+          mt: 6,
         }}
       >
         <Stack spacing={5} textAlign="center" alignItems="center" sx={{ pb: 15 }}>
-
           {/* 🟢 MENSAJE */}
           <Box sx={{ textAlign: "center", display: "inline-block" }}>
             <Typography
@@ -170,7 +156,8 @@ export default function FinalResumeScreen() {
               sx={{
                 fontWeight: 800,
                 color: "#fff",
-                textShadow: "0 4px 12px rgba(0,0,0,0.35)"
+                textShadow: "0 4px 12px rgba(0,0,0,0.35)",
+                mt: { xs: -2 },
               }}
             >
               <Box
@@ -178,7 +165,7 @@ export default function FinalResumeScreen() {
                 sx={{
                   display: "inline-block",
                   mr: 1,
-                  animation: `${bounceIdle} 2.5s ease-in-out infinite`
+                  animation: `${bounceIdle} 2.5s ease-in-out infinite`,
                 }}
               >
                 🎉
@@ -195,7 +182,7 @@ export default function FinalResumeScreen() {
                   animation: `
                   ${fadeScale} 0.6s ease-out,
                   ${glow} 2s ease-in-out 0.6s infinite alternate
-                `
+                `,
                 }}
               >
                 {user.name}
@@ -208,34 +195,24 @@ export default function FinalResumeScreen() {
                 width: "90%",
                 mx: "auto",
                 backgroundColor: "#ddd",
-                mb: 2,
-                mt: 3,
+                mb: { xs: 0, md: 2 },
+                mt: { xs: 2, md: 3 },
               }}
             />
           </Box>
 
-
           {/* 🔵 VOLUMEN TOTAL */}
           {muscleVolume.length === 0 ? (
-            <Box></Box>
+            <Box sx={{ display: { xs: "none", md: "block" } }}></Box>
           ) : (
             <VolumeCard value={totalVolume} />
           )}
 
-
           {/* Estadisticas */}
-          <Stack
-            direction="row"
-            spacing={2}
-            width="100%"
-            maxWidth={520}
-          >
-            <StatCard
-              label="Duración"
-              value={formatDuration(duration)}
-            />
+          <Stack direction="row" spacing={2} width="100%" maxWidth={520}>
+            <StatCard label="Duración" value={formatDuration(duration)} />
             {muscleVolume.length === 0 ? (
-              <Box></Box>
+              <Box sx={{ display: { xs: "none" } }}></Box>
             ) : (
               <StatCard
                 label="Ejercicios completados"
@@ -257,7 +234,7 @@ export default function FinalResumeScreen() {
                   background: "rgba(0,0,0,0.25)",
                   backdropFilter: "blur(8px)",
                   boxShadow: "0 8px 30px rgba(0,0,0,0.35)",
-                  display: "inline-block"
+                  display: "inline-block",
                 }}
               >
                 <Typography
@@ -267,7 +244,7 @@ export default function FinalResumeScreen() {
                     color: "#fff",
                     textAlign: "center",
                     textShadow: "0 6px 18px rgba(0,0,0,0.6)",
-                    lineHeight: 1.3
+                    lineHeight: 1.3,
                   }}
                 >
                   Registrá tus series para ver tus estadísticas
@@ -275,14 +252,20 @@ export default function FinalResumeScreen() {
               </Box>
             </>
           ) : (
-
-            <Box width="75%">
+            <Box
+              sx={{
+                width: {
+                  xs: "100%",
+                  md: "75%",
+                },
+              }}
+            >
               <Box
                 sx={{
                   display: "flex",
                   alignItems: "center",
                   width: "100%",
-                  my: 2
+                  my: 2,
                 }}
               >
                 <Box sx={{ flex: 1, height: "1px", backgroundColor: "rgba(255, 255, 255, 0.8)" }} />
@@ -292,8 +275,8 @@ export default function FinalResumeScreen() {
                     mx: 2,
                     fontWeight: 600,
                     fontSize: "1.8rem",
-                    color: 'white',
-                    whiteSpace: "nowrap"
+                    color: "white",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   Volumen por músculo
@@ -302,13 +285,12 @@ export default function FinalResumeScreen() {
                 <Box sx={{ flex: 1, height: "1px", backgroundColor: "rgba(255,255,255,0.8)" }} />
               </Box>
 
-
               <Box
                 sx={{
                   display: "flex",
                   flexWrap: "wrap",
                   gap: 2,
-                  justifyContent: "center" // 👈 clave para centrar la última
+                  justifyContent: "center", // 👈 clave para centrar la última
                 }}
               >
                 {muscleVolume.map((m) => (
@@ -319,15 +301,11 @@ export default function FinalResumeScreen() {
                       minWidth: "260px", // opcional para que no se achiquen demasiado
                     }}
                   >
-                    <MuscleVolumeCard
-                      muscle={m.muscle}
-                      volume={m.volume}
-                    />
+                    <MuscleVolumeCard muscle={m.muscle} volume={m.volume} />
                   </Box>
                 ))}
               </Box>
             </Box>
-
           )}
 
           {/* 🔙 BOTÓN */}
@@ -341,17 +319,12 @@ export default function FinalResumeScreen() {
               display: "flex",
               justifyContent: "center",
               zIndex: 10,
-              pb: 2
+              pb: 2,
             }}
           >
-            <PrimaryButton
-              label="Volver"
-              to={`/workout/${userId}`}
-            />
+            <PrimaryButton label="Volver" to={`/workout/${userId}`} />
           </Box>
         </Stack>
-
-
       </Container>
     </Box>
   );

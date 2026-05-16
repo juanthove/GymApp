@@ -67,8 +67,9 @@ export default function AchievementsScreen() {
           position: "absolute",
           inset: 0,
           backgroundImage: `url(${backgroundImg})`,
-          backgroundSize: "cover",
+          backgroundSize: "contain",
           backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
           backgroundAttachment: "fixed",
           zIndex: 0,
         }}

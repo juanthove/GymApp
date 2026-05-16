@@ -8,8 +8,15 @@ export default function UserCard({ title, imageUrl, onClick, sx }) {
       sx={{
         borderRadius: 4,
         overflow: "hidden",
-        height: 300,
-        minHeight: 300,
+        height: {
+          xs: 260,
+          md: 300,
+        },
+
+        minHeight: {
+          xs: 260,
+          md: 300,
+        },
         transition: "0.3s",
         cursor: "pointer",
         "&:hover": {
@@ -36,7 +43,10 @@ export default function UserCard({ title, imageUrl, onClick, sx }) {
           {!imageUrl && (
             <PersonIcon
               sx={{
-                fontSize: 270,
+                fontSize: {
+                  xs: 230,
+                  md: 270,
+                },
                 color: "#9e9e9e",
               }}
             />
