@@ -1414,10 +1414,12 @@ export default function ExerciseScreen() {
                       Última vez: {formatDate(ex.alert.lastPerformedDate)}
                     </Typography>
 
-                    <Typography sx={{ fontSize: { xs: "1.2rem", md: "1.5rem" } }} color="error">
-                      Hace {ex.alert.weeksSinceLastPerformed}{" "}
-                      {ex.alert.weeksSinceLastPerformed === 1 ? "semana" : "semanas"} que no lo hacés
-                    </Typography>
+                    {ex.alert.weeksSinceLastPerformed > 0 && (
+                      <Typography sx={{ fontSize: { xs: "1.2rem", md: "1.5rem" } }} color="error">
+                        Hace {ex.alert.weeksSinceLastPerformed}{" "}
+                        {ex.alert.weeksSinceLastPerformed === 1 ? "semana" : "semanas"} que no lo hacés
+                      </Typography>
+                    )}
                   </Box>
                 ))}
               </Stack>
