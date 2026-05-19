@@ -1,0 +1,64 @@
+EXPLICACION DE LO IMPLEMENTADO (PWA GYMPRO)
+
+Fecha: 19/05/2026
+Proyecto: gymapp (frontend Vite + React)
+
+1) Objetivo alcanzado
+Se configuró la web para que pueda instalarse como aplicacion en dispositivos moviles/tablets (PWA).
+Al abrirla desde el icono instalado, se ejecuta en modo tipo app (standalone), reduciendo la apariencia de navegador.
+
+2) Cambios realizados
+A. vite.config.js
+- Se agrego el plugin vite-plugin-pwa.
+- Se configuro:
+  - registerType: autoUpdate (actualiza el service worker automaticamente).
+  - includeAssets para incluir favicon.svg e icons.svg.
+  - workbox.maximumFileSizeToCacheInBytes = 8 * 1024 * 1024.
+  - manifest con:
+    - name/short_name: GymPro
+    - theme_color/background_color: #0b132b
+    - display: standalone
+    - orientation: portrait
+    - start_url y scope: /
+    - icons
+
+B. src/main.jsx
+- Se registro el service worker con:
+  registerSW({ immediate: true })
+
+C. index.html
+- Se ajustaron metatags para experiencia movil y modo app:
+  - theme-color
+  - apple-mobile-web-app-capable
+  - apple-mobile-web-app-status-bar-style
+  - apple-mobile-web-app-title
+  - mobile-web-app-capable
+- Se cambio el favicon a /favicon.svg
+
+D. Dependencia agregada
+- Se instalo vite-plugin-pwa como dependencia de desarrollo.
+
+3) Como funciona tecnicamente
+- En build de produccion, Vite genera:
+  - manifest.webmanifest
+  - sw.js (service worker)
+- El navegador detecta que la web es instalable (si cumple HTTPS + manifest + SW).
+- Al instalarse y abrirse desde el acceso directo, se inicia en modo standalone.
+- El service worker permite cache de archivos y mejora comportamiento de carga.
+
+4) Validacion realizada
+- Se ejecuto npm run build correctamente.
+- Se verifico generacion de archivos PWA en dist.
+
+5) Limitaciones importantes
+- No se puede forzar pantalla completa desde una pestaña normal del navegador.
+- El modo tipo app aparece al abrir desde el icono instalado.
+- En iOS, el comportamiento depende de Safari y puede variar segun version.
+
+6) Requisito de despliegue
+- Debe publicarse en HTTPS para instalacion PWA en dispositivos reales.
+
+7) Recomendaciones siguientes
+- Agregar iconos PNG 192x192 y 512x512 para mejor compatibilidad.
+- Revisar code splitting porque el bundle principal es grande (~7 MB).
+- Probar instalacion en Android (Chrome) e iPadOS (Safari).

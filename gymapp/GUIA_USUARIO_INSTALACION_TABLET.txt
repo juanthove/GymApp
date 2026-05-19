@@ -1,0 +1,72 @@
+GUIA DE USUARIO - INSTALAR GYMPRO EN TABLET
+
+Esta guia explica como instalar GymPro en tu tablet para usarla como una app.
+
+Requisitos
+- Conexion a internet
+- URL oficial de GymPro (publicada en HTTPS)
+- Navegador actualizado
+
+==============================
+ANDROID (TABLET) - CHROME
+==============================
+1. Abre GymPro en Google Chrome.
+2. Espera unos segundos a que cargue completamente.
+3. Toca el menu de Chrome (icono de 3 puntos).
+4. Selecciona una de estas opciones (segun version):
+   - Instalar aplicacion
+   - Anadir a pantalla principal
+5. Confirma el nombre "GymPro" y pulsa Instalar/Anadir.
+6. Busca el icono en la pantalla de inicio.
+7. Abre GymPro desde ese icono (no desde una pestana normal).
+
+Resultado esperado
+- Se abrira en modo app (sin barra completa del navegador).
+
+==============================
+iPAD (SAFARI)
+==============================
+1. Abre GymPro en Safari (importante: usar Safari).
+2. Toca el boton Compartir.
+3. Selecciona Anadir a pantalla de inicio.
+4. Confirma el nombre "GymPro" y pulsa Anadir.
+5. Abre GymPro desde el icono creado en la pantalla de inicio.
+
+Resultado esperado
+- Se abrira con apariencia de app.
+
+==============================
+BUENAS PRACTICAS DE USO
+==============================
+- Siempre abre GymPro desde el icono instalado.
+- Si no ves cambios, cierra y vuelve a abrir la app instalada.
+- Mantener navegador/sistema actualizados mejora la compatibilidad.
+
+==============================
+SOLUCION DE PROBLEMAS
+==============================
+Problema: No aparece opcion de instalar.
+Posibles causas:
+- El sitio no esta en HTTPS.
+- Abriste en navegador no compatible.
+- La pagina no termino de cargar.
+Accion:
+- Verifica HTTPS.
+- En Android usa Chrome.
+- En iPad usa Safari.
+- Recarga la pagina y vuelve a intentar.
+
+Problema: Se abre como web normal.
+Accion:
+- Abre GymPro desde el icono de pantalla de inicio.
+- No usar una pestana del navegador.
+
+Problema: Cambios no actualizados.
+Accion:
+- Cierra completamente la app y vuelve a abrir.
+- Si persiste, elimina el acceso y vuelve a instalar.
+
+==============================
+NOTA IMPORTANTE
+==============================
+La app web en modo instalado no siempre elimina absolutamente toda la interfaz del sistema, porque eso depende del sistema operativo y el navegador. Pero si se logra experiencia tipo app para uso diario.

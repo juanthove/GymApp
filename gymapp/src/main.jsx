@@ -8,6 +8,9 @@ import theme from "./theme";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import "dayjs/locale/es";
+import { registerSW } from "virtual:pwa-register";
+
+registerSW({ immediate: true });
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
