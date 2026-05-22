@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import backgroundImg from "../assets/gymproIcon.png";
@@ -66,27 +66,6 @@ export default function LoginScreen() {
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showFullscreenButton, setShowFullscreenButton] = useState(false);
-
-  useEffect(() => {
-    if (!canUseFullscreen()) {
-      return undefined;
-    }
-
-    const syncFullscreenState = () => {
-      setShowFullscreenButton(!isFullscreenActive());
-    };
-
-    document.addEventListener("fullscreenchange", syncFullscreenState);
-    document.addEventListener("webkitfullscreenchange", syncFullscreenState);
-
-    syncFullscreenState();
-
-    return () => {
-      document.removeEventListener("fullscreenchange", syncFullscreenState);
-      document.removeEventListener("webkitfullscreenchange", syncFullscreenState);
-    };
-  }, []);
 
   const handleLogin = async () => {
     setError("");
@@ -97,6 +76,18 @@ export default function LoginScreen() {
     }
 
     try {
+      if (!canUseFullscreen()) {
+        setError("Este navegador no permite pantalla completa en este modo");
+        return;
+      }
+
+      const enteredFullscreen = await requestFullscreen();
+
+      if (!enteredFullscreen) {
+        setError("Debes activar pantalla completa para continuar");
+        return;
+      }
+
       setLoading(true);
 
       const res = await loginSystemUser({
@@ -256,24 +247,6 @@ export default function LoginScreen() {
                     },
                   }}
                 />
-
-                {/* 🔘 BOTÓN */}
-                {showFullscreenButton ? (
-                  <Button
-                    variant="outlined"
-                    onClick={requestFullscreen}
-                    sx={{
-                      py: 1.3,
-                      fontWeight: 700,
-                      fontSize: "1.4rem",
-                      borderWidth: 2,
-                      color: "#111827",
-                      borderColor: "rgba(17, 24, 39, 0.7)"
-                    }}
-                  >
-                    Activar pantalla completa
-                  </Button>
-                ) : null}
 
                 <Button
                   size="lg"

@@ -12,11 +12,12 @@ export default defineConfig({
     basicSsl(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg", "icons.svg"],
+      includeAssets: ["favicon.svg", "icons.svg", "icon-192.png", "icon-512.png"],
       workbox: {
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024
       },
       manifest: {
+        id: "/",
         name: "GymPro",
         short_name: "GymPro",
         description: "GymPro training app",
@@ -27,6 +28,22 @@ export default defineConfig({
         scope: "/",
         start_url: "/",
         icons: [
+          {
+            src: "/icon-192.png",
+            sizes: "192x192",
+            type: "image/png"
+          },
+          {
+            src: "/icon-512.png",
+            sizes: "512x512",
+            type: "image/png"
+          },
+          {
+            src: "/icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable"
+          },
           {
             src: "/icons.svg",
             sizes: "any",
