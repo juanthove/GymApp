@@ -76,24 +76,27 @@ export default function LoginScreen() {
     }
 
     try {
-      if (!canUseFullscreen()) {
-        setError("Este navegador no permite pantalla completa en este modo");
-        return;
-      }
-
-      const enteredFullscreen = await requestFullscreen();
-
-      if (!enteredFullscreen) {
-        setError("Debes activar pantalla completa para continuar");
-        return;
-      }
-
       setLoading(true);
 
       const res = await loginSystemUser({
         username,
         password
       });
+
+      // Solo staff debe entrar obligatoriamente en pantalla completa.
+      if (res.role === "STAFF") {
+        if (!canUseFullscreen()) {
+          setError("Este navegador no permite pantalla completa para usuarios staff");
+          return;
+        }
+
+        const enteredFullscreen = await requestFullscreen();
+
+        if (!enteredFullscreen) {
+          setError("Staff debe activar pantalla completa para continuar");
+          return;
+        }
+      }
 
       // 🔥 guardar sesión simple
       localStorage.setItem("systemUser", JSON.stringify(res));

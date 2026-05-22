@@ -26,6 +26,7 @@ import {
   TextField,
   IconButton,
   InputAdornment,
+  Switch,
 } from "@mui/material";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -34,17 +35,76 @@ import ClearIcon from "@mui/icons-material/Clear";
 import UserCard from "../components/UserCard";
 import AnimatedDialog from "../components/AnimatedDialog";
 
+const isFullscreenActive = () =>
+  Boolean(
+    document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.msFullscreenElement
+  );
+
+const requestFullscreen = async () => {
+  const element = document.documentElement;
+  const method =
+    element.requestFullscreen ||
+    element.webkitRequestFullscreen ||
+    element.msRequestFullscreen;
+
+  if (!method) {
+    return false;
+  }
+
+  try {
+    await method.call(element);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const exitFullscreen = async () => {
+  const method =
+    document.exitFullscreen ||
+    document.webkitExitFullscreen ||
+    document.msExitFullscreen;
+
+  if (!method) {
+    return false;
+  }
+
+  try {
+    await method.call(document);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export default function HomeScreen() {
   const [users, setUsers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [search, setSearch] = useState("");
+  const [fullscreenEnabled, setFullscreenEnabled] = useState(isFullscreenActive());
 
   const navigate = useNavigate();
 
   useEffect(() => {
     loadUsers();
+  }, []);
+
+  useEffect(() => {
+    const syncFullscreenState = () => {
+      setFullscreenEnabled(isFullscreenActive());
+    };
+
+    document.addEventListener("fullscreenchange", syncFullscreenState);
+    document.addEventListener("webkitfullscreenchange", syncFullscreenState);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", syncFullscreenState);
+      document.removeEventListener("webkitfullscreenchange", syncFullscreenState);
+    };
   }, []);
 
   const loadUsers = async () => {
@@ -144,6 +204,57 @@ export default function HomeScreen() {
                 </svg>
               </Box>
             </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 3,
+              px: { xs: 1.5, md: 3 },
+              maxWidth: "1100px",
+              margin: "0 auto",
+            }}
+          >
+            <Typography
+              sx={{
+                color: "#fff",
+                fontWeight: 700,
+                fontSize: { xs: "1.1rem", md: "1.3rem" },
+              }}
+            >
+              Conectados: {users.length}
+            </Typography>
+
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography
+                sx={{
+                  color: "#fff",
+                  fontWeight: 700,
+                  fontSize: { xs: "0.95rem", md: "1.05rem" },
+                }}
+              >
+                Pantalla completa
+              </Typography>
+
+              <Switch
+                checked={fullscreenEnabled}
+                onChange={async (_event, checked) => {
+                  if (checked) {
+                    const ok = await requestFullscreen();
+
+                    if (!ok) {
+                      setFullscreenEnabled(false);
+                    }
+                    return;
+                  }
+
+                  await exitFullscreen();
+                }}
+                color="error"
+              />
+            </Box>
           </Box>
 
           <Box
