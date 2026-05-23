@@ -119,11 +119,13 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
         String image = exercise.getExercise() != null ? exercise.getExercise().getImage() : null;
         String video = exercise.getExercise() != null ? exercise.getExercise().getVideo() : null;
         String icon = exercise.getExercise() != null ? exercise.getExercise().getIcon() : null;
-        boolean selected = dayId != null && exercise.getId() != null && selectedWorkoutExerciseService.isSelected(dayId, exercise.getId());
+        boolean selected = dayId != null && exercise.getId() != null
+                && selectedWorkoutExerciseService.isSelected(dayId, exercise.getId());
         ExerciseType type = exercise.getExercise() != null ? exercise.getExercise().getType() : null;
         return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName, exerciseMuscle, type,
-                exercise.getExerciseOrder(), exercise.getWeight(), description, exercise.getComment(), exercise.isCompleted(), 
-                exercise.getNextWeight(), image, video, icon, selected, null);
+                exercise.getExerciseOrder(), exercise.getWeight(), description, exercise.getComment(),
+                exercise.isCompleted(),
+                exercise.getNextWeight(), image, video, icon, selected, null, null);
     }
 
     @Override

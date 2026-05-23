@@ -208,7 +208,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
                 .orElseThrow(() -> new ResourceNotFoundException("Workout day not found"));
         day.setFinishedAt(LocalDateTime.now());
 
-        //Eliminar json con ejercicios seleccionados
+        // Eliminar json con ejercicios seleccionados
         selectedWorkoutExerciseService.deleteSelectedFile(id);
 
         // 🔹 3. Obtener usuario (asumiendo relación)
@@ -242,13 +242,16 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
     public String getWorkoutDayStatus(Long id) {
         WorkoutDay day = workoutDayRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found"));
-        if (day.getStartedAt() == null) return "NOT_STARTED";
-        if (day.getFinishedAt() == null) return "IN_PROGRESS";
+        if (day.getStartedAt() == null)
+            return "NOT_STARTED";
+        if (day.getFinishedAt() == null)
+            return "IN_PROGRESS";
         return "COMPLETED";
     }
 
     @Override
     public WorkoutDayExercisesResponse getWorkoutDayExercises(Long dayId) {
+
         WorkoutDay day = workoutDayRepository.findById(dayId)
                 .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found"));
 
@@ -263,13 +266,39 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
         Map<Long, ExerciseAlertResponse> alertMap = buildAlertMap(userId);
 
-        var exerciseResponses = workoutExerciseRepository
-                .findByWorkoutDayIdOrderByExerciseOrder(dayId)
-                .stream()
-                .map(ex -> toWorkoutExerciseResponse(ex, alertMap))
+        // Traigo ejercicios una sola vez
+        List<WorkoutExercise> exercises = workoutExerciseRepository.findByWorkoutDayIdOrderByExerciseOrder(dayId);
+
+        // Obtengo todos los exerciseId
+        List<Long> exerciseIds = exercises.stream()
+                .map(ex -> ex.getExercise().getId())
+                .distinct()
                 .toList();
 
-        return new WorkoutDayExercisesResponse(dayId, reps, selectedIds, exerciseResponses);
+        // Query que obtiene última fecha realizada
+        List<Object[]> rows = workoutExerciseRepository.findLastCompletedDates(
+                day.getWorkout().getId(),
+                dayId,
+                exerciseIds);
+
+        // Map<exerciseId, lastPerformedDate>
+        Map<Long, LocalDate> lastPerformedMap = rows.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((LocalDateTime) row[1]).toLocalDate()));
+
+        var exerciseResponses = exercises.stream()
+                .map(ex -> toWorkoutExerciseResponse(
+                        ex,
+                        alertMap,
+                        lastPerformedMap.get(ex.getExercise().getId())))
+                .toList();
+
+        return new WorkoutDayExercisesResponse(
+                dayId,
+                reps,
+                selectedIds,
+                exerciseResponses);
     }
 
     private LocalDate resolveDate(LocalDate date, Granularity granularity) {
@@ -293,63 +322,58 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
             long days = ChronoUnit.DAYS.between(minDate, maxDate);
 
-            if (days <= 180) return Granularity.WEEK;
+            if (days <= 180)
+                return Granularity.WEEK;
             return Granularity.MONTH;
         }
 
         return Granularity.DAY;
     }
 
-
     @Override
     public WorkoutFrequencyResponse getWorkoutFrequency(
             Long userId,
             LocalDate from,
             LocalDate to,
-            Granularity granularity
-    ) {
+            Granularity granularity) {
 
-        List<WorkoutDayCountProjection> rawData =
-            workoutDayRepository.countWorkoutDaysByDate(userId);
+        List<WorkoutDayCountProjection> rawData = workoutDayRepository.countWorkoutDaysByDate(userId);
 
         List<WorkoutDayCountResponse> result = rawData.stream()
-            .map(d -> new WorkoutDayCountResponse(
-                d.getDate(),
-                d.getCount()
-            ))
-            .toList();
+                .map(d -> new WorkoutDayCountResponse(
+                        d.getDate(),
+                        d.getCount()))
+                .toList();
 
         if (from != null) {
             result = result.stream()
-                .filter(d -> !d.date().isBefore(from))
-                .toList();
+                    .filter(d -> !d.date().isBefore(from))
+                    .toList();
         }
 
         if (to != null) {
             result = result.stream()
-                .filter(d -> !d.date().isAfter(to))
-                .toList();
+                    .filter(d -> !d.date().isAfter(to))
+                    .toList();
         }
 
         List<LocalDate> dates = result.stream()
-            .map(WorkoutDayCountResponse::date)
-            .toList();
+                .map(WorkoutDayCountResponse::date)
+                .toList();
 
         Granularity resolvedGranularity = resolveGranularity(dates, granularity);
-       
 
         // 🔥 agrupar según granularidad
         Map<LocalDate, Long> grouped = result.stream()
                 .collect(Collectors.groupingBy(
                         item -> resolveDate(item.date(), resolvedGranularity),
-                        Collectors.summingLong(WorkoutDayCountResponse::count)
-                ));
+                        Collectors.summingLong(WorkoutDayCountResponse::count)));
 
         List<WorkoutDayCountResponse> data = grouped.entrySet().stream()
                 .map(e -> new WorkoutDayCountResponse(e.getKey(), e.getValue()))
                 .sorted(Comparator.comparing(WorkoutDayCountResponse::date))
                 .toList();
-        
+
         return new WorkoutFrequencyResponse(resolvedGranularity, data);
     }
 
@@ -357,42 +381,40 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
     public WorkoutDaySummaryResponse getWorkoutDaySummary(Long userId, Long dayId) {
 
         WorkoutDay day = workoutDayRepository.findById(dayId)
-            .orElseThrow(() -> new ResourceNotFoundException("Workout day not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Workout day not found"));
 
         // 🕒 Duración
         Long duration = 0L;
 
         if (day.getStartedAt() != null && day.getFinishedAt() != null) {
             duration = ChronoUnit.MINUTES.between(
-                day.getStartedAt(),
-                day.getFinishedAt()
-            );
+                    day.getStartedAt(),
+                    day.getFinishedAt());
         }
 
         // 📊 Volumen total
-        Double totalVolume =  workoutSetService.getTotalVolumeByDay(userId, dayId);
+        Double totalVolume = workoutSetService.getTotalVolumeByDay(userId, dayId);
 
-        //Total de ejercicios
+        // Total de ejercicios
         int totalExercises = workoutSetService.getTotalExercisesByDay(userId, dayId);
 
         // 💪 Volumen por músculo
         var muscleVolumes = workoutSetService
-            .getMuscleVolumeByDay(userId, dayId);
+                .getMuscleVolumeByDay(userId, dayId);
 
         return new WorkoutDaySummaryResponse(
-            dayId,
-            totalVolume,
-            duration,
-            totalExercises,
-            muscleVolumes
-        );
+                dayId,
+                totalVolume,
+                duration,
+                totalExercises,
+                muscleVolumes);
     }
 
     private ExerciseAlertResponse calculateExerciseAlert(
             LocalDate lastPerformedDate,
-            Integer weeksRule
-    ) {
-        if (weeksRule == null) weeksRule = 1;
+            Integer weeksRule) {
+        if (weeksRule == null)
+            weeksRule = 1;
 
         if (lastPerformedDate == null) {
             return new ExerciseAlertResponse(true, null, null);
@@ -406,8 +428,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         return new ExerciseAlertResponse(
                 overdue,
                 weeksSince,
-                lastPerformedDate.toString()
-        );
+                lastPerformedDate.toString());
     }
 
     private Map<Long, ExerciseAlertResponse> buildAlertMap(Long userId) {
@@ -417,17 +438,15 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
                 .stream()
                 .collect(Collectors.toMap(
                         r -> r.getExercise().getId(),
-                        r -> r.getWeeks()
-                ));
+                        r -> r.getWeeks()));
 
         // 🔹 última fecha por ejercicio
         Map<Long, LocalDate> lastDates = workoutExerciseRepository
-            .findLastPerformedDatesByUser(userId)
-            .stream()
-            .collect(Collectors.toMap(
-                row -> (Long) row[0],
-                row -> ((LocalDateTime) row[1]).toLocalDate()
-            ));
+                .findLastPerformedDatesByUser(userId)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((LocalDateTime) row[1]).toLocalDate()));
 
         // 🔹 construir alerts
         Map<Long, ExerciseAlertResponse> result = new java.util.HashMap<>();
@@ -444,7 +463,8 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         return result;
     }
 
-    private WorkoutExerciseResponse toWorkoutExerciseResponse(WorkoutExercise exercise, Map<Long, ExerciseAlertResponse> alertMap) {
+    private WorkoutExerciseResponse toWorkoutExerciseResponse(WorkoutExercise exercise,
+            Map<Long, ExerciseAlertResponse> alertMap, LocalDate lastPerformedDate) {
         Long dayId = exercise.getWorkoutDay() != null ? exercise.getWorkoutDay().getId() : null;
         Long exerciseId = exercise.getExercise() != null ? exercise.getExercise().getId() : null;
         String exerciseName = exercise.getExercise() != null ? exercise.getExercise().getName() : null;
@@ -459,16 +479,20 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
             alert = alertMap.get(exercise.getExercise().getId());
         }
 
-        boolean selected = dayId != null && exercise.getId() != null && selectedWorkoutExerciseService.isSelected(dayId, exercise.getId());
+        boolean selected = dayId != null && exercise.getId() != null
+                && selectedWorkoutExerciseService.isSelected(dayId, exercise.getId());
         ExerciseType type = exercise.getExercise() != null ? exercise.getExercise().getType() : null;
         return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName, exerciseMuscle, type,
-                exercise.getExerciseOrder(), exercise.getWeight(), description, exercise.getComment(), exercise.isCompleted(), 
-                exercise.getNextWeight(), image, video, icon, selected, alert);
+                exercise.getExerciseOrder(), exercise.getWeight(), description, exercise.getComment(),
+                exercise.isCompleted(),
+                exercise.getNextWeight(), image, video, icon, selected, alert, lastPerformedDate);
     }
 
     private WorkoutDayResponse toResponse(WorkoutDay day) {
         Long workoutId = day.getWorkout() != null ? day.getWorkout().getId() : null;
-        return new WorkoutDayResponse(day.getId(), day.getName(), muscleService.getMusclesFromWorkoutDay(day), day.getDayOrder(),
-                day.getMuscleImage(), day.isAbdominal(), day.getStartedAt(), day.getFinishedAt(), day.getStatus(), workoutId);
+        return new WorkoutDayResponse(day.getId(), day.getName(), muscleService.getMusclesFromWorkoutDay(day),
+                day.getDayOrder(),
+                day.getMuscleImage(), day.isAbdominal(), day.getStartedAt(), day.getFinishedAt(), day.getStatus(),
+                workoutId);
     }
 }
