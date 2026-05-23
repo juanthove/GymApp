@@ -1,5 +1,7 @@
 package com.gymapp.dto.response;
 
+import java.time.LocalDate;
+
 import com.gymapp.model.ExerciseType;
 import com.gymapp.model.MuscleType;
 
@@ -20,6 +22,8 @@ public record WorkoutExerciseResponse(
         String video,
         String icon,
         boolean selected,
-        ExerciseAlertResponse alert
+        ExerciseAlertResponse alert,
+        LocalDate lastPerformedDate
 
-) {}
+) {
+}

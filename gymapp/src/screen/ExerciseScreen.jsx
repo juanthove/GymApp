@@ -158,7 +158,7 @@ export default function ExerciseScreen() {
       const [abs, workoutDayData, userData] = await Promise.all([
         isAbdominalWorkoutDay(workoutDayId),
         getWorkoutDayExercises(workoutDayId),
-        getUserById(userId), // 🔥 lo metés acá
+        getUserById(userId),
       ]);
 
       setIsAbdominal(abs);
@@ -189,6 +189,20 @@ export default function ExerciseScreen() {
     } catch (error) {
       console.error("Error cargando datos:", error);
     }
+  };
+
+  const formatDateName = (dateString) => {
+    if (!dateString) return "";
+
+    const [year, month, day] = dateString.split("-");
+
+    const date = new Date(year, month - 1, day);
+
+    const dayName = date.toLocaleDateString("es-ES", {
+      weekday: "long",
+    });
+
+    return dayName.charAt(0).toUpperCase() + dayName.slice(1);
   };
 
   const formatDate = (date) => {
@@ -273,9 +287,13 @@ export default function ExerciseScreen() {
 
     const updateItem = (item) => {
       if (item.id !== updated.id) return item;
+
       return {
+        ...item,
         ...updated,
         exercise: item.exercise || null,
+
+        lastPerformedDate: updated.lastPerformedDate ?? item.lastPerformedDate,
       };
     };
 
@@ -1202,6 +1220,7 @@ export default function ExerciseScreen() {
                           flexDirection: "column",
                           justifyContent: "center",
                           mt: 0.5,
+                          pr: { xs: 15.7, md: 22.6 },
                         }}
                       >
                         <Typography sx={{ fontWeight: 700, fontSize: { xs: "1.2rem", md: "1.5rem" } }}>
@@ -1219,10 +1238,14 @@ export default function ExerciseScreen() {
 
                       <Box
                         sx={{
-                          minWidth: { xs: "90px", md: "120px" },
+                          position: "absolute",
+                          top: 16,
+                          right: 16,
                           display: "flex",
-                          justifyContent: "flex-end",
-                          alignItems: "flex-start",
+                          flexDirection: "column",
+                          alignItems: "flex-end",
+                          gap: 4,
+                          mr: -0.7,
                         }}
                       >
                         <Typography
@@ -1234,6 +1257,18 @@ export default function ExerciseScreen() {
                           }}
                         >
                           ✔ Completado
+                        </Typography>
+
+                        <Typography
+                          sx={{
+                            fontSize: { xs: "0.85rem", md: "1.4rem" },
+                            color: "#555555",
+                            mt: 0.5,
+                            textAlign: "right",
+                            visibility: ex.lastPerformedDate ? "visible" : "hidden",
+                          }}
+                        >
+                          {ex.lastPerformedDate ? `Lo hiciste el ${formatDateName(ex.lastPerformedDate)}` : ""}
                         </Typography>
                       </Box>
                     </Box>
