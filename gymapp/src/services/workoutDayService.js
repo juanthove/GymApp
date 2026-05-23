@@ -1,4 +1,4 @@
-import { apiRequest } from "./apiClient";
+import { apiRequest, buildAuthorizedAssetUrl } from "./apiClient";
 
 const DAY_API = "/api/workout-days";
 
@@ -60,7 +60,7 @@ export async function deleteWorkoutDayImage(dayId) {
 
 export function getWorkoutDayImageUrl(filename) {
   if (!filename) return null;
-  return `${DAY_API}/muscle-image/${filename}`;
+  return buildAuthorizedAssetUrl(`${DAY_API}/muscle-image/${filename}`);
 }
 
 export function deleteWorkoutDayImageByFilename(filename) {

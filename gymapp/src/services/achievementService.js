@@ -1,4 +1,4 @@
-import { apiRequest } from "./apiClient";
+import { apiRequest, buildAuthorizedAssetUrl } from "./apiClient";
 
 const ACHIEVEMENT_API = "/api/achievements";
 
@@ -78,5 +78,5 @@ export async function deleteAchievement(id) {
 // 🔥 URL de imagen (igual que ejercicios)
 export function getAchievementImageUrl(filename) {
   if (!filename) return null;
-  return `/api/achievements/image/${filename}`;
+  return buildAuthorizedAssetUrl(`/api/achievements/image/${filename}`);
 }

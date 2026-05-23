@@ -1,6 +1,7 @@
 package com.gymapp.controller;
 
 import com.gymapp.dto.request.LoginRequest;
+import com.gymapp.dto.response.LoginResponse;
 import com.gymapp.dto.request.SystemUserRequest;
 import com.gymapp.dto.response.SystemUserResponse;
 import com.gymapp.service.SystemUserService;
@@ -42,7 +43,7 @@ public class SystemUserController {
     }
 
     @PostMapping("/login")
-    public SystemUserResponse login(@Valid @RequestBody LoginRequest request) {
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         return service.login(request);
     }
 

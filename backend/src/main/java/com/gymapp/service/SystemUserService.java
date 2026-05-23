@@ -1,6 +1,7 @@
 package com.gymapp.service;
 
 import com.gymapp.dto.request.LoginRequest;
+import com.gymapp.dto.response.LoginResponse;
 import com.gymapp.dto.request.SystemUserRequest;
 import com.gymapp.dto.response.SystemUserResponse;
 
@@ -16,7 +17,7 @@ public interface SystemUserService {
 
     SystemUserResponse update(Long id, SystemUserRequest request);
 
-    SystemUserResponse login(LoginRequest request);
+    LoginResponse login(LoginRequest request);
 
     void delete(Long id);
 }

@@ -1,4 +1,4 @@
-import { apiRequest } from "./apiClient";
+import { apiRequest, buildAuthorizedAssetUrl } from "./apiClient";
 
 const USER_API = "/api/users";
 
@@ -66,7 +66,7 @@ export async function deleteUserImage(userId) {
 
 export function getUserImageUrl(filename) {
   if (!filename) return null;
-  return `${USER_API}/image/${filename}`;
+  return buildAuthorizedAssetUrl(`${USER_API}/image/${filename}`);
 }
 
 // Login

@@ -1,5 +1,5 @@
 //Funciones sobre ejercicios
-import { apiRequest } from "./apiClient";
+import { apiRequest, buildAuthorizedAssetUrl } from "./apiClient";
 
 export async function getExercises() {
   return apiRequest("/api/exercises");
@@ -78,17 +78,17 @@ export async function deleteExercise(id) {
 // Obtener URL de la imagen de un ejercicio
 export function getExerciseImageUrl(filename) {
   if (!filename) return null;
-  return `/api/exercises/image/${filename}`;
+  return buildAuthorizedAssetUrl(`/api/exercises/image/${filename}`);
 }
 
 // Obtener URL del video de un ejercicio
 export function getExerciseVideoUrl(filename) {
   if (!filename) return null;
-  return `/api/exercises/video/${filename}`;
+  return buildAuthorizedAssetUrl(`/api/exercises/video/${filename}`);
 }
 
 // Obtener URL del icono de un ejercicio
 export function getExerciseIconUrl(filename) {
   if (!filename) return null;
-  return `/api/exercises/icon/${filename}`;
+  return buildAuthorizedAssetUrl(`/api/exercises/icon/${filename}`);
 }

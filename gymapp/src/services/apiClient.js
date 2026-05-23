@@ -24,8 +24,46 @@ async function toApiError(response) {
   return error;
 }
 
+export function getAuthToken() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const raw = localStorage.getItem("systemUser");
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed?.token || null;
+  } catch {
+    return null;
+  }
+}
+
+export function buildAuthorizedAssetUrl(url) {
+  const token = getAuthToken();
+  if (!token) {
+    return url;
+  }
+
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}token=${encodeURIComponent(token)}`;
+}
+
 export async function apiRequest(url, options = {}, responseType = "json") {
-  const response = await fetch(url, options);
+  const token = getAuthToken();
+  const headers = new Headers(options.headers || {});
+
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
 
   if (!response.ok) {
     throw await toApiError(response);
