@@ -22,7 +22,7 @@ public class JwtService {
     @Value("${app.jwt.secret:GymAppSuperSecretKeyJwtChangeThisInProd_2026_1234567890}")
     private String jwtSecret;
 
-    @Value("${app.jwt.expiration-ms:86400000}")
+    @Value("${app.jwt.expiration-ms:68400000}")
     private long jwtExpirationMillis;
 
     public String generateToken(SystemUser user) {

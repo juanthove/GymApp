@@ -44,5 +44,6 @@ export async function loginSystemUser(credentials) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(credentials),
+    skipAuthRedirect: true,
   });
 }

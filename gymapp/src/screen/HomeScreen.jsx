@@ -36,18 +36,11 @@ import UserCard from "../components/UserCard";
 import AnimatedDialog from "../components/AnimatedDialog";
 
 const isFullscreenActive = () =>
-  Boolean(
-    document.fullscreenElement ||
-      document.webkitFullscreenElement ||
-      document.msFullscreenElement
-  );
+  Boolean(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
 
 const requestFullscreen = async () => {
   const element = document.documentElement;
-  const method =
-    element.requestFullscreen ||
-    element.webkitRequestFullscreen ||
-    element.msRequestFullscreen;
+  const method = element.requestFullscreen || element.webkitRequestFullscreen || element.msRequestFullscreen;
 
   if (!method) {
     return false;
@@ -62,10 +55,7 @@ const requestFullscreen = async () => {
 };
 
 const exitFullscreen = async () => {
-  const method =
-    document.exitFullscreen ||
-    document.webkitExitFullscreen ||
-    document.msExitFullscreen;
+  const method = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
 
   if (!method) {
     return false;
@@ -187,7 +177,7 @@ export default function HomeScreen() {
               }}
             >
               Usuarios activos
-              <Box sx={{ width: "150%", ml: "-25%" }}>
+              <Box sx={{ width: { xs: "120%", md: "150%" }, ml: { xs: "-10%", md: "-25%" } }}>
                 <svg width="100%" height="6" viewBox="0 0 100 6" preserveAspectRatio="none">
                   <defs>
                     <filter id="blur">
@@ -212,8 +202,9 @@ export default function HomeScreen() {
               alignItems: "center",
               justifyContent: "space-between",
               mb: 3,
+              pb: 1,
               px: { xs: 1.5, md: 3 },
-              maxWidth: "1100px",
+              maxWidth: { xs: "93%", md: "1100px" },
               margin: "0 auto",
             }}
           >
@@ -221,7 +212,7 @@ export default function HomeScreen() {
               sx={{
                 color: "#fff",
                 fontWeight: 700,
-                fontSize: { xs: "1.1rem", md: "1.3rem" },
+                fontSize: { xs: "1.1rem", md: "1.5rem" },
               }}
             >
               Conectados: {users.length}
@@ -232,7 +223,7 @@ export default function HomeScreen() {
                 sx={{
                   color: "#fff",
                   fontWeight: 700,
-                  fontSize: { xs: "0.95rem", md: "1.05rem" },
+                  fontSize: { xs: "1.05rem", md: "1.4rem" },
                 }}
               >
                 Pantalla completa

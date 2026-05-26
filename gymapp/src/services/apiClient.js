@@ -52,9 +52,34 @@ export function buildAuthorizedAssetUrl(url) {
   return `${url}${separator}token=${encodeURIComponent(token)}`;
 }
 
+function isAuthFreeRequest(url, options) {
+  if (options?.skipAuthRedirect) {
+    return true;
+  }
+
+  return url.includes("/login") || url.includes("/not-logged");
+}
+
+function redirectToLogin() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  localStorage.removeItem("systemUser");
+
+  if (!window.location.pathname.startsWith("/login")) {
+    window.location.href = "/login";
+  }
+}
+
 export async function apiRequest(url, options = {}, responseType = "json") {
   const token = getAuthToken();
   const headers = new Headers(options.headers || {});
+
+  if (!token && !isAuthFreeRequest(url, options)) {
+    redirectToLogin();
+    throw new Error("Sin token de sesión. Redirigiendo a login.");
+  }
 
   if (token && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${token}`);
@@ -66,6 +91,9 @@ export async function apiRequest(url, options = {}, responseType = "json") {
   });
 
   if (!response.ok) {
+    if ((response.status === 401 || response.status === 403) && !isAuthFreeRequest(url, options)) {
+      redirectToLogin();
+    }
     throw await toApiError(response);
   }
 

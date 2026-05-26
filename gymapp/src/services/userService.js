@@ -28,7 +28,9 @@ export async function getLoggedUser() {
 
 // Usuarios no logueados
 export async function getNotLoggedUser() {
-  return apiRequest(`${USER_API}/not-logged`);
+  return apiRequest(`${USER_API}/not-logged`, {
+    skipAuthRedirect: true,
+  });
 }
 
 // Actualizar usuario
@@ -74,6 +76,7 @@ export async function loginUser(userId) {
   return apiRequest(`${USER_API}/${userId}/login`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
+    skipAuthRedirect: true,
   });
 }
 
@@ -102,4 +105,3 @@ export async function setCurrentWorkout(userId, workoutId) {
 export async function getUserAchievements(userId) {
   return apiRequest(`${USER_API}/${userId}/achievements`);
 }
-

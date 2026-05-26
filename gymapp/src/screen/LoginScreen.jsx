@@ -3,16 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Container,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Card, CardContent, Container, Stack, TextField, Typography } from "@mui/material";
 
 import { loginSystemUser } from "../services/systemUserService";
 
@@ -21,19 +12,11 @@ import AppSnackbar from "../components/AppSnackbar";
 const canUseFullscreen = () => {
   const element = document.documentElement;
 
-  return Boolean(
-    element.requestFullscreen ||
-      element.webkitRequestFullscreen ||
-      element.msRequestFullscreen
-  );
+  return Boolean(element.requestFullscreen || element.webkitRequestFullscreen || element.msRequestFullscreen);
 };
 
 const isFullscreenActive = () =>
-  Boolean(
-    document.fullscreenElement ||
-      document.webkitFullscreenElement ||
-      document.msFullscreenElement
-  );
+  Boolean(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
 
 const requestFullscreen = async () => {
   if (isFullscreenActive()) {
@@ -41,10 +24,7 @@ const requestFullscreen = async () => {
   }
 
   const element = document.documentElement;
-  const method =
-    element.requestFullscreen ||
-    element.webkitRequestFullscreen ||
-    element.msRequestFullscreen;
+  const method = element.requestFullscreen || element.webkitRequestFullscreen || element.msRequestFullscreen;
 
   if (!method) {
     return false;
@@ -80,7 +60,7 @@ export default function LoginScreen() {
 
       const res = await loginSystemUser({
         username,
-        password
+        password,
       });
 
       // Solo staff debe entrar obligatoriamente en pantalla completa.
@@ -107,7 +87,6 @@ export default function LoginScreen() {
       } else {
         navigate("/home");
       }
-
     } catch (e) {
       setError(e?.message || "Error al iniciar sesión");
     } finally {
@@ -120,7 +99,7 @@ export default function LoginScreen() {
       sx={{
         position: "relative",
         minHeight: "100vh",
-        overflow: "hidden"
+        overflow: "hidden",
       }}
     >
       {/* 🖼️ BACKGROUND */}
@@ -129,11 +108,11 @@ export default function LoginScreen() {
           position: "absolute",
           inset: 0,
           backgroundImage: `url(${backgroundImg})`,
-          backgroundSize: "cover",
+          backgroundSize: "contain",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
           backgroundAttachment: "fixed",
-          zIndex: 0
+          zIndex: 0,
         }}
       />
 
@@ -144,7 +123,7 @@ export default function LoginScreen() {
           inset: 0,
           backgroundColor: "rgba(44, 44, 44, 0.4)",
           backdropFilter: "blur(6px)",
-          zIndex: 1
+          zIndex: 1,
         }}
       />
 
@@ -156,7 +135,7 @@ export default function LoginScreen() {
           alignItems: "center",
           justifyContent: "center",
           zIndex: 2,
-          position: "relative"
+          position: "relative",
         }}
       >
         <Card
@@ -169,18 +148,17 @@ export default function LoginScreen() {
             minHeight: 700,
             maxWidth: 700, // 👈 controla ancho real
             p: 4,
-            mx: "auto"
+            mx: "auto",
           }}
         >
           <CardContent
             sx={{
               height: "100%",
-              alignItems: "center",     // 👈 centra vertical
-              justifyContent: "center"  // 👈 centra horizontal
+              alignItems: "center", // 👈 centra vertical
+              justifyContent: "center", // 👈 centra horizontal
             }}
           >
             <Stack sx={{ height: "100%" }}>
-
               {/* 🧠 TÍTULO */}
               <Box textAlign="center" sx={{ p: 2 }}>
                 <Typography
@@ -189,7 +167,7 @@ export default function LoginScreen() {
                   sx={{
                     background: "linear-gradient(135deg, #ff2020, #f16744)",
                     WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent"
+                    WebkitTextFillColor: "transparent",
                   }}
                 >
                   GymPro
@@ -199,7 +177,6 @@ export default function LoginScreen() {
                   Iniciar sesión
                 </Typography>
               </Box>
-
 
               <Stack spacing={3} sx={{ mt: 9 }}>
                 {/* 👤 USER */}
@@ -214,15 +191,15 @@ export default function LoginScreen() {
 
                       "&.MuiInputLabel-shrink": {
                         fontSize: "1.6rem",
-                        transform: "translate(11px, -18px) scale(1)"
-                      }
-                    }
+                        transform: "translate(11px, -18px) scale(1)",
+                      },
+                    },
                   }}
                   sx={{
                     "& .MuiInputBase-root": {
                       height: 80, // 👈 altura
-                      fontSize: "2rem"
-                    }
+                      fontSize: "2rem",
+                    },
                   }}
                 />
 
@@ -239,14 +216,14 @@ export default function LoginScreen() {
 
                       "&.MuiInputLabel-shrink": {
                         fontSize: "1.6rem",
-                        transform: "translate(11px, -18px) scale(1)"
-                      }
-                    }
+                        transform: "translate(11px, -18px) scale(1)",
+                      },
+                    },
                   }}
                   sx={{
                     "& .MuiInputBase-root": {
                       height: 80, // 👈 altura
-                      fontSize: "2rem"
+                      fontSize: "2rem",
                     },
                   }}
                 />
@@ -261,13 +238,12 @@ export default function LoginScreen() {
                     fontWeight: 700,
                     fontSize: "1.7rem",
                     background: "linear-gradient(135deg, #ff2020, #f16744)",
-                    boxShadow: "0 4px 15px rgba(0,0,0,0.3)"
+                    boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
                   }}
                 >
                   {loading ? "Entrando..." : "Login"}
                 </Button>
               </Stack>
-
             </Stack>
           </CardContent>
         </Card>
@@ -285,12 +261,11 @@ export default function LoginScreen() {
             "& .MuiAlert-icon": {
               fontSize: "1.8rem",
               alignItems: "center",
-              marginTop: "2px"
-            }
+              marginTop: "2px",
+            },
           }}
         />
       </Container>
-
     </Box>
   );
 }
