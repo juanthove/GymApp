@@ -6,6 +6,7 @@ import com.gymapp.dto.response.templates.WorkoutTemplateResponse;
 import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.Exercise;
 import com.gymapp.model.templates.*;
+import com.gymapp.repository.WorkoutDayRepository;
 import com.gymapp.repository.ExerciseRepository;
 import com.gymapp.repository.templates.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,9 +18,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.Map;
+import java.util.Set;
+import java.util.Objects;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.io.IOException;
 
 @Service
 public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
+
+    private final Path dayImagePath = Paths.get("uploads/day");
 
     @Autowired
     private WorkoutTemplateRepository templateRepo;
@@ -35,6 +44,9 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
 
     @Autowired
     private MuscleService muscleService;
+
+    @Autowired
+    private WorkoutDayRepository workoutDayRepository;
 
     @Override
     public List<WorkoutTemplateResponse> getAllTemplates() {
@@ -57,6 +69,7 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
             WorkoutTemplateDay day = new WorkoutTemplateDay();
             day.setName(d.name());
             day.setDayOrder(d.dayOrder());
+            day.setMuscleImage(d.muscleImage());
             day.setTemplate(template);
             day = dayRepo.save(day);
 
@@ -133,6 +146,10 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
 
         // 🔥 TRAER EXISTENTES
         List<WorkoutTemplateDay> existingDays = dayRepo.findByTemplateId(id);
+        Set<String> previousImageNames = existingDays.stream()
+            .map(WorkoutTemplateDay::getMuscleImage)
+            .filter(Objects::nonNull)
+            .collect(java.util.stream.Collectors.toSet());
 
         // 🔥 MAPA PARA CONTROL
         Map<Long, WorkoutTemplateDay> existingMap = existingDays.stream()
@@ -149,6 +166,9 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
 
                 day.setName(d.name());
                 day.setDayOrder(d.dayOrder());
+                day.setMuscleImage(d.muscleImage());
+
+                day = dayRepo.save(day);
 
                 existingMap.remove(d.id());
 
@@ -157,6 +177,7 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
                 day = new WorkoutTemplateDay();
                 day.setName(d.name());
                 day.setDayOrder(d.dayOrder());
+                day.setMuscleImage(d.muscleImage());
                 day.setTemplate(template);
 
                 day = dayRepo.save(day);
@@ -185,6 +206,10 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
             dayRepo.delete(toDelete);
         }
 
+        for (String imageName : previousImageNames) {
+            deleteImageIfUnused(imageName);
+        }
+
         return new WorkoutTemplateResponse(template.getId(), template.getName(), template.getDescription());
     }
 
@@ -193,6 +218,10 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
     public void deleteFullTemplate(Long id) {
 
         List<WorkoutTemplateDay> days = dayRepo.findByTemplateId(id);
+        Set<String> previousImageNames = days.stream()
+                .map(WorkoutTemplateDay::getMuscleImage)
+                .filter(Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
 
         for (WorkoutTemplateDay day : days) {
             exerciseRepo.deleteByTemplateDayId(day.getId());
@@ -200,5 +229,28 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
 
         dayRepo.deleteByTemplateId(id);
         templateRepo.deleteById(id);
+
+        for (String imageName : previousImageNames) {
+            deleteImageIfUnused(imageName);
+        }
+    }
+
+    private void deleteImageIfUnused(String imageName) {
+        if (imageName == null || imageName.isBlank()) {
+            return;
+        }
+
+        long workoutRefs = workoutDayRepository.countByMuscleImage(imageName);
+        long templateRefs = dayRepo.countByMuscleImage(imageName);
+
+        if (workoutRefs + templateRefs > 0) {
+            return;
+        }
+
+        try {
+            Files.deleteIfExists(dayImagePath.resolve(imageName));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

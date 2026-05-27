@@ -15,6 +15,7 @@ import com.gymapp.repository.UserRepository;
 import com.gymapp.repository.WorkoutDayRepository;
 import com.gymapp.repository.WorkoutExerciseRepository;
 import com.gymapp.repository.WorkoutRepository;
+import com.gymapp.repository.templates.WorkoutTemplateDayRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +48,9 @@ public class WorkoutServiceImpl implements WorkoutService {
 
     @Autowired
     private MuscleService muscleService;
+
+    @Autowired
+    private WorkoutTemplateDayRepository workoutTemplateDayRepository;
 
     @Override
     public List<WorkoutResponse> getAllWorkouts() {
@@ -135,6 +139,7 @@ public class WorkoutServiceImpl implements WorkoutService {
             WorkoutDay day = new WorkoutDay();
             day.setName(dayData.name());
             day.setDayOrder(dayData.dayOrder());
+            day.setMuscleImage(dayData.muscleImage());
             day.setWorkout(workout);
             day = workoutDayRepository.save(day);
             for (WorkoutFullRequest.ExerciseItem exData : dayData.exercises()) {
@@ -163,6 +168,11 @@ public class WorkoutServiceImpl implements WorkoutService {
         workoutRepository.save(workout);
 
         List<WorkoutDay> existingDays = workoutDayRepository.findByWorkoutIdOrderByDayOrder(id);
+        Set<String> previousImageNames = existingDays.stream()
+            .map(WorkoutDay::getMuscleImage)
+            .filter(Objects::nonNull)
+            .collect(java.util.stream.Collectors.toSet());
+
         for (WorkoutDay day : existingDays) {
             workoutExerciseRepository.deleteByWorkoutDayId(day.getId());
         }
@@ -172,6 +182,7 @@ public class WorkoutServiceImpl implements WorkoutService {
             WorkoutDay day = new WorkoutDay();
             day.setName(dayData.name());
             day.setDayOrder(dayData.dayOrder());
+            day.setMuscleImage(dayData.muscleImage());
             day.setWorkout(workout);
             day = workoutDayRepository.save(day);
             for (WorkoutFullRequest.ExerciseItem exData : dayData.exercises()) {
@@ -185,6 +196,11 @@ public class WorkoutServiceImpl implements WorkoutService {
                 workoutExerciseRepository.save(workoutExercise);
             }
         }
+
+        for (String imageName : previousImageNames) {
+            deleteImageIfUnused(imageName);
+        }
+
         return toResponse(workout);
     }
 
@@ -192,18 +208,40 @@ public class WorkoutServiceImpl implements WorkoutService {
     @Transactional
     public void deleteFullWorkout(Long id) {
         List<WorkoutDay> days = workoutDayRepository.findByWorkoutIdOrderByDayOrder(id);
+        Set<String> previousImageNames = days.stream()
+                .map(WorkoutDay::getMuscleImage)
+                .filter(Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
+
         for (WorkoutDay day : days) {
-            if (day.getMuscleImage() != null) {
-                try {
-                    Files.deleteIfExists(dayImagePath.resolve(day.getMuscleImage()));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
             workoutExerciseRepository.deleteByWorkoutDayId(day.getId());
         }
+
         workoutDayRepository.deleteByWorkoutId(id);
         workoutRepository.deleteById(id);
+
+        for (String imageName : previousImageNames) {
+            deleteImageIfUnused(imageName);
+        }
+    }
+
+    private void deleteImageIfUnused(String imageName) {
+        if (imageName == null || imageName.isBlank()) {
+            return;
+        }
+
+        long workoutRefs = workoutDayRepository.countByMuscleImage(imageName);
+        long templateRefs = workoutTemplateDayRepository.countByMuscleImage(imageName);
+
+        if (workoutRefs + templateRefs > 0) {
+            return;
+        }
+
+        try {
+            Files.deleteIfExists(dayImagePath.resolve(imageName));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private WorkoutResponse toResponse(Workout w) {

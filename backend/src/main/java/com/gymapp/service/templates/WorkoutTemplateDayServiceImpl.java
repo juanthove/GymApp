@@ -3,6 +3,7 @@ package com.gymapp.service.templates;
 import com.gymapp.dto.response.templates.WorkoutTemplateDayResponse;
 import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.templates.WorkoutTemplateDay;
+import com.gymapp.repository.WorkoutDayRepository;
 import com.gymapp.repository.templates.WorkoutTemplateDayRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.*;
@@ -24,6 +25,9 @@ public class WorkoutTemplateDayServiceImpl implements WorkoutTemplateDayService 
     @Autowired
     private MuscleService muscleService;
 
+    @Autowired
+    private WorkoutDayRepository workoutDayRepository;
+
     private final Path path = Paths.get("uploads/day");
     
 
@@ -35,9 +39,7 @@ public class WorkoutTemplateDayServiceImpl implements WorkoutTemplateDayService 
 
         Files.createDirectories(path);
 
-        if (day.getMuscleImage() != null) {
-            Files.deleteIfExists(path.resolve(day.getMuscleImage()));
-        }
+        String previousImage = day.getMuscleImage();
 
         String original = file.getOriginalFilename();
         if (original == null || !original.contains(".")) {
@@ -50,7 +52,11 @@ public class WorkoutTemplateDayServiceImpl implements WorkoutTemplateDayService 
 
         day.setMuscleImage(fileName);
 
-        return toResponse(repo.save(day));
+        WorkoutTemplateDay saved = repo.save(day);
+
+        deleteImageIfUnused(previousImage, null, saved.getId());
+
+        return toResponse(saved);
     }
 
     @Override
@@ -59,12 +65,17 @@ public class WorkoutTemplateDayServiceImpl implements WorkoutTemplateDayService 
         WorkoutTemplateDay day = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Day not found"));
 
+        String previousImage = day.getMuscleImage();
+
         if (day.getMuscleImage() != null) {
-            Files.deleteIfExists(path.resolve(day.getMuscleImage()));
             day.setMuscleImage(null);
         }
 
-        return toResponse(repo.save(day));
+        WorkoutTemplateDay saved = repo.save(day);
+
+        deleteImageIfUnused(previousImage, null, saved.getId());
+
+        return toResponse(saved);
     }
 
     @Override
@@ -88,15 +99,15 @@ public class WorkoutTemplateDayServiceImpl implements WorkoutTemplateDayService 
         WorkoutTemplateDay day = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Day not found"));
 
+        String imageName = day.getMuscleImage();
+
+        repo.deleteById(id);
+
         try {
-            if (day.getMuscleImage() != null) {
-                Files.deleteIfExists(path.resolve(day.getMuscleImage()));
-            }
+            deleteImageIfUnused(imageName, null, null);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        repo.deleteById(id);
     }
 
     private WorkoutTemplateDayResponse toResponse(WorkoutTemplateDay d) {
@@ -111,6 +122,27 @@ public class WorkoutTemplateDayServiceImpl implements WorkoutTemplateDayService 
     }
 
     public void deleteImageByFilename(String filename) throws IOException {
+        deleteImageIfUnused(filename, null, null);
+    }
+
+    private void deleteImageIfUnused(String filename, Long excludeWorkoutDayId, Long excludeTemplateDayId)
+            throws IOException {
+        if (filename == null || filename.isBlank()) {
+            return;
+        }
+
+        long workoutRefs = excludeWorkoutDayId != null
+                ? workoutDayRepository.countByMuscleImageAndIdNot(filename, excludeWorkoutDayId)
+                : workoutDayRepository.countByMuscleImage(filename);
+
+        long templateRefs = excludeTemplateDayId != null
+                ? repo.countByMuscleImageAndIdNot(filename, excludeTemplateDayId)
+                : repo.countByMuscleImage(filename);
+
+        if (workoutRefs + templateRefs > 0) {
+            return;
+        }
+
         Path filePath = path.resolve(filename).normalize();
         Files.deleteIfExists(filePath);
     }

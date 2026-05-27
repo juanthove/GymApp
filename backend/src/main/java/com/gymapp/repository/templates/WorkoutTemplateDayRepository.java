@@ -11,6 +11,10 @@ public interface WorkoutTemplateDayRepository extends JpaRepository<WorkoutTempl
 
     List<WorkoutTemplateDay> findByTemplateIdOrderByDayOrder(Long templateId);
 
+    long countByMuscleImage(String muscleImage);
+
+    long countByMuscleImageAndIdNot(String muscleImage, Long id);
+
     void deleteByTemplateId(Long templateId);
 
 }

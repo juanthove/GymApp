@@ -13,6 +13,10 @@ public interface WorkoutDayRepository extends JpaRepository<WorkoutDay, Long> {
 
     List<WorkoutDay> findByWorkoutIdOrderByDayOrder(Long workoutId);
 
+    long countByMuscleImage(String muscleImage);
+
+    long countByMuscleImageAndIdNot(String muscleImage, Long id);
+
     void deleteByWorkoutId(Long workoutId);
 
     @Query("""

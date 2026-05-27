@@ -20,6 +20,7 @@ import com.gymapp.repository.ExerciseReminderRuleRepository;
 import com.gymapp.repository.WorkoutDayRepository;
 import com.gymapp.repository.WorkoutRepository;
 import com.gymapp.repository.WorkoutExerciseRepository;
+import com.gymapp.repository.templates.WorkoutTemplateDayRepository;
 import com.gymapp.repository.projection.WorkoutDayCountProjection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -36,6 +37,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.Map;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -74,6 +76,9 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private WorkoutTemplateDayRepository workoutTemplateDayRepository;
 
     @Override
     public List<WorkoutDayResponse> getAllWorkoutDays() {
@@ -119,9 +124,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
         Files.createDirectories(dayImagePath);
 
-        if (day.getMuscleImage() != null) {
-            Files.deleteIfExists(dayImagePath.resolve(day.getMuscleImage()));
-        }
+        String previousImage = day.getMuscleImage();
 
         String original = file.getOriginalFilename();
         if (original == null || !original.contains(".")) {
@@ -134,7 +137,11 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         Files.copy(file.getInputStream(), dayImagePath.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
 
         day.setMuscleImage(fileName);
-        return toResponse(workoutDayRepository.save(day));
+        WorkoutDay saved = workoutDayRepository.save(day);
+
+        deleteImageIfUnused(previousImage, saved.getId(), null);
+
+        return toResponse(saved);
     }
 
     @Override
@@ -142,12 +149,17 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         WorkoutDay day = workoutDayRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found"));
 
+        String previousImage = day.getMuscleImage();
+
         if (day.getMuscleImage() != null) {
-            Files.deleteIfExists(dayImagePath.resolve(day.getMuscleImage()));
             day.setMuscleImage(null);
         }
 
-        return toResponse(workoutDayRepository.save(day));
+        WorkoutDay saved = workoutDayRepository.save(day);
+
+        deleteImageIfUnused(previousImage, saved.getId(), null);
+
+        return toResponse(saved);
     }
 
     @Override
@@ -166,7 +178,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
     @Override
     public void deleteImageByFilename(String filename) throws IOException {
-        Files.deleteIfExists(dayImagePath.resolve(filename).normalize());
+        deleteImageIfUnused(filename, null, null);
     }
 
     @Override
@@ -174,15 +186,36 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         WorkoutDay day = workoutDayRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("WorkoutDay not found"));
 
+        String imageName = day.getMuscleImage();
+
+        workoutDayRepository.deleteById(id);
+
         try {
-            if (day.getMuscleImage() != null) {
-                Files.deleteIfExists(dayImagePath.resolve(day.getMuscleImage()));
-            }
+            deleteImageIfUnused(imageName, null, null);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
 
-        workoutDayRepository.deleteById(id);
+    private void deleteImageIfUnused(String filename, Long excludeWorkoutDayId, Long excludeTemplateDayId)
+            throws IOException {
+        if (filename == null || filename.isBlank()) {
+            return;
+        }
+
+        long workoutRefs = excludeWorkoutDayId != null
+                ? workoutDayRepository.countByMuscleImageAndIdNot(filename, excludeWorkoutDayId)
+                : workoutDayRepository.countByMuscleImage(filename);
+
+        long templateRefs = excludeTemplateDayId != null
+                ? workoutTemplateDayRepository.countByMuscleImageAndIdNot(filename, excludeTemplateDayId)
+                : workoutTemplateDayRepository.countByMuscleImage(filename);
+
+        if (workoutRefs + templateRefs > 0) {
+            return;
+        }
+
+        Files.deleteIfExists(dayImagePath.resolve(filename).normalize());
     }
 
     @Override

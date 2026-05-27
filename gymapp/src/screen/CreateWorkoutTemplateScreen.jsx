@@ -9,9 +9,7 @@ import {
   updateWorkoutTemplate,
   deleteWorkoutTemplate,
   uploadWorkoutTemplateDayImage,
-  deleteWorkoutTemplateDayImage,
   getWorkoutTemplateDayImageUrl,
-  deleteWorkoutTemplateDayImageByFilename
 } from "../services/workoutTemplateService";
 
 import {
@@ -167,6 +165,7 @@ export default function CreateWorkoutTemplateScreen() {
 
       image: null,
       deleteImage: false,
+      sourceMuscleImage: day.muscleImage || null,
 
       // 🔥 clave: armar URL desde filename
       preview: day.muscleImage
@@ -190,6 +189,7 @@ export default function CreateWorkoutTemplateScreen() {
         selectedExercise: null,
         image: null,
         deleteImage: false,
+        sourceMuscleImage: null,
         preview: null
       }
     ]);
@@ -297,6 +297,7 @@ export default function CreateWorkoutTemplateScreen() {
       selectedExercise: null,
       image: null,
       deleteImage: false,
+      sourceMuscleImage: null,
       preview: null // 🔥 NO copiar imagen
     };
 
@@ -317,8 +318,13 @@ export default function CreateWorkoutTemplateScreen() {
         name,
         description,
         days: days.map((day, index) => ({
+          id: day.id || null,
           name: day.name,
           dayOrder: index + 1,
+          muscleImage:
+            day.deleteImage || day.image
+              ? null
+              : (day.sourceMuscleImage || null),
           exercises: day.exercises.map((ex, i) => ({
             exerciseId: ex.exerciseId,
             order: i + 1
@@ -327,16 +333,6 @@ export default function CreateWorkoutTemplateScreen() {
       };
 
       let templateId;
-
-      let oldImages = [];
-
-      if (selectedTemplateId) {
-        const existing = await getWorkoutTemplateById(selectedTemplateId);
-
-        oldImages = existing.days
-          .map(d => d.muscleImage)
-          .filter(Boolean);
-      }
 
       // 1️⃣ CREAR o ACTUALIZAR (FULL)
       if (selectedTemplateId) {
@@ -368,24 +364,6 @@ export default function CreateWorkoutTemplateScreen() {
         if (frontDay.image) {
           await uploadWorkoutTemplateDayImage(backendDay.id, frontDay.image);
         }
-
-        else if (frontDay.deleteImage) {
-          await deleteWorkoutTemplateDayImage(backendDay.id);
-        }
-
-        else if (frontDay.preview && !frontDay.image && !frontDay.deleteImage) {
-
-          const res = await fetch(frontDay.preview);
-          const blob = await res.blob();
-
-          const file = new File([blob], "image.jpg", { type: blob.type });
-
-          await uploadWorkoutTemplateDayImage(backendDay.id, file);
-        }
-      }
-
-      for (const img of oldImages) {
-        deleteWorkoutTemplateDayImageByFilename(img);
       }
 
       // 4️⃣ RESET

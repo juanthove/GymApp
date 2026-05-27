@@ -10,9 +10,7 @@ import {
 import { createWorkout, updateWorkout, getWorkoutById } from "../services/workoutService";
 import {
   uploadWorkoutDayImage,
-  deleteWorkoutDayImage,
   getWorkoutDayImageUrl,
-  deleteWorkoutDayImageByFilename,
 } from "../services/workoutDayService";
 
 import {
@@ -214,6 +212,7 @@ export default function CreateWorkoutScreen() {
       dayOrder: day.dayOrder,
       image: null,
       deleteImage: false,
+      sourceMuscleImage: day.muscleImage || null,
       preview: day.muscleImage ? getWorkoutTemplateDayImageUrl(day.muscleImage) : null,
 
       exercises: day.exercises.map((ex) => ({
@@ -247,6 +246,7 @@ export default function CreateWorkoutScreen() {
       dayOrder: day.dayOrder,
       image: null,
       deleteImage: false,
+      sourceMuscleImage: day.muscleImage || null,
       preview: day.muscleImage ? getWorkoutDayImageUrl(day.muscleImage) : null,
 
       exercises: day.exercises
@@ -293,6 +293,7 @@ export default function CreateWorkoutScreen() {
         exercises: [],
         image: null,
         deleteImage: false,
+        sourceMuscleImage: null,
         preview: null,
       },
     ]);
@@ -376,6 +377,7 @@ export default function CreateWorkoutScreen() {
       muscles: [...dayToCopy.muscles],
       image: null,
       deleteImage: false,
+      sourceMuscleImage: null,
       preview: null,
       exercises: dayToCopy.exercises.map((ex) => ({
         ...ex,
@@ -402,6 +404,10 @@ export default function CreateWorkoutScreen() {
         endDate,
         days: days.map((day, index) => ({
           name: day.name,
+          muscleImage:
+            day.deleteImage || day.image
+              ? null
+              : (day.sourceMuscleImage || null),
           exercises: day.exercises.map((ex) => ({
             exerciseId: ex.exerciseId,
             weight: ex.weight,
@@ -423,11 +429,6 @@ export default function CreateWorkoutScreen() {
 
         if (frontDay?.image) {
           await uploadWorkoutDayImage(backendDay.id, frontDay.image);
-        } else if (frontDay?.preview && !frontDay.deleteImage) {
-          const response = await fetch(frontDay.preview);
-          const blob = await response.blob();
-          const file = new File([blob], "day-image.jpg", { type: blob.type || "image/jpeg" });
-          await uploadWorkoutDayImage(backendDay.id, file);
         }
       }
 
@@ -445,9 +446,6 @@ export default function CreateWorkoutScreen() {
     if (!validateWorkout()) return;
 
     try {
-      const existingWorkout = await getWorkoutById(workoutId);
-      const oldImages = existingWorkout.days.map((day) => day.muscleImage).filter(Boolean);
-
       const workoutData = {
         name: workoutName,
         reps: Number(globalReps),
@@ -456,6 +454,10 @@ export default function CreateWorkoutScreen() {
         endDate,
         days: days.map((day, index) => ({
           name: day.name,
+          muscleImage:
+            day.deleteImage || day.image
+              ? null
+              : (day.sourceMuscleImage || null),
           exercises: day.exercises.map((ex) => ({
             exerciseId: ex.exerciseId,
             weight: ex.weight,
@@ -475,18 +477,7 @@ export default function CreateWorkoutScreen() {
 
         if (frontDay?.image) {
           await uploadWorkoutDayImage(backendDay.id, frontDay.image);
-        } else if (frontDay?.deleteImage) {
-          await deleteWorkoutDayImage(backendDay.id);
-        } else if (frontDay?.preview) {
-          const response = await fetch(frontDay.preview);
-          const blob = await response.blob();
-          const file = new File([blob], "day-image.jpg", { type: blob.type || "image/jpeg" });
-          await uploadWorkoutDayImage(backendDay.id, file);
         }
-      }
-
-      for (const image of oldImages) {
-        await deleteWorkoutDayImageByFilename(image);
       }
 
       resetForm();
