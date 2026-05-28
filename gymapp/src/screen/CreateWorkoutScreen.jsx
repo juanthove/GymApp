@@ -8,10 +8,7 @@ import {
   getWorkoutTemplateDayImageUrl,
 } from "../services/workoutTemplateService";
 import { createWorkout, updateWorkout, getWorkoutById } from "../services/workoutService";
-import {
-  uploadWorkoutDayImage,
-  getWorkoutDayImageUrl,
-} from "../services/workoutDayService";
+import { uploadWorkoutDayImage, getWorkoutDayImageUrl } from "../services/workoutDayService";
 
 import {
   Container,
@@ -404,10 +401,7 @@ export default function CreateWorkoutScreen() {
         endDate,
         days: days.map((day, index) => ({
           name: day.name,
-          muscleImage:
-            day.deleteImage || day.image
-              ? null
-              : (day.sourceMuscleImage || null),
+          muscleImage: day.deleteImage || day.image ? null : day.sourceMuscleImage || null,
           exercises: day.exercises.map((ex) => ({
             exerciseId: ex.exerciseId,
             weight: ex.weight,
@@ -454,10 +448,7 @@ export default function CreateWorkoutScreen() {
         endDate,
         days: days.map((day, index) => ({
           name: day.name,
-          muscleImage:
-            day.deleteImage || day.image
-              ? null
-              : (day.sourceMuscleImage || null),
+          muscleImage: day.deleteImage || day.image ? null : day.sourceMuscleImage || null,
           exercises: day.exercises.map((ex) => ({
             exerciseId: ex.exerciseId,
             weight: ex.weight,
@@ -653,14 +644,12 @@ export default function CreateWorkoutScreen() {
                     setFile={(file) => {
                       const updated = [...days];
                       updated[dayIndex].image = file;
-                      updated[dayIndex].deleteImage = false;
                       setDays(updated);
                     }}
                     preview={day.preview}
                     setPreview={(preview) => {
                       const updated = [...days];
                       updated[dayIndex].preview = preview;
-                      updated[dayIndex].deleteImage = false;
                       setDays(updated);
                     }}
                     existingUrl={day.preview && !day.preview.startsWith("blob:") ? day.preview : null}

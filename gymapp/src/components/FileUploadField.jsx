@@ -9,9 +9,8 @@ export default function FileUploadField({
   existingUrl,
   deleteFlag,
   setDeleteFlag,
-  renderPreview
+  renderPreview,
 }) {
-
   const handleChange = (e) => {
     const selected = e.target.files[0];
     if (!selected) return;
@@ -29,13 +28,7 @@ export default function FileUploadField({
 
       <Button variant="outlined" component="label">
         Seleccionar
-        <input
-          hidden
-          type="file"
-          accept={accept}
-          onClick={(e) => (e.target.value = null)}
-          onChange={handleChange}
-        />
+        <input hidden type="file" accept={accept} onClick={(e) => (e.target.value = null)} onChange={handleChange} />
       </Button>
 
       {/* Checkbox eliminar */}
@@ -56,9 +49,7 @@ export default function FileUploadField({
       )}
 
       {/* Preview */}
-      {(preview || existingUrl) && !deleteFlag &&
-        renderPreview(preview || existingUrl)
-      }
+      {(preview || existingUrl) && !deleteFlag && renderPreview(preview || existingUrl)}
     </Stack>
   );
 }
