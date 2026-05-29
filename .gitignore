@@ -23,3 +23,5 @@ backend/src/main/resources/application.properties
 target/
 *.log
 .env
+
+certs/*

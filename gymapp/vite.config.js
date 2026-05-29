@@ -1,15 +1,14 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
-import basicSsl from "@vitejs/plugin-basic-ssl";
 import { VitePWA } from "vite-plugin-pwa";
+import fs from "fs";
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     svgr(),
-    basicSsl(),
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["icon-192.png", "icon-512.png", "icon-1254.png"],
@@ -50,7 +49,13 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      "/api": "http://localhost:8080",
+      "/api": "http://gympro:8080",
+    },
+    host: "0.0.0.0",
+    port: 5173,
+    https: {
+      key: fs.readFileSync("../certs/gympro+2-key.pem"),
+      cert: fs.readFileSync("../certs/gympro+2.pem"),
     },
   },
 });
