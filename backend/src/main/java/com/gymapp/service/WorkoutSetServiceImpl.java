@@ -133,12 +133,12 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
         }
 
         result.sort((a, b) -> {
-            // 🔹 1. comparar por semana (desc)
+            // Comparar por semana (desc)
             int cmpWeek = b.weekStart().compareTo(a.weekStart());
             if (cmpWeek != 0)
                 return cmpWeek;
 
-            // 🔹 2. comparar por orden del enum
+            // Comparar por orden del enum
             return Integer.compare(
                     a.muscle().ordinal(),
                     b.muscle().ordinal());

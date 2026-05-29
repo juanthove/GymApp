@@ -1,18 +1,11 @@
 import { Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
-export default function PrimaryButton({
-  label,
-  to,
-  onClick,
-  disabled = false,
-  icon = null,
-  sx = {}
-}) {
+export default function PrimaryButton({ label, to, onClick, disabled = false, icon = null, sx = {} }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    if (disabled) return; // 👈 evita acción
+    if (disabled) return;
     if (onClick) onClick();
     if (to) navigate(to);
   };
@@ -21,7 +14,7 @@ export default function PrimaryButton({
     <Button
       onClick={handleClick}
       disabled={disabled}
-      startIcon={icon} 
+      startIcon={icon}
       sx={{
         px: 4,
         py: 1.5,
@@ -32,7 +25,7 @@ export default function PrimaryButton({
         color: "#fff",
 
         background: disabled
-          ? "linear-gradient(145deg, #9e9e9e, #757575)" // 👈 gris
+          ? "linear-gradient(145deg, #9e9e9e, #757575)"
           : "linear-gradient(145deg, #4a9dfd, #3379db)",
 
         boxShadow: disabled
@@ -54,10 +47,10 @@ export default function PrimaryButton({
               boxShadow: `
                 inset 0 4px 8px rgba(0,0,0,0.3),
                 inset 0 -2px 4px rgba(255,255,255,0.2)
-              `
+              `,
             },
 
-        ...sx
+        ...sx,
       }}
     >
       {label}

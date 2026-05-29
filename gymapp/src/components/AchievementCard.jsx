@@ -100,7 +100,7 @@ export default function AchievementCard({ achievement }) {
         textAlign: "center",
       }}
     >
-      {/* 🔒 LOCK */}
+      {/* LOCK */}
       {!isUnlocked && (
         <Box
           sx={{
@@ -130,7 +130,7 @@ export default function AchievementCard({ achievement }) {
           justifyContent: "center",
         }}
       >
-        {/* ✨ glow */}
+        {/* GLOW */}
         <Box
           sx={{
             position: "absolute",
@@ -148,7 +148,7 @@ export default function AchievementCard({ achievement }) {
           }}
         />
 
-        {/* 🖼️ imagen */}
+        {/* IMAGEN */}
         {achievement.imageUrl && (
           <Box
             component="img"
@@ -165,7 +165,7 @@ export default function AchievementCard({ achievement }) {
           />
         )}
 
-        {/* 🏆 nombre superpuesto */}
+        {/* NOMBRE */}
         <Typography
           sx={{
             position: "absolute",
@@ -195,19 +195,19 @@ export default function AchievementCard({ achievement }) {
         </Typography>
       </Box>
 
-      {/* 🔹 INFO */}
+      {/* INFO */}
       <Stack direction="row" spacing={1} alignItems="center" justifyContent="center" flexWrap="wrap">
-        {/* 📅 STREAK / CONSISTENCY */}
+        {/* STREAK / CONSISTENCY */}
         {(isStreak || isConsistency) && (
           <AchievementChip label="General" color={baseColor} icon={<CalendarMonthIcon />} />
         )}
 
-        {/* 💪 MÚSCULO */}
+        {/* MÚSCULO */}
         {achievement.muscle && (
           <AchievementChip label={muscleLabels[achievement.muscle]} color={baseColor} icon={iconElement} />
         )}
 
-        {/* 🏋️ EJERCICIO */}
+        {/* EJERCICIO */}
         {achievement.exerciseName && (
           <AchievementChip
             label={achievement.exerciseName}
@@ -221,11 +221,11 @@ export default function AchievementCard({ achievement }) {
           />
         )}
 
-        {/* 🏋️ GENERAL VOLUMEN */}
+        {/* GENERAL VOLUMEN */}
         {isGeneralVolume && <AchievementChip label="General" color={baseColor} icon={<FitnessCenterIcon />} />}
       </Stack>
 
-      {/* 🎯 OBJETIVO */}
+      {/* OBJETIVO */}
       <Typography
         sx={{
           fontWeight: 900,
@@ -236,20 +236,18 @@ export default function AchievementCard({ achievement }) {
         {formatNumber(achievement.requiredValue)} {isVolume ? "kg" : isStreak ? "días seguidos" : "días entrenados"}
       </Typography>
 
-      {/* 📊 PROGRESO */}
+      {/* PROGRESO */}
       <Box sx={{ width: "100%", mt: 1 }}>
         <LinearProgress
           variant="determinate"
           value={progressPercent}
           sx={{
-            height: 18, // 👈 más alta
+            height: 18,
             borderRadius: 999,
             overflow: "hidden",
 
-            // 🎨 fondo (track)
             backgroundColor: lightenColor(baseColor, 0.7),
 
-            // ✨ profundidad real (no solo glow)
             boxShadow: `
               inset 0 2px 4px rgba(0,0,0,0.5),
               inset 0 -1px 2px rgba(255,255,255,0.2)
@@ -258,7 +256,6 @@ export default function AchievementCard({ achievement }) {
             "& .MuiLinearProgress-bar": {
               borderRadius: 999,
 
-              // 🔥 gradiente más “premium”
               background: `linear-gradient(
                 90deg,
                 ${darkenColor(baseColor, 0.2)} 0%,
@@ -267,7 +264,6 @@ export default function AchievementCard({ achievement }) {
                 ${lightenColor(baseColor, 0.3)} 100%
               )`,
 
-              // ✨ brillo + relieve
               boxShadow: `
                 0 0 10px ${baseColor},
                 inset 0 2px 3px rgba(255,255,255,0.35),
@@ -289,7 +285,7 @@ export default function AchievementCard({ achievement }) {
         </Typography>
       </Box>
 
-      {/* 📅 COMPLETADO */}
+      {/* COMPLETADO */}
       {isUnlocked && achievement.unlockedAt && (
         <Typography
           sx={{

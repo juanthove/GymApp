@@ -46,7 +46,6 @@ import {
   Bar,
   XAxis,
   YAxis,
-  Tooltip,
   ResponsiveContainer,
   CartesianGrid,
   LabelList,
@@ -56,6 +55,9 @@ import {
 import BackButton from "../components/BackButton";
 import MuscleChips from "../components/MuscleChips";
 import PRCard from "../components/PRCard";
+import CustomLineTooltip from "../components/CustomLineTooltip";
+
+import { MAIN_RED, RED_GRADIENT } from "../utils/colorUtils";
 
 import {
   getTotalWorkoutVolumeByUserAndDateRange,
@@ -194,7 +196,7 @@ export default function StatsScreen() {
     const result = Array.from(groups.values());
 
     for (const group of result) {
-      const total = group.subtotal; // 👈 ESTE es el total semanal
+      const total = group.subtotal;
 
       for (const row of group.rows) {
         row.volumeRatio = total > 0 ? (row.currentVolume / total) * 100 : 0;
@@ -236,7 +238,7 @@ export default function StatsScreen() {
   }, [muscleOptions, selectedMuscle]);
 
   function getGranularity(from, to) {
-    if (!from || !to) return null; // default
+    if (!from || !to) return null;
 
     const days = (new Date(to) - new Date(from)) / (1000 * 60 * 60 * 24);
 
@@ -254,15 +256,14 @@ export default function StatsScreen() {
         userId,
         from,
         to,
-        granularity, // podés mandar null también
+        granularity,
         selectedMuscle === "ALL" ? null : selectedMuscle,
       );
 
-      // 🔥 IMPORTANTE
       setVolumeGranularity(res.granularity);
 
       const formatted = (res.data || []).map((item) => ({
-        date: item.date,
+        date: dayjs(item.date).valueOf(),
         volume: Number(item.volume || 0),
       }));
 
@@ -277,18 +278,13 @@ export default function StatsScreen() {
   const loadFrequency = async () => {
     try {
       setLoadingFrequency(true);
-      const res = await getWorkoutFrequency(
-        userId,
-        from,
-        to,
-        frequencyMode, // 👈 directo
-      );
+      const res = await getWorkoutFrequency(userId, from, to, frequencyMode);
 
       setFrequencyGranularity(res.granularity);
 
       const formatted = (res.data || []).map((item) => ({
-        date: dayjs(item.date).valueOf(), // 🔥 clave
-        originalDate: item.date, // guardás el string original
+        date: dayjs(item.date).valueOf(),
+        originalDate: item.date,
         count: item.count,
       }));
 
@@ -339,7 +335,7 @@ export default function StatsScreen() {
       const formatted = new Intl.DateTimeFormat("es-ES", {
         year: "numeric",
         month: "short",
-      }).format(new Date(value)); // "abr 2026"
+      }).format(new Date(value)); //abr 2026
 
       return formatted.charAt(0).toUpperCase() + formatted.slice(1);
     }
@@ -385,6 +381,25 @@ export default function StatsScreen() {
     }
   }, [from, to, activeTab, frequencyMode]);
 
+  //GRAFICA VOLUMEN
+  const VOLUME_POINT_WIDTH = 90;
+
+  const minWidth = window.innerWidth < 900 ? 500 : 820;
+
+  const volumeChartWidth = Math.max(chartData.length * VOLUME_POINT_WIDTH + 80, containerWidth || minWidth);
+
+  //Custom tooltip
+  const tooltipTimeoutRef = useRef(null);
+  const [clickedPoint, setClickedPoint] = useState(null);
+
+  useEffect(() => {
+    return () => {
+      if (tooltipTimeoutRef.current) {
+        clearTimeout(tooltipTimeoutRef.current);
+      }
+    };
+  }, []);
+
   //GRAFICA FRECUENCIA
   const getBarColor = (count) => {
     if (count === 0) return "#e0e0e0";
@@ -428,7 +443,7 @@ export default function StatsScreen() {
 
     const timeout = setTimeout(() => {
       setShouldAnimate(false);
-    }, 700); // mismo tiempo que animationDuration
+    }, 700);
 
     return () => clearTimeout(timeout);
   }, [frequencyData, frequencyMode, from, to]);
@@ -442,12 +457,7 @@ export default function StatsScreen() {
 
   const loadCalendarData = async () => {
     try {
-      const res = await getWorkoutFrequency(
-        userId,
-        null,
-        null,
-        "DAY", // 🔥 siempre por día
-      );
+      const res = await getWorkoutFrequency(userId, null, null, "DAY");
 
       setCalendarData(res.data || []);
     } catch (e) {
@@ -480,7 +490,7 @@ export default function StatsScreen() {
           width: { xs: 40, sm: 48, md: 64 },
           height: { xs: 40, sm: 48, md: 64 },
 
-          borderRadius: "50%", // 👈 ESTO los hace circulares
+          borderRadius: "50%",
           fontSize: { xs: "1rem", sm: "1.2rem", md: "1.5rem" },
           fontWeight: 700,
 
@@ -621,7 +631,7 @@ export default function StatsScreen() {
                   width: 80,
                   height: 4,
                   borderRadius: 10,
-                  background: "linear-gradient(90deg, #ff2020, #f16744)",
+                  background: RED_GRADIENT,
                 }}
               />
             </Box>
@@ -654,7 +664,7 @@ export default function StatsScreen() {
                 }}
                 sx={{
                   position: "relative",
-                  background: "rgba(0,0,0,0.35)", // 👈 más oscuro
+                  background: "rgba(0,0,0,0.35)",
                   borderRadius: 3,
                   p: 0.5,
                   backdropFilter: "blur(6px)",
@@ -827,7 +837,7 @@ export default function StatsScreen() {
                       variant="h2"
                       sx={{
                         fontWeight: 800,
-                        background: "linear-gradient(135deg, #ff2020, #f16744)",
+                        background: RED_GRADIENT,
                         WebkitBackgroundClip: "text",
                         WebkitTextFillColor: "transparent",
                         animation: `
@@ -835,13 +845,7 @@ export default function StatsScreen() {
                       `,
                       }}
                     >
-                      <CountUp
-                        key={activeTab} // 👈 importante
-                        end={computedTotalVolume}
-                        duration={0.5}
-                        separator="."
-                        preserveValue
-                      />{" "}
+                      <CountUp key={activeTab} end={computedTotalVolume} duration={0.5} separator="." preserveValue />{" "}
                       kg
                     </Typography>
 
@@ -863,6 +867,7 @@ export default function StatsScreen() {
                   backdropFilter: "blur(6px)",
                   border: "1px solid rgba(255,255,255,0.1)",
                   borderRadius: 3,
+                  overflow: "visible",
                 }}
               >
                 <CardContent>
@@ -876,7 +881,7 @@ export default function StatsScreen() {
                         width: 60,
                         height: 4,
                         borderRadius: 10,
-                        background: "linear-gradient(90deg, #ff2020, #f16744)",
+                        background: RED_GRADIENT,
                       }}
                     />
                   </Stack>
@@ -886,44 +891,128 @@ export default function StatsScreen() {
                   ) : chartData.length === 0 ? (
                     <Typography color="text.secondary">No hay datos para graficar.</Typography>
                   ) : (
-                    <Box sx={{ width: "100%", height: 300 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" />
-
-                          <XAxis dataKey="date" tickFormatter={(value) => formatXAxis(value, volumeGranularity)} />
-
-                          <YAxis />
-
-                          <Tooltip
-                            trigger="click"
-                            content={({ active, payload, label }) => {
-                              if (!active || !payload || payload.length === 0) return null;
-
-                              const value = payload[0].value;
-
-                              return (
-                                <Box
-                                  sx={{
-                                    bgcolor: "background.paper",
-                                    p: 1.5,
-                                    borderRadius: 2,
-                                    boxShadow: 3,
-                                  }}
-                                >
-                                  <Typography variant="body2">Fecha: {label}</Typography>
-
-                                  <Typography variant="body2" fontWeight={600}>
-                                    {formatVolume(value)} kg
-                                  </Typography>
-                                </Box>
-                              );
+                    <Box
+                      sx={{
+                        position: "relative",
+                        "& *:focus": {
+                          outline: "none",
+                        },
+                        "& *:focus-visible": {
+                          outline: "none",
+                        },
+                      }}
+                    >
+                      <Box
+                        ref={containerRef}
+                        sx={{
+                          width: "100%",
+                          overflowX: "auto",
+                          overflowY: "hidden",
+                        }}
+                      >
+                        <Box sx={{ width: volumeChartWidth }}>
+                          <LineChart
+                            width={volumeChartWidth}
+                            height={300}
+                            data={chartData}
+                            margin={{
+                              top: 10,
+                              right: 45,
+                              left: 0,
+                              bottom: 30,
                             }}
-                          />
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
 
-                          <Line type="monotone" dataKey="volume" stroke="#1976d2" strokeWidth={3} dot={false} />
-                        </LineChart>
-                      </ResponsiveContainer>
+                            <XAxis
+                              dataKey="date"
+                              interval={0}
+                              scale="point"
+                              tick={({ x, y, payload }) => {
+                                const formatted = formatXAxis(payload.value, volumeGranularity);
+                                const lines = formatted.split("\n");
+
+                                return (
+                                  <text x={x} y={y} textAnchor="middle" fill="#000" fontSize={20} fontWeight={600}>
+                                    {lines.map((line, index) => (
+                                      <tspan key={index} x={x} dy={index === 0 ? 22 : 22}>
+                                        {line}
+                                      </tspan>
+                                    ))}
+                                  </text>
+                                );
+                              }}
+                            />
+
+                            <YAxis />
+
+                            <Line
+                              type="monotone"
+                              dataKey="volume"
+                              stroke={MAIN_RED}
+                              strokeWidth={5}
+                              activeDot={false}
+                              dot={(props) => {
+                                const { cx, cy, payload, index } = props;
+
+                                const isActive = clickedPoint?.index === index;
+
+                                return (
+                                  <circle
+                                    cx={cx}
+                                    cy={cy}
+                                    r={isActive ? 10 : 7}
+                                    fill={MAIN_RED}
+                                    stroke="#fff"
+                                    strokeWidth={2}
+                                    style={{ cursor: "pointer" }}
+                                    onClick={() => {
+                                      setClickedPoint({
+                                        payload,
+                                        cx,
+                                        cy,
+                                        index,
+                                      });
+
+                                      if (tooltipTimeoutRef.current) {
+                                        clearTimeout(tooltipTimeoutRef.current);
+                                      }
+
+                                      tooltipTimeoutRef.current = setTimeout(() => {
+                                        setClickedPoint(null);
+                                      }, 3000);
+                                    }}
+                                  />
+                                );
+                              }}
+                            />
+                          </LineChart>
+                        </Box>
+                        {clickedPoint && (
+                          <Box
+                            sx={{
+                              position: "absolute",
+                              left: clickedPoint.cx,
+                              top: clickedPoint.cy - 10,
+                              transform: "translate(-50%, -100%)",
+                              zIndex: 9999,
+                              pointerEvents: "none",
+                            }}
+                          >
+                            <CustomLineTooltip
+                              active
+                              label={clickedPoint.payload.date}
+                              payload={[
+                                {
+                                  value: clickedPoint.payload.volume,
+                                  dataKey: "volume",
+                                },
+                              ]}
+                              granularity={volumeGranularity}
+                            />
+                          </Box>
+                        )}
+                      </Box>
                     </Box>
                   )}
                 </CardContent>
@@ -949,7 +1038,7 @@ export default function StatsScreen() {
                         width: 60,
                         height: 4,
                         borderRadius: 10,
-                        background: "linear-gradient(90deg, #ff2020, #f16744)",
+                        background: RED_GRADIENT,
                       }}
                     />
                   </Stack>
@@ -988,13 +1077,14 @@ export default function StatsScreen() {
                             borderRadius: 3,
                             background: "rgba(255,255,255,0.04)",
                             border: "1px solid rgba(255,255,255,0.08)",
-                            borderLeft: "4px solid #ff2020",
+                            borderLeft: `4px solid ${MAIN_RED}`,
                           }}
                         >
                           {/* 📅 HEADER SEMANA */}
                           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                             <Typography sx={{ fontWeight: 700, fontSize: "1.2rem" }}>
-                              {group.weekStart} a {group.weekEnd}
+                              {dayjs(group.weekStart).format("DD/MM/YYYY")} -{" "}
+                              {dayjs(group.weekEnd).format("DD/MM/YYYY")}
                             </Typography>
 
                             <Typography sx={{ fontWeight: 800, fontSize: "1.2rem" }}>
@@ -1072,6 +1162,11 @@ export default function StatsScreen() {
                                       height: 10,
                                       borderRadius: 10,
                                       mb: 0.3,
+                                      "& .MuiLinearProgress-bar": {
+                                        backgroundColor: MAIN_RED,
+                                      },
+
+                                      backgroundColor: "rgba(255,32,32,0.15)",
                                     }}
                                   />
 
@@ -1194,7 +1289,7 @@ export default function StatsScreen() {
                         width: 60,
                         height: 4,
                         borderRadius: 10,
-                        background: "linear-gradient(90deg, #ff2020, #f16744)",
+                        background: RED_GRADIENT,
                       }}
                     />
                   </Stack>
@@ -1375,7 +1470,7 @@ export default function StatsScreen() {
                         width: 60,
                         height: 4,
                         borderRadius: 10,
-                        background: "linear-gradient(90deg, #ff2020, #f16744)",
+                        background: RED_GRADIENT,
                       }}
                     />
                   </Stack>
@@ -1399,7 +1494,7 @@ export default function StatsScreen() {
                     <Box
                       sx={{
                         position: "relative",
-                        height: "100%", // 👈 clave
+                        height: "100%",
                         display: "flex",
                         justifyContent: "center",
                       }}
@@ -1409,7 +1504,7 @@ export default function StatsScreen() {
                         onClick={() => setCalendarMonth((prev) => prev.subtract(1, "month"))}
                         sx={{
                           position: "absolute",
-                          left: 15, // 👈 separa del calendario
+                          left: 15,
                           top: "40%",
                           transform: "translateY(-50%)",
 
@@ -1454,14 +1549,14 @@ export default function StatsScreen() {
                         disableHighlightToday
                         sx={{
                           width: "fit-content",
-                          height: "auto", // 1. Permite que el componente crezca
-                          maxHeight: 500, // 2. Elimina la restricción de altura
+                          height: "auto", //Permite que el componente crezca
+                          maxHeight: 500, //Elimina la restricción de altura
 
                           "& .MuiDayCalendar-monthContainer": {
-                            position: "relative", // Evita cortes raros en animaciones
+                            position: "relative", //Evita cortes raros en animaciones
                           },
 
-                          // 🔥 CLAVE: grid fijo de 7 columnas
+                          //Grid fijo de 7 columnas
                           "& .MuiDayCalendar-weekContainer": {
                             display: "grid",
                             gridTemplateColumns: {
@@ -1486,7 +1581,6 @@ export default function StatsScreen() {
                             display: "none",
                           },
 
-                          // 🔥 evitar que MUI meta flex raro
                           "& .MuiDayCalendar-root": {
                             width: "auto",
                           },
@@ -1500,9 +1594,9 @@ export default function StatsScreen() {
 
                           //Evitar efectos al cliquear
                           "& .MuiPickersDay-root": {
-                            pointerEvents: "none", // Bloquea clics, hovers y selección
-                            userSelect: "none", // Evita que se seleccione el texto del número
-                            backgroundColor: "transparent !important", // Evita el fondo azul
+                            pointerEvents: "none", //Bloquea clics, hovers y selección
+                            userSelect: "none", //Evita que se seleccione el texto del número
+                            backgroundColor: "transparent !important", //Evita el fondo azul
                           },
 
                           "& .Mui-selected": {

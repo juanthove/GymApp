@@ -2,7 +2,7 @@ import { apiRequest, buildAuthorizedAssetUrl } from "./apiClient";
 
 const USER_API = "/api/users";
 
-// Crear usuario
+//Crear usuario
 export async function createUser(user) {
   return apiRequest(USER_API, {
     method: "POST",
@@ -11,29 +11,29 @@ export async function createUser(user) {
   });
 }
 
-// Obtener todos los usuarios
+//Obtener todos los usuarios
 export async function getUsers() {
   return apiRequest(USER_API);
 }
 
-// Obtener usuario por id
+//Obtener usuario por id
 export async function getUserById(id) {
   return apiRequest(`${USER_API}/${id}`);
 }
 
-// Usuarios logueados
+//Usuarios logueados
 export async function getLoggedUser() {
   return apiRequest(`${USER_API}/logged`);
 }
 
-// Usuarios no logueados
+//Usuarios no logueados
 export async function getNotLoggedUser() {
   return apiRequest(`${USER_API}/not-logged`, {
     skipAuthRedirect: true,
   });
 }
 
-// Actualizar usuario
+//Actualizar usuario
 export async function updateUser(id, user) {
   return apiRequest(`${USER_API}/${id}`, {
     method: "PUT",
@@ -42,7 +42,7 @@ export async function updateUser(id, user) {
   });
 }
 
-// Eliminar usuario
+//Eliminar usuario
 export async function deleteUser(id) {
   await apiRequest(`${USER_API}/${id}`, {
     method: "DELETE",
@@ -71,7 +71,7 @@ export function getUserImageUrl(filename) {
   return buildAuthorizedAssetUrl(`${USER_API}/image/${filename}`);
 }
 
-// Login
+//Login
 export async function loginUser(userId) {
   return apiRequest(`${USER_API}/${userId}/login`, {
     method: "PATCH",
@@ -80,7 +80,7 @@ export async function loginUser(userId) {
   });
 }
 
-// Logout
+//Logout
 export async function logoutUser(userId) {
   return apiRequest(`${USER_API}/${userId}/logout`, {
     method: "PATCH",
@@ -88,12 +88,12 @@ export async function logoutUser(userId) {
   });
 }
 
-// Obtener el workout actual del usuario
+//Obtener el workout actual del usuario
 export async function getCurrentWorkout(userId) {
   return apiRequest(`${USER_API}/${userId}/current-workout`);
 }
 
-// Cambiar workout actual del usuario
+//Cambiar workout actual del usuario
 export async function setCurrentWorkout(userId, workoutId) {
   return apiRequest(`${USER_API}/${userId}/current-workout/${workoutId}`, {
     method: "PUT",
@@ -101,7 +101,7 @@ export async function setCurrentWorkout(userId, workoutId) {
   });
 }
 
-// Obtener todos los logros del usuario (bloqueados y desbloqueados)
+//Obtener todos los logros del usuario (bloqueados y desbloqueados)
 export async function getUserAchievements(userId) {
   return apiRequest(`${USER_API}/${userId}/achievements`);
 }

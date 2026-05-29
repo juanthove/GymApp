@@ -40,7 +40,7 @@ export default function AchievementsScreen() {
     }
   };
 
-  // 🔥 Filtrar por nivel del usuario
+  //Filtrar por nivel del usuario
   const filteredAchievements = useMemo(() => {
     if (!user) return [];
 
@@ -61,7 +61,7 @@ export default function AchievementsScreen() {
         overflow: "hidden",
       }}
     >
-      {/* 🖼️ BACKGROUND */}
+      {/* BACKGROUND */}
       <Box
         sx={{
           position: "absolute",
@@ -75,7 +75,7 @@ export default function AchievementsScreen() {
         }}
       />
 
-      {/* 🌑 OVERLAY */}
+      {/* OVERLAY */}
       <Box
         sx={{
           position: "fixed",
@@ -88,7 +88,7 @@ export default function AchievementsScreen() {
 
       <Container maxWidth="md" sx={{ mt: 4, mb: 6, zIndex: 2, position: "relative" }}>
         <Stack spacing={3}>
-          {/* 🔝 HEADER */}
+          {/* HEADER */}
           <Box
             sx={{
               display: "flex",
@@ -132,7 +132,7 @@ export default function AchievementsScreen() {
             <Box sx={{ width: 48 }} />
           </Box>
 
-          {/* 🧱 GRID DE CARDS */}
+          {/* GRID DE CARDS */}
           <Card
             sx={{
               background: "rgba(255, 255, 255, 0.7)",
@@ -168,7 +168,7 @@ export default function AchievementsScreen() {
                     gridTemplateColumns: {
                       xs: "repeat(2, 1fr)",
                       sm: "repeat(3, 1fr)",
-                      md: "repeat(4, 1fr)", // 🔥 4 por fila
+                      md: "repeat(4, 1fr)",
                     },
                     gap: 3,
                   }}

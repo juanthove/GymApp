@@ -2,7 +2,7 @@ import { apiRequest } from "./apiClient";
 
 const SYSTEM_USER_API = "/api/system-users";
 
-// Crear system user (admin / staff)
+//Crear system user (admin / staff)
 export async function createSystemUser(user) {
   return apiRequest(SYSTEM_USER_API, {
     method: "POST",
@@ -20,17 +20,17 @@ export async function updateSystemUser(id, user) {
   });
 }
 
-// Obtener todos
+//Obtener todos
 export async function getSystemUsers() {
   return apiRequest(SYSTEM_USER_API);
 }
 
-// Obtener por id
+//Obtener por id
 export async function getSystemUserById(id) {
   return apiRequest(`${SYSTEM_USER_API}/${id}`);
 }
 
-// Eliminar
+//Eliminar
 export async function deleteSystemUser(id) {
   await apiRequest(`${SYSTEM_USER_API}/${id}`, {
     method: "DELETE",
@@ -38,7 +38,7 @@ export async function deleteSystemUser(id) {
   return true;
 }
 
-// LOGIN
+//Login
 export async function loginSystemUser(credentials) {
   return apiRequest(`${SYSTEM_USER_API}/login`, {
     method: "POST",

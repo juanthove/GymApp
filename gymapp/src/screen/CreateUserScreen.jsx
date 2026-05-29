@@ -8,7 +8,7 @@ import {
   getUsers,
   uploadUserImage,
   deleteUserImage,
-  getUserImageUrl
+  getUserImageUrl,
 } from "../services/userService";
 
 import { getUserLevels } from "../services/userLevelService";
@@ -27,14 +27,13 @@ import {
   DialogContent,
   DialogActions,
   Slider,
-  Box
+  Box,
 } from "@mui/material";
 
 import BackButton from "../components/BackButton";
 import AppSnackbar from "../components/AppSnackbar";
 
 export default function CreateUserScreen() {
-
   const [users, setUsers] = useState([]);
   const [selectedId, setSelectedId] = useState("new");
   const [currentUser, setCurrentUser] = useState(null);
@@ -49,7 +48,6 @@ export default function CreateUserScreen() {
   const [preview, setPreview] = useState(null);
   const [deleteImageChecked, setDeleteImageChecked] = useState(false);
 
-  // 🔥 crop states
   const [showCropModal, setShowCropModal] = useState(false);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -97,7 +95,7 @@ export default function CreateUserScreen() {
       return;
     }
 
-    const user = users.find(u => u.id === Number(id));
+    const user = users.find((u) => u.id === Number(id));
 
     setCurrentUser(user);
     setName(user.name);
@@ -143,7 +141,7 @@ export default function CreateUserScreen() {
     return true;
   };
 
-  // 🔥 helper para recortar
+  //Recortar imagen
   const getCroppedImg = async (imageSrc, crop) => {
     const image = new Image();
     image.src = imageSrc;
@@ -156,17 +154,7 @@ export default function CreateUserScreen() {
     canvas.width = crop.width;
     canvas.height = crop.height;
 
-    ctx.drawImage(
-      image,
-      crop.x,
-      crop.y,
-      crop.width,
-      crop.height,
-      0,
-      0,
-      crop.width,
-      crop.height
-    );
+    ctx.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
 
     return new Promise((resolve) => {
       canvas.toBlob((blob) => {
@@ -193,14 +181,12 @@ export default function CreateUserScreen() {
     if (!validateForm()) return;
 
     try {
-
       if (selectedId === "new") {
-
         const created = await createUser({
           name,
           surname,
           gymDaysPerWeek: parseInt(gymDays, 10),
-          userLevelId: selectedLevel
+          userLevelId: selectedLevel,
         });
 
         if (image) {
@@ -209,14 +195,12 @@ export default function CreateUserScreen() {
 
         setMessage("Usuario creado correctamente");
         setMessageType("success");
-
       } else {
-
         await updateUser(selectedId, {
           name,
           surname,
           gymDaysPerWeek: parseInt(gymDays, 10),
-          userLevelId: selectedLevel
+          userLevelId: selectedLevel,
         });
 
         if (image) {
@@ -231,7 +215,6 @@ export default function CreateUserScreen() {
 
       resetForm();
       loadUsers();
-
     } catch (error) {
       setMessage("Error: " + error.message);
       setMessageType("error");
@@ -250,7 +233,6 @@ export default function CreateUserScreen() {
 
         resetForm();
         loadUsers();
-
       } catch {
         setMessage("Error al eliminar usuario");
         setMessageType("error");
@@ -259,35 +241,29 @@ export default function CreateUserScreen() {
   };
 
   return (
-
     <Container maxWidth="sm" sx={{ mt: 4, mb: 6 }}>
-
       <Paper sx={{ p: 4 }}>
-
         <Box
           sx={{
             position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            mb: 2
+            mb: 2,
           }}
         >
-
-          {/* 🔙 Flecha a la izquierda */}
+          {/* Flecha a la izquierda */}
           <Box sx={{ position: "absolute", left: 0 }}>
             <BackButton to="/admin" sx={{ color: "black" }} />
           </Box>
 
-          {/* 🧠 Título centrado REAL */}
+          {/* Título centrado REAL */}
           <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
             Usuarios
           </Typography>
-
         </Box>
 
         <Stack spacing={3}>
-
           <TextField
             select
             label="Seleccionar usuario"
@@ -296,7 +272,7 @@ export default function CreateUserScreen() {
           >
             <MenuItem value="new">Nuevo Usuario</MenuItem>
 
-            {users.map(u => (
+            {users.map((u) => (
               <MenuItem key={u.id} value={u.id}>
                 {u.name} {u.surname}
               </MenuItem>
@@ -314,13 +290,8 @@ export default function CreateUserScreen() {
             onChange={(e) => setGymDays(e.target.value)}
           />
 
-          <TextField
-            select
-            label="Nivel"
-            value={selectedLevel}
-            onChange={(e) => setSelectedLevel(e.target.value)}
-          >
-            {levels.map(level => (
+          <TextField select label="Nivel" value={selectedLevel} onChange={(e) => setSelectedLevel(e.target.value)}>
+            {levels.map((level) => (
               <MenuItem key={level.id} value={level.id}>
                 {level.name}
               </MenuItem>
@@ -337,7 +308,8 @@ export default function CreateUserScreen() {
                 type="file"
                 accept="image/*"
                 ref={fileInputRef}
-                onClick={() => { //Permitir volver a elegir la misma imagen
+                onClick={() => {
+                  //Permitir volver a elegir la misma imagen
                   if (fileInputRef.current) {
                     fileInputRef.current.value = "";
                   }
@@ -381,21 +353,16 @@ export default function CreateUserScreen() {
                   style={{
                     maxWidth: "180px",
                     borderRadius: "10px",
-                    border: "1px solid #ddd"
+                    border: "1px solid #ddd",
                   }}
                 />
               )}
             </Stack>
           )}
 
-          <AppSnackbar
-            message={message}
-            type={messageType}
-            onClose={() => setMessage("")}
-          />
+          <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
 
           <Stack direction="row" spacing={2}>
-
             {currentUser && (
               <Button variant="contained" color="error" onClick={handleDelete}>
                 Eliminar Usuario
@@ -405,16 +372,13 @@ export default function CreateUserScreen() {
             <Button variant="contained" color="success" onClick={handleSubmit}>
               {currentUser ? "Actualizar Usuario" : "Crear Usuario"}
             </Button>
-
           </Stack>
-
         </Stack>
       </Paper>
 
-      {/* 🔥 MODAL CROPPER */}
+      {/* MODAL CROPPER */}
       <Dialog open={showCropModal} onClose={() => setShowCropModal(false)} fullWidth>
         <DialogContent sx={{ position: "relative", height: 300 }}>
-
           <Cropper
             image={preview}
             crop={crop}
@@ -424,18 +388,11 @@ export default function CreateUserScreen() {
             onZoomChange={setZoom}
             onCropComplete={(area, pixels) => setCroppedAreaPixels(pixels)}
           />
-
         </DialogContent>
 
         <Stack sx={{ px: 3 }}>
           <Typography>Zoom</Typography>
-          <Slider
-            min={1}
-            max={3}
-            step={0.1}
-            value={zoom}
-            onChange={(e, val) => setZoom(val)}
-          />
+          <Slider min={1} max={3} step={0.1} value={zoom} onChange={(e, val) => setZoom(val)} />
         </Stack>
 
         <DialogActions>
@@ -445,7 +402,6 @@ export default function CreateUserScreen() {
           </Button>
         </DialogActions>
       </Dialog>
-
     </Container>
   );
 }

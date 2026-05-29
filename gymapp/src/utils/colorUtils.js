@@ -17,3 +17,7 @@ export const darkenColor = (hex, amount = 0.2) => {
 
   return `rgb(${r}, ${g}, ${b})`;
 };
+
+export const MAIN_RED = "#ff2020";
+
+export const RED_GRADIENT = "linear-gradient(90deg, #ff2020, #f16744)";

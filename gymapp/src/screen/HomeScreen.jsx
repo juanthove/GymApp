@@ -252,8 +252,8 @@ export default function HomeScreen() {
             sx={{
               display: "grid",
               gridTemplateColumns: {
-                xs: "repeat(2, 1fr)", // celulares/tablets chicas
-                md: "repeat(3, 1fr)", // ipad pro y grandes
+                xs: "repeat(2, 1fr)",
+                md: "repeat(3, 1fr)",
               },
               gap: {
                 xs: 2,
@@ -336,7 +336,7 @@ export default function HomeScreen() {
             headerSx={{ py: 1 }}
             paperSx={{
               borderRadius: 4,
-              maxHeight: "60vh", // 🔥 mantenés EXACTAMENTE el alto
+              maxHeight: "60vh",
             }}
             closeSx={{ p: 1, "& svg": { fontSize: 50 } }}
             actions={
@@ -370,18 +370,15 @@ export default function HomeScreen() {
               sx={{
                 mb: 2,
 
-                // 👇 altura del input
                 "& .MuiOutlinedInput-root": {
-                  height: 80, // 🔥 más alto (probá 60–70)
+                  height: 80,
                   borderRadius: 3,
                 },
 
-                // 👇 texto que escribís
                 "& .MuiInputBase-input": {
-                  fontSize: "2rem", // 🔥 tamaño del texto
+                  fontSize: "2rem",
                 },
 
-                // 👇 placeholder
                 "& .MuiInputBase-input::placeholder": {
                   fontSize: "2rem",
                   opacity: 0.7,
@@ -425,7 +422,7 @@ export default function HomeScreen() {
                       <Avatar
                         src={user.image ? getUserImageUrl(user.image) : undefined}
                         sx={{
-                          width: 65, // 🔥 antes ~40
+                          width: 65,
                           height: 65,
                           fontSize: "2rem",
                           mr: 3,

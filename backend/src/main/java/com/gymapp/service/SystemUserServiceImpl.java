@@ -60,7 +60,7 @@ public class SystemUserServiceImpl implements SystemUserService {
         SystemUser user = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("SystemUser no encontrado"));
 
-        // 🔥 validar username duplicado
+        // Validar username duplicado
         repository.findByUsername(request.username())
                 .filter(u -> !u.getId().equals(id))
                 .ifPresent(u -> {
@@ -70,7 +70,7 @@ public class SystemUserServiceImpl implements SystemUserService {
         user.setUsername(request.username());
         user.setRole(request.role());
 
-        // 🔐 solo actualiza password si viene
+        // Solo actualiza password si viene
         if (request.password() != null && !request.password().isBlank()) {
             user.setPassword(passwordEncoder.encode(request.password()));
         }
@@ -88,7 +88,6 @@ public class SystemUserServiceImpl implements SystemUserService {
             throw new ConflictException("Password incorrecta");
         }
 
-        // Migra password legacy en texto plano a bcrypt al autenticarse correctamente.
         if (!isBcryptHash(user.getPassword())) {
             user.setPassword(passwordEncoder.encode(request.password()));
             repository.save(user);
@@ -102,8 +101,7 @@ public class SystemUserServiceImpl implements SystemUserService {
                 user.getRole(),
                 token,
                 "Bearer",
-                jwtService.getExpirationMillis()
-        );
+                jwtService.getExpirationMillis());
     }
 
     @Override
@@ -118,8 +116,7 @@ public class SystemUserServiceImpl implements SystemUserService {
         return new SystemUserResponse(
                 user.getId(),
                 user.getUsername(),
-                user.getRole()
-        );
+                user.getRole());
     }
 
     private boolean passwordMatches(String rawPassword, String storedPassword) {

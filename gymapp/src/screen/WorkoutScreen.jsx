@@ -196,7 +196,7 @@ export default function WorkoutScreen() {
 
   useEffect(() => {
     let start = null;
-    const duration = 1200; // ⏱️ duración total (más alto = más lento)
+    const duration = 1200;
 
     const animate = (timestamp) => {
       if (!start) start = timestamp;
@@ -266,7 +266,7 @@ export default function WorkoutScreen() {
         overflow: "hidden",
       }}
     >
-      {/* 🖼️ BACKGROUND */}
+      {/* BACKGROUND */}
       <Box
         sx={{
           position: "absolute",
@@ -280,7 +280,7 @@ export default function WorkoutScreen() {
         }}
       />
 
-      {/* 🌑 OVERLAY */}
+      {/* OVERLAY */}
       <Box
         sx={{
           position: "absolute",
@@ -291,7 +291,7 @@ export default function WorkoutScreen() {
         }}
       />
 
-      {/* 📦 CONTENIDO */}
+      {/* CONTENIDO */}
       <Box
         sx={{
           position: "relative",
@@ -300,7 +300,7 @@ export default function WorkoutScreen() {
         }}
       >
         <Box sx={{ position: "relative", mb: 2 }}>
-          {/* 🔝 TOP BAR */}
+          {/* TOP BAR */}
           <Box
             sx={{
               display: "flex",
@@ -341,7 +341,7 @@ export default function WorkoutScreen() {
             />
           </Box>
 
-          {/* 👋 TITULO */}
+          {/* TITULO */}
           <Typography
             variant="h3"
             textAlign="center"
@@ -363,7 +363,7 @@ export default function WorkoutScreen() {
           maxWidth="sm"
           sx={{
             position: "relative",
-            zIndex: 2, // 👈 CLAVE
+            zIndex: 2,
             mt: 6,
           }}
         >
@@ -458,7 +458,7 @@ export default function WorkoutScreen() {
                 />
 
                 <Box sx={{ position: "relative", zIndex: 1, borderRadius: "50%", overflow: "hidden" }}>
-                  {/* SVG GRADIENT DEFINICIÓN */}
+                  {/* SVG GRADIENT */}
                   <svg width={0} height={0}>
                     <defs>
                       <linearGradient id="gradientProgress" x1="0%" y1="0%" x2="100%" y2="100%">

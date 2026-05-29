@@ -1,28 +1,13 @@
 import { useState, useEffect } from "react";
 
-import {
-  createSystemUser,
-  updateSystemUser,
-  getSystemUsers,
-  deleteSystemUser
-} from "../services/systemUserService";
+import { createSystemUser, updateSystemUser, getSystemUsers, deleteSystemUser } from "../services/systemUserService";
 
-import {
-  Container,
-  Paper,
-  Typography,
-  TextField,
-  MenuItem,
-  Button,
-  Stack,
-  Box
-} from "@mui/material";
+import { Container, Paper, Typography, TextField, MenuItem, Button, Stack, Box } from "@mui/material";
 
 import BackButton from "../components/BackButton";
 import AppSnackbar from "../components/AppSnackbar";
 
 export default function CreateSystemUserScreen() {
-
   const [users, setUsers] = useState([]);
   const [selectedId, setSelectedId] = useState("new");
   const [currentUser, setCurrentUser] = useState(null);
@@ -59,11 +44,11 @@ export default function CreateSystemUserScreen() {
       return;
     }
 
-    const user = users.find(u => u.id === Number(id));
+    const user = users.find((u) => u.id === Number(id));
 
     setCurrentUser(user);
     setUsername(user.username);
-    setPassword(""); // 🔥 nunca cargues password
+    setPassword("");
     setRole(user.role);
   };
 
@@ -90,22 +75,19 @@ export default function CreateSystemUserScreen() {
 
     try {
       if (selectedId === "new") {
-
         await createSystemUser({
           username,
           password,
-          role
+          role,
         });
 
         setMessage("Usuario del sistema creado correctamente");
         setMessageType("success");
-
       } else {
-
         await updateSystemUser(selectedId, {
           username,
-          password: password || null, // 👈 clave
-          role
+          password: password || null,
+          role,
         });
 
         setMessage("Usuario actualizado correctamente");
@@ -114,7 +96,6 @@ export default function CreateSystemUserScreen() {
 
       resetForm();
       loadUsers();
-
     } catch (error) {
       setMessage("Error: " + error.message);
       setMessageType("error");
@@ -133,7 +114,6 @@ export default function CreateSystemUserScreen() {
 
         resetForm();
         loadUsers();
-
       } catch {
         setMessage("Error al eliminar usuario");
         setMessageType("error");
@@ -143,35 +123,30 @@ export default function CreateSystemUserScreen() {
 
   return (
     <Container maxWidth="sm" sx={{ mt: 4, mb: 6 }}>
-
       <Paper sx={{ p: 4 }}>
-
-        {/* 🔙 HEADER */}
+        {/* HEADER */}
         <Box
           sx={{
             position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            mb: 2
+            mb: 2,
           }}
         >
-
-          {/* 🔙 Flecha a la izquierda */}
+          {/* Flecha a la izquierda */}
           <Box sx={{ position: "absolute", left: 0 }}>
             <BackButton to="/admin" sx={{ color: "black" }} />
           </Box>
 
-          {/* 🧠 Título centrado REAL */}
+          {/* Título centrado */}
           <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
             Usuarios del sistema
           </Typography>
-
         </Box>
 
         <Stack spacing={3}>
-
-          {/* 🔽 SELECT */}
+          {/* SELECT */}
           <TextField
             select
             label="Seleccionar usuario"
@@ -180,77 +155,48 @@ export default function CreateSystemUserScreen() {
           >
             <MenuItem value="new">Nuevo Usuario</MenuItem>
 
-            {users.map(u => (
+            {users.map((u) => (
               <MenuItem key={u.id} value={u.id}>
                 {u.username} ({u.role})
               </MenuItem>
             ))}
           </TextField>
 
-          {/* 👤 USERNAME */}
-          <TextField
-            label="Usuario"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
+          {/* USERNAME */}
+          <TextField label="Usuario" value={username} onChange={(e) => setUsername(e.target.value)} />
 
-          {/* 🔒 PASSWORD */}
+          {/* PASSWORD */}
           <TextField
             label="Contraseña"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            helperText={
-              currentUser
-                ? "Dejar vacío para mantener la contraseña actual"
-                : "La contraseña es obligatoria"
-            }
+            helperText={currentUser ? "Dejar vacío para mantener la contraseña actual" : "La contraseña es obligatoria"}
           />
 
-          {/* 🎭 ROLE */}
-          <TextField
-            select
-            label="Tipo de usuario"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-          >
+          {/* ROL */}
+          <TextField select label="Tipo de usuario" value={role} onChange={(e) => setRole(e.target.value)}>
             <MenuItem value="ADMIN">Admin</MenuItem>
             <MenuItem value="STAFF">Común</MenuItem>
           </TextField>
 
-          {/* 🔔 MENSAJES */}
-          <AppSnackbar
-            message={message}
-            type={messageType}
-            onClose={() => setMessage("")}
-          />
+          {/* MENSAJES */}
+          <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
 
-          {/* 🔘 BOTONES */}
+          {/* BOTONES */}
           <Stack direction="row" spacing={2}>
-
             {currentUser && (
-              <Button
-                variant="contained"
-                color="error"
-                onClick={handleDelete}
-              >
+              <Button variant="contained" color="error" onClick={handleDelete}>
                 Eliminar Usuario
               </Button>
             )}
 
-            <Button
-              variant="contained"
-              color="success"
-              onClick={handleSubmit}
-            >
+            <Button variant="contained" color="success" onClick={handleSubmit}>
               {currentUser ? "Guardar cambios" : "Crear Usuario"}
             </Button>
-
           </Stack>
-
         </Stack>
       </Paper>
-
     </Container>
   );
 }

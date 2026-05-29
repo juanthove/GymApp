@@ -41,7 +41,7 @@ export default function FinalResumeScreen() {
     setTotalExercises(summary.totalExercises ?? 0);
   };
 
-  // 🎬 ENTRADA (fade + scale)
+  //ENTRADA (fade + scale)
   const fadeScale = keyframes`
     0% {
       opacity: 0;
@@ -56,7 +56,7 @@ export default function FinalResumeScreen() {
     }
   `;
 
-  // ✨ GLOW SUAVE (energía)
+  //GLOW SUAVE
   const glow = keyframes`
     0% {
       text-shadow: 0 0 4px rgba(255,255,255,0.2), 0 0 10px rgba(211,47,47,0.2);
@@ -100,7 +100,7 @@ export default function FinalResumeScreen() {
         overflow: "hidden",
       }}
     >
-      {/* 🖼️ IMAGEN DE FONDO (parte inferior) */}
+      {/* IMAGEN DE FONDO */}
       <Box
         sx={{
           position: "absolute",
@@ -139,7 +139,7 @@ export default function FinalResumeScreen() {
         }}
       />
 
-      {/* 📦 CONTENIDO */}
+      {/* CONTENIDO */}
       <Container
         maxWidth="md"
         sx={{
@@ -149,7 +149,7 @@ export default function FinalResumeScreen() {
         }}
       >
         <Stack spacing={5} textAlign="center" alignItems="center" sx={{ pb: 15 }}>
-          {/* 🟢 MENSAJE */}
+          {/* MENSAJE */}
           <Box sx={{ textAlign: "center", display: "inline-block" }}>
             <Typography
               variant="h3"
@@ -201,7 +201,7 @@ export default function FinalResumeScreen() {
             />
           </Box>
 
-          {/* 🔵 VOLUMEN TOTAL */}
+          {/* VOLUMEN TOTAL */}
           {muscleVolume.length === 0 ? (
             <Box sx={{ display: { xs: "none", md: "block" } }}></Box>
           ) : (
@@ -214,14 +214,11 @@ export default function FinalResumeScreen() {
             {muscleVolume.length === 0 ? (
               <Box sx={{ display: { xs: "none" } }}></Box>
             ) : (
-              <StatCard
-                label="Ejercicios completados"
-                value={totalExercises} // 🔥 mock por ahora
-              />
+              <StatCard label="Ejercicios completados" value={totalExercises} />
             )}
           </Stack>
 
-          {/* 🟣 VOLUMEN POR MÚSCULO */}
+          {/* VOLUMEN POR MÚSCULO */}
           {muscleVolume.length === 0 ? (
             <>
               <Box sx={{ height: 60 }} />
@@ -239,7 +236,7 @@ export default function FinalResumeScreen() {
               >
                 <Typography
                   sx={{
-                    fontSize: "2.5rem", // 🔥 bien grande
+                    fontSize: "2.5rem",
                     fontWeight: 800,
                     color: "#fff",
                     textAlign: "center",
@@ -290,15 +287,15 @@ export default function FinalResumeScreen() {
                   display: "flex",
                   flexWrap: "wrap",
                   gap: 2,
-                  justifyContent: "center", // 👈 clave para centrar la última
+                  justifyContent: "center",
                 }}
               >
                 {muscleVolume.map((m) => (
                   <Box
                     key={m.muscle}
                     sx={{
-                      width: "calc(50% - 8px)", // 👈 2 por fila (gap compensado)
-                      minWidth: "260px", // opcional para que no se achiquen demasiado
+                      width: "calc(50% - 8px)",
+                      minWidth: "260px",
                     }}
                   >
                     <MuscleVolumeCard muscle={m.muscle} volume={m.volume} />
@@ -308,7 +305,7 @@ export default function FinalResumeScreen() {
             </Box>
           )}
 
-          {/* 🔙 BOTÓN */}
+          {/* BOTÓN */}
           <Box
             sx={{
               position: "fixed",

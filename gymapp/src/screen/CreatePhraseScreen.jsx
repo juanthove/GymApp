@@ -1,28 +1,13 @@
 import { useState, useEffect } from "react";
 
-import {
-  createPhrase,
-  updatePhrase,
-  deletePhrase,
-  getPhrases
-} from "../services/phraseService";
+import { createPhrase, updatePhrase, deletePhrase, getPhrases } from "../services/phraseService";
 
-import {
-  Container,
-  Paper,
-  Typography,
-  TextField,
-  MenuItem,
-  Button,
-  Stack,
-  Box
-} from "@mui/material";
+import { Container, Paper, Typography, TextField, MenuItem, Button, Stack, Box } from "@mui/material";
 
 import BackButton from "../components/BackButton";
 import AppSnackbar from "../components/AppSnackbar";
 
 export default function CreatePhraseScreen() {
-
   const [phrases, setPhrases] = useState([]);
   const [selectedId, setSelectedId] = useState("new");
   const [currentPhrase, setCurrentPhrase] = useState(null);
@@ -55,7 +40,7 @@ export default function CreatePhraseScreen() {
       return;
     }
 
-    const phrase = phrases.find(p => p.id === Number(id));
+    const phrase = phrases.find((p) => p.id === Number(id));
 
     setCurrentPhrase(phrase);
     setText(phrase.text);
@@ -76,16 +61,12 @@ export default function CreatePhraseScreen() {
     if (!validateForm()) return;
 
     try {
-
       if (selectedId === "new") {
-
         await createPhrase({ text });
 
         setMessage("Frase creada correctamente");
         setMessageType("success");
-
       } else {
-
         await updatePhrase(selectedId, { text });
 
         setMessage("Frase actualizada correctamente");
@@ -94,7 +75,6 @@ export default function CreatePhraseScreen() {
 
       resetForm();
       loadPhrases();
-
     } catch (error) {
       setMessage("Error: " + error.message);
       setMessageType("error");
@@ -106,7 +86,6 @@ export default function CreatePhraseScreen() {
 
     if (window.confirm("¿Seguro que deseas eliminar esta frase?")) {
       try {
-
         await deletePhrase(currentPhrase.id);
 
         setMessage("Frase eliminada correctamente");
@@ -114,7 +93,6 @@ export default function CreatePhraseScreen() {
 
         resetForm();
         loadPhrases();
-
       } catch {
         setMessage("Error al eliminar frase");
         setMessageType("error");
@@ -124,43 +102,33 @@ export default function CreatePhraseScreen() {
 
   return (
     <Container maxWidth="sm" sx={{ mt: 4, mb: 6 }}>
-
       <Paper sx={{ p: 4 }}>
-
         <Box
           sx={{
             position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            mb: 2
+            mb: 2,
           }}
         >
-
-          {/* 🔙 Flecha a la izquierda */}
+          {/* Flecha a la izquierda */}
           <Box sx={{ position: "absolute", left: 0 }}>
             <BackButton to="/admin" sx={{ color: "black" }} />
           </Box>
 
-          {/* 🧠 Título centrado REAL */}
+          {/* Título centrado */}
           <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
             Frases
           </Typography>
-
         </Box>
 
         <Stack spacing={3}>
-
           {/* SELECT */}
-          <TextField
-            select
-            label="Seleccionar frase"
-            value={selectedId}
-            onChange={(e) => handleSelect(e.target.value)}
-          >
+          <TextField select label="Seleccionar frase" value={selectedId} onChange={(e) => handleSelect(e.target.value)}>
             <MenuItem value="new">Nueva frase</MenuItem>
 
-            {phrases.map(p => (
+            {phrases.map((p) => (
               <MenuItem key={p.id} value={p.id}>
                 {p.text}
               </MenuItem>
@@ -168,48 +136,25 @@ export default function CreatePhraseScreen() {
           </TextField>
 
           {/* INPUT */}
-          <TextField
-            label="Frase"
-            multiline
-            minRows={3}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
+          <TextField label="Frase" multiline minRows={3} value={text} onChange={(e) => setText(e.target.value)} />
 
           {/* BOTONES */}
           <Stack direction="row" spacing={2}>
-
             {currentPhrase && (
-              <Button
-                variant="contained"
-                color="error"
-                onClick={handleDelete}
-              >
+              <Button variant="contained" color="error" onClick={handleDelete}>
                 Eliminar
               </Button>
             )}
 
-            <Button
-              variant="contained"
-              color="success"
-              onClick={handleSubmit}
-            >
+            <Button variant="contained" color="success" onClick={handleSubmit}>
               {currentPhrase ? "Actualizar" : "Crear"}
             </Button>
-
           </Stack>
-
         </Stack>
-
       </Paper>
 
       {/* SNACKBAR */}
-      <AppSnackbar
-        message={message}
-        type={messageType}
-        onClose={() => setMessage("")}
-      />
-
+      <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
     </Container>
   );
 }

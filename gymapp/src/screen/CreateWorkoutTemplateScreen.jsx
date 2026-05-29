@@ -144,7 +144,7 @@ export default function CreateWorkoutTemplateScreen() {
     setDescription(template.description || "");
 
     const loadedDays = template.days.map((day) => ({
-      id: day.id, // 🔥 importante
+      id: day.id,
 
       name: day.name,
       muscles: day.muscles || [],
@@ -163,7 +163,6 @@ export default function CreateWorkoutTemplateScreen() {
       deleteImage: false,
       sourceMuscleImage: day.muscleImage || null,
 
-      // 🔥 clave: armar URL desde filename
       preview: day.muscleImage ? getWorkoutTemplateDayImageUrl(day.muscleImage) : null,
     }));
 
@@ -270,14 +269,14 @@ export default function CreateWorkoutTemplateScreen() {
     const dayToCopy = days[index];
 
     const newDay = {
-      id: null, // 🔥 nuevo día
+      id: null,
       name: dayToCopy.name + " copia",
       exercises: dayToCopy.exercises.map((ex) => ({ ...ex })),
       selectedExercise: null,
       image: null,
       deleteImage: false,
       sourceMuscleImage: null,
-      preview: null, // 🔥 NO copiar imagen
+      preview: null,
     };
 
     const updated = [...days];
@@ -307,7 +306,7 @@ export default function CreateWorkoutTemplateScreen() {
 
       let templateId;
 
-      // 1️⃣ CREAR o ACTUALIZAR (FULL)
+      //Crear o actualizar full
       if (selectedTemplateId) {
         await updateWorkoutTemplate(selectedTemplateId, templateData);
         templateId = selectedTemplateId;
@@ -322,10 +321,10 @@ export default function CreateWorkoutTemplateScreen() {
         setMessageType("success");
       }
 
-      // 2️⃣ TRAER TEMPLATE CON IDS REALES
+      //Obtener template
       const fullTemplate = await getWorkoutTemplateById(templateId);
 
-      // 3️⃣ MANEJO DE IMÁGENES
+      //Imagenes
       for (let i = 0; i < fullTemplate.days.length; i++) {
         const backendDay = fullTemplate.days[i];
         const frontDay = days[i];
@@ -335,7 +334,7 @@ export default function CreateWorkoutTemplateScreen() {
         }
       }
 
-      // 4️⃣ RESET
+      //Reset
       resetForm();
       loadTemplates();
     } catch (e) {
@@ -375,12 +374,12 @@ export default function CreateWorkoutTemplateScreen() {
             mb: 2,
           }}
         >
-          {/* 🔙 Flecha a la izquierda */}
+          {/* Flecha a la izquierda */}
           <Box sx={{ position: "absolute", left: 0 }}>
             <BackButton to="/admin" sx={{ color: "black" }} />
           </Box>
 
-          {/* 🧠 Título centrado REAL */}
+          {/* Título centrado REAL */}
           <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
             Plantillas
           </Typography>

@@ -141,7 +141,7 @@ export default function ExerciseScreen() {
       });
     });
 
-    // 🔥 mínimo 3 series
+    //3 series minimo
     const maxSetNumber = Math.max(...Object.keys(grouped).map(Number), 3);
 
     const result = [];
@@ -169,7 +169,6 @@ export default function ExerciseScreen() {
       const exercises = workoutDayData.exercises ?? [];
       setAllExercises(exercises);
 
-      // 🔴 alertas
       const overdueExercises = exercises.filter((ex) => ex.alert && ex.alert.overdue && !ex.selected);
 
       setAlertExercises(overdueExercises);
@@ -223,13 +222,10 @@ export default function ExerciseScreen() {
   };
 
   const filteredExercises = allExercises.filter((ex) => {
-    // 🔴 día abdominal
     if (isAbdominal && ex.type !== "ABDOMINAL") return false;
 
-    // 🔵 filtro por tipo
     if (filterType !== "ALL" && ex.type !== filterType) return false;
 
-    // 🟢 filtro por músculo
     if (filterMuscle !== "ALL" && ex.exerciseMuscle !== filterMuscle) return false;
 
     return true;
@@ -307,14 +303,12 @@ export default function ExerciseScreen() {
 
   const handleCompleteClick = (ex) => {
     if (ex.completed) {
-      // comportamiento actual
       toggleCompleteExercise(ex);
       return;
     }
 
-    // abrir modal
     setPendingExercise(ex);
-    setNextWeight(ex.weight ?? ""); // placeholder lógico
+    setNextWeight(ex.weight ?? "");
     setWeightModalOpen(true);
   };
 
@@ -384,7 +378,6 @@ export default function ExerciseScreen() {
 
     const setNumber = setIndex + 1;
 
-    // 🔥 borrar en backend si existen
     const existing = await getWorkoutSetsByWorkoutExercise(selectedExercise.id);
 
     const toDelete = existing.filter((s) => s.setNumber === setNumber);
@@ -393,7 +386,6 @@ export default function ExerciseScreen() {
       await deleteWorkoutSet(s.id);
     }
 
-    // 🔥 actualizar UI
     const updated = sets.filter((_, i) => i !== setIndex);
 
     setSets(updated);
@@ -428,7 +420,6 @@ export default function ExerciseScreen() {
       await deleteWorkoutSet(s.id);
     }
 
-    // resetear en UI
     const updated = [...sets];
     updated[setIndex] = [{ reps: "", weight: "", id: null }];
     setSets(updated);
@@ -440,7 +431,7 @@ export default function ExerciseScreen() {
   const saveSet = async (setIndex, showMessage = true, existingSets = null) => {
     const now = Date.now();
 
-    // ⛔ evitar doble ejecución muy rápida
+    //Evitar doble ejecución muy rápida
     if (now - (lastSaveTimeRef.current[setIndex] || 0) < 300) {
       return;
     }
@@ -464,10 +455,9 @@ export default function ExerciseScreen() {
     const allEmpty = blocks.every((b) => !hasValue(b.reps) && !hasValue(b.weight));
     const allFull = blocks.every((b) => hasValue(b.reps) && hasValue(b.weight));
 
-    // ❌ mezcla inválida
+    //Mezcla inválida
     if (!allEmpty && !allFull) return;
 
-    // 🔥 detectar cambios reales
     const hasChanges =
       toDelete.length > 0 ||
       blocks.some((b) => {
@@ -479,22 +469,20 @@ export default function ExerciseScreen() {
         return String(original.reps) !== String(b.reps) || String(original.weight) !== String(b.weight);
       });
 
-    // 🚫 NO HAY CAMBIOS → SALIR SIN MOSTRAR NADA
     if (!hasChanges) return;
 
-    // 🔥 RECIÉN ACÁ activás loading
     savingSetsRef.current[setIndex] = true;
     setSavingSets((prev) => ({ ...prev, [setIndex]: true }));
 
     try {
       const startTime = Date.now();
 
-      // DELETE
+      //DELETE
       for (const d of toDelete) {
         await deleteWorkoutSet(d.id);
       }
 
-      // EMPTY
+      //EMPTY
       if (allEmpty) {
         for (const b of blocks) {
           if (b.id) await deleteWorkoutSet(b.id);
@@ -502,7 +490,7 @@ export default function ExerciseScreen() {
         return;
       }
 
-      // SAVE
+      //SAVE
       for (const b of blocks) {
         if (b.id) {
           await updateWorkoutSet(b.id, {
@@ -541,14 +529,13 @@ export default function ExerciseScreen() {
       const allEmpty = set.every((b) => !hasValue(b.reps) && !hasValue(b.weight));
       const allFull = set.every((b) => hasValue(b.reps) && hasValue(b.weight));
 
-      // ❌ serie inválida (mezcla interna)
+      //Serie invalida
       if (!allEmpty && !allFull) return false;
 
       if (allFull) hasAnyData = true;
       if (allEmpty) hasAnyEmpty = true;
     }
 
-    // ❌ mezcla entre series (unas sí, otras no)
     if (hasAnyData && hasAnyEmpty) return false;
 
     return true;
@@ -559,7 +546,7 @@ export default function ExerciseScreen() {
   };
 
   const handleCloseExerciseModal = async () => {
-    // 🔥 guardar todas las series válidas
+    //Guardar series
     for (let i = 0; i < sets.length; i++) {
       if (savingSetsRef.current[i]) continue;
       await saveSet(i, false);
@@ -576,7 +563,7 @@ export default function ExerciseScreen() {
         overflow: "hidden",
       }}
     >
-      {/* 🖼️ BACKGROUND */}
+      {/* BACKGROUND */}
       <Box
         sx={{
           position: "absolute",
@@ -590,7 +577,7 @@ export default function ExerciseScreen() {
         }}
       />
 
-      {/* 🌑 OVERLAY */}
+      {/* OVERLAY */}
       <Box
         sx={{
           position: "fixed",
@@ -712,7 +699,7 @@ export default function ExerciseScreen() {
                   }}
                 >
                   <Stack direction="row" alignItems="center" spacing={2} sx={{ width: "100%" }}>
-                    {/* 🖼️ ICONO */}
+                    {/* ICONO */}
                     {ex.icon && (
                       <Box
                         sx={{
@@ -735,9 +722,9 @@ export default function ExerciseScreen() {
                       </Box>
                     )}
 
-                    {/* 📊 CONTENIDO */}
+                    {/* CONTENIDO */}
                     <Box sx={{ flex: 1 }}>
-                      {/* 🔝 FILA: NOMBRE + PESO/REPS */}
+                      {/* FILA: NOMBRE + PESO/REPS */}
                       <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Typography
                           fontWeight={600}
@@ -763,7 +750,7 @@ export default function ExerciseScreen() {
                         </Typography>
                       </Stack>
 
-                      {/* 📏 LINEA */}
+                      {/* LINEA */}
                       <Box
                         sx={{
                           width: "100%",
@@ -773,7 +760,7 @@ export default function ExerciseScreen() {
                         }}
                       />
 
-                      {/* ✅ COMPLETADO */}
+                      {/* COMPLETADO */}
                       <Box sx={{ height: 30 }}>
                         {ex.completed && (
                           <Typography
@@ -808,7 +795,7 @@ export default function ExerciseScreen() {
               backdropFilter: "blur(12px)",
               WebkitBackdropFilter: "blur(12px)",
 
-              background: "linear-gradient(to top, rgba(255,255,255,0.12), rgba(168, 168, 168, 0.02))", // 🔥 super liviano (no oscurece)
+              background: "linear-gradient(to top, rgba(255,255,255,0.12), rgba(168, 168, 168, 0.02))",
 
               borderTop: "1px solid rgba(255,255,255,0.2)",
 
@@ -944,7 +931,7 @@ export default function ExerciseScreen() {
                   >
                     <Typography sx={{ fontWeight: 700, fontSize: "1.4rem" }}>Serie {setIndex + 1}</Typography>
 
-                    {/* ❌ BOTÓN ELIMINAR SERIE */}
+                    {/* BOTÓN ELIMINAR SERIE */}
                     {sets.length > 3 && !selectedExercise?.completed && (
                       <CloseButton
                         onClick={() => removeSet(setIndex)}
@@ -981,19 +968,16 @@ export default function ExerciseScreen() {
                             onBlur={() => handleAutoSave(setIndex)}
                             sx={{
                               width: 100,
-                              // input
                               "& .MuiInputBase-input": {
                                 fontSize: "1.5rem",
                                 paddingTop: "12px",
                                 paddingBottom: "4px",
                               },
 
-                              // label normal
                               "& .MuiInputLabel-root": {
                                 fontSize: "1.5rem",
                               },
 
-                              // 🔥 label cuando sube (con valor)
                               "& .MuiInputLabel-root.MuiInputLabel-shrink": {
                                 fontSize: "1.6rem",
                               },
@@ -1016,19 +1000,16 @@ export default function ExerciseScreen() {
                             onBlur={() => handleAutoSave(setIndex)}
                             sx={{
                               width: 100,
-                              // input
                               "& .MuiInputBase-input": {
                                 fontSize: "1.5rem",
                                 paddingTop: "12px",
                                 paddingBottom: "4px",
                               },
 
-                              // label normal
                               "& .MuiInputLabel-root": {
                                 fontSize: "1.5rem",
                               },
 
-                              // 🔥 label cuando sube (con valor)
                               "& .MuiInputLabel-root.MuiInputLabel-shrink": {
                                 fontSize: "1.6rem",
                               },
@@ -1286,7 +1267,7 @@ export default function ExerciseScreen() {
             title="Finalizar día"
             titleSize="2rem"
             paperSx={{
-              maxWidth: 600, // 👈 ancho tipo modal chico como antes
+              maxWidth: 600,
               borderRadius: 3,
             }}
           >
@@ -1297,7 +1278,7 @@ export default function ExerciseScreen() {
                   fontSize: "1.4rem",
                   fontWeight: 500,
                   textAlign: "center",
-                  mb: 4, // 🔥 espacio igual al DialogContent original
+                  mb: 4,
                 }}
               >
                 ¿Querés hacer abdominales antes de terminar la rutina?
@@ -1311,7 +1292,7 @@ export default function ExerciseScreen() {
                   sx={{
                     minWidth: 80,
                     px: 2,
-                    py: 1, // 🔥 menos alto
+                    py: 1,
                     fontSize: "1.4rem",
                     textTransform: "none",
                     borderRadius: 2,
@@ -1325,12 +1306,12 @@ export default function ExerciseScreen() {
                   onClick={finishDayWithAbs}
                   sx={{
                     px: 2.5,
-                    py: 1, // 🔥 menos alto
+                    py: 1,
                     fontSize: "1.4rem",
                     fontWeight: 700,
                     textTransform: "none",
                     borderRadius: 2,
-                    whiteSpace: "nowrap", // 🔥 evita salto de línea
+                    whiteSpace: "nowrap",
                   }}
                 >
                   Sí, agregar abdominales
@@ -1372,19 +1353,16 @@ export default function ExerciseScreen() {
                 placeholder={`${pendingExercise?.weight ?? 0}`}
                 type="number"
                 sx={{
-                  // input
                   "& .MuiInputBase-input": {
                     fontSize: "1.5rem",
                     paddingTop: "12px",
                     paddingBottom: "4px",
                   },
 
-                  // label normal
                   "& .MuiInputLabel-root": {
                     fontSize: "1.5rem",
                   },
 
-                  // 🔥 label cuando sube (con valor)
                   "& .MuiInputLabel-root.MuiInputLabel-shrink": {
                     fontSize: "1.6rem",
                   },
@@ -1403,7 +1381,7 @@ export default function ExerciseScreen() {
             </DialogActions>
           </Dialog>
 
-          {/*MODAL ALERTAS*/}
+          {/* MODAL ALERTAS */}
           <Dialog
             open={alertModalOpen}
             onClose={() => setAlertModalOpen(false)}

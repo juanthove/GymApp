@@ -1,32 +1,20 @@
 import { useState, useEffect } from "react";
 
-import {
-  getExercises
-} from "../services/exerciseService";
+import { getExercises } from "../services/exerciseService";
 
 import {
   getExerciseReminderRules,
   createExerciseReminderRule,
   updateExerciseReminderRule,
-  deleteExerciseReminderRule
+  deleteExerciseReminderRule,
 } from "../services/exerciseReminderRuleService";
 
-import {
-  Container,
-  Paper,
-  Typography,
-  TextField,
-  MenuItem,
-  Button,
-  Stack,
-  Box
-} from "@mui/material";
+import { Container, Paper, Typography, TextField, MenuItem, Button, Stack, Box } from "@mui/material";
 
 import BackButton from "../components/BackButton";
 import AppSnackbar from "../components/AppSnackbar";
 
 export default function CreateExerciseReminderRuleScreen() {
-
   const [rules, setRules] = useState([]);
   const [exercises, setExercises] = useState([]);
 
@@ -44,10 +32,7 @@ export default function CreateExerciseReminderRuleScreen() {
   }, []);
 
   const loadData = async () => {
-    const [rulesData, exercisesData] = await Promise.all([
-      getExerciseReminderRules(),
-      getExercises()
-    ]);
+    const [rulesData, exercisesData] = await Promise.all([getExerciseReminderRules(), getExercises()]);
 
     setRules(rulesData);
     setExercises(exercisesData);
@@ -68,7 +53,7 @@ export default function CreateExerciseReminderRuleScreen() {
       return;
     }
 
-    const rule = rules.find(r => r.id === Number(id));
+    const rule = rules.find((r) => r.id === Number(id));
 
     setCurrentRule(rule);
     setExerciseId(rule.exerciseId);
@@ -97,10 +82,9 @@ export default function CreateExerciseReminderRuleScreen() {
     if (!validateForm()) return;
 
     try {
-
       const payload = {
         exerciseId: Number(exerciseId),
-        weeks: Number(weeks)
+        weeks: Number(weeks),
       };
 
       if (selectedId === "new") {
@@ -117,7 +101,6 @@ export default function CreateExerciseReminderRuleScreen() {
 
       resetForm();
       loadData();
-
     } catch (error) {
       setMessage("Error: " + error.message);
       setMessageType("error");
@@ -129,7 +112,6 @@ export default function CreateExerciseReminderRuleScreen() {
 
     if (window.confirm("¿Seguro que deseas eliminar esta regla?")) {
       try {
-
         await deleteExerciseReminderRule(currentRule.id);
 
         setMessage("Regla eliminada correctamente");
@@ -137,7 +119,6 @@ export default function CreateExerciseReminderRuleScreen() {
 
         resetForm();
         loadData();
-
       } catch {
         setMessage("Error al eliminar regla");
         setMessageType("error");
@@ -147,44 +128,34 @@ export default function CreateExerciseReminderRuleScreen() {
 
   return (
     <Container maxWidth="sm" sx={{ mt: 4, mb: 6 }}>
-
       <Paper sx={{ p: 4 }}>
-
         <Box
           sx={{
             position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            mb: 2
+            mb: 2,
           }}
         >
-
-          {/* 🔙 Flecha a la izquierda */}
+          {/* Flecha a la izquierda */}
           <Box sx={{ position: "absolute", left: 0 }}>
             <BackButton to="/admin" sx={{ color: "black" }} />
           </Box>
 
-          {/* 🧠 Título centrado REAL */}
+          {/* Título centrado */}
           <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
             Avisos de ejercicios
           </Typography>
-
         </Box>
 
         <Stack spacing={3}>
-
           {/* SELECT RULE */}
-          <TextField
-            select
-            label="Seleccionar regla"
-            value={selectedId}
-            onChange={(e) => handleSelect(e.target.value)}
-          >
+          <TextField select label="Seleccionar regla" value={selectedId} onChange={(e) => handleSelect(e.target.value)}>
             <MenuItem value="new">Nueva regla</MenuItem>
 
-            {rules.map(r => {
-              const ex = exercises.find(e => e.id === r.exerciseId);
+            {rules.map((r) => {
+              const ex = exercises.find((e) => e.id === r.exerciseId);
 
               return (
                 <MenuItem key={r.id} value={r.id}>
@@ -195,13 +166,8 @@ export default function CreateExerciseReminderRuleScreen() {
           </TextField>
 
           {/* SELECT EXERCISE */}
-          <TextField
-            select
-            label="Ejercicio"
-            value={exerciseId}
-            onChange={(e) => setExerciseId(e.target.value)}
-          >
-            {exercises.map(ex => (
+          <TextField select label="Ejercicio" value={exerciseId} onChange={(e) => setExerciseId(e.target.value)}>
+            {exercises.map((ex) => (
               <MenuItem key={ex.id} value={ex.id}>
                 {ex.name}
               </MenuItem>
@@ -219,38 +185,21 @@ export default function CreateExerciseReminderRuleScreen() {
 
           {/* BOTONES */}
           <Stack direction="row" spacing={2}>
-
             {currentRule && (
-              <Button
-                variant="contained"
-                color="error"
-                onClick={handleDelete}
-              >
+              <Button variant="contained" color="error" onClick={handleDelete}>
                 Eliminar
               </Button>
             )}
 
-            <Button
-              variant="contained"
-              color="success"
-              onClick={handleSubmit}
-            >
+            <Button variant="contained" color="success" onClick={handleSubmit}>
               {currentRule ? "Actualizar" : "Crear"}
             </Button>
-
           </Stack>
-
         </Stack>
-
       </Paper>
 
       {/* SNACKBAR */}
-      <AppSnackbar
-        message={message}
-        type={messageType}
-        onClose={() => setMessage("")}
-      />
-
+      <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
     </Container>
   );
 }

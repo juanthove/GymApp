@@ -10,7 +10,6 @@ export async function getExerciseById(id) {
 }
 
 export async function createExercise(exercise) {
-
   const formData = new FormData();
 
   formData.append("name", exercise.name);
@@ -33,12 +32,11 @@ export async function createExercise(exercise) {
 
   return apiRequest("/api/exercises", {
     method: "POST",
-    body: formData
+    body: formData,
   });
 }
 
 export async function updateExercise(id, exercise) {
-
   const formData = new FormData();
 
   formData.append("name", exercise.name);
@@ -65,29 +63,29 @@ export async function updateExercise(id, exercise) {
 
   return apiRequest(`/api/exercises/${id}`, {
     method: "PUT",
-    body: formData
+    body: formData,
   });
 }
 
 export async function deleteExercise(id) {
   await apiRequest(`/api/exercises/${id}`, {
-    method: "DELETE"
+    method: "DELETE",
   });
 }
 
-// Obtener URL de la imagen de un ejercicio
+//Obtener URL de la imagen de un ejercicio
 export function getExerciseImageUrl(filename) {
   if (!filename) return null;
   return buildAuthorizedAssetUrl(`/api/exercises/image/${filename}`);
 }
 
-// Obtener URL del video de un ejercicio
+//Obtener URL del video de un ejercicio
 export function getExerciseVideoUrl(filename) {
   if (!filename) return null;
   return buildAuthorizedAssetUrl(`/api/exercises/video/${filename}`);
 }
 
-// Obtener URL del icono de un ejercicio
+//Obtener URL del icono de un ejercicio
 export function getExerciseIconUrl(filename) {
   if (!filename) return null;
   return buildAuthorizedAssetUrl(`/api/exercises/icon/${filename}`);

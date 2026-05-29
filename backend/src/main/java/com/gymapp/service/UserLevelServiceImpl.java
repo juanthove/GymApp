@@ -33,8 +33,7 @@ public class UserLevelServiceImpl implements UserLevelService {
     public UserLevelResponse getUserLevelById(Long id) {
         return toResponse(
                 userLevelRepository.findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Nivel de usuario no encontrado"))
-        );
+                        .orElseThrow(() -> new ResourceNotFoundException("Nivel de usuario no encontrado")));
     }
 
     @Override
@@ -66,7 +65,7 @@ public class UserLevelServiceImpl implements UserLevelService {
 
         userLevelRepository.delete(toDelete);
 
-        // 🔥 Reordenar automáticamente
+        // Reordenar automáticamente
         List<UserLevel> levels = userLevelRepository.findAll()
                 .stream()
                 .sorted(Comparator.comparingInt(UserLevel::getLevelOrder))
@@ -82,21 +81,20 @@ public class UserLevelServiceImpl implements UserLevelService {
     @Override
     public void updateUserLevelsOrder(List<UserLevelOrderRequest> levels) {
 
-        // 1️⃣ Traer todos en una sola query
+        // Traer todos en una sola query
         List<Long> ids = levels.stream()
                 .map(UserLevelOrderRequest::id)
                 .toList();
 
         List<UserLevel> entities = userLevelRepository.findAllById(ids);
 
-        // 2️⃣ Mapear id → order
+        // Mapear id → order
         Map<Long, Integer> orderMap = levels.stream()
                 .collect(Collectors.toMap(
                         UserLevelOrderRequest::id,
-                        UserLevelOrderRequest::levelOrder
-                ));
+                        UserLevelOrderRequest::levelOrder));
 
-        // 3️⃣ Aplicar cambios en memoria
+        // Aplicar cambios en memoria
         for (UserLevel lvl : entities) {
             Integer newOrder = orderMap.get(lvl.getId());
 
@@ -107,7 +105,7 @@ public class UserLevelServiceImpl implements UserLevelService {
             lvl.setLevelOrder(newOrder);
         }
 
-        // 4️⃣ Guardar todo junto
+        // Guardar todo junto
         userLevelRepository.saveAll(entities);
     }
 
@@ -115,7 +113,6 @@ public class UserLevelServiceImpl implements UserLevelService {
         return new UserLevelResponse(
                 userLevel.getId(),
                 userLevel.getName(),
-                userLevel.getLevelOrder()
-        );
+                userLevel.getLevelOrder());
     }
 }

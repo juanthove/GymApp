@@ -99,7 +99,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
         UserLevel level = userLevelRepository.findById(request.userLevelId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Nivel no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Nivel no encontrado"));
 
         user.setName(request.name());
         user.setSurname(request.surname());
@@ -226,17 +226,17 @@ public class UserServiceImpl implements UserService {
         return toWorkoutResponse(user.getCurrentWorkout());
     }
 
-    //Actualizar las stats del usuario para los logros
+    // Actualizar las stats del usuario para los logros
     @Override
     public void updateUserStats(User user, LocalDate workoutDate) {
 
         LocalDate lastDate = user.getLastWorkoutDate();
 
-        // 🔹 Siempre suma total
+        // Siempre suma total
         user.setTotalWorkoutDays(user.getTotalWorkoutDays() + 1);
 
         if (lastDate == null) {
-            // 🟢 Primer entrenamiento
+            // Primer entrenamiento
             user.setCurrentWeekWorkoutCount(1);
             user.setStreakStartDate(workoutDate);
             user.setLastWorkoutDate(workoutDate);
@@ -255,39 +255,39 @@ public class UserServiceImpl implements UserService {
 
         if (sameWeek) {
 
-            // 🔹 Sigue en la misma semana
+            // Sigue en la misma semana
             user.setCurrentWeekWorkoutCount(
-                    user.getCurrentWeekWorkoutCount() + 1
-            );
+                    user.getCurrentWeekWorkoutCount() + 1);
 
         } else {
 
-            // 🔹 Cambió de semana → validar semana anterior
+            // Cambió de semana → validar semana anterior
             if (user.getCurrentWeekWorkoutCount() >= user.getGymDaysPerWeek()) {
 
-                // ✅ streak continúa → NO tocás la fecha
+                // Streak continúa → No tocar fecha
 
             } else {
 
-                // ❌ streak roto → reinicia desde hoy
+                // Streak roto → reinicia desde hoy
                 user.setStreakStartDate(workoutDate);
             }
 
-            // 🔹 nueva semana arranca en 1
+            // Nueva semana arranca en 1
             user.setCurrentWeekWorkoutCount(1);
         }
 
         user.setLastWorkoutDate(workoutDate);
     }
 
-    //Actualizar las stats del usuario para cuando entre a ver los logros
+    // Actualizar las stats del usuario para cuando entre a ver los logros
     @Override
     public void updateUserStreakState(User user) {
 
         LocalDate today = LocalDate.now();
         LocalDate lastDate = user.getLastWorkoutDate();
 
-        if (lastDate == null) return;
+        if (lastDate == null)
+            return;
 
         WeekFields weekFields = WeekFields.ISO;
 
@@ -299,21 +299,21 @@ public class UserServiceImpl implements UserService {
 
         boolean sameWeek = currentWeek == lastWeek && currentYear == lastYear;
 
-        if (sameWeek) return;
+        if (sameWeek)
+            return;
 
-        // 🔹 Cambió la semana → validar semana anterior
+        // Cambió la semana → validar semana anterior
         if (user.getCurrentWeekWorkoutCount() >= user.getGymDaysPerWeek()) {
 
-            // ✅ cumplió → mantiene streak
-            // no tocamos streakStartDate
+            // Cumple
 
         } else {
 
-            // ❌ no cumplió → reset streak
+            // No cumplie → reset streak
             user.setStreakStartDate(null);
         }
 
-        // 🔹 reset semana actual (todavía no entrenó esta semana)
+        // Reset semana actual (todavía no entrenó esta semana)
         user.setCurrentWeekWorkoutCount(0);
 
         userRepository.save(user);

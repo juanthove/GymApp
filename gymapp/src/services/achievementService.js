@@ -2,17 +2,17 @@ import { apiRequest, buildAuthorizedAssetUrl } from "./apiClient";
 
 const ACHIEVEMENT_API = "/api/achievements";
 
-// Obtener todos los logros
+//Obtener todos los logros
 export async function getAchievements() {
   return apiRequest(ACHIEVEMENT_API);
 }
 
-// Obtener logro por id
+//Obtener logro por id
 export async function getAchievementById(id) {
   return apiRequest(`${ACHIEVEMENT_API}/${id}`);
 }
 
-// Crear logro
+//Crear logro
 export async function createAchievement(achievement) {
   const formData = new FormData();
 
@@ -39,7 +39,7 @@ export async function createAchievement(achievement) {
   });
 }
 
-// Actualizar logro
+//Actualizar logro
 export async function updateAchievement(id, achievement) {
   const formData = new FormData();
 
@@ -68,14 +68,14 @@ export async function updateAchievement(id, achievement) {
   });
 }
 
-// Eliminar logro
+//Eliminar logro
 export async function deleteAchievement(id) {
   return apiRequest(`${ACHIEVEMENT_API}/${id}`, {
     method: "DELETE",
   });
 }
 
-// 🔥 URL de imagen (igual que ejercicios)
+//URL de imagen
 export function getAchievementImageUrl(filename) {
   if (!filename) return null;
   return buildAuthorizedAssetUrl(`/api/achievements/image/${filename}`);

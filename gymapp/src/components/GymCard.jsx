@@ -9,11 +9,11 @@ export default function GymCard({
   children,
   onClick,
   sx,
-  status = "NORMAL", // "COMPLETED", "IN_PROGRESS", "NORMAL"
+  status = "NORMAL", //"COMPLETED", "IN_PROGRESS", "NORMAL"
   showArrow = false,
-  variant = "day", // "day" o "exercise"
+  variant = "day", //"day" o "exercise"
 }) {
-  // Base style general de la Card
+  //Base style general de la Card
   const baseStyle = {
     borderRadius: 4,
     position: "relative",
@@ -29,7 +29,7 @@ export default function GymCard({
     ...sx,
   };
 
-  // Solo para day y status COMPLETED
+  //Solo para day y status COMPLETED
   if (variant === "day" && status === "COMPLETED") {
     Object.assign(baseStyle, {
       background: "rgba(230, 230, 230, 0.3)",
@@ -38,17 +38,17 @@ export default function GymCard({
       boxShadow: "none",
       opacity: 1,
 
-      // Estilo para los textos generales (título, subtítulo)
+      //Estilo para los textos generales (título, subtítulo)
       "& .MuiTypography-root": {
-        color: "rgba(255, 255, 255, 0.85)", // Blanco más sólido para que se lea sobre el fondo claro
-        textShadow: "0px 1px 2px rgba(0,0,0,0.2)", // Sombra suave para separar del blanco
+        color: "rgba(255, 255, 255, 0.85)",
+        textShadow: "0px 1px 2px rgba(0,0,0,0.2)",
       },
 
-      // ESTO ES LA CLAVE: Forzamos el color verde para el estado completado
+      //Forzar verde para completo
       "& .status-text-completed": {
-        color: "#127919 !important", // Un verde oscuro tipo "Forest Green" que resalte sobre blanco
+        color: "#127919 !important",
         fontWeight: 800,
-        textShadow: "0px 1px 2px rgba(255, 255, 255, 0.41)", // Quitamos la sombra blanca para que no se ensucie
+        textShadow: "0px 1px 2px rgba(255, 255, 255, 0.41)",
       },
 
       "&:hover": {
@@ -100,7 +100,7 @@ export default function GymCard({
             }}
           >
             {/* IZQUIERDA: Titulo + Subtitle + children */}
-            {/* 🔝 HEADER: título + estado */}
+            {/* HEADER: título + estado */}
             <Box
               sx={{
                 display: "flex",
@@ -142,7 +142,7 @@ export default function GymCard({
               </Box>
             </Box>
 
-            {/* 📊 SUBTITLE + contenido */}
+            {/* SUBTITLE + contenido */}
             <Box sx={{ mt: 0.5 }}>
               {subtitle && <Box>{subtitle}</Box>}
               {children}

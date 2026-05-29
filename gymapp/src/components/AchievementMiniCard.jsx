@@ -33,7 +33,6 @@ export default function AchievementMiniCard({ achievement, onClick }) {
 
     const trimmed = text.slice(0, maxLength);
 
-    // 🔥 evita cortar palabras a la mitad feo
     const lastSpace = trimmed.lastIndexOf(" ");
 
     return (lastSpace > 0 ? trimmed.slice(0, lastSpace) : trimmed) + "...";
@@ -52,14 +51,14 @@ export default function AchievementMiniCard({ achievement, onClick }) {
 
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between", // 🔥 importante
+        justifyContent: "space-between",
 
         background: `linear-gradient(0deg, ${bgColorDark}, ${bgColorSoft})`,
         border: `2px solid ${darkenColor(baseColor, 0.4)}`,
         overflow: "hidden",
       }}
     >
-      {/* 🔒 LOCK */}
+      {/* LOCK */}
       {!isUnlocked && (
         <Box
           sx={{
@@ -79,7 +78,7 @@ export default function AchievementMiniCard({ achievement, onClick }) {
         </Box>
       )}
 
-      {/* 🖼️ IMAGEN + NOMBRE SUPERPUESTO */}
+      {/* IMAGEN + NOMBRE SUPERPUESTO */}
       <Box
         sx={{
           width: "100%",
@@ -90,11 +89,11 @@ export default function AchievementMiniCard({ achievement, onClick }) {
           justifyContent: "center",
         }}
       >
-        {/* ✨ glow */}
+        {/* GLOW */}
         <Box
           sx={{
             position: "absolute",
-            inset: 0, // 🔥 ocupa TODO el contenedor
+            inset: 0,
             background: `radial-gradient(circle, ${bgColorDark} 0%, transparent 60%), 
             repeating-conic-gradient(
               from 0deg at 50% 30%,
@@ -109,7 +108,7 @@ export default function AchievementMiniCard({ achievement, onClick }) {
           }}
         />
 
-        {/* 🖼️ imagen */}
+        {/* IMAGEN */}
         {achievement.imageUrl && (
           <Box
             component="img"
@@ -126,11 +125,11 @@ export default function AchievementMiniCard({ achievement, onClick }) {
           />
         )}
 
-        {/* 🏆 NOMBRE SUPERPUESTO */}
+        {/* NOMBRE SUPERPUESTO */}
         <Typography
           sx={{
             position: "absolute",
-            bottom: -10, // 🔥 lo baja un poco sobre la imagen
+            bottom: -10,
             left: "50%",
             transform: "translateX(-50%)",
 
@@ -146,7 +145,6 @@ export default function AchievementMiniCard({ achievement, onClick }) {
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
 
-            // ✨ sombra para que resalte SIEMPRE
             textShadow: `
               0 2px 6px rgba(0,0,0,0.8),
               0 0 10px rgba(0,0,0,0.6)
@@ -159,7 +157,7 @@ export default function AchievementMiniCard({ achievement, onClick }) {
         </Typography>
       </Box>
 
-      {/* 📊 CONTENIDO DINÁMICO */}
+      {/* CONTENIDO DINÁMICO */}
       {isUnlocked ? (
         <Typography
           sx={{
@@ -180,26 +178,23 @@ export default function AchievementMiniCard({ achievement, onClick }) {
             mt: 1,
           }}
         >
-          {/* 📊 BARRA */}
+          {/* BARRA */}
           <LinearProgress
             variant="determinate"
             value={progressPercent}
             sx={{
               flex: 1,
-              height: 8, // 👈 más gruesa
+              height: 8,
               borderRadius: 10,
               overflow: "hidden",
 
-              // fondo de la barra
               backgroundColor: lightenColor(baseColor, 0.85),
 
-              // sombra exterior (levanta la barra)
               boxShadow: "inset 0 1px 2px rgba(0,0,0,0.4)",
 
               "& .MuiLinearProgress-bar": {
                 borderRadius: 10,
 
-                // degradado más marcado
                 background: `linear-gradient(
                   90deg,
                   ${baseColor} 0%,
@@ -207,7 +202,6 @@ export default function AchievementMiniCard({ achievement, onClick }) {
                   ${baseColor} 100%
                 )`,
 
-                // ✨ brillo interno
                 boxShadow: `
                   inset 0 1px 2px rgba(255,255,255,0.3),
                   inset 0 -1px 2px rgba(0,0,0,0.3)
@@ -216,7 +210,7 @@ export default function AchievementMiniCard({ achievement, onClick }) {
             }}
           />
 
-          {/* 🔢 PORCENTAJE */}
+          {/* PORCENTAJE */}
           <Typography
             sx={{
               minWidth: 35,

@@ -59,7 +59,7 @@ export default function CreateAchievementScreen() {
       getExercises(),
     ]);
 
-    // agrupar logros por nivel
+    //Agrupar logros por nivel
     const levelsWithAchievements = levelsData.map((level) => ({
       ...level,
       achievements: achievementsData
@@ -97,7 +97,7 @@ export default function CreateAchievementScreen() {
 
     updated[levelIndex].achievements.push({
       id: null,
-      tempId: crypto.randomUUID(), // 🔥 clave única
+      tempId: crypto.randomUUID(),
       name: "",
       type: "VOLUME",
       requiredValue: "",
@@ -194,7 +194,7 @@ export default function CreateAchievementScreen() {
       const ach = {
         ...updated[levelIndex].achievements[achIndex],
         type: newType,
-        requiredValue: null, // limpiar valor al cambiar tipo
+        requiredValue: null,
       };
 
       updated[levelIndex].achievements[achIndex] = ach;
@@ -204,35 +204,34 @@ export default function CreateAchievementScreen() {
   };
 
   const validateAchievements = () => {
-    const seen = new Set(); // 🔥 para evitar duplicados
+    const seen = new Set();
 
     for (const level of levels) {
       for (const ach of level.achievements) {
-        // 🔹 Nombre
+        //Nombre
         if (!ach.name?.trim()) {
           setMessage("Todos los logros deben tener nombre");
           setMessageType("warning");
           return false;
         }
 
-        // 🔹 Tipo
+        //Tipo
         if (!ach.type) {
           setMessage(`El logro "${ach.name}" debe tener tipo`);
           setMessageType("warning");
           return false;
         }
 
-        // 🔹 Valor requerido
+        //Valor requerido
         if (!ach.requiredValue || ach.requiredValue <= 0) {
           setMessage(`El logro "${ach.name}" debe tener un valor válido (> 0)`);
           setMessageType("warning");
           return false;
         }
 
-        // 🔥 VALIDACIONES POR TIPO
+        //VALIDACIONES POR TIPO
 
         if (ach.type === "VOLUME") {
-          // ❗ opcional: evitar mezcla
           if (ach.exercise && ach.muscle) {
             setMessage(`El logro "${ach.name}" no puede tener ejercicio y músculo al mismo tiempo`);
             setMessageType("warning");
@@ -254,7 +253,6 @@ export default function CreateAchievementScreen() {
           }
         }
 
-        // 🔥 DUPLICADOS (MUY RECOMENDADO)
         const exerciseKey = ach.exercise?.id ?? ach.exerciseId ?? "none";
         const muscleKey = ach.muscle ? ach.muscle : "none";
         const requiredValue = Number(ach.requiredValue);
@@ -310,7 +308,7 @@ export default function CreateAchievementScreen() {
 
                           <IconButton
                             onClick={(e) => {
-                              e.stopPropagation(); // 🔥 evita que abra/cierre el accordion
+                              e.stopPropagation();
                               removeAchievement(levelIndex, achIndex);
                             }}
                           >

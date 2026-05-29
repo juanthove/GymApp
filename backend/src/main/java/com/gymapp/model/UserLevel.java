@@ -13,7 +13,7 @@ public class UserLevel {
     @GeneratedValue
     private Long id;
 
-    private String name; // BEGINNER, INTERMEDIATE...
+    private String name;
 
     private int levelOrder; // 1, 2, 3, 4
 }

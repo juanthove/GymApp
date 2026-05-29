@@ -39,24 +39,40 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
-                .exceptionHandling(exception -> exception.authenticationEntryPoint((request, response, authException) -> {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                .exceptionHandling(
+                        exception -> exception.authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-                    ErrorResponse error = new ErrorResponse(
-                            401,
-                            "Unauthorized",
-                            "Token inválido o ausente",
-                            null
-                    );
+                            ErrorResponse error = new ErrorResponse(
+                                    401,
+                                    "Unauthorized",
+                                    "Token inválido o ausente",
+                                    null);
 
-                    new ObjectMapper().writeValue(response.getOutputStream(), error);
-                }))
+                            new ObjectMapper().writeValue(response.getOutputStream(), error);
+                        }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Frontend React / Vite build
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/assets/**",
+                                "/manifest.webmanifest",
+                                "/sw.js",
+                                "/workbox-*.js",
+                                "/icon-192.png",
+                                "/icon-512.png",
+                                "/favicon.ico")
+                        .permitAll()
+
+                        // Auth
                         .requestMatchers("/api/system-users/login").permitAll()
-                        .anyRequest().authenticated()
-                )
+
+                        // API protegida
+                        .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

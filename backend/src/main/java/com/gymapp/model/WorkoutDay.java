@@ -17,7 +17,7 @@ public class WorkoutDay {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name; // Day 1, Push, Pull, etc
+    private String name;
 
     private int dayOrder;
 
@@ -35,11 +35,11 @@ public class WorkoutDay {
 
     public String getStatus() {
 
-        if(startedAt == null){
+        if (startedAt == null) {
             return "NOT_STARTED";
         }
 
-        if(finishedAt == null){
+        if (finishedAt == null) {
             return "IN_PROGRESS";
         }
 

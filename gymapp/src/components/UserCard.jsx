@@ -1,4 +1,3 @@
-// UserCard.jsx
 import { Card, CardActionArea, Typography, Box } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 
@@ -76,7 +75,7 @@ export default function UserCard({ title, imageUrl, onClick, sx }) {
             {title}
           </Typography>
 
-          {/* línea roja */}
+          {/* LINEA ROJA */}
           <Box
             sx={{
               width: "80%",

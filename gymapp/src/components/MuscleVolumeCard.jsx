@@ -3,8 +3,8 @@ import { keyframes } from "@mui/system";
 import { useEffect, useRef, useState } from "react";
 import { useCountUp } from "react-countup";
 
-import { muscleLabels, muscleColors } from "../config/muscleConfig"
-import { lightenColor, darkenColor } from "../utils/colorUtils"
+import { muscleLabels, muscleColors } from "../config/muscleConfig";
+import { lightenColor, darkenColor } from "../utils/colorUtils";
 
 import ChestIcon from "../assets/muscles/chest.svg?react";
 import BackIcon from "../assets/muscles/back.svg?react";
@@ -33,7 +33,7 @@ const muscleIcons = {
   ADDUCTORS: AductorsIcon,
   ABDUCTORS: AbductorsIcon,
   CALVES: CalvesIcon,
-  ABDOMINALS: AbsIcon
+  ABDOMINALS: AbsIcon,
 };
 
 const strokeMap = {
@@ -49,10 +49,9 @@ const strokeMap = {
   ADDUCTORS: 2500,
   ABDUCTORS: 2000,
   CALVES: 1800,
-  ABDOMINALS: 1100
+  ABDOMINALS: 1100,
 };
 
-// 💥 animación pop
 const pop = keyframes`
   0% { transform: scale(1); }
   40% { transform: scale(1.12); }
@@ -80,7 +79,7 @@ export default function MuscleVolumeCard({ muscle, volume }) {
     onEnd: () => {
       setAnimate(true);
       setTimeout(() => setAnimate(false), 400);
-    }
+    },
   });
 
   useEffect(() => {
@@ -92,12 +91,12 @@ export default function MuscleVolumeCard({ muscle, volume }) {
       sx={{
         position: "relative",
         display: "flex",
-        flexDirection: "column", // 👈 vertical
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "space-between",
 
         width: "100%",
-        height: 220, // 👈 forma rectangular/cuadrada
+        height: 220,
         px: 2,
         py: 1.5,
         borderRadius: "16px",
@@ -109,7 +108,7 @@ export default function MuscleVolumeCard({ muscle, volume }) {
         overflow: "hidden",
       }}
     >
-      {/* brillo arriba */}
+      {/* BRILLO ARRIBA */}
       <Box
         sx={{
           position: "absolute",
@@ -117,13 +116,12 @@ export default function MuscleVolumeCard({ muscle, volume }) {
           left: 0,
           width: "100%",
           height: "35%",
-          background:
-            "linear-gradient(to bottom, rgba(255,255,255,0.35), transparent)",
+          background: "linear-gradient(to bottom, rgba(255,255,255,0.35), transparent)",
           pointerEvents: "none",
         }}
       />
 
-      {/* sombra abajo */}
+      {/* SOMBRA ABAJO */}
       <Box
         sx={{
           position: "absolute",
@@ -131,13 +129,12 @@ export default function MuscleVolumeCard({ muscle, volume }) {
           left: 0,
           width: "100%",
           height: "30%",
-          background:
-            "linear-gradient(to top, rgba(0,0,0,0.08), transparent)",
+          background: "linear-gradient(to top, rgba(0,0,0,0.08), transparent)",
           pointerEvents: "none",
         }}
       />
 
-      {/* 🧠 NOMBRE */}
+      {/* NOMBRE */}
       <Typography
         sx={{
           fontWeight: 700,
@@ -149,7 +146,7 @@ export default function MuscleVolumeCard({ muscle, volume }) {
         {muscleLabels[muscle] || muscle}
       </Typography>
 
-      {/* 💪 ICONO */}
+      {/* ICONO */}
       {Icon && (
         <>
           <style>
@@ -216,7 +213,7 @@ export default function MuscleVolumeCard({ muscle, volume }) {
         </>
       )}
 
-      {/* ⚖️ KG */}
+      {/* KG */}
       <Typography
         sx={{
           fontWeight: 800,

@@ -496,12 +496,12 @@ export default function CreateWorkoutScreen() {
             mb: 2,
           }}
         >
-          {/* 🔙 Flecha a la izquierda */}
+          {/* Flecha a la izquierda */}
           <Box sx={{ position: "absolute", left: 0 }}>
             <BackButton to="/admin" sx={{ color: "black" }} />
           </Box>
 
-          {/* 🧠 Título centrado REAL */}
+          {/* Título centrado REAL */}
           <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
             Crear Planilla
           </Typography>
@@ -517,7 +517,6 @@ export default function CreateWorkoutScreen() {
               setExpandedDays([]);
 
               requestAnimationFrame(async () => {
-                // 🔥 limpiar datos anteriores
                 resetForm();
 
                 setSelectedUser(userId);
@@ -755,7 +754,7 @@ export default function CreateWorkoutScreen() {
                                   </IconButton>
                                 </Stack>
 
-                                {/* 👇 HANDLE */}
+                                {/* HANDLE */}
                                 <Box
                                   sx={{
                                     display: "grid",

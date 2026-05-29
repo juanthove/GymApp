@@ -31,22 +31,18 @@ export default function MuscleChips({ muscles = [], size = "small", chipSx = {} 
               color: "#fff",
               fontWeight: 600,
 
-              // 🌈 fondo con gradiente
               background: `linear-gradient(135deg, ${light}, ${base})`,
 
-              // 🤍 borde blanco
               border: "1px solid rgba(255,255,255,0.7)",
 
-              // ✨ efecto “glass + profundidad”
+              //Efecto glass y profundidad
               boxShadow: `
                 0 3px 8px rgba(0,0,0,0.25),
                 inset 0 1px 2px rgba(255,255,255,0.4)
               `,
 
-              // 🎯 forma más pill
               borderRadius: "999px",
 
-              // 💫 hover suave
               transition: "0.2s",
               "&:hover": {
                 transform: "scale(1.05)",

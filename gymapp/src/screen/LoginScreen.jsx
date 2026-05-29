@@ -63,7 +63,7 @@ export default function LoginScreen() {
         password,
       });
 
-      // Solo staff debe entrar obligatoriamente en pantalla completa.
+      //Solo staff debe entrar obligatoriamente en pantalla completa.
       if (res.role === "STAFF") {
         if (!canUseFullscreen()) {
           setError("Este navegador no permite pantalla completa para usuarios staff");
@@ -78,10 +78,8 @@ export default function LoginScreen() {
         }
       }
 
-      // 🔥 guardar sesión simple
       localStorage.setItem("systemUser", JSON.stringify(res));
 
-      // 🔥 redirección por rol
       if (res.role === "ADMIN") {
         navigate("/admin");
       } else {
@@ -102,7 +100,7 @@ export default function LoginScreen() {
         overflow: "hidden",
       }}
     >
-      {/* 🖼️ BACKGROUND */}
+      {/* BACKGROUND */}
       <Box
         sx={{
           position: "absolute",
@@ -116,7 +114,7 @@ export default function LoginScreen() {
         }}
       />
 
-      {/* 🌑 OVERLAY */}
+      {/* OVERLAY */}
       <Box
         sx={{
           position: "fixed",
@@ -146,7 +144,7 @@ export default function LoginScreen() {
             border: "1px solid rgba(255,255,255,0.2)",
             width: "100%",
             minHeight: 700,
-            maxWidth: 700, // 👈 controla ancho real
+            maxWidth: 700,
             p: 4,
             mx: "auto",
           }}
@@ -154,12 +152,12 @@ export default function LoginScreen() {
           <CardContent
             sx={{
               height: "100%",
-              alignItems: "center", // 👈 centra vertical
-              justifyContent: "center", // 👈 centra horizontal
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <Stack sx={{ height: "100%" }}>
-              {/* 🧠 TÍTULO */}
+              {/* TÍTULO */}
               <Box textAlign="center" sx={{ p: 2 }}>
                 <Typography
                   variant="h2"
@@ -179,7 +177,7 @@ export default function LoginScreen() {
               </Box>
 
               <Stack spacing={3} sx={{ mt: 9 }}>
-                {/* 👤 USER */}
+                {/* USER */}
                 <TextField
                   label="Usuario"
                   value={username}
@@ -197,13 +195,13 @@ export default function LoginScreen() {
                   }}
                   sx={{
                     "& .MuiInputBase-root": {
-                      height: 80, // 👈 altura
+                      height: 80,
                       fontSize: "2rem",
                     },
                   }}
                 />
 
-                {/* 🔒 PASSWORD */}
+                {/* PASSWORD */}
                 <TextField
                   label="Contraseña"
                   type="password"
@@ -222,7 +220,7 @@ export default function LoginScreen() {
                   }}
                   sx={{
                     "& .MuiInputBase-root": {
-                      height: 80, // 👈 altura
+                      height: 80,
                       fontSize: "2rem",
                     },
                   }}
@@ -248,7 +246,7 @@ export default function LoginScreen() {
           </CardContent>
         </Card>
 
-        {/* ⚠️ ERROR */}
+        {/* ERROR */}
         <AppSnackbar
           message={error}
           type="error"

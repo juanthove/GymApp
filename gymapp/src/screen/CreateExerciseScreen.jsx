@@ -6,7 +6,7 @@ import {
   updateExercise,
   deleteExercise,
   getExerciseImageUrl,
-  getExerciseVideoUrl
+  getExerciseVideoUrl,
 } from "../services/exerciseService";
 
 import {
@@ -19,7 +19,7 @@ import {
   Stack,
   Checkbox,
   FormControlLabel,
-  Box
+  Box,
 } from "@mui/material";
 
 import BackButton from "../components/BackButton";
@@ -27,7 +27,6 @@ import FileUploadField from "../components/FileUploadField";
 import AppSnackbar from "../components/AppSnackbar";
 
 export default function CreateExerciseScreen() {
-
   const [exercises, setExercises] = useState([]);
   const [selectedId, setSelectedId] = useState("new");
 
@@ -75,7 +74,7 @@ export default function CreateExerciseScreen() {
     { value: "ADDUCTORS", label: "Aductores" },
     { value: "ABDUCTORS", label: "Abductores" },
     { value: "CALVES", label: "Gemelos" },
-    { value: "ABDOMINALS", label: "Abdominales" }
+    { value: "ABDOMINALS", label: "Abdominales" },
   ];
 
   useEffect(() => {
@@ -103,24 +102,21 @@ export default function CreateExerciseScreen() {
     setDeleteVideo(false);
     setDeleteIcon(false);
     setCurrentExercise(null);
-    setFileKey(prev => prev + 3);
+    setFileKey((prev) => prev + 3);
   };
 
   const formatExerciseType = (type) => {
-
     const map = {
       PRIMARY: "Primario",
       SECONDARY: "Secundario",
       TERTIARY: "Terciario",
-      ABDOMINAL: "Abdominal"
+      ABDOMINAL: "Abdominal",
     };
 
     return map[type] || type;
-
   };
 
   const handleSelect = (id) => {
-
     setSelectedId(id);
 
     if (id === "new") {
@@ -128,7 +124,7 @@ export default function CreateExerciseScreen() {
       return;
     }
 
-    const ex = exercises.find(e => e.id === Number(id));
+    const ex = exercises.find((e) => e.id === Number(id));
 
     setCurrentExercise(ex);
     setName(ex.name);
@@ -161,9 +157,7 @@ export default function CreateExerciseScreen() {
     }
 
     try {
-
       if (selectedId === "new") {
-
         await createExercise({
           name,
           description,
@@ -171,14 +165,12 @@ export default function CreateExerciseScreen() {
           type,
           image,
           video,
-          icon
+          icon,
         });
 
         setMessage("Ejercicio registrado correctamente");
         setMessageType("success");
-
       } else {
-
         await updateExercise(selectedId, {
           name,
           description,
@@ -189,7 +181,7 @@ export default function CreateExerciseScreen() {
           icon,
           deleteImage,
           deleteVideo,
-          deleteIcon
+          deleteIcon,
         });
 
         setMessage("Ejercicio actualizado correctamente");
@@ -198,22 +190,16 @@ export default function CreateExerciseScreen() {
 
       resetForm();
       loadExercises();
-
     } catch (err) {
-
       setMessage("Error al guardar el ejercicio");
       setMessageType("error");
-
     }
-
   };
 
   const handleDelete = async () => {
-
     if (!window.confirm("¿Eliminar ejercicio?")) return;
 
     try {
-
       await deleteExercise(selectedId);
 
       setMessage("Ejercicio eliminado");
@@ -221,68 +207,52 @@ export default function CreateExerciseScreen() {
 
       resetForm();
       loadExercises();
-
     } catch {
-
       setMessage("Error al eliminar ejercicio");
       setMessageType("error");
-
     }
-
   };
 
   return (
-
     <Container maxWidth="md" sx={{ mt: 4, mb: 6 }}>
-
       <Paper sx={{ p: 4 }}>
-
         <Box
           sx={{
             position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            mb: 2
+            mb: 2,
           }}
         >
-
-          {/* 🔙 Flecha a la izquierda */}
+          {/* Flecha a la izquierda */}
           <Box sx={{ position: "absolute", left: 0 }}>
             <BackButton to="/admin" sx={{ color: "black" }} />
           </Box>
 
-          {/* 🧠 Título centrado REAL */}
+          {/* Título centrado */}
           <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
             Ejercicios
           </Typography>
-
         </Box>
 
         <Stack spacing={3}>
-
           <TextField
             select
             label="Seleccionar ejercicio"
             value={selectedId}
             onChange={(e) => handleSelect(e.target.value)}
           >
-
             <MenuItem value="new">Nuevo ejercicio</MenuItem>
 
-            {exercises.map(ex => (
+            {exercises.map((ex) => (
               <MenuItem key={ex.id} value={ex.id}>
                 {ex.name} ({formatExerciseType(ex.type)})
               </MenuItem>
             ))}
-
           </TextField>
 
-          <TextField
-            label="Nombre"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+          <TextField label="Nombre" value={name} onChange={(e) => setName(e.target.value)} />
 
           <TextField
             label="Descripción"
@@ -292,48 +262,25 @@ export default function CreateExerciseScreen() {
             onChange={(e) => setDescription(e.target.value)}
           />
 
-          <TextField
-            select
-            label="Músculo trabajado"
-            value={muscle}
-            onChange={(e) => setMuscle(e.target.value)}
-          >
-
+          <TextField select label="Músculo trabajado" value={muscle} onChange={(e) => setMuscle(e.target.value)}>
             {muscleOptions.map((m) => (
               <MenuItem key={m.value} value={m.value}>
                 {m.label}
               </MenuItem>
             ))}
-
           </TextField>
 
           {/* SELECT TIPO DE EJERCICIO */}
 
-          <TextField
-            select
-            label="Tipo de ejercicio"
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-          >
+          <TextField select label="Tipo de ejercicio" value={type} onChange={(e) => setType(e.target.value)}>
+            <MenuItem value="PRIMARY">Primario</MenuItem>
 
-            <MenuItem value="PRIMARY">
-              Primario
-            </MenuItem>
+            <MenuItem value="SECONDARY">Secundario</MenuItem>
 
-            <MenuItem value="SECONDARY">
-              Secundario
-            </MenuItem>
+            <MenuItem value="TERTIARY">Terciario</MenuItem>
 
-            <MenuItem value="TERTIARY">
-              Terciario
-            </MenuItem>
-
-            <MenuItem value="ABDOMINAL">
-              Abdominal
-            </MenuItem>
-
+            <MenuItem value="ABDOMINAL">Abdominal</MenuItem>
           </TextField>
-
 
           {/* ICON */}
 
@@ -346,11 +293,8 @@ export default function CreateExerciseScreen() {
             existingUrl={currentExercise?.icon && `/api/exercises/icon/${currentExercise.icon}`}
             deleteFlag={deleteIcon}
             setDeleteFlag={setDeleteIcon}
-            renderPreview={(src) => (
-              <img src={src} style={{ maxWidth: "100px", borderRadius: "8px" }} />
-            )}
+            renderPreview={(src) => <img src={src} style={{ maxWidth: "100px", borderRadius: "8px" }} />}
           />
-
 
           {/* IMAGE */}
 
@@ -363,11 +307,8 @@ export default function CreateExerciseScreen() {
             existingUrl={currentExercise?.image && getExerciseImageUrl(currentExercise.image)}
             deleteFlag={deleteImage}
             setDeleteFlag={setDeleteImage}
-            renderPreview={(src) => (
-              <img src={src} style={{ maxWidth: "300px", borderRadius: "8px" }} />
-            )}
+            renderPreview={(src) => <img src={src} style={{ maxWidth: "300px", borderRadius: "8px" }} />}
           />
-
 
           {/* VIDEO */}
 
@@ -380,46 +321,24 @@ export default function CreateExerciseScreen() {
             existingUrl={currentExercise?.video && getExerciseVideoUrl(currentExercise.video)}
             deleteFlag={deleteVideo}
             setDeleteFlag={setDeleteVideo}
-            renderPreview={(src) => (
-              <video src={src} controls style={{ maxWidth: "400px" }} />
-            )}
+            renderPreview={(src) => <video src={src} controls style={{ maxWidth: "400px" }} />}
           />
 
-          <AppSnackbar
-            message={message}
-            type={messageType}
-            onClose={() => setMessage("")}
-          />
+          <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
 
           <Stack direction="row" spacing={2}>
-
-            {selectedId !== "new" &&
-              <Button
-                variant="contained"
-                color="error"
-                onClick={handleDelete}
-              >
+            {selectedId !== "new" && (
+              <Button variant="contained" color="error" onClick={handleDelete}>
                 Eliminar ejercicio
               </Button>
-            }
+            )}
 
-            <Button
-              variant="contained"
-              color="success"
-              onClick={handleSubmit}
-            >
-              {selectedId === "new"
-                ? "Registrar ejercicio"
-                : "Actualizar ejercicio"}
+            <Button variant="contained" color="success" onClick={handleSubmit}>
+              {selectedId === "new" ? "Registrar ejercicio" : "Actualizar ejercicio"}
             </Button>
-
           </Stack>
-
         </Stack>
-
       </Paper>
-
     </Container>
-
   );
 }

@@ -16,7 +16,7 @@ export default function BackButton({ to, sx }) {
         fontWeight: 600,
         color: "#fff",
 
-        ...sx
+        ...sx,
       }}
     >
       <ArrowBackIosNewIcon sx={{ filter: "drop-shadow(0 0 2px white)", fontSize: "2.2rem" }} />

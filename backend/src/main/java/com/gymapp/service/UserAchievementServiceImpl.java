@@ -108,7 +108,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
     @Override
     public List<UserAchievementResponse> getUserAchievements(Long userId) {
 
-        // 🔹 1. Usuario
+        // Usuario
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
@@ -123,11 +123,11 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
         UserLevel userLevel = user.getUserLevel();
 
-        // 🔹 2. Achievements disponibles (>= nivel del usuario)
+        // Achievements disponibles (>= nivel del usuario)
         List<Achievement> achievements = achievementRepository
                 .findByLevelIdGreaterThanEqual(userLevel.getId());
 
-        // 🔹 3. Achievements desbloqueados o en progreso
+        // Achievements desbloqueados o en progreso
         List<UserAchievement> unlockedList = userAchievementRepository.findByUserId(userId);
 
         Map<Long, UserAchievement> unlockedMap = unlockedList.stream()
@@ -135,7 +135,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                         ua -> ua.getAchievement().getId(),
                         ua -> ua));
 
-        // 🔹 4. Armar respuesta
+        // Armar respuesta
         return achievements.stream().map(achievement -> {
 
             UserAchievement ua = unlockedMap.get(achievement.getId());
@@ -168,7 +168,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
     // Actualizar solo streak cuando se obtiene los logros
     private void updateStreakAchievements(User user) {
 
-        // 🔹 1. Traer solo los UA activos (no completados)
+        // Traer solo los UA activos (no completados)
         List<UserAchievement> existing = userAchievementRepository.findByUserId(user.getId());
 
         Map<Long, UserAchievement> uaMap = existing.stream()
@@ -176,7 +176,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                         ua -> ua.getAchievement().getId(),
                         ua -> ua));
 
-        // 🔹 2. Traer achievements STREAK disponibles
+        // Traer achievements STREAK disponibles
         List<Achievement> achievements = achievementRepository.findAvailableStreakAchievements(
                 user.getUserLevel().getId());
 
@@ -196,7 +196,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
             UserAchievement ua = uaMap.get(ach.getId());
 
-            // 🔹 crear si no existe
+            // Crear si no existe
             if (ua == null) {
                 ua = new UserAchievement();
                 ua.setUser(user);
@@ -206,13 +206,13 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
             boolean changed = false;
 
-            // 🔹 actualizar progress SOLO si cambió
+            // Actualizar progress SOLO si cambió
             if (!Objects.equals(ua.getProgress(), progress)) {
                 ua.setProgress(progress);
                 changed = true;
             }
 
-            // 🔓 unlock
+            // Unlock
             if (ua.getUnlockedAt() == null &&
                     progress >= ach.getRequiredValue()) {
 
@@ -225,7 +225,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
             }
         }
 
-        // 🔹 guardar solo si hay cambios reales
+        // Guardar solo si hay cambios reales
         if (!toSave.isEmpty()) {
             userAchievementRepository.saveAll(toSave);
         }
@@ -243,7 +243,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                         ua -> ua.getAchievement().getId(),
                         ua -> ua));
 
-        // Traer todo con solo 3 query
+        // Traer todo
         double totalVolume = workoutSetRepository.sumTotalVolumeAll(user.getId());
 
         Map<Long, Double> volumeByExercise = workoutSetRepository.sumVolumeGroupedByExercise(user.getId())
@@ -298,7 +298,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
             }
 
             if (progress <= 0)
-                continue; // 👈 clave
+                continue;
 
             UserAchievement ua = new UserAchievement();
             ua.setUser(user);
@@ -320,13 +320,13 @@ public class UserAchievementServiceImpl implements UserAchievementService {
     @Override
     public void updateAchievements(User user, Long workoutDayId) {
 
-        // 🔹 1. Traer sets del día
+        // Traer sets del día
         List<WorkoutSet> sets = workoutSetRepository.findByWorkoutDayId(workoutDayId);
 
         if (sets.isEmpty())
             return;
 
-        // 🔹 2. Agrupar volumen
+        // Agrupar volumen
         Map<Long, Double> volumeByExercise = new HashMap<>();
         Map<MuscleType, Double> volumeByMuscle = new HashMap<>();
         double totalVolume = 0;
@@ -340,34 +340,34 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
             totalVolume += volume;
 
-            // volumen por ejercicio
+            // Volumen por ejercicio
             volumeByExercise.merge(ex.getId(), volume, Double::sum);
 
-            // volumen por músculo
+            // Volumen por músculo
             if (muscle != null) {
                 volumeByMuscle.merge(muscle, volume, Double::sum);
             }
         }
 
-        // 🔹 3. Traer achievements del nivel hacia arriba
+        // Traer achievements del nivel hacia arriba
         List<Achievement> achievements = achievementRepository
                 .findByLevelIdGreaterThanEqual(user.getUserLevel().getId());
 
-        // 🔹 4. Filtrar SOLO los relevantes
+        // Filtrar SOLO los relevantes
         achievements = achievements.stream()
                 .filter(ach -> {
 
-                    // global
+                    // Global
                     if (ach.getMuscle() == null && ach.getExercise() == null) {
                         return true;
                     }
 
-                    // por músculo
+                    // Por músculo
                     if (ach.getMuscle() != null) {
                         return volumeByMuscle.containsKey(ach.getMuscle());
                     }
 
-                    // por ejercicio
+                    // Por ejercicio
                     if (ach.getExercise() != null) {
                         return volumeByExercise.containsKey(ach.getExercise().getId());
                     }
@@ -376,7 +376,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                 })
                 .toList();
 
-        // 🔹 5. UserAchievements existentes
+        // UserAchievements existentes
         Map<Long, UserAchievement> uaMap = userAchievementRepository.findByUserId(user.getId())
                 .stream()
                 .collect(Collectors.toMap(
@@ -385,12 +385,12 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
         List<UserAchievement> toSave = new ArrayList<>();
 
-        // 🔹 6. Procesar logros
+        // Procesar logros
         for (Achievement ach : achievements) {
 
             UserAchievement ua = uaMap.get(ach.getId());
 
-            // 🔹 crear si no existe
+            // Crear si no existe
             if (ua == null) {
                 ua = new UserAchievement();
                 ua.setUser(user);
@@ -398,7 +398,6 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                 ua.setProgress(calculateInitialProgress(user, ach, workoutDayId));
             }
 
-            // 🔥 si ya está desbloqueado → NO tocar más
             if (ua.getUnlockedAt() != null) {
                 continue;
             }
@@ -443,7 +442,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                 }
             }
 
-            // 🔓 desbloqueo
+            // Desbloqueo
             if (ua.getProgress() >= ach.getRequiredValue()) {
                 ua.setUnlockedAt(LocalDateTime.now());
             }
@@ -451,7 +450,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
             toSave.add(ua);
         }
 
-        // 🔹 7. Guardar todo junto
+        // Guardar todo junto
         userAchievementRepository.saveAll(toSave);
     }
 
@@ -483,7 +482,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
             }
 
             case STREAK, CONSISTENCY -> {
-                return 0.0; // 👈 clave
+                return 0.0;
             }
 
             default -> {
@@ -504,7 +503,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
         Map<Long, Double> progressByUser = new HashMap<>();
 
-        // 🔹 1. Obtener progreso masivo SOLO para VOLUME
+        // Obtener progreso masivo SOLO para VOLUME
         if (ach.getType() == AchievementType.VOLUME) {
 
             List<Object[]> rows;
@@ -531,7 +530,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
         List<UserAchievement> toSave = new ArrayList<>();
 
-        // 🔹 2. Recalcular por usuario
+        // Recalcular por usuario
         for (UserAchievement ua : userAchievements) {
 
             User user = ua.getUser();
@@ -540,13 +539,13 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
             boolean changed = false;
 
-            // 🔄 actualizar progreso
+            // Actualizar progreso
             if (!Objects.equals(ua.getProgress(), progress)) {
                 ua.setProgress(progress);
                 changed = true;
             }
 
-            // 🔓 / 🔒 estado de desbloqueo
+            // Estado de desbloqueo
             if (progress >= ach.getRequiredValue()) {
                 if (ua.getUnlockedAt() == null) {
                     ua.setUnlockedAt(LocalDateTime.now());
@@ -554,7 +553,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                 }
             } else {
                 if (ua.getUnlockedAt() != null) {
-                    ua.setUnlockedAt(null); // 👈 descompletar
+                    ua.setUnlockedAt(null); // Descompletar
                     changed = true;
                 }
             }
@@ -579,7 +578,6 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
             case VOLUME -> {
 
-                // 🔥 lookup O(1)
                 yield progressByUser.getOrDefault(user.getId(), 0.0);
             }
 
@@ -616,9 +614,9 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                 a.getExercise() != null ? a.getExercise().getMuscle() : null,
                 a.getLevel() != null ? a.getLevel().getId() : null,
                 a.getLevel() != null ? a.getLevel().getName() : null,
-                true, // 🔥 desbloqueado
+                true,
                 userAchievement.getUnlockedAt(),
-                a.getRequiredValue() // 🔥 progreso completo
+                a.getRequiredValue() // Progreso completo
         );
     }
 }

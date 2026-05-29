@@ -104,15 +104,13 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
 
             List<WorkoutTemplateExercise> exercises = exerciseRepo.findByTemplateDayIdOrderByExerciseOrder(day.getId());
 
-            List<WorkoutTemplateFullResponse.ExerciseItem> exList =
-                    exercises.stream()
-                            .map(ex -> new WorkoutTemplateFullResponse.ExerciseItem(
-                                    ex.getId(),
-                                    ex.getExercise().getId(),
-                                    ex.getExercise().getName(),
-                                    ex.getExerciseOrder()
-                            ))
-                            .toList();
+            List<WorkoutTemplateFullResponse.ExerciseItem> exList = exercises.stream()
+                    .map(ex -> new WorkoutTemplateFullResponse.ExerciseItem(
+                            ex.getId(),
+                            ex.getExercise().getId(),
+                            ex.getExercise().getName(),
+                            ex.getExerciseOrder()))
+                    .toList();
 
             dayList.add(new WorkoutTemplateFullResponse.DayItem(
                     day.getId(),
@@ -120,16 +118,14 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
                     muscleService.getMusclesFromTemplateDay(day),
                     day.getDayOrder(),
                     day.getMuscleImage(),
-                    exList
-            ));
+                    exList));
         }
 
         return new WorkoutTemplateFullResponse(
                 template.getId(),
                 template.getName(),
                 template.getDescription(),
-                dayList
-        );
+                dayList);
     }
 
     @Override
@@ -144,14 +140,13 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
 
         templateRepo.save(template);
 
-        // 🔥 TRAER EXISTENTES
+        // Traer existentes
         List<WorkoutTemplateDay> existingDays = dayRepo.findByTemplateId(id);
         Set<String> previousImageNames = existingDays.stream()
-            .map(WorkoutTemplateDay::getMuscleImage)
-            .filter(Objects::nonNull)
-            .collect(java.util.stream.Collectors.toSet());
+                .map(WorkoutTemplateDay::getMuscleImage)
+                .filter(Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
 
-        // 🔥 MAPA PARA CONTROL
         Map<Long, WorkoutTemplateDay> existingMap = existingDays.stream()
                 .collect(Collectors.toMap(WorkoutTemplateDay::getId, d -> d));
 
@@ -159,7 +154,7 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
 
             WorkoutTemplateDay day;
 
-            // 🟡 UPDATE
+            // Update
             if (d.id() != null && existingMap.containsKey(d.id())) {
 
                 day = existingMap.get(d.id());
@@ -173,7 +168,7 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
                 existingMap.remove(d.id());
 
             } else {
-                // 🟢 CREATE
+                // Create
                 day = new WorkoutTemplateDay();
                 day.setName(d.name());
                 day.setDayOrder(d.dayOrder());
@@ -183,7 +178,6 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
                 day = dayRepo.save(day);
             }
 
-            // 🔥 EJERCICIOS (simple: borrar y recrear SOLO de ese día)
             exerciseRepo.deleteByTemplateDayId(day.getId());
 
             for (WorkoutTemplateFullRequest.ExerciseItem ex : d.exercises()) {
@@ -200,7 +194,7 @@ public class WorkoutTemplateServiceImpl implements WorkoutTemplateService {
             }
         }
 
-        // 🔴 DELETE días que ya no existen
+        // Delete ya no existen
         for (WorkoutTemplateDay toDelete : existingMap.values()) {
             exerciseRepo.deleteByTemplateDayId(toDelete.getId());
             dayRepo.delete(toDelete);

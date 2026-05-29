@@ -18,6 +18,7 @@ backend/selected-exercises/*
 !backend/selected-exercises/.gitkeep
 
 backend/src/main/resources/application.properties
+backend/src/main/resources/static/*
 
 #Spring Boot
 target/

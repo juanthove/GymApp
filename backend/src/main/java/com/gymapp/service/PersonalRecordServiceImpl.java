@@ -90,7 +90,8 @@ public class PersonalRecordServiceImpl implements PersonalRecordService {
                     return newRecord;
                 });
 
-        if (personalRecord.getId() == null || personalRecord.getWeight() == null || weight > personalRecord.getWeight()) {
+        if (personalRecord.getId() == null || personalRecord.getWeight() == null
+                || weight > personalRecord.getWeight()) {
             personalRecord.setWeight(weight);
             personalRecord.setDate(LocalDateTime.now());
             personalRecord = personalRecordRepository.save(personalRecord);
@@ -111,16 +112,13 @@ public class PersonalRecordServiceImpl implements PersonalRecordService {
 
     private PersonalRecordResponse toResponse(PersonalRecord pr) {
         return new PersonalRecordResponse(
-            pr.getId(),
-            pr.getUser() != null ? pr.getUser().getId() : null,
-            pr.getExercise() != null ? pr.getExercise().getId() : null,
-            pr.getWeight(),
-            pr.getDate(),
-
-            // 🔥 nuevos campos
-            pr.getExercise() != null ? pr.getExercise().getName() : null,
-            pr.getExercise() != null ? pr.getExercise().getMuscle() : null,
-            pr.getExercise() != null ? pr.getExercise().getIcon() : null
-        );
+                pr.getId(),
+                pr.getUser() != null ? pr.getUser().getId() : null,
+                pr.getExercise() != null ? pr.getExercise().getId() : null,
+                pr.getWeight(),
+                pr.getDate(),
+                pr.getExercise() != null ? pr.getExercise().getName() : null,
+                pr.getExercise() != null ? pr.getExercise().getMuscle() : null,
+                pr.getExercise() != null ? pr.getExercise().getIcon() : null);
     }
 }

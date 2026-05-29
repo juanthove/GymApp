@@ -2,7 +2,7 @@ import { apiRequest } from "./apiClient";
 
 const PHRASE_API = "/api/phrases";
 
-// Crear frase
+//Crear frase
 export async function createPhrase(phrase) {
   return apiRequest(PHRASE_API, {
     method: "POST",
@@ -11,22 +11,22 @@ export async function createPhrase(phrase) {
   });
 }
 
-// Obtener todas
+//Obtener todas
 export async function getPhrases() {
   return apiRequest(PHRASE_API);
 }
 
-// Obtener por id
+//Obtener por id
 export async function getPhraseById(id) {
   return apiRequest(`${PHRASE_API}/${id}`);
 }
 
-// Obtener random 🔥
+//Obtener random
 export async function getRandomPhrase() {
   return apiRequest(`${PHRASE_API}/random`);
 }
 
-// Actualizar
+//Actualizar
 export async function updatePhrase(id, phrase) {
   return apiRequest(`${PHRASE_API}/${id}`, {
     method: "PUT",
@@ -35,7 +35,7 @@ export async function updatePhrase(id, phrase) {
   });
 }
 
-// Eliminar
+//Eliminar
 export async function deletePhrase(id) {
   await apiRequest(`${PHRASE_API}/${id}`, {
     method: "DELETE",

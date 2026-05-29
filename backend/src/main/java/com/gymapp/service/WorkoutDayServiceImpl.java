@@ -243,13 +243,13 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         // Eliminar json con ejercicios seleccionados
         selectedWorkoutExerciseService.deleteSelectedFile(id);
 
-        // 🔹 3. Obtener usuario (asumiendo relación)
+        // Obtener usuario
         User user = day.getWorkout().getUser();
 
-        // 🔹 4. Actualizar stats del usuario (streak, totalDays, etc)
+        // Actualizar stats del usuario (streak, totalDays, etc)
         userService.updateUserStats(user, LocalDate.now());
 
-        // 🔹 5. Actualizar achievements
+        // Actualizar achievements
         userAchievementService.updateAchievements(user, id);
 
         return toResponse(workoutDayRepository.save(day));
@@ -298,7 +298,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
         Map<Long, ExerciseAlertResponse> alertMap = buildAlertMap(userId);
 
-        // Traigo ejercicios una sola vez
+        // Traer ejercicios una sola vez
         List<WorkoutExercise> exercises = workoutExerciseRepository.findByWorkoutDayIdOrderByExerciseOrder(dayId);
 
         // Obtengo todos los exerciseId
@@ -395,7 +395,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
         Granularity resolvedGranularity = resolveGranularity(dates, granularity);
 
-        // 🔥 agrupar según granularidad
+        // Agrupar según granularidad
         Map<LocalDate, Long> grouped = result.stream()
                 .collect(Collectors.groupingBy(
                         item -> resolveDate(item.date(), resolvedGranularity),
@@ -415,7 +415,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         WorkoutDay day = workoutDayRepository.findById(dayId)
                 .orElseThrow(() -> new ResourceNotFoundException("Workout day not found"));
 
-        // 🕒 Duración
+        // Duración
         Long duration = 0L;
 
         if (day.getStartedAt() != null && day.getFinishedAt() != null) {
@@ -424,13 +424,13 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
                     day.getFinishedAt());
         }
 
-        // 📊 Volumen total
+        // Volumen total
         Double totalVolume = workoutSetService.getTotalVolumeByDay(userId, dayId);
 
         // Total de ejercicios
         int totalExercises = workoutSetService.getTotalExercisesByDay(userId, dayId);
 
-        // 💪 Volumen por músculo
+        // Volumen por músculo
         var muscleVolumes = workoutSetService
                 .getMuscleVolumeByDay(userId, dayId);
 
@@ -465,14 +465,14 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
     private Map<Long, ExerciseAlertResponse> buildAlertMap(Long userId) {
 
-        // 🔹 reglas
+        // Reglas
         Map<Long, Integer> rules = exerciseReminderRuleRepository.findAll()
                 .stream()
                 .collect(Collectors.toMap(
                         r -> r.getExercise().getId(),
                         r -> r.getWeeks()));
 
-        // 🔹 última fecha por ejercicio
+        // Ultima fecha por ejercicio
         Map<Long, LocalDate> lastDates = workoutExerciseRepository
                 .findLastPerformedDatesByUser(userId)
                 .stream()
@@ -480,7 +480,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
                         row -> (Long) row[0],
                         row -> ((LocalDateTime) row[1]).toLocalDate()));
 
-        // 🔹 construir alerts
+        // Construir alerts
         Map<Long, ExerciseAlertResponse> result = new java.util.HashMap<>();
 
         for (Map.Entry<Long, Integer> entry : rules.entrySet()) {

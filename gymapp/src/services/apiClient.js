@@ -15,7 +15,7 @@ async function toApiError(response) {
       }
     }
   } catch {
-    // Keep fallback message when body parsing fails.
+    //Mantener mensaje de fallback
   }
 
   const error = new Error(message);

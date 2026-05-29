@@ -13,36 +13,33 @@ export default function AchievementChip({ label, color = "#999", icon = null, si
         px: 1.2,
         py: 2.5,
 
-        // 🔥 gradiente sutil (clave para profundidad)
         background: `linear-gradient(135deg, ${light}, ${color})`,
 
-        // 🤍 borde
         border: "1px solid rgba(255,255,255,0.6)",
         borderRadius: "999px",
 
         fontWeight: 600,
 
-        // ✨ sombra externa + interna (relieve)
+        //Relieve
         boxShadow: `
           0 3px 8px rgba(0,0,0,0.25),
           inset 0 1px 2px rgba(255,255,255,0.4),
           inset 0 -1px 2px rgba(0,0,0,0.2)
         `,
 
-        // 🔥 texto
+        //Texto
         "& .MuiChip-label": {
           color: "#fff !important",
           fontSize: "2rem",
           ml: 1,
         },
 
-        // 🔥 icono
+        //Icono
         "& .MuiChip-icon": {
           color: "#fff !important",
           fontSize: 40,
         },
 
-        // 💫 hover más pro
         transition: "all 0.2s ease",
         "&:hover": {
           transform: "scale(1.07)",

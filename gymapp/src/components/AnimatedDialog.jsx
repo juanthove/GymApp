@@ -1,11 +1,4 @@
-import {
-  Dialog,
-  Box,
-  Typography,
-  DialogContent,
-  DialogActions,
-  Slide
-} from "@mui/material";
+import { Dialog, Box, Typography, DialogContent, DialogActions, Slide } from "@mui/material";
 import { forwardRef } from "react";
 import CloseButton from "./CloseButton";
 
@@ -25,7 +18,7 @@ export default function AnimatedDialog({
   titleSize = "1.3rem",
   headerSx = {},
   paperSx = {},
-  closeSx = {}
+  closeSx = {},
 }) {
   return (
     <Dialog
@@ -34,11 +27,11 @@ export default function AnimatedDialog({
       fullWidth={fullWidth}
       maxWidth={maxWidth}
       slots={{
-        transition: Transition
+        transition: Transition,
       }}
       slotProps={{
         transition: {
-          onExited: onExited
+          onExited: onExited,
         },
         paper: {
           sx: {
@@ -46,10 +39,9 @@ export default function AnimatedDialog({
             background: "#fff",
             boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
 
-            // 👇 permite override externo
-            ...paperSx
-          }
-        }
+            ...paperSx,
+          },
+        },
       }}
     >
       {/* HEADER */}
@@ -59,9 +51,8 @@ export default function AnimatedDialog({
           alignItems: "center",
           justifyContent: "space-between",
           px: 2,
-          ...headerSx
+          ...headerSx,
         }}
-        
       >
         <Box sx={{ width: 24 }} />
 
@@ -70,7 +61,7 @@ export default function AnimatedDialog({
             flex: 1,
             textAlign: "center",
             fontWeight: 600,
-            fontSize: titleSize
+            fontSize: titleSize,
           }}
         >
           {title}
@@ -80,9 +71,7 @@ export default function AnimatedDialog({
       </Box>
 
       {/* CONTENT */}
-      <DialogContent sx={{ px: 2, pb: 1 }}>
-        {children}
-      </DialogContent>
+      <DialogContent sx={{ px: 2, pb: 1 }}>{children}</DialogContent>
 
       {/* ACTIONS */}
       {actions && (
@@ -92,7 +81,7 @@ export default function AnimatedDialog({
             pb: 2,
             pt: 1,
             display: "flex",
-            gap: 1
+            gap: 1,
           }}
         >
           {actions}

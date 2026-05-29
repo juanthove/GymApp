@@ -29,7 +29,7 @@ public class SelectedWorkoutExerciseService {
 
         List<Long> selected = new ArrayList<>(readSelectedIds(workoutDayId));
         if (!selected.contains(workoutExerciseId)) {
-            selected.add(workoutExerciseId); // 👈 se agrega al final
+            selected.add(workoutExerciseId);
             writeSelectedIds(workoutDayId, selected);
         }
     }
@@ -94,7 +94,8 @@ public class SelectedWorkoutExerciseService {
             if (data.length == 0) {
                 return List.of();
             }
-            return objectMapper.readValue(data, new TypeReference<List<Long>>() {});
+            return objectMapper.readValue(data, new TypeReference<List<Long>>() {
+            });
         } catch (IOException e) {
             throw new RuntimeException("Error reading selected-exercises file for day " + workoutDayId, e);
         }

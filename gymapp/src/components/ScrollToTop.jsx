@@ -1,3 +1,4 @@
+//SCROLL AUTOMATICO HACIA ARRIBA AL CAMBIAR DE SCREEN
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 

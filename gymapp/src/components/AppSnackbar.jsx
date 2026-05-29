@@ -6,9 +6,8 @@ export default function AppSnackbar({
   onClose,
   duration = 3000,
   alertSx = {},
-  snackbarProps = {}
+  snackbarProps = {},
 }) {
-
   return (
     <Snackbar
       open={!!message}
@@ -17,10 +16,7 @@ export default function AppSnackbar({
       anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       {...snackbarProps}
     >
-      <Alert
-        severity={type}
-        sx={{ width: "100%", ...alertSx }}
-      >
+      <Alert severity={type} sx={{ width: "100%", ...alertSx }}>
         {message}
       </Alert>
     </Snackbar>

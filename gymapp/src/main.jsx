@@ -20,7 +20,6 @@ createRoot(document.getElementById("root")).render(
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
         <App />
       </LocalizationProvider>
-
     </ThemeProvider>
-  </StrictMode>
+  </StrictMode>,
 );

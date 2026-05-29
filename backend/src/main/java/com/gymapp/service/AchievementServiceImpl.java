@@ -109,13 +109,13 @@ public class AchievementServiceImpl implements AchievementService {
 
         Files.createDirectories(imagePath);
 
-        // 🔥 eliminar imagen
+        // Eliminar imagen
         if (Boolean.TRUE.equals(deleteImage) && achievement.getImage() != null) {
             Files.deleteIfExists(imagePath.resolve(achievement.getImage()));
             achievement.setImage(null);
         }
 
-        // 🔥 reemplazar imagen
+        // Reemplazar imagen
         if (image != null && !image.isEmpty()) {
 
             if (achievement.getImage() != null) {
@@ -129,7 +129,7 @@ public class AchievementServiceImpl implements AchievementService {
             achievement.setImage(fileName);
         }
 
-        // 🔥 renombrar archivo si cambia nombre
+        // Renombrar archivo si cambia nombre
         if (!oldName.equals(request.name()) && achievement.getImage() != null) {
             String oldSafeName = oldName.toLowerCase().replace(" ", "_");
             String ext = getExtension(achievement.getImage());
@@ -143,7 +143,7 @@ public class AchievementServiceImpl implements AchievementService {
             }
         }
 
-        // relaciones
+        // Relaciones
         if (request.levelId() != null) {
             UserLevel level = userLevelRepository.findById(request.levelId())
                     .orElseThrow(() -> new ResourceNotFoundException("Nivel de usuario no encontrado"));

@@ -2,17 +2,17 @@ import { apiRequest } from "./apiClient";
 
 const USER_LEVEL_API = "/api/user-levels";
 
-// Obtener todos los niveles de usuario
+//Obtener todos los niveles de usuario
 export async function getUserLevels() {
   return apiRequest(USER_LEVEL_API);
 }
 
-// Obtener nivel de usuario por id
+//Obtener nivel de usuario por id
 export async function getUserLevelById(id) {
   return apiRequest(`${USER_LEVEL_API}/${id}`);
 }
 
-// Crear nivel de usuario
+//Crear nivel de usuario
 export async function createUserLevel(userLevel) {
   return apiRequest(USER_LEVEL_API, {
     method: "POST",
@@ -21,7 +21,7 @@ export async function createUserLevel(userLevel) {
   });
 }
 
-// Actualizar nivel de usuario
+//Actualizar nivel de usuario
 export async function updateUserLevel(id, userLevel) {
   return apiRequest(`${USER_LEVEL_API}/${id}`, {
     method: "PUT",
@@ -30,7 +30,7 @@ export async function updateUserLevel(id, userLevel) {
   });
 }
 
-// Eliminar nivel de usuario
+//Eliminar nivel de usuario
 export async function deleteUserLevel(id) {
   return apiRequest(`${USER_LEVEL_API}/${id}`, {
     method: "DELETE",

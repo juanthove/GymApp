@@ -11,18 +11,17 @@ public record WorkoutFullRequest(
         @NotNull @Positive Integer reps,
         @NotNull LocalDate startDate,
         @NotNull LocalDate endDate,
-        @NotNull @NotEmpty List<@Valid DayItem> days
-) {
+        @NotNull @NotEmpty List<@Valid DayItem> days) {
     public record DayItem(
             @NotBlank @Size(max = 100) String name,
             @NotNull @PositiveOrZero Integer dayOrder,
             String muscleImage,
-            @NotNull List<@Valid ExerciseItem> exercises
-    ) {}
+            @NotNull List<@Valid ExerciseItem> exercises) {
+    }
 
     public record ExerciseItem(
             @NotNull Long exerciseId,
             @NotNull @PositiveOrZero Integer order,
-            @PositiveOrZero Double weight
-    ) {}
+            @PositiveOrZero Double weight) {
+    }
 }

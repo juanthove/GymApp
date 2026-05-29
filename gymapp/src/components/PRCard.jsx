@@ -53,7 +53,7 @@ export default function PRCard({ row }) {
         textAlign: "center",
       }}
     >
-      {/* ✨ brillo arriba */}
+      {/* BRILLO ARRIBA */}
       <Box
         sx={{
           position: "absolute",
@@ -66,7 +66,7 @@ export default function PRCard({ row }) {
         }}
       />
 
-      {/* 🏋️ Nombre */}
+      {/* NOMBRE */}
       <Typography
         sx={{
           fontWeight: 800,
@@ -90,7 +90,7 @@ export default function PRCard({ row }) {
         {row.name}
       </Typography>
 
-      {/* 🖼️ Imagen */}
+      {/* IMAGEN */}
       <Box
         sx={{
           height: {
@@ -118,7 +118,7 @@ export default function PRCard({ row }) {
         )}
       </Box>
 
-      {/* ⚖️ Peso */}
+      {/* PESO */}
       <Typography
         sx={{
           fontWeight: 900,
@@ -133,7 +133,7 @@ export default function PRCard({ row }) {
         <span ref={countUpRef} /> kg
       </Typography>
 
-      {/* 📅 Fecha */}
+      {/* FECHA */}
       <Typography
         sx={{
           fontSize: {
