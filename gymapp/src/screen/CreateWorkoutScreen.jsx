@@ -69,6 +69,8 @@ export default function CreateWorkoutScreen() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("info");
 
+  const [expandedDays, setExpandedDays] = useState([]);
+
   const [globalReps, setGlobalReps] = useState("");
 
   const repOptions = [
@@ -156,6 +158,7 @@ export default function CreateWorkoutScreen() {
     setIsLastWorkout(false);
     setGlobalReps("");
     setSelectedExercises({});
+    setExpandedDays([]);
   };
 
   const loadUsers = async () => {
@@ -511,14 +514,21 @@ export default function CreateWorkoutScreen() {
             value={selectedUser}
             onChange={async (e) => {
               const userId = e.target.value;
-              setSelectedUser(userId);
+              setExpandedDays([]);
 
-              if (userId) {
-                await checkCurrentWorkout(userId);
+              requestAnimationFrame(async () => {
+                // 🔥 limpiar datos anteriores
+                resetForm();
 
-                const user = await getUserById(userId);
-                setGymDaysPerWeek(user.gymDaysPerWeek || 0);
-              }
+                setSelectedUser(userId);
+
+                if (userId) {
+                  await checkCurrentWorkout(userId);
+
+                  const user = await getUserById(userId);
+                  setGymDaysPerWeek(user.gymDaysPerWeek || 0);
+                }
+              });
             }}
           >
             <MenuItem value="" disabled>
@@ -599,7 +609,17 @@ export default function CreateWorkoutScreen() {
           </Stack>
 
           {days.map((day, dayIndex) => (
-            <Accordion key={dayIndex}>
+            <Accordion
+              key={day.id}
+              expanded={expandedDays.includes(day.id)}
+              onChange={(event, isExpanded) => {
+                if (isExpanded) {
+                  setExpandedDays((prev) => [...prev, day.id]);
+                } else {
+                  setExpandedDays((prev) => prev.filter((id) => id !== day.id));
+                }
+              }}
+            >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography>
                   Día {dayIndex + 1} - {day.name}

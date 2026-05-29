@@ -19,11 +19,12 @@ import java.util.List;
 /**
  * Script que copia el último workout (el más reciente) de cada usuario.
  * El nuevo workout mantiene los mismos días y ejercicios. Para cada ejercicio,
- * el peso se establece en nextWeight si existe; de lo contrario, se mantiene el peso actual.
+ * el peso se establece en nextWeight si existe; de lo contrario, se mantiene el
+ * peso actual.
  *
  * Para ejecutar, inicia la aplicación con la propiedad:
- *   script.copy-last-workouts=true
- * Ejemplo:  java -jar app.jar --script.copy-last-workouts=true
+ * script.copy-last-workouts=true
+ * Ejemplo: java -jar app.jar --script.copy-last-workouts=true
  */
 @Component
 @ConditionalOnProperty(name = "script.copy-last-workouts", havingValue = "true")
@@ -47,23 +48,35 @@ public class CopyLastWorkoutsScript implements CommandLineRunner {
         List<User> users = userRepository.findAll();
 
         for (User user : users) {
-            List<Workout> workouts = workoutRepository.findByUserIdOrderByStartDateDesc(user.getId());
+            List<Workout> workouts = workoutRepository
+                    .findByUserIdAndStartDateIsNotNullOrderByStartDateDescIdDesc(user.getId());
             if (workouts.isEmpty()) {
                 System.out.println("[CopyLastWorkoutsScript] Usuario " + user.getId()
-                        + " (" + user.getName() + " " + user.getSurname() + ") no tiene workouts. Se omite.");
+                        + " (" + user.getName() + " " + user.getSurname()
+                        + ") no tiene workouts con fecha de inicio. Se omite.");
                 continue;
             }
 
             Workout lastWorkout = workouts.get(0);
 
-            // Crear nuevo workout como copia (sin fechas; se completarán cuando empiece el nuevo ciclo)
+            // Crear nuevo workout como copia desplazada una semana hacia adelante.
+            // Se asume que la semana anterior empieza el lunes y termina el domingo.
             Workout newWorkout = new Workout();
             newWorkout.setName(lastWorkout.getName());
             newWorkout.setReps(lastWorkout.getReps());
-            newWorkout.setStartDate(null);
-            newWorkout.setEndDate(null);
+
+            var newStartDate = lastWorkout.getStartDate().plusDays(7);
+            var newEndDate = (lastWorkout.getEndDate() != null)
+                    ? lastWorkout.getEndDate().plusDays(7)
+                    : newStartDate.plusDays(6);
+
+            newWorkout.setStartDate(newStartDate);
+            newWorkout.setEndDate(newEndDate);
             newWorkout.setUser(user);
             newWorkout = workoutRepository.save(newWorkout);
+
+            user.setCurrentWorkout(newWorkout);
+            userRepository.save(user);
 
             List<WorkoutDay> days = workoutDayRepository.findByWorkoutIdOrderByDayOrder(lastWorkout.getId());
 
@@ -72,7 +85,7 @@ public class CopyLastWorkoutsScript implements CommandLineRunner {
                 newDay.setName(oldDay.getName());
                 newDay.setDayOrder(oldDay.getDayOrder());
                 newDay.setMuscleImage(oldDay.getMuscleImage());
-                newDay.setAbdominal(oldDay.isAbdominal());
+                newDay.setAbdominal(false);
                 newDay.setWorkout(newWorkout);
                 newDay = workoutDayRepository.save(newDay);
 

@@ -11,4 +11,6 @@ public interface WorkoutRepository extends JpaRepository<Workout, Long> {
 
     List<Workout> findByUserIdOrderByStartDateDesc(Long userId);
 
+    List<Workout> findByUserIdAndStartDateIsNotNullOrderByStartDateDescIdDesc(Long userId);
+
 }

@@ -59,6 +59,8 @@ export default function CreateWorkoutTemplateScreen() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("info");
 
+  const [expandedDays, setExpandedDays] = useState([]);
+
   useEffect(() => {
     loadTemplates();
     loadExercises();
@@ -93,6 +95,7 @@ export default function CreateWorkoutTemplateScreen() {
     setName("");
     setDescription("");
     setDays([]);
+    setExpandedDays([]);
   };
 
   const validateTemplate = () => {
@@ -131,6 +134,7 @@ export default function CreateWorkoutTemplateScreen() {
   const loadTemplateData = async (id) => {
     if (!id) {
       resetForm();
+      setExpandedDays([]);
       return;
     }
 
@@ -164,6 +168,7 @@ export default function CreateWorkoutTemplateScreen() {
     }));
 
     setDays(loadedDays);
+    setExpandedDays([]);
   };
 
   const addDay = () => {
@@ -388,8 +393,11 @@ export default function CreateWorkoutTemplateScreen() {
             value={selectedTemplateId}
             onChange={(e) => {
               const id = e.target.value;
-              setSelectedTemplateId(id);
-              loadTemplateData(id);
+              setExpandedDays([]);
+              requestAnimationFrame(async () => {
+                setSelectedTemplateId(id);
+                await loadTemplateData(id);
+              });
             }}
           >
             <MenuItem value="">Nueva plantilla</MenuItem>
@@ -412,7 +420,17 @@ export default function CreateWorkoutTemplateScreen() {
           />
 
           {days.map((day, dayIndex) => (
-            <Accordion key={dayIndex}>
+            <Accordion
+              key={dayIndex}
+              expanded={expandedDays.includes(dayIndex)}
+              onChange={(event, isExpanded) => {
+                if (isExpanded) {
+                  setExpandedDays([...expandedDays, dayIndex]);
+                } else {
+                  setExpandedDays(expandedDays.filter((i) => i !== dayIndex));
+                }
+              }}
+            >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography>
                   Día {dayIndex + 1} - {day.name}
