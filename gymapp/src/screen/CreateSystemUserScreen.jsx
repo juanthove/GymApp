@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import useRequireAuth from "../hooks/useRequireAuth";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -10,6 +11,7 @@ import BackButton from "../components/BackButton";
 import AppSnackbar from "../components/AppSnackbar";
 
 export default function CreateSystemUserScreen() {
+  useRequireAuth();
   const [users, setUsers] = useState([]);
   const [selectedId, setSelectedId] = useState("new");
   const [currentUser, setCurrentUser] = useState(null);

@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
+import useRequireAuth from "../hooks/useRequireAuth";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -13,6 +14,7 @@ import { getUserById, getUserAchievements } from "../services/userService";
 import { getAchievementImageUrl } from "../services/achievementService";
 
 export default function AchievementsScreen() {
+  useRequireAuth();
   const { userId } = useParams();
 
   const [loading, setLoading] = useState(true);

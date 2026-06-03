@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getLoggedUser, getNotLoggedUser, loginUser, getUserImageUrl } from "../services/userService";
 import { useNavigate } from "react-router-dom";
+import useRequireAuth from "../hooks/useRequireAuth";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -70,6 +71,7 @@ const exitFullscreen = async () => {
 };
 
 export default function HomeScreen() {
+  useRequireAuth();
   const [users, setUsers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [showModal, setShowModal] = useState(false);

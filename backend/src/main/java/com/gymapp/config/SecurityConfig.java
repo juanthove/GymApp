@@ -54,60 +54,9 @@ public class SecurityConfig {
                         }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // Frontend React / Vite build
-                        .requestMatchers(
-                                "/",
-                                "/index.html",
-                                "/assets/**",
-                                "/manifest.webmanifest",
-                                "/sw.js",
-                                "/workbox-*.js",
-                                "/icon-192.png",
-                                "/icon-512.png",
-                                "/favicon.ico")
-                        .permitAll()
-
-                        // Auth
                         .requestMatchers("/api/system-users/login").permitAll()
-
-                        // Admin-only API routes
-                        .requestMatchers("/api/system-users/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/users").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/users/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/users/*/image").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/users/*/image").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/user-levels").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/user-levels/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/user-levels/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/phrases").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/phrases/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/phrases/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/achievements").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/achievements/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/achievements/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/exercises").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/exercises/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/exercises/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/workout-template").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/workout-template/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/workout-template/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/workout-template-days/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/workout-template-days/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/workout-template-days/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/workout-template-exercises/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/workout-template-exercises/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/workout-template-exercises/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/workouts").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/workouts/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/workouts/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/exercise-reminder-rules").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/exercise-reminder-rules/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/exercise-reminder-rules/**").hasRole("ADMIN")
-
-                        // API protegida
-                        .anyRequest().authenticated())
+                        .requestMatchers("/api/**").authenticated()
+                        .anyRequest().permitAll())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

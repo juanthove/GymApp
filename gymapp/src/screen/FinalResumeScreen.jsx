@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import useRequireAuth from "../hooks/useRequireAuth";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { getUserById } from "../services/userService";
@@ -17,6 +18,7 @@ import MuscleVolumeCard from "../components/MuscleVolumeCard";
 import StatCard from "../components/StatCard";
 
 export default function FinalResumeScreen() {
+  useRequireAuth();
   const { userId, workoutDayId } = useParams();
 
   const [user, setUser] = useState(null);

@@ -28,7 +28,6 @@ function formatLabel(label, granularity) {
 }
 
 export default function CustomLineTooltip({ active, payload, label, granularity = "DAY" }) {
-  console.log(granularity);
   if (!active || !payload || payload.length === 0) {
     return null;
   }

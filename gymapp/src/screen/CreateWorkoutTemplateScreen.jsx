@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import useRequireAuth from "../hooks/useRequireAuth";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -49,6 +50,7 @@ import SortableList from "../components/sortable/SortableList";
 import SortableItem from "../components/sortable/SortableItem";
 
 export default function CreateWorkoutTemplateScreen() {
+  useRequireAuth();
   const [templates, setTemplates] = useState([]);
   const [exercises, setExercises] = useState([]);
 

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import useRequireAuth from "../hooks/useRequireAuth";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -35,6 +36,7 @@ import PrimaryButton from "../components/PrimaryButton";
 import AnimatedDialog from "../components/AnimatedDialog";
 
 export default function WorkoutScreen() {
+  useRequireAuth();
   const { userId } = useParams();
   const navigate = useNavigate();
 

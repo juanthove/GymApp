@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import useRequireAuth from "../hooks/useRequireAuth";
 
 import backgroundImg from "../assets/gymproIcon.png";
 import { muscleLabels } from "../config/muscleConfig";
@@ -61,6 +62,7 @@ import {
 import GroupIcon from "@mui/icons-material/Group";
 
 export default function ExerciseScreen() {
+  useRequireAuth();
   const { userId, workoutDayId } = useParams();
 
   const [user, setUser] = useState(null);

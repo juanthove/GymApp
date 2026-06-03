@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import useRequireAuth from "../hooks/useRequireAuth";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -18,6 +19,7 @@ import PrimaryButton from "../components/PrimaryButton";
 
 export default function AdminScreen() {
   const navigate = useNavigate();
+  useRequireAuth();
 
   const adminOptions = [
     {

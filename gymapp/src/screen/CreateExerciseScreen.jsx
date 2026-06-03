@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import useRequireAuth from "../hooks/useRequireAuth";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -29,6 +30,7 @@ import FileUploadField from "../components/FileUploadField";
 import AppSnackbar from "../components/AppSnackbar";
 
 export default function CreateExerciseScreen() {
+  useRequireAuth();
   const [exercises, setExercises] = useState([]);
   const [selectedId, setSelectedId] = useState("new");
 

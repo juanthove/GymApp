@@ -59,8 +59,8 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 5173,
     https: {
-      key: fs.readFileSync("../certs/gympro+2-key.pem"),
-      cert: fs.readFileSync("../certs/gympro+2.pem"),
+      key: fs.readFileSync("../certs/localhost+3-key.pem"),
+      cert: fs.readFileSync("../certs/localhost+3.pem"),
     },
   },
 });

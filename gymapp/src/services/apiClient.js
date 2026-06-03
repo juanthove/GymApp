@@ -42,6 +42,38 @@ export function getAuthToken() {
   }
 }
 
+export function parseJwt(token) {
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    let payload = parts[1];
+    // base64url -> base64
+    payload = payload.replace(/-/g, "+").replace(/_/g, "/");
+    while (payload.length % 4) payload += "=";
+    const decoded = atob(payload);
+    try {
+      return JSON.parse(decoded);
+    } catch (e) {
+      return null;
+    }
+  } catch {
+    return null;
+  }
+}
+
+export function isTokenValid(token) {
+  if (!token) return false;
+  const payload = parseJwt(token);
+  if (!payload) return false;
+  // `exp` claim is in seconds since epoch
+  if (typeof payload.exp === "number") {
+    const now = Math.floor(Date.now() / 1000);
+    return payload.exp > now;
+  }
+  // If no exp claim, assume token is valid (can't determine)
+  return true;
+}
+
 export function buildAuthorizedAssetUrl(url) {
   const token = getAuthToken();
   if (!token) {
@@ -60,10 +92,8 @@ function isAuthFreeRequest(url, options) {
   return url.includes("/login") || url.includes("/not-logged");
 }
 
-function redirectToLogin() {
-  if (typeof window === "undefined") {
-    return;
-  }
+export function redirectToLogin() {
+  console.log("redirectToLogin ejecutado");
 
   localStorage.removeItem("systemUser");
 
@@ -92,6 +122,7 @@ export async function apiRequest(url, options = {}, responseType = "json") {
 
   if (!response.ok) {
     if ((response.status === 401 || response.status === 403) && !isAuthFreeRequest(url, options)) {
+      console.log("401 detectado");
       redirectToLogin();
     }
     throw await toApiError(response);

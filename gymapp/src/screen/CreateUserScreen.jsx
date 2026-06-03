@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import useRequireAuth from "../hooks/useRequireAuth";
 import Cropper from "react-easy-crop";
 
 import backgroundImg from "../assets/gymproIcon.png";
@@ -36,6 +37,7 @@ import BackButton from "../components/BackButton";
 import AppSnackbar from "../components/AppSnackbar";
 
 export default function CreateUserScreen() {
+  useRequireAuth();
   const [users, setUsers] = useState([]);
   const [selectedId, setSelectedId] = useState("new");
   const [currentUser, setCurrentUser] = useState(null);

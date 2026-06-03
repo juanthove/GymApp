@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
+import useRequireAuth from "../hooks/useRequireAuth";
 
 import CountUpImport from "react-countup";
 const CountUp = CountUpImport?.default || CountUpImport;
@@ -85,6 +86,7 @@ function shiftDateIso(dateIso, days) {
 }
 
 export default function StatsScreen() {
+  useRequireAuth();
   const { userId } = useParams();
   const [loadingVolume, setLoadingVolume] = useState(false);
   const [loadingPR, setLoadingPR] = useState(false);

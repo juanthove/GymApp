@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import useRequireAuth from "../hooks/useRequireAuth";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -17,6 +18,7 @@ import BackButton from "../components/BackButton";
 import AppSnackbar from "../components/AppSnackbar";
 
 export default function CreateExerciseReminderRuleScreen() {
+  useRequireAuth();
   const [rules, setRules] = useState([]);
   const [exercises, setExercises] = useState([]);
 

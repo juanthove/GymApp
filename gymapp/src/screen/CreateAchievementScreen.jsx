@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import useRequireAuth from "../hooks/useRequireAuth";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -38,6 +39,7 @@ import AppSnackbar from "../components/AppSnackbar";
 import FileUploadField from "../components/FileUploadField";
 
 export default function CreateAchievementScreen() {
+  useRequireAuth();
   const [levels, setLevels] = useState([]);
   const [exercises, setExercises] = useState([]);
 

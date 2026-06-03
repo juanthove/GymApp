@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import useRequireAuth from "../hooks/useRequireAuth";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -27,6 +28,7 @@ import SortableList from "../components/sortable/SortableList";
 import SortableItem from "../components/sortable/SortableItem";
 
 export default function CreateUserLevel() {
+  useRequireAuth();
   const [levels, setLevels] = useState([]);
   const [newName, setNewName] = useState("");
 
