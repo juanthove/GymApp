@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 
+import backgroundImg from "../assets/gymproIcon.png";
+
 import { getUsers, getCurrentWorkout, setCurrentWorkout, getUserById } from "../services/userService";
 import { getExercises } from "../services/exerciseService";
 import {
@@ -485,333 +487,370 @@ export default function CreateWorkoutScreen() {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 6 }}>
-      <Paper sx={{ p: 4 }}>
-        <Box
-          sx={{
-            position: "relative",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            mb: 2,
-          }}
-        >
-          {/* Flecha a la izquierda */}
-          <Box sx={{ position: "absolute", left: 0 }}>
-            <BackButton to="/admin" sx={{ color: "black" }} />
-          </Box>
+    <Box
+      sx={{
+        position: "relative",
+        minHeight: "100vh",
+        overflow: "hidden",
+      }}
+    >
+      {/* BACKGROUND */}
 
-          {/* Título centrado REAL */}
-          <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
-            Crear Planilla
-          </Typography>
-        </Box>
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `url(${backgroundImg})`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          backgroundSize: "contain",
 
-        <Stack spacing={3}>
-          <TextField
-            select
-            label="Usuario"
-            value={selectedUser}
-            onChange={async (e) => {
-              const userId = e.target.value;
-              setExpandedDays([]);
+          "@media (min-aspect-ratio: 16/9)": {
+            backgroundSize: "90%",
+          },
 
-              requestAnimationFrame(async () => {
-                resetForm();
+          zIndex: 0,
+        }}
+      />
 
-                setSelectedUser(userId);
-
-                if (userId) {
-                  await checkCurrentWorkout(userId);
-
-                  const user = await getUserById(userId);
-                  setGymDaysPerWeek(user.gymDaysPerWeek || 0);
-                }
-              });
+      {/* OVERLAY */}
+      <Box
+        sx={{
+          position: "fixed",
+          inset: 0,
+          backgroundColor: "rgba(44, 44, 44, 0.4)",
+          backdropFilter: "blur(6px)",
+          zIndex: 1,
+        }}
+      />
+      <Container maxWidth="md" sx={{ mt: 4, mb: 6, position: "relative", zIndex: 2 }}>
+        <Paper sx={{ p: 4 }}>
+          <Box
+            sx={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mb: 2,
             }}
           >
-            <MenuItem value="" disabled>
-              Seleccionar usuario
-            </MenuItem>
+            {/* Flecha a la izquierda */}
+            <Box sx={{ position: "absolute", left: 0 }}>
+              <BackButton to="/admin" sx={{ color: "black" }} />
+            </Box>
 
-            {users.map((u) => (
-              <MenuItem key={u.id} value={u.id}>
-                {u.name} {u.surname}
-              </MenuItem>
-            ))}
-          </TextField>
+            {/* Título centrado REAL */}
+            <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
+              Crear Planilla
+            </Typography>
+          </Box>
 
-          {selectedUser && (
-            <TextField select label="Origen" value={source} onChange={(e) => handleSourceChange(e.target.value)}>
-              <MenuItem value="empty">Planilla vacía</MenuItem>
-
-              {hasCurrentWorkout && <MenuItem value="last">Última planilla</MenuItem>}
-
-              {templates.map((t) => (
-                <MenuItem key={t.id} value={`template-${t.id}`}>
-                  {t.name}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
-
-          {gymDaysPerWeek > 0 && (
-            <Stack spacing={1}>
-              <Typography variant="body2" color={days.length > gymDaysPerWeek ? "error" : "textPrimary"}>
-                Días de la planilla: {days.length} / {gymDaysPerWeek}
-              </Typography>
-
-              <LinearProgress
-                variant="determinate"
-                color={days.length > gymDaysPerWeek ? "error" : "primary"}
-                value={Math.min((days.length / gymDaysPerWeek) * 100, 100)}
-              />
-            </Stack>
-          )}
-
-          <TextField
-            label="Nombre de la planilla"
-            value={workoutName}
-            onChange={(e) => setWorkoutName(e.target.value)}
-          />
-
-          <Stack direction="row" spacing={2}>
-            <TextField
-              type="date"
-              label="Fecha inicio"
-              InputLabelProps={{ shrink: true }}
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-
-            <TextField
-              type="date"
-              label="Fecha fin"
-              InputLabelProps={{ shrink: true }}
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
-
+          <Stack spacing={3}>
             <TextField
               select
-              label="Repeticiones globales"
-              value={globalReps}
-              onChange={(e) => setGlobalReps(e.target.value)}
-              sx={{ width: 202 }}
+              label="Usuario"
+              value={selectedUser}
+              onChange={async (e) => {
+                const userId = e.target.value;
+                setExpandedDays([]);
+
+                requestAnimationFrame(async () => {
+                  resetForm();
+
+                  setSelectedUser(userId);
+
+                  if (userId) {
+                    await checkCurrentWorkout(userId);
+
+                    const user = await getUserById(userId);
+                    setGymDaysPerWeek(user.gymDaysPerWeek || 0);
+                  }
+                });
+              }}
             >
-              {repOptions.map((opt) => (
-                <MenuItem key={opt.value} value={opt.value}>
-                  {opt.label}
+              <MenuItem value="" disabled>
+                Seleccionar usuario
+              </MenuItem>
+
+              {users.map((u) => (
+                <MenuItem key={u.id} value={u.id}>
+                  {u.name} {u.surname}
                 </MenuItem>
               ))}
             </TextField>
-          </Stack>
 
-          {days.map((day, dayIndex) => (
-            <Accordion
-              key={day.id}
-              expanded={expandedDays.includes(day.id)}
-              onChange={(event, isExpanded) => {
-                if (isExpanded) {
-                  setExpandedDays((prev) => [...prev, day.id]);
-                } else {
-                  setExpandedDays((prev) => prev.filter((id) => id !== day.id));
-                }
-              }}
-            >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>
-                  Día {dayIndex + 1} - {day.name}
-                </Typography>
-              </AccordionSummary>
+            {selectedUser && (
+              <TextField select label="Origen" value={source} onChange={(e) => handleSourceChange(e.target.value)}>
+                <MenuItem value="empty">Planilla vacía</MenuItem>
 
-              <AccordionDetails>
-                <Stack spacing={2}>
-                  <Stack direction="row" justifyContent="space-between">
-                    <Typography variant="h6">Configuración del día</Typography>
+                {hasCurrentWorkout && <MenuItem value="last">Última planilla</MenuItem>}
 
-                    <Stack direction="row">
-                      <IconButton onClick={() => moveDay(dayIndex, -1)}>
-                        <ArrowUpwardIcon />
-                      </IconButton>
-
-                      <IconButton onClick={() => moveDay(dayIndex, 1)}>
-                        <ArrowDownwardIcon />
-                      </IconButton>
-
-                      <IconButton onClick={() => duplicateDay(dayIndex)}>
-                        <FileCopyIcon />
-                      </IconButton>
-
-                      <IconButton onClick={() => removeDay(dayIndex)}>
-                        <DeleteIcon color="error" />
-                      </IconButton>
-                    </Stack>
-                  </Stack>
-
-                  <TextField
-                    label="Nombre del día"
-                    value={day.name}
-                    onChange={(e) => updateDayField(dayIndex, "name", e.target.value)}
-                  />
-
-                  <MuscleChips muscles={day.muscles} />
-
-                  <FileUploadField
-                    label="Imagen del día"
-                    accept="image/*"
-                    setFile={(file) => {
-                      const updated = [...days];
-                      updated[dayIndex].image = file;
-                      setDays(updated);
-                    }}
-                    preview={day.preview}
-                    setPreview={(preview) => {
-                      const updated = [...days];
-                      updated[dayIndex].preview = preview;
-                      setDays(updated);
-                    }}
-                    existingUrl={day.preview && !day.preview.startsWith("blob:") ? day.preview : null}
-                    deleteFlag={day.deleteImage}
-                    setDeleteFlag={(value) => {
-                      const updated = [...days];
-                      updated[dayIndex].deleteImage = value;
-
-                      if (value) {
-                        updated[dayIndex].image = null;
-                      }
-
-                      setDays(updated);
-                    }}
-                    renderPreview={(src) => (
-                      <img
-                        src={src}
-                        style={{
-                          maxWidth: "300px",
-                          borderRadius: "8px",
-                        }}
-                      />
-                    )}
-                  />
-
-                  <Autocomplete
-                    options={exercises}
-                    getOptionLabel={(option) => option.name}
-                    value={selectedExercises[dayIndex] || null}
-                    onChange={(event, value) =>
-                      setSelectedExercises((prev) => ({
-                        ...prev,
-                        [dayIndex]: value,
-                      }))
-                    }
-                    renderInput={(params) => <TextField {...params} label="Seleccionar ejercicio" />}
-                  />
-
-                  <Button variant="contained" color="success" onClick={() => addExerciseToDay(dayIndex)}>
-                    Agregar ejercicio
-                  </Button>
-
-                  <Divider />
-
-                  <SortableList
-                    items={day.exercises}
-                    getId={(item) => item.id}
-                    setItems={(newItems) => {
-                      const updated = [...days];
-                      updated[dayIndex].exercises = newItems.map((ex, i) => ({
-                        ...ex,
-                        order: i + 1,
-                      }));
-
-                      updated[dayIndex].muscles = calculateDayMuscles(updated[dayIndex].exercises);
-
-                      setDays(updated);
-                    }}
-                  >
-                    {day.exercises.map((ex, i) => {
-                      const exercise = exercisesById[ex.exerciseId];
-
-                      return (
-                        <SortableItem key={ex.id} id={ex.id}>
-                          <Card>
-                            <CardContent>
-                              <Stack direction="row" alignItems="center" justifyContent="space-between">
-                                <Stack direction="row" spacing={2} alignItems="center">
-                                  <Typography sx={{ width: 200 }}>
-                                    {i + 1}. {exercise?.name}
-                                  </Typography>
-
-                                  <TextField
-                                    type="number"
-                                    label="Peso"
-                                    size="small"
-                                    value={ex.weight}
-                                    onChange={(e) => updateExerciseField(dayIndex, i, "weight", e.target.value)}
-                                  />
-
-                                  <IconButton onClick={() => removeExerciseFromDay(dayIndex, i)}>
-                                    <DeleteIcon color="error" />
-                                  </IconButton>
-                                </Stack>
-
-                                {/* HANDLE */}
-                                <Box
-                                  sx={{
-                                    display: "grid",
-                                    gridTemplateColumns: "repeat(2, 8px)",
-                                    gap: "5px",
-                                    cursor: "grab",
-                                    mr: 3,
-                                  }}
-                                >
-                                  {[...Array(6)].map((_, i) => (
-                                    <Box
-                                      key={i}
-                                      sx={{
-                                        width: 7,
-                                        height: 7,
-                                        backgroundColor: "#888",
-                                        borderRadius: "50%",
-                                      }}
-                                    />
-                                  ))}
-                                </Box>
-                              </Stack>
-                            </CardContent>
-                          </Card>
-                        </SortableItem>
-                      );
-                    })}
-                  </SortableList>
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
-          ))}
-
-          <Button
-            variant="contained"
-            color="success"
-            onClick={addDay}
-            disabled={!selectedUser || (gymDaysPerWeek && days.length >= gymDaysPerWeek)}
-          >
-            Agregar día
-          </Button>
-
-          <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
-
-          <Stack direction="row" spacing={2}>
-            {isLastWorkout && (
-              <Button variant="contained" color="success" onClick={handleUpdateWorkout}>
-                Actualizar última planilla
-              </Button>
+                {templates.map((t) => (
+                  <MenuItem key={t.id} value={`template-${t.id}`}>
+                    {t.name}
+                  </MenuItem>
+                ))}
+              </TextField>
             )}
 
-            <Button variant="contained" color="success" onClick={handleCreateWorkout}>
-              Crear nueva planilla
+            {gymDaysPerWeek > 0 && (
+              <Stack spacing={1}>
+                <Typography variant="body2" color={days.length > gymDaysPerWeek ? "error" : "textPrimary"}>
+                  Días de la planilla: {days.length} / {gymDaysPerWeek}
+                </Typography>
+
+                <LinearProgress
+                  variant="determinate"
+                  color={days.length > gymDaysPerWeek ? "error" : "primary"}
+                  value={Math.min((days.length / gymDaysPerWeek) * 100, 100)}
+                />
+              </Stack>
+            )}
+
+            <TextField
+              label="Nombre de la planilla"
+              value={workoutName}
+              onChange={(e) => setWorkoutName(e.target.value)}
+            />
+
+            <Stack direction="row" spacing={2}>
+              <TextField
+                type="date"
+                label="Fecha inicio"
+                InputLabelProps={{ shrink: true }}
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+
+              <TextField
+                type="date"
+                label="Fecha fin"
+                InputLabelProps={{ shrink: true }}
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+
+              <TextField
+                select
+                label="Repeticiones globales"
+                value={globalReps}
+                onChange={(e) => setGlobalReps(e.target.value)}
+                sx={{ width: 202 }}
+              >
+                {repOptions.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Stack>
+
+            {days.map((day, dayIndex) => (
+              <Accordion
+                key={day.id}
+                expanded={expandedDays.includes(day.id)}
+                onChange={(event, isExpanded) => {
+                  if (isExpanded) {
+                    setExpandedDays((prev) => [...prev, day.id]);
+                  } else {
+                    setExpandedDays((prev) => prev.filter((id) => id !== day.id));
+                  }
+                }}
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography>
+                    Día {dayIndex + 1} - {day.name}
+                  </Typography>
+                </AccordionSummary>
+
+                <AccordionDetails>
+                  <Stack spacing={2}>
+                    <Stack direction="row" justifyContent="space-between">
+                      <Typography variant="h6">Configuración del día</Typography>
+
+                      <Stack direction="row">
+                        <IconButton onClick={() => moveDay(dayIndex, -1)}>
+                          <ArrowUpwardIcon />
+                        </IconButton>
+
+                        <IconButton onClick={() => moveDay(dayIndex, 1)}>
+                          <ArrowDownwardIcon />
+                        </IconButton>
+
+                        <IconButton onClick={() => duplicateDay(dayIndex)}>
+                          <FileCopyIcon />
+                        </IconButton>
+
+                        <IconButton onClick={() => removeDay(dayIndex)}>
+                          <DeleteIcon color="error" />
+                        </IconButton>
+                      </Stack>
+                    </Stack>
+
+                    <TextField
+                      label="Nombre del día"
+                      value={day.name}
+                      onChange={(e) => updateDayField(dayIndex, "name", e.target.value)}
+                    />
+
+                    <MuscleChips muscles={day.muscles} />
+
+                    <FileUploadField
+                      label="Imagen del día"
+                      accept="image/*"
+                      setFile={(file) => {
+                        const updated = [...days];
+                        updated[dayIndex].image = file;
+                        setDays(updated);
+                      }}
+                      preview={day.preview}
+                      setPreview={(preview) => {
+                        const updated = [...days];
+                        updated[dayIndex].preview = preview;
+                        setDays(updated);
+                      }}
+                      existingUrl={day.preview && !day.preview.startsWith("blob:") ? day.preview : null}
+                      deleteFlag={day.deleteImage}
+                      setDeleteFlag={(value) => {
+                        const updated = [...days];
+                        updated[dayIndex].deleteImage = value;
+
+                        if (value) {
+                          updated[dayIndex].image = null;
+                        }
+
+                        setDays(updated);
+                      }}
+                      renderPreview={(src) => (
+                        <img
+                          src={src}
+                          style={{
+                            maxWidth: "300px",
+                            borderRadius: "8px",
+                          }}
+                        />
+                      )}
+                    />
+
+                    <Autocomplete
+                      options={exercises}
+                      getOptionLabel={(option) => option.name}
+                      value={selectedExercises[dayIndex] || null}
+                      onChange={(event, value) =>
+                        setSelectedExercises((prev) => ({
+                          ...prev,
+                          [dayIndex]: value,
+                        }))
+                      }
+                      renderInput={(params) => <TextField {...params} label="Seleccionar ejercicio" />}
+                    />
+
+                    <Button variant="contained" color="success" onClick={() => addExerciseToDay(dayIndex)}>
+                      Agregar ejercicio
+                    </Button>
+
+                    <Divider />
+
+                    <SortableList
+                      items={day.exercises}
+                      getId={(item) => item.id}
+                      setItems={(newItems) => {
+                        const updated = [...days];
+                        updated[dayIndex].exercises = newItems.map((ex, i) => ({
+                          ...ex,
+                          order: i + 1,
+                        }));
+
+                        updated[dayIndex].muscles = calculateDayMuscles(updated[dayIndex].exercises);
+
+                        setDays(updated);
+                      }}
+                    >
+                      {day.exercises.map((ex, i) => {
+                        const exercise = exercisesById[ex.exerciseId];
+
+                        return (
+                          <SortableItem key={ex.id} id={ex.id}>
+                            <Card>
+                              <CardContent>
+                                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                                  <Stack direction="row" spacing={2} alignItems="center">
+                                    <Typography sx={{ width: 200 }}>
+                                      {i + 1}. {exercise?.name}
+                                    </Typography>
+
+                                    <TextField
+                                      type="number"
+                                      label="Peso"
+                                      size="small"
+                                      value={ex.weight}
+                                      onChange={(e) => updateExerciseField(dayIndex, i, "weight", e.target.value)}
+                                    />
+
+                                    <IconButton onClick={() => removeExerciseFromDay(dayIndex, i)}>
+                                      <DeleteIcon color="error" />
+                                    </IconButton>
+                                  </Stack>
+
+                                  {/* HANDLE */}
+                                  <Box
+                                    sx={{
+                                      display: "grid",
+                                      gridTemplateColumns: "repeat(2, 8px)",
+                                      gap: "5px",
+                                      cursor: "grab",
+                                      mr: 3,
+                                    }}
+                                  >
+                                    {[...Array(6)].map((_, i) => (
+                                      <Box
+                                        key={i}
+                                        sx={{
+                                          width: 7,
+                                          height: 7,
+                                          backgroundColor: "#888",
+                                          borderRadius: "50%",
+                                        }}
+                                      />
+                                    ))}
+                                  </Box>
+                                </Stack>
+                              </CardContent>
+                            </Card>
+                          </SortableItem>
+                        );
+                      })}
+                    </SortableList>
+                  </Stack>
+                </AccordionDetails>
+              </Accordion>
+            ))}
+
+            <Button
+              variant="contained"
+              color="success"
+              onClick={addDay}
+              disabled={!selectedUser || (gymDaysPerWeek && days.length >= gymDaysPerWeek)}
+            >
+              Agregar día
             </Button>
+
+            <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
+
+            <Stack direction="row" spacing={2}>
+              {isLastWorkout && (
+                <Button variant="contained" color="success" onClick={handleUpdateWorkout}>
+                  Actualizar última planilla
+                </Button>
+              )}
+
+              <Button variant="contained" color="success" onClick={handleCreateWorkout}>
+                Crear nueva planilla
+              </Button>
+            </Stack>
           </Stack>
-        </Stack>
-      </Paper>
-    </Container>
+        </Paper>
+      </Container>
+    </Box>
   );
 }

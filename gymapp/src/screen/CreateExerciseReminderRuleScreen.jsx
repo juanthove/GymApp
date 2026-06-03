@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 
+import backgroundImg from "../assets/gymproIcon.png";
+
 import { getExercises } from "../services/exerciseService";
 
 import {
@@ -127,79 +129,121 @@ export default function CreateExerciseReminderRuleScreen() {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 4, mb: 6 }}>
-      <Paper sx={{ p: 4 }}>
-        <Box
-          sx={{
-            position: "relative",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            mb: 2,
-          }}
-        >
-          {/* Flecha a la izquierda */}
-          <Box sx={{ position: "absolute", left: 0 }}>
-            <BackButton to="/admin" sx={{ color: "black" }} />
+    <Box
+      sx={{
+        position: "relative",
+        minHeight: "100vh",
+        overflow: "hidden",
+      }}
+    >
+      {/* BACKGROUND */}
+
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `url(${backgroundImg})`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          backgroundSize: "contain",
+
+          "@media (min-aspect-ratio: 16/9)": {
+            backgroundSize: "90%",
+          },
+
+          zIndex: 0,
+        }}
+      />
+
+      {/* OVERLAY */}
+      <Box
+        sx={{
+          position: "fixed",
+          inset: 0,
+          backgroundColor: "rgba(44, 44, 44, 0.4)",
+          backdropFilter: "blur(6px)",
+          zIndex: 1,
+        }}
+      />
+      <Container maxWidth="sm" sx={{ mt: 4, mb: 6, position: "relative", zIndex: 2 }}>
+        <Paper sx={{ p: 4 }}>
+          <Box
+            sx={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mb: 2,
+            }}
+          >
+            {/* Flecha a la izquierda */}
+            <Box sx={{ position: "absolute", left: 0 }}>
+              <BackButton to="/admin" sx={{ color: "black" }} />
+            </Box>
+
+            {/* Título centrado */}
+            <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
+              Avisos de ejercicios
+            </Typography>
           </Box>
 
-          {/* Título centrado */}
-          <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
-            Avisos de ejercicios
-          </Typography>
-        </Box>
+          <Stack spacing={3}>
+            {/* SELECT RULE */}
+            <TextField
+              select
+              label="Seleccionar regla"
+              value={selectedId}
+              onChange={(e) => handleSelect(e.target.value)}
+            >
+              <MenuItem value="new">Nueva regla</MenuItem>
 
-        <Stack spacing={3}>
-          {/* SELECT RULE */}
-          <TextField select label="Seleccionar regla" value={selectedId} onChange={(e) => handleSelect(e.target.value)}>
-            <MenuItem value="new">Nueva regla</MenuItem>
+              {rules.map((r) => {
+                const ex = exercises.find((e) => e.id === r.exerciseId);
 
-            {rules.map((r) => {
-              const ex = exercises.find((e) => e.id === r.exerciseId);
+                return (
+                  <MenuItem key={r.id} value={r.id}>
+                    {ex ? ex.name : `Ejercicio ${r.exerciseId}`} — Cada {r.weeks} semanas
+                  </MenuItem>
+                );
+              })}
+            </TextField>
 
-              return (
-                <MenuItem key={r.id} value={r.id}>
-                  {ex ? ex.name : `Ejercicio ${r.exerciseId}`} — Cada {r.weeks} semanas
+            {/* SELECT EXERCISE */}
+            <TextField select label="Ejercicio" value={exerciseId} onChange={(e) => setExerciseId(e.target.value)}>
+              {exercises.map((ex) => (
+                <MenuItem key={ex.id} value={ex.id}>
+                  {ex.name}
                 </MenuItem>
-              );
-            })}
-          </TextField>
+              ))}
+            </TextField>
 
-          {/* SELECT EXERCISE */}
-          <TextField select label="Ejercicio" value={exerciseId} onChange={(e) => setExerciseId(e.target.value)}>
-            {exercises.map((ex) => (
-              <MenuItem key={ex.id} value={ex.id}>
-                {ex.name}
-              </MenuItem>
-            ))}
-          </TextField>
+            {/* WEEKS INPUT */}
+            <TextField
+              label="Cada cuántas semanas"
+              type="number"
+              value={weeks}
+              onChange={(e) => setWeeks(e.target.value)}
+              inputProps={{ min: 1 }}
+            />
 
-          {/* WEEKS INPUT */}
-          <TextField
-            label="Cada cuántas semanas"
-            type="number"
-            value={weeks}
-            onChange={(e) => setWeeks(e.target.value)}
-            inputProps={{ min: 1 }}
-          />
+            {/* BOTONES */}
+            <Stack direction="row" spacing={2}>
+              {currentRule && (
+                <Button variant="contained" color="error" onClick={handleDelete}>
+                  Eliminar
+                </Button>
+              )}
 
-          {/* BOTONES */}
-          <Stack direction="row" spacing={2}>
-            {currentRule && (
-              <Button variant="contained" color="error" onClick={handleDelete}>
-                Eliminar
+              <Button variant="contained" color="success" onClick={handleSubmit}>
+                {currentRule ? "Actualizar" : "Crear"}
               </Button>
-            )}
-
-            <Button variant="contained" color="success" onClick={handleSubmit}>
-              {currentRule ? "Actualizar" : "Crear"}
-            </Button>
+            </Stack>
           </Stack>
-        </Stack>
-      </Paper>
+        </Paper>
 
-      {/* SNACKBAR */}
-      <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
-    </Container>
+        {/* SNACKBAR */}
+        <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
+      </Container>
+    </Box>
   );
 }

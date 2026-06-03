@@ -9,8 +9,6 @@ import com.gymapp.repository.WorkoutDayRepository;
 import com.gymapp.repository.WorkoutExerciseRepository;
 import com.gymapp.repository.WorkoutRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,14 +19,9 @@ import java.util.List;
  * El nuevo workout mantiene los mismos días y ejercicios. Para cada ejercicio,
  * el peso se establece en nextWeight si existe; de lo contrario, se mantiene el
  * peso actual.
- *
- * Para ejecutar, inicia la aplicación con la propiedad:
- * script.copy-last-workouts=true
- * Ejemplo: java -jar app.jar --script.copy-last-workouts=true
  */
 @Component
-@ConditionalOnProperty(name = "script.copy-last-workouts", havingValue = "true")
-public class CopyLastWorkoutsScript implements CommandLineRunner {
+public class CopyLastWorkoutsScript {
 
     @Autowired
     private UserRepository userRepository;
@@ -42,9 +35,8 @@ public class CopyLastWorkoutsScript implements CommandLineRunner {
     @Autowired
     private WorkoutExerciseRepository workoutExerciseRepository;
 
-    @Override
     @Transactional
-    public void run(String... args) {
+    public void execute() {
         List<User> users = userRepository.findAll();
 
         for (User user : users) {

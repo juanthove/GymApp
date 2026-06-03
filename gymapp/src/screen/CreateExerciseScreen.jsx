@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import backgroundImg from "../assets/gymproIcon.png";
+
 import {
   getExercises,
   createExercise,
@@ -214,131 +216,168 @@ export default function CreateExerciseScreen() {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 6 }}>
-      <Paper sx={{ p: 4 }}>
-        <Box
-          sx={{
-            position: "relative",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            mb: 2,
-          }}
-        >
-          {/* Flecha a la izquierda */}
-          <Box sx={{ position: "absolute", left: 0 }}>
-            <BackButton to="/admin" sx={{ color: "black" }} />
+    <Box
+      sx={{
+        position: "relative",
+        minHeight: "100vh",
+        overflow: "hidden",
+      }}
+    >
+      {/* BACKGROUND */}
+
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `url(${backgroundImg})`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          backgroundSize: "contain",
+
+          "@media (min-aspect-ratio: 16/9)": {
+            backgroundSize: "90%",
+          },
+
+          zIndex: 0,
+        }}
+      />
+
+      {/* OVERLAY */}
+      <Box
+        sx={{
+          position: "fixed",
+          inset: 0,
+          backgroundColor: "rgba(44, 44, 44, 0.4)",
+          backdropFilter: "blur(6px)",
+          zIndex: 1,
+        }}
+      />
+      <Container maxWidth="md" sx={{ mt: 4, mb: 6, position: "relative", zIndex: 2 }}>
+        <Paper sx={{ p: 4 }}>
+          <Box
+            sx={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mb: 2,
+            }}
+          >
+            {/* Flecha a la izquierda */}
+            <Box sx={{ position: "absolute", left: 0 }}>
+              <BackButton to="/admin" sx={{ color: "black" }} />
+            </Box>
+
+            {/* Título centrado */}
+            <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
+              Ejercicios
+            </Typography>
           </Box>
 
-          {/* Título centrado */}
-          <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
-            Ejercicios
-          </Typography>
-        </Box>
+          <Stack spacing={3}>
+            <TextField
+              select
+              label="Seleccionar ejercicio"
+              value={selectedId}
+              onChange={(e) => handleSelect(e.target.value)}
+            >
+              <MenuItem value="new">Nuevo ejercicio</MenuItem>
 
-        <Stack spacing={3}>
-          <TextField
-            select
-            label="Seleccionar ejercicio"
-            value={selectedId}
-            onChange={(e) => handleSelect(e.target.value)}
-          >
-            <MenuItem value="new">Nuevo ejercicio</MenuItem>
+              {exercises.map((ex) => (
+                <MenuItem key={ex.id} value={ex.id}>
+                  {ex.name} ({formatExerciseType(ex.type)})
+                </MenuItem>
+              ))}
+            </TextField>
 
-            {exercises.map((ex) => (
-              <MenuItem key={ex.id} value={ex.id}>
-                {ex.name} ({formatExerciseType(ex.type)})
-              </MenuItem>
-            ))}
-          </TextField>
+            <TextField label="Nombre" value={name} onChange={(e) => setName(e.target.value)} />
 
-          <TextField label="Nombre" value={name} onChange={(e) => setName(e.target.value)} />
+            <TextField
+              label="Descripción"
+              multiline
+              minRows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
 
-          <TextField
-            label="Descripción"
-            multiline
-            minRows={3}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
+            <TextField select label="Músculo trabajado" value={muscle} onChange={(e) => setMuscle(e.target.value)}>
+              {muscleOptions.map((m) => (
+                <MenuItem key={m.value} value={m.value}>
+                  {m.label}
+                </MenuItem>
+              ))}
+            </TextField>
 
-          <TextField select label="Músculo trabajado" value={muscle} onChange={(e) => setMuscle(e.target.value)}>
-            {muscleOptions.map((m) => (
-              <MenuItem key={m.value} value={m.value}>
-                {m.label}
-              </MenuItem>
-            ))}
-          </TextField>
+            {/* SELECT TIPO DE EJERCICIO */}
 
-          {/* SELECT TIPO DE EJERCICIO */}
+            <TextField select label="Tipo de ejercicio" value={type} onChange={(e) => setType(e.target.value)}>
+              <MenuItem value="PRIMARY">Primario</MenuItem>
 
-          <TextField select label="Tipo de ejercicio" value={type} onChange={(e) => setType(e.target.value)}>
-            <MenuItem value="PRIMARY">Primario</MenuItem>
+              <MenuItem value="SECONDARY">Secundario</MenuItem>
 
-            <MenuItem value="SECONDARY">Secundario</MenuItem>
+              <MenuItem value="TERTIARY">Terciario</MenuItem>
 
-            <MenuItem value="TERTIARY">Terciario</MenuItem>
+              <MenuItem value="ABDOMINAL">Abdominal</MenuItem>
+            </TextField>
 
-            <MenuItem value="ABDOMINAL">Abdominal</MenuItem>
-          </TextField>
+            {/* ICON */}
 
-          {/* ICON */}
+            <FileUploadField
+              label="Icono"
+              accept="image/*"
+              setFile={setIcon}
+              preview={iconPreview}
+              setPreview={setIconPreview}
+              existingUrl={currentExercise?.icon && `/api/exercises/icon/${currentExercise.icon}`}
+              deleteFlag={deleteIcon}
+              setDeleteFlag={setDeleteIcon}
+              renderPreview={(src) => <img src={src} style={{ maxWidth: "100px", borderRadius: "8px" }} />}
+            />
 
-          <FileUploadField
-            label="Icono"
-            accept="image/*"
-            setFile={setIcon}
-            preview={iconPreview}
-            setPreview={setIconPreview}
-            existingUrl={currentExercise?.icon && `/api/exercises/icon/${currentExercise.icon}`}
-            deleteFlag={deleteIcon}
-            setDeleteFlag={setDeleteIcon}
-            renderPreview={(src) => <img src={src} style={{ maxWidth: "100px", borderRadius: "8px" }} />}
-          />
+            {/* IMAGE */}
 
-          {/* IMAGE */}
+            <FileUploadField
+              label="Imagen"
+              accept="image/*"
+              setFile={setImage}
+              preview={imagePreview}
+              setPreview={setImagePreview}
+              existingUrl={currentExercise?.image && getExerciseImageUrl(currentExercise.image)}
+              deleteFlag={deleteImage}
+              setDeleteFlag={setDeleteImage}
+              renderPreview={(src) => <img src={src} style={{ maxWidth: "300px", borderRadius: "8px" }} />}
+            />
 
-          <FileUploadField
-            label="Imagen"
-            accept="image/*"
-            setFile={setImage}
-            preview={imagePreview}
-            setPreview={setImagePreview}
-            existingUrl={currentExercise?.image && getExerciseImageUrl(currentExercise.image)}
-            deleteFlag={deleteImage}
-            setDeleteFlag={setDeleteImage}
-            renderPreview={(src) => <img src={src} style={{ maxWidth: "300px", borderRadius: "8px" }} />}
-          />
+            {/* VIDEO */}
 
-          {/* VIDEO */}
+            <FileUploadField
+              label="Video"
+              accept="video/*"
+              setFile={setVideo}
+              preview={videoPreview}
+              setPreview={setVideoPreview}
+              existingUrl={currentExercise?.video && getExerciseVideoUrl(currentExercise.video)}
+              deleteFlag={deleteVideo}
+              setDeleteFlag={setDeleteVideo}
+              renderPreview={(src) => <video src={src} controls style={{ maxWidth: "400px" }} />}
+            />
 
-          <FileUploadField
-            label="Video"
-            accept="video/*"
-            setFile={setVideo}
-            preview={videoPreview}
-            setPreview={setVideoPreview}
-            existingUrl={currentExercise?.video && getExerciseVideoUrl(currentExercise.video)}
-            deleteFlag={deleteVideo}
-            setDeleteFlag={setDeleteVideo}
-            renderPreview={(src) => <video src={src} controls style={{ maxWidth: "400px" }} />}
-          />
+            <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
 
-          <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
+            <Stack direction="row" spacing={2}>
+              {selectedId !== "new" && (
+                <Button variant="contained" color="error" onClick={handleDelete}>
+                  Eliminar ejercicio
+                </Button>
+              )}
 
-          <Stack direction="row" spacing={2}>
-            {selectedId !== "new" && (
-              <Button variant="contained" color="error" onClick={handleDelete}>
-                Eliminar ejercicio
+              <Button variant="contained" color="success" onClick={handleSubmit}>
+                {selectedId === "new" ? "Registrar ejercicio" : "Actualizar ejercicio"}
               </Button>
-            )}
-
-            <Button variant="contained" color="success" onClick={handleSubmit}>
-              {selectedId === "new" ? "Registrar ejercicio" : "Actualizar ejercicio"}
-            </Button>
+            </Stack>
           </Stack>
-        </Stack>
-      </Paper>
-    </Container>
+        </Paper>
+      </Container>
+    </Box>
   );
 }

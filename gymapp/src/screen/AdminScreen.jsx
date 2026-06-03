@@ -97,7 +97,7 @@ export default function AdminScreen() {
           backgroundImage: `url(${backgroundImg})`,
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center",
-          backgroundSize: "cover",
+          backgroundSize: "contain",
 
           "@media (min-aspect-ratio: 16/9)": {
             backgroundSize: "90%",

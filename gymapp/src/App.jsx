@@ -8,7 +8,7 @@ import CreateExerciseReminderRule from "./screen/CreateExerciseReminderRuleScree
 import CreateUserLevelScreen from "./screen/CreateUserLevelScreen";
 import CreateAchievementScreen from "./screen/CreateAchievementScreen";
 import AdminScreen from "./screen/AdminScreen";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 
 import HomeScreen from "./screen/HomeScreen";
@@ -19,6 +19,28 @@ import StatsScreen from "./screen/StatsScreen";
 import AchievementsScreen from "./screen/AchievementsScreen";
 
 import LoginScreen from "./screen/LoginScreen";
+
+function AdminRoute({ children }) {
+  if (typeof window === "undefined") {
+    return children;
+  }
+
+  const raw = localStorage.getItem("systemUser");
+  if (!raw) {
+    return <Navigate to="/login" replace />;
+  }
+
+  try {
+    const currentUser = JSON.parse(raw);
+    if (currentUser?.role !== "ADMIN") {
+      return <Navigate to="/home" replace />;
+    }
+  } catch {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
 
 function App() {
   return (
@@ -32,16 +54,86 @@ function App() {
         <Route path="/stats/:userId" element={<StatsScreen />} />
         <Route path="/achievements/:userId" element={<AchievementsScreen />} />
 
-        <Route path="/admin" element={<AdminScreen />} />
-        <Route path="/admin/users" element={<CreateUserScreen />} />
-        <Route path="/admin/system-users" element={<CreateSystemUserScreen />} />
-        <Route path="/admin/exercises" element={<CreateExerciseScreen />} />
-        <Route path="/admin/workout-templates" element={<CreateWorkoutTemplateScreen />} />
-        <Route path="/admin/workouts" element={<CreateWorkoutScreen />} />
-        <Route path="/admin/phrases" element={<CreatePhraseScreen />} />
-        <Route path="/admin/rules" element={<CreateExerciseReminderRule />} />
-        <Route path="/admin/user-level" element={<CreateUserLevelScreen />} />
-        <Route path="/admin/achievements" element={<CreateAchievementScreen />} />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminScreen />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <AdminRoute>
+              <CreateUserScreen />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/system-users"
+          element={
+            <AdminRoute>
+              <CreateSystemUserScreen />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/exercises"
+          element={
+            <AdminRoute>
+              <CreateExerciseScreen />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/workout-templates"
+          element={
+            <AdminRoute>
+              <CreateWorkoutTemplateScreen />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/workouts"
+          element={
+            <AdminRoute>
+              <CreateWorkoutScreen />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/phrases"
+          element={
+            <AdminRoute>
+              <CreatePhraseScreen />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/rules"
+          element={
+            <AdminRoute>
+              <CreateExerciseReminderRule />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/user-level"
+          element={
+            <AdminRoute>
+              <CreateUserLevelScreen />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/achievements"
+          element={
+            <AdminRoute>
+              <CreateAchievementScreen />
+            </AdminRoute>
+          }
+        />
 
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/" element={<LoginScreen />} />

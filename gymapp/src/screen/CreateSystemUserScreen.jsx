@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 
+import backgroundImg from "../assets/gymproIcon.png";
+
 import { createSystemUser, updateSystemUser, getSystemUsers, deleteSystemUser } from "../services/systemUserService";
 
 import { Container, Paper, Typography, TextField, MenuItem, Button, Stack, Box } from "@mui/material";
@@ -122,81 +124,120 @@ export default function CreateSystemUserScreen() {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 4, mb: 6 }}>
-      <Paper sx={{ p: 4 }}>
-        {/* HEADER */}
-        <Box
-          sx={{
-            position: "relative",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            mb: 2,
-          }}
-        >
-          {/* Flecha a la izquierda */}
-          <Box sx={{ position: "absolute", left: 0 }}>
-            <BackButton to="/admin" sx={{ color: "black" }} />
+    <Box
+      sx={{
+        position: "relative",
+        minHeight: "100vh",
+        overflow: "hidden",
+      }}
+    >
+      {/* BACKGROUND */}
+
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `url(${backgroundImg})`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          backgroundSize: "contain",
+
+          "@media (min-aspect-ratio: 16/9)": {
+            backgroundSize: "90%",
+          },
+
+          zIndex: 0,
+        }}
+      />
+
+      {/* OVERLAY */}
+      <Box
+        sx={{
+          position: "fixed",
+          inset: 0,
+          backgroundColor: "rgba(44, 44, 44, 0.4)",
+          backdropFilter: "blur(6px)",
+          zIndex: 1,
+        }}
+      />
+      <Container maxWidth="sm" sx={{ mt: 4, mb: 6, position: "relative", zIndex: 2 }}>
+        <Paper sx={{ p: 4 }}>
+          {/* HEADER */}
+          <Box
+            sx={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mb: 2,
+            }}
+          >
+            {/* Flecha a la izquierda */}
+            <Box sx={{ position: "absolute", left: 0 }}>
+              <BackButton to="/admin" sx={{ color: "black" }} />
+            </Box>
+
+            {/* Título centrado */}
+            <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
+              Usuarios del sistema
+            </Typography>
           </Box>
 
-          {/* Título centrado */}
-          <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
-            Usuarios del sistema
-          </Typography>
-        </Box>
+          <Stack spacing={3}>
+            {/* SELECT */}
+            <TextField
+              select
+              label="Seleccionar usuario"
+              value={selectedId}
+              onChange={(e) => handleSelect(e.target.value)}
+            >
+              <MenuItem value="new">Nuevo Usuario</MenuItem>
 
-        <Stack spacing={3}>
-          {/* SELECT */}
-          <TextField
-            select
-            label="Seleccionar usuario"
-            value={selectedId}
-            onChange={(e) => handleSelect(e.target.value)}
-          >
-            <MenuItem value="new">Nuevo Usuario</MenuItem>
+              {users.map((u) => (
+                <MenuItem key={u.id} value={u.id}>
+                  {u.username} ({u.role})
+                </MenuItem>
+              ))}
+            </TextField>
 
-            {users.map((u) => (
-              <MenuItem key={u.id} value={u.id}>
-                {u.username} ({u.role})
-              </MenuItem>
-            ))}
-          </TextField>
+            {/* USERNAME */}
+            <TextField label="Usuario" value={username} onChange={(e) => setUsername(e.target.value)} />
 
-          {/* USERNAME */}
-          <TextField label="Usuario" value={username} onChange={(e) => setUsername(e.target.value)} />
+            {/* PASSWORD */}
+            <TextField
+              label="Contraseña"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              helperText={
+                currentUser ? "Dejar vacío para mantener la contraseña actual" : "La contraseña es obligatoria"
+              }
+            />
 
-          {/* PASSWORD */}
-          <TextField
-            label="Contraseña"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            helperText={currentUser ? "Dejar vacío para mantener la contraseña actual" : "La contraseña es obligatoria"}
-          />
+            {/* ROL */}
+            <TextField select label="Tipo de usuario" value={role} onChange={(e) => setRole(e.target.value)}>
+              <MenuItem value="ADMIN">Admin</MenuItem>
+              <MenuItem value="STAFF">Común</MenuItem>
+            </TextField>
 
-          {/* ROL */}
-          <TextField select label="Tipo de usuario" value={role} onChange={(e) => setRole(e.target.value)}>
-            <MenuItem value="ADMIN">Admin</MenuItem>
-            <MenuItem value="STAFF">Común</MenuItem>
-          </TextField>
+            {/* MENSAJES */}
+            <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
 
-          {/* MENSAJES */}
-          <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
+            {/* BOTONES */}
+            <Stack direction="row" spacing={2}>
+              {currentUser && (
+                <Button variant="contained" color="error" onClick={handleDelete}>
+                  Eliminar Usuario
+                </Button>
+              )}
 
-          {/* BOTONES */}
-          <Stack direction="row" spacing={2}>
-            {currentUser && (
-              <Button variant="contained" color="error" onClick={handleDelete}>
-                Eliminar Usuario
+              <Button variant="contained" color="success" onClick={handleSubmit}>
+                {currentUser ? "Guardar cambios" : "Crear Usuario"}
               </Button>
-            )}
-
-            <Button variant="contained" color="success" onClick={handleSubmit}>
-              {currentUser ? "Guardar cambios" : "Crear Usuario"}
-            </Button>
+            </Stack>
           </Stack>
-        </Stack>
-      </Paper>
-    </Container>
+        </Paper>
+      </Container>
+    </Box>
   );
 }

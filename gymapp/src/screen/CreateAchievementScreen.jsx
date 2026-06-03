@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import backgroundImg from "../assets/gymproIcon.png";
+
 import {
   getAchievements,
   createAchievement,
@@ -274,170 +276,207 @@ export default function CreateAchievementScreen() {
   const getKey = (ach) => ach.id ?? ach.tempId;
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 6 }}>
-      <Paper sx={{ p: 4 }}>
-        <Box sx={{ position: "relative", mb: 2 }}>
-          <Box sx={{ position: "absolute", left: 0 }}>
-            <BackButton to="/admin" sx={{ color: "black" }} />
+    <Box
+      sx={{
+        position: "relative",
+        minHeight: "100vh",
+        overflow: "hidden",
+      }}
+    >
+      {/* BACKGROUND */}
+
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `url(${backgroundImg})`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          backgroundSize: "contain",
+
+          "@media (min-aspect-ratio: 16/9)": {
+            backgroundSize: "90%",
+          },
+
+          zIndex: 0,
+        }}
+      />
+
+      {/* OVERLAY */}
+      <Box
+        sx={{
+          position: "fixed",
+          inset: 0,
+          backgroundColor: "rgba(44, 44, 44, 0.4)",
+          backdropFilter: "blur(6px)",
+          zIndex: 1,
+        }}
+      />
+      <Container maxWidth="md" sx={{ mt: 4, mb: 6, position: "relative", zIndex: 2 }}>
+        <Paper sx={{ p: 4 }}>
+          <Box sx={{ position: "relative", mb: 2 }}>
+            <Box sx={{ position: "absolute", left: 0 }}>
+              <BackButton to="/admin" sx={{ color: "black" }} />
+            </Box>
+
+            <Typography variant="h4" align="center">
+              Logros
+            </Typography>
           </Box>
 
-          <Typography variant="h4" align="center">
-            Logros
-          </Typography>
-        </Box>
+          <Stack spacing={3}>
+            {levels.map((level, levelIndex) => (
+              <Accordion key={level.id}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography>{level.name}</Typography>
+                </AccordionSummary>
 
-        <Stack spacing={3}>
-          {levels.map((level, levelIndex) => (
-            <Accordion key={level.id}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>{level.name}</Typography>
-              </AccordionSummary>
-
-              <AccordionDetails>
-                <Stack spacing={2}>
-                  {level.achievements.map((ach, achIndex) => (
-                    <Accordion key={ach.id || ach.tempId}>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Stack
-                          direction="row"
-                          justifyContent="space-between"
-                          alignItems="center"
-                          sx={{ width: "100%" }}
-                        >
-                          <Typography>{ach.name || `Logro ${achIndex + 1}`}</Typography>
-
-                          <IconButton
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeAchievement(levelIndex, achIndex);
-                            }}
+                <AccordionDetails>
+                  <Stack spacing={2}>
+                    {level.achievements.map((ach, achIndex) => (
+                      <Accordion key={ach.id || ach.tempId}>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                          <Stack
+                            direction="row"
+                            justifyContent="space-between"
+                            alignItems="center"
+                            sx={{ width: "100%" }}
                           >
-                            <DeleteIcon color="error" />
-                          </IconButton>
-                        </Stack>
-                      </AccordionSummary>
+                            <Typography>{ach.name || `Logro ${achIndex + 1}`}</Typography>
 
-                      <AccordionDetails>
-                        <Stack spacing={2}>
-                          <TextField
-                            label="Nombre"
-                            value={ach.name || ""}
-                            onChange={(e) => updateAchievementField(levelIndex, achIndex, "name", e.target.value)}
-                          />
+                            <IconButton
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeAchievement(levelIndex, achIndex);
+                              }}
+                            >
+                              <DeleteIcon color="error" />
+                            </IconButton>
+                          </Stack>
+                        </AccordionSummary>
 
-                          <TextField
-                            select
-                            label="Tipo"
-                            value={ach.type || ""}
-                            onChange={(e) => handleTypeChange(levelIndex, achIndex, e.target.value)}
-                          >
-                            <MenuItem value="VOLUME">Volumen</MenuItem>
-                            <MenuItem value="CONSISTENCY">Consistencia</MenuItem>
-                            <MenuItem value="STREAK">Racha</MenuItem>
-                          </TextField>
+                        <AccordionDetails>
+                          <Stack spacing={2}>
+                            <TextField
+                              label="Nombre"
+                              value={ach.name || ""}
+                              onChange={(e) => updateAchievementField(levelIndex, achIndex, "name", e.target.value)}
+                            />
 
-                          <TextField
-                            type="number"
-                            label={
-                              ach.type === "VOLUME"
-                                ? "Peso requerido"
-                                : ach.type === "STREAK"
-                                  ? "Días consecutivos"
-                                  : "Días totales"
-                            }
-                            value={ach.requiredValue || ""}
-                            onChange={(e) =>
-                              updateAchievementField(levelIndex, achIndex, "requiredValue", e.target.value)
-                            }
-                          />
+                            <TextField
+                              select
+                              label="Tipo"
+                              value={ach.type || ""}
+                              onChange={(e) => handleTypeChange(levelIndex, achIndex, e.target.value)}
+                            >
+                              <MenuItem value="VOLUME">Volumen</MenuItem>
+                              <MenuItem value="CONSISTENCY">Consistencia</MenuItem>
+                              <MenuItem value="STREAK">Racha</MenuItem>
+                            </TextField>
 
-                          <TextField
-                            select
-                            label="Músculo"
-                            value={ach.muscle || ""}
-                            onChange={(e) => updateAchievementField(levelIndex, achIndex, "muscle", e.target.value)}
-                          >
-                            <MenuItem value="">Ninguno</MenuItem>
+                            <TextField
+                              type="number"
+                              label={
+                                ach.type === "VOLUME"
+                                  ? "Peso requerido"
+                                  : ach.type === "STREAK"
+                                    ? "Días consecutivos"
+                                    : "Días totales"
+                              }
+                              value={ach.requiredValue || ""}
+                              onChange={(e) =>
+                                updateAchievementField(levelIndex, achIndex, "requiredValue", e.target.value)
+                              }
+                            />
 
-                            {Object.entries(muscleLabels).map(([key, label]) => (
-                              <MenuItem key={key} value={key}>
-                                {label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
+                            <TextField
+                              select
+                              label="Músculo"
+                              value={ach.muscle || ""}
+                              onChange={(e) => updateAchievementField(levelIndex, achIndex, "muscle", e.target.value)}
+                            >
+                              <MenuItem value="">Ninguno</MenuItem>
 
-                          <TextField
-                            select
-                            label="Ejercicio"
-                            value={ach.exercise?.id || ""}
-                            onChange={(e) => {
-                              const ex = exercises.find((x) => x.id === e.target.value);
-                              updateAchievementField(levelIndex, achIndex, "exercise", ex);
-                            }}
-                          >
-                            <MenuItem value="">Ninguno</MenuItem>
+                              {Object.entries(muscleLabels).map(([key, label]) => (
+                                <MenuItem key={key} value={key}>
+                                  {label}
+                                </MenuItem>
+                              ))}
+                            </TextField>
 
-                            {exercises.map((ex) => (
-                              <MenuItem key={ex.id} value={ex.id}>
-                                {ex.name}
-                              </MenuItem>
-                            ))}
-                          </TextField>
+                            <TextField
+                              select
+                              label="Ejercicio"
+                              value={ach.exercise?.id || ""}
+                              onChange={(e) => {
+                                const ex = exercises.find((x) => x.id === e.target.value);
+                                updateAchievementField(levelIndex, achIndex, "exercise", ex);
+                              }}
+                            >
+                              <MenuItem value="">Ninguno</MenuItem>
 
-                          <FileUploadField
-                            label="Imagen del logro"
-                            accept="image/png,image/webp"
-                            setFile={(file) => {
-                              const key = getKey(ach);
-                              setImages((prev) => ({ ...prev, [key]: file }));
-                            }}
-                            preview={imagePreviews[getKey(ach)]}
-                            setPreview={(preview) => {
-                              const key = getKey(ach);
-                              setImagePreviews((prev) => ({ ...prev, [key]: preview }));
-                            }}
-                            existingUrl={ach.image ? `/api/achievements/image/${ach.image}` : null}
-                            deleteFlag={deleteImages[getKey(ach)] || false}
-                            setDeleteFlag={(value) => {
-                              const key = getKey(ach);
-                              setDeleteImages((prev) => ({ ...prev, [key]: value }));
-                            }}
-                            renderPreview={(src) => (
-                              <img
-                                src={src}
-                                style={{
-                                  width: "80px",
-                                  height: "80px",
-                                  objectFit: "contain",
-                                  background: "#f5f5f5",
-                                  borderRadius: "10px",
-                                  padding: "6px",
-                                }}
-                              />
-                            )}
-                          />
-                        </Stack>
-                      </AccordionDetails>
-                    </Accordion>
-                  ))}
+                              {exercises.map((ex) => (
+                                <MenuItem key={ex.id} value={ex.id}>
+                                  {ex.name}
+                                </MenuItem>
+                              ))}
+                            </TextField>
 
-                  <Button variant="contained" onClick={() => addAchievement(levelIndex)}>
-                    Agregar logro
-                  </Button>
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
-          ))}
+                            <FileUploadField
+                              label="Imagen del logro"
+                              accept="image/png,image/webp"
+                              setFile={(file) => {
+                                const key = getKey(ach);
+                                setImages((prev) => ({ ...prev, [key]: file }));
+                              }}
+                              preview={imagePreviews[getKey(ach)]}
+                              setPreview={(preview) => {
+                                const key = getKey(ach);
+                                setImagePreviews((prev) => ({ ...prev, [key]: preview }));
+                              }}
+                              existingUrl={ach.image ? `/api/achievements/image/${ach.image}` : null}
+                              deleteFlag={deleteImages[getKey(ach)] || false}
+                              setDeleteFlag={(value) => {
+                                const key = getKey(ach);
+                                setDeleteImages((prev) => ({ ...prev, [key]: value }));
+                              }}
+                              renderPreview={(src) => (
+                                <img
+                                  src={src}
+                                  style={{
+                                    width: "80px",
+                                    height: "80px",
+                                    objectFit: "contain",
+                                    background: "#f5f5f5",
+                                    borderRadius: "10px",
+                                    padding: "6px",
+                                  }}
+                                />
+                              )}
+                            />
+                          </Stack>
+                        </AccordionDetails>
+                      </Accordion>
+                    ))}
 
-          <Divider />
+                    <Button variant="contained" onClick={() => addAchievement(levelIndex)}>
+                      Agregar logro
+                    </Button>
+                  </Stack>
+                </AccordionDetails>
+              </Accordion>
+            ))}
 
-          <Button variant="contained" color="success" onClick={saveAll}>
-            Guardar todos los logros
-          </Button>
+            <Divider />
 
-          <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
-        </Stack>
-      </Paper>
-    </Container>
+            <Button variant="contained" color="success" onClick={saveAll}>
+              Guardar todos los logros
+            </Button>
+
+            <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
+          </Stack>
+        </Paper>
+      </Container>
+    </Box>
   );
 }

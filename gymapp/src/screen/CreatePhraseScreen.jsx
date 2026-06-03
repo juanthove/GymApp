@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 
+import backgroundImg from "../assets/gymproIcon.png";
+
 import { createPhrase, updatePhrase, deletePhrase, getPhrases } from "../services/phraseService";
 
 import { Container, Paper, Typography, TextField, MenuItem, Button, Stack, Box } from "@mui/material";
@@ -101,60 +103,102 @@ export default function CreatePhraseScreen() {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 4, mb: 6 }}>
-      <Paper sx={{ p: 4 }}>
-        <Box
-          sx={{
-            position: "relative",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            mb: 2,
-          }}
-        >
-          {/* Flecha a la izquierda */}
-          <Box sx={{ position: "absolute", left: 0 }}>
-            <BackButton to="/admin" sx={{ color: "black" }} />
+    <Box
+      sx={{
+        position: "relative",
+        minHeight: "100vh",
+        overflow: "hidden",
+      }}
+    >
+      {/* BACKGROUND */}
+
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `url(${backgroundImg})`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          backgroundSize: "contain",
+
+          "@media (min-aspect-ratio: 16/9)": {
+            backgroundSize: "90%",
+          },
+
+          zIndex: 0,
+        }}
+      />
+
+      {/* OVERLAY */}
+      <Box
+        sx={{
+          position: "fixed",
+          inset: 0,
+          backgroundColor: "rgba(44, 44, 44, 0.4)",
+          backdropFilter: "blur(6px)",
+          zIndex: 1,
+        }}
+      />
+      <Container maxWidth="sm" sx={{ mt: 4, mb: 6, position: "relative", zIndex: 2 }}>
+        <Paper sx={{ p: 4 }}>
+          <Box
+            sx={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mb: 2,
+            }}
+          >
+            {/* Flecha a la izquierda */}
+            <Box sx={{ position: "absolute", left: 0 }}>
+              <BackButton to="/admin" sx={{ color: "black" }} />
+            </Box>
+
+            {/* Título centrado */}
+            <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
+              Frases
+            </Typography>
           </Box>
 
-          {/* Título centrado */}
-          <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
-            Frases
-          </Typography>
-        </Box>
+          <Stack spacing={3}>
+            {/* SELECT */}
+            <TextField
+              select
+              label="Seleccionar frase"
+              value={selectedId}
+              onChange={(e) => handleSelect(e.target.value)}
+            >
+              <MenuItem value="new">Nueva frase</MenuItem>
 
-        <Stack spacing={3}>
-          {/* SELECT */}
-          <TextField select label="Seleccionar frase" value={selectedId} onChange={(e) => handleSelect(e.target.value)}>
-            <MenuItem value="new">Nueva frase</MenuItem>
+              {phrases.map((p) => (
+                <MenuItem key={p.id} value={p.id}>
+                  {p.text}
+                </MenuItem>
+              ))}
+            </TextField>
 
-            {phrases.map((p) => (
-              <MenuItem key={p.id} value={p.id}>
-                {p.text}
-              </MenuItem>
-            ))}
-          </TextField>
+            {/* INPUT */}
+            <TextField label="Frase" multiline minRows={3} value={text} onChange={(e) => setText(e.target.value)} />
 
-          {/* INPUT */}
-          <TextField label="Frase" multiline minRows={3} value={text} onChange={(e) => setText(e.target.value)} />
+            {/* BOTONES */}
+            <Stack direction="row" spacing={2}>
+              {currentPhrase && (
+                <Button variant="contained" color="error" onClick={handleDelete}>
+                  Eliminar
+                </Button>
+              )}
 
-          {/* BOTONES */}
-          <Stack direction="row" spacing={2}>
-            {currentPhrase && (
-              <Button variant="contained" color="error" onClick={handleDelete}>
-                Eliminar
+              <Button variant="contained" color="success" onClick={handleSubmit}>
+                {currentPhrase ? "Actualizar" : "Crear"}
               </Button>
-            )}
-
-            <Button variant="contained" color="success" onClick={handleSubmit}>
-              {currentPhrase ? "Actualizar" : "Crear"}
-            </Button>
+            </Stack>
           </Stack>
-        </Stack>
-      </Paper>
+        </Paper>
 
-      {/* SNACKBAR */}
-      <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
-    </Container>
+        {/* SNACKBAR */}
+        <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
+      </Container>
+    </Box>
   );
 }

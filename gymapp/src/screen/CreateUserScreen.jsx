@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import Cropper from "react-easy-crop";
 
+import backgroundImg from "../assets/gymproIcon.png";
+
 import {
   createUser,
   updateUser,
@@ -241,167 +243,204 @@ export default function CreateUserScreen() {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 4, mb: 6 }}>
-      <Paper sx={{ p: 4 }}>
-        <Box
-          sx={{
-            position: "relative",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            mb: 2,
-          }}
-        >
-          {/* Flecha a la izquierda */}
-          <Box sx={{ position: "absolute", left: 0 }}>
-            <BackButton to="/admin" sx={{ color: "black" }} />
+    <Box
+      sx={{
+        position: "relative",
+        minHeight: "100vh",
+        overflow: "hidden",
+      }}
+    >
+      {/* BACKGROUND */}
+
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `url(${backgroundImg})`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          backgroundSize: "contain",
+
+          "@media (min-aspect-ratio: 16/9)": {
+            backgroundSize: "90%",
+          },
+
+          zIndex: 0,
+        }}
+      />
+
+      {/* OVERLAY */}
+      <Box
+        sx={{
+          position: "fixed",
+          inset: 0,
+          backgroundColor: "rgba(44, 44, 44, 0.4)",
+          backdropFilter: "blur(6px)",
+          zIndex: 1,
+        }}
+      />
+      <Container maxWidth="sm" sx={{ mt: 4, mb: 6, position: "relative", zIndex: 2 }}>
+        <Paper sx={{ p: 4 }}>
+          <Box
+            sx={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mb: 2,
+            }}
+          >
+            {/* Flecha a la izquierda */}
+            <Box sx={{ position: "absolute", left: 0 }}>
+              <BackButton to="/admin" sx={{ color: "black" }} />
+            </Box>
+
+            {/* Título centrado REAL */}
+            <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
+              Usuarios
+            </Typography>
           </Box>
 
-          {/* Título centrado REAL */}
-          <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
-            Usuarios
-          </Typography>
-        </Box>
+          <Stack spacing={3}>
+            <TextField
+              select
+              label="Seleccionar usuario"
+              value={selectedId}
+              onChange={(e) => handleSelect(e.target.value)}
+            >
+              <MenuItem value="new">Nuevo Usuario</MenuItem>
 
-        <Stack spacing={3}>
-          <TextField
-            select
-            label="Seleccionar usuario"
-            value={selectedId}
-            onChange={(e) => handleSelect(e.target.value)}
-          >
-            <MenuItem value="new">Nuevo Usuario</MenuItem>
+              {users.map((u) => (
+                <MenuItem key={u.id} value={u.id}>
+                  {u.name} {u.surname}
+                </MenuItem>
+              ))}
+            </TextField>
 
-            {users.map((u) => (
-              <MenuItem key={u.id} value={u.id}>
-                {u.name} {u.surname}
-              </MenuItem>
-            ))}
-          </TextField>
+            <TextField label="Nombre" value={name} onChange={(e) => setName(e.target.value)} />
+            <TextField label="Apellido" value={surname} onChange={(e) => setSurname(e.target.value)} />
 
-          <TextField label="Nombre" value={name} onChange={(e) => setName(e.target.value)} />
-          <TextField label="Apellido" value={surname} onChange={(e) => setSurname(e.target.value)} />
+            <TextField
+              label="Días por semana en el gimnasio"
+              type="number"
+              inputProps={{ min: 1, max: 7 }}
+              value={gymDays}
+              onChange={(e) => setGymDays(e.target.value)}
+            />
 
-          <TextField
-            label="Días por semana en el gimnasio"
-            type="number"
-            inputProps={{ min: 1, max: 7 }}
-            value={gymDays}
-            onChange={(e) => setGymDays(e.target.value)}
-          />
+            <TextField select label="Nivel" value={selectedLevel} onChange={(e) => setSelectedLevel(e.target.value)}>
+              {levels.map((level) => (
+                <MenuItem key={level.id} value={level.id}>
+                  {level.name}
+                </MenuItem>
+              ))}
+            </TextField>
 
-          <TextField select label="Nivel" value={selectedLevel} onChange={(e) => setSelectedLevel(e.target.value)}>
-            {levels.map((level) => (
-              <MenuItem key={level.id} value={level.id}>
-                {level.name}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          <Stack spacing={1}>
-            <Typography>Foto de perfil</Typography>
-
-            <Button variant="outlined" component="label">
-              Seleccionar imagen
-              <input
-                hidden
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                onClick={() => {
-                  //Permitir volver a elegir la misma imagen
-                  if (fileInputRef.current) {
-                    fileInputRef.current.value = "";
-                  }
-                }}
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (!file) return;
-
-                  const imageUrl = URL.createObjectURL(file);
-
-                  setPreview(imageUrl);
-                  setImage(file);
-                  setDeleteImageChecked(false);
-                  setShowCropModal(true);
-                }}
-              />
-            </Button>
-          </Stack>
-
-          {preview && (
             <Stack spacing={1}>
-              {currentUser && (
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={deleteImageChecked}
-                      onChange={() => {
-                        const checked = !deleteImageChecked;
-                        setDeleteImageChecked(checked);
-                        if (checked) setImage(null);
-                      }}
-                    />
-                  }
-                  label="Eliminar foto"
-                />
-              )}
+              <Typography>Foto de perfil</Typography>
 
-              {!deleteImageChecked && (
-                <img
-                  src={preview}
-                  style={{
-                    maxWidth: "180px",
-                    borderRadius: "10px",
-                    border: "1px solid #ddd",
+              <Button variant="outlined" component="label">
+                Seleccionar imagen
+                <input
+                  hidden
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  onClick={() => {
+                    //Permitir volver a elegir la misma imagen
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = "";
+                    }
+                  }}
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const imageUrl = URL.createObjectURL(file);
+
+                    setPreview(imageUrl);
+                    setImage(file);
+                    setDeleteImageChecked(false);
+                    setShowCropModal(true);
                   }}
                 />
-              )}
-            </Stack>
-          )}
-
-          <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
-
-          <Stack direction="row" spacing={2}>
-            {currentUser && (
-              <Button variant="contained" color="error" onClick={handleDelete}>
-                Eliminar Usuario
               </Button>
+            </Stack>
+
+            {preview && (
+              <Stack spacing={1}>
+                {currentUser && (
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={deleteImageChecked}
+                        onChange={() => {
+                          const checked = !deleteImageChecked;
+                          setDeleteImageChecked(checked);
+                          if (checked) setImage(null);
+                        }}
+                      />
+                    }
+                    label="Eliminar foto"
+                  />
+                )}
+
+                {!deleteImageChecked && (
+                  <img
+                    src={preview}
+                    style={{
+                      maxWidth: "180px",
+                      borderRadius: "10px",
+                      border: "1px solid #ddd",
+                    }}
+                  />
+                )}
+              </Stack>
             )}
 
-            <Button variant="contained" color="success" onClick={handleSubmit}>
-              {currentUser ? "Actualizar Usuario" : "Crear Usuario"}
-            </Button>
+            <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
+
+            <Stack direction="row" spacing={2}>
+              {currentUser && (
+                <Button variant="contained" color="error" onClick={handleDelete}>
+                  Eliminar Usuario
+                </Button>
+              )}
+
+              <Button variant="contained" color="success" onClick={handleSubmit}>
+                {currentUser ? "Actualizar Usuario" : "Crear Usuario"}
+              </Button>
+            </Stack>
           </Stack>
-        </Stack>
-      </Paper>
+        </Paper>
 
-      {/* MODAL CROPPER */}
-      <Dialog open={showCropModal} onClose={() => setShowCropModal(false)} fullWidth>
-        <DialogContent sx={{ position: "relative", height: 300 }}>
-          <Cropper
-            image={preview}
-            crop={crop}
-            zoom={zoom}
-            aspect={4 / 3}
-            onCropChange={setCrop}
-            onZoomChange={setZoom}
-            onCropComplete={(area, pixels) => setCroppedAreaPixels(pixels)}
-          />
-        </DialogContent>
+        {/* MODAL CROPPER */}
+        <Dialog open={showCropModal} onClose={() => setShowCropModal(false)} fullWidth>
+          <DialogContent sx={{ position: "relative", height: 300 }}>
+            <Cropper
+              image={preview}
+              crop={crop}
+              zoom={zoom}
+              aspect={4 / 3}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={(area, pixels) => setCroppedAreaPixels(pixels)}
+            />
+          </DialogContent>
 
-        <Stack sx={{ px: 3 }}>
-          <Typography>Zoom</Typography>
-          <Slider min={1} max={3} step={0.1} value={zoom} onChange={(e, val) => setZoom(val)} />
-        </Stack>
+          <Stack sx={{ px: 3 }}>
+            <Typography>Zoom</Typography>
+            <Slider min={1} max={3} step={0.1} value={zoom} onChange={(e, val) => setZoom(val)} />
+          </Stack>
 
-        <DialogActions>
-          <Button onClick={() => setShowCropModal(false)}>Cancelar</Button>
-          <Button variant="contained" onClick={handleCropSave}>
-            Guardar
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+          <DialogActions>
+            <Button onClick={() => setShowCropModal(false)}>Cancelar</Button>
+            <Button variant="contained" onClick={handleCropSave}>
+              Guardar
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Container>
+    </Box>
   );
 }

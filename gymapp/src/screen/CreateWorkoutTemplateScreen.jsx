@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 
+import backgroundImg from "../assets/gymproIcon.png";
+
 import { getExercises } from "../services/exerciseService";
 
 import {
@@ -363,253 +365,290 @@ export default function CreateWorkoutTemplateScreen() {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 6 }}>
-      <Paper sx={{ p: 4 }}>
-        <Box
-          sx={{
-            position: "relative",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            mb: 2,
-          }}
-        >
-          {/* Flecha a la izquierda */}
-          <Box sx={{ position: "absolute", left: 0 }}>
-            <BackButton to="/admin" sx={{ color: "black" }} />
-          </Box>
+    <Box
+      sx={{
+        position: "relative",
+        minHeight: "100vh",
+        overflow: "hidden",
+      }}
+    >
+      {/* BACKGROUND */}
 
-          {/* Título centrado REAL */}
-          <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
-            Plantillas
-          </Typography>
-        </Box>
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `url(${backgroundImg})`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          backgroundSize: "contain",
 
-        <Stack spacing={3}>
-          <TextField
-            select
-            label="Seleccionar plantilla"
-            value={selectedTemplateId}
-            onChange={(e) => {
-              const id = e.target.value;
-              setExpandedDays([]);
-              requestAnimationFrame(async () => {
-                setSelectedTemplateId(id);
-                await loadTemplateData(id);
-              });
+          "@media (min-aspect-ratio: 16/9)": {
+            backgroundSize: "90%",
+          },
+
+          zIndex: 0,
+        }}
+      />
+
+      {/* OVERLAY */}
+      <Box
+        sx={{
+          position: "fixed",
+          inset: 0,
+          backgroundColor: "rgba(44, 44, 44, 0.4)",
+          backdropFilter: "blur(6px)",
+          zIndex: 1,
+        }}
+      />
+      <Container maxWidth="md" sx={{ mt: 4, mb: 6, position: "relative", zIndex: 2 }}>
+        <Paper sx={{ p: 4 }}>
+          <Box
+            sx={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mb: 2,
             }}
           >
-            <MenuItem value="">Nueva plantilla</MenuItem>
+            {/* Flecha a la izquierda */}
+            <Box sx={{ position: "absolute", left: 0 }}>
+              <BackButton to="/admin" sx={{ color: "black" }} />
+            </Box>
 
-            {templates.map((t) => (
-              <MenuItem key={t.id} value={t.id}>
-                {t.name}
-              </MenuItem>
-            ))}
-          </TextField>
+            {/* Título centrado REAL */}
+            <Typography variant="h4" sx={{ transform: "translateY(-2px)" }}>
+              Plantillas
+            </Typography>
+          </Box>
 
-          <TextField label="Nombre de la plantilla" value={name} onChange={(e) => setName(e.target.value)} />
-
-          <TextField
-            label="Descripción"
-            multiline
-            minRows={3}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-
-          {days.map((day, dayIndex) => (
-            <Accordion
-              key={dayIndex}
-              expanded={expandedDays.includes(dayIndex)}
-              onChange={(event, isExpanded) => {
-                if (isExpanded) {
-                  setExpandedDays([...expandedDays, dayIndex]);
-                } else {
-                  setExpandedDays(expandedDays.filter((i) => i !== dayIndex));
-                }
+          <Stack spacing={3}>
+            <TextField
+              select
+              label="Seleccionar plantilla"
+              value={selectedTemplateId}
+              onChange={(e) => {
+                const id = e.target.value;
+                setExpandedDays([]);
+                requestAnimationFrame(async () => {
+                  setSelectedTemplateId(id);
+                  await loadTemplateData(id);
+                });
               }}
             >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>
-                  Día {dayIndex + 1} - {day.name}
-                </Typography>
-              </AccordionSummary>
+              <MenuItem value="">Nueva plantilla</MenuItem>
 
-              <AccordionDetails>
-                <Stack spacing={2}>
-                  <Stack direction="row" justifyContent="space-between">
-                    <Typography variant="h6">Configuración del día</Typography>
+              {templates.map((t) => (
+                <MenuItem key={t.id} value={t.id}>
+                  {t.name}
+                </MenuItem>
+              ))}
+            </TextField>
 
-                    <Stack direction="row">
-                      <IconButton onClick={() => moveDay(dayIndex, -1)}>
-                        <ArrowUpwardIcon />
-                      </IconButton>
+            <TextField label="Nombre de la plantilla" value={name} onChange={(e) => setName(e.target.value)} />
 
-                      <IconButton onClick={() => moveDay(dayIndex, 1)}>
-                        <ArrowDownwardIcon />
-                      </IconButton>
+            <TextField
+              label="Descripción"
+              multiline
+              minRows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
 
-                      <IconButton onClick={() => duplicateDay(dayIndex)}>
-                        <FileCopyIcon />
-                      </IconButton>
+            {days.map((day, dayIndex) => (
+              <Accordion
+                key={dayIndex}
+                expanded={expandedDays.includes(dayIndex)}
+                onChange={(event, isExpanded) => {
+                  if (isExpanded) {
+                    setExpandedDays([...expandedDays, dayIndex]);
+                  } else {
+                    setExpandedDays(expandedDays.filter((i) => i !== dayIndex));
+                  }
+                }}
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography>
+                    Día {dayIndex + 1} - {day.name}
+                  </Typography>
+                </AccordionSummary>
 
-                      <IconButton onClick={() => removeDay(dayIndex)}>
-                        <DeleteIcon color="error" />
-                      </IconButton>
+                <AccordionDetails>
+                  <Stack spacing={2}>
+                    <Stack direction="row" justifyContent="space-between">
+                      <Typography variant="h6">Configuración del día</Typography>
+
+                      <Stack direction="row">
+                        <IconButton onClick={() => moveDay(dayIndex, -1)}>
+                          <ArrowUpwardIcon />
+                        </IconButton>
+
+                        <IconButton onClick={() => moveDay(dayIndex, 1)}>
+                          <ArrowDownwardIcon />
+                        </IconButton>
+
+                        <IconButton onClick={() => duplicateDay(dayIndex)}>
+                          <FileCopyIcon />
+                        </IconButton>
+
+                        <IconButton onClick={() => removeDay(dayIndex)}>
+                          <DeleteIcon color="error" />
+                        </IconButton>
+                      </Stack>
                     </Stack>
-                  </Stack>
 
-                  <TextField
-                    label="Nombre del día"
-                    value={day.name}
-                    onChange={(e) => updateDayField(dayIndex, "name", e.target.value)}
-                  />
+                    <TextField
+                      label="Nombre del día"
+                      value={day.name}
+                      onChange={(e) => updateDayField(dayIndex, "name", e.target.value)}
+                    />
 
-                  <MuscleChips muscles={day.muscles} />
+                    <MuscleChips muscles={day.muscles} />
 
-                  <FileUploadField
-                    label="Imagen del día"
-                    accept="image/*"
-                    setFile={(file) => {
-                      const updated = [...days];
-                      updated[dayIndex].image = file;
-                      setDays(updated);
-                    }}
-                    preview={day.preview}
-                    setPreview={(preview) => {
-                      const updated = [...days];
-                      updated[dayIndex].preview = preview;
-                      setDays(updated);
-                    }}
-                    existingUrl={day.preview && !day.preview.startsWith("blob:") ? day.preview : null}
-                    deleteFlag={day.deleteImage}
-                    setDeleteFlag={(value) => {
-                      const updated = [...days];
-                      updated[dayIndex].deleteImage = value;
+                    <FileUploadField
+                      label="Imagen del día"
+                      accept="image/*"
+                      setFile={(file) => {
+                        const updated = [...days];
+                        updated[dayIndex].image = file;
+                        setDays(updated);
+                      }}
+                      preview={day.preview}
+                      setPreview={(preview) => {
+                        const updated = [...days];
+                        updated[dayIndex].preview = preview;
+                        setDays(updated);
+                      }}
+                      existingUrl={day.preview && !day.preview.startsWith("blob:") ? day.preview : null}
+                      deleteFlag={day.deleteImage}
+                      setDeleteFlag={(value) => {
+                        const updated = [...days];
+                        updated[dayIndex].deleteImage = value;
 
-                      if (value) {
-                        updated[dayIndex].image = null;
-                      }
+                        if (value) {
+                          updated[dayIndex].image = null;
+                        }
 
-                      setDays(updated);
-                    }}
-                    renderPreview={(src) => (
-                      <img
-                        src={src}
-                        style={{
-                          maxWidth: "300px",
-                          borderRadius: "8px",
-                        }}
-                      />
-                    )}
-                  />
+                        setDays(updated);
+                      }}
+                      renderPreview={(src) => (
+                        <img
+                          src={src}
+                          style={{
+                            maxWidth: "300px",
+                            borderRadius: "8px",
+                          }}
+                        />
+                      )}
+                    />
 
-                  <Autocomplete
-                    options={exercises}
-                    getOptionLabel={(option) => option.name}
-                    value={day.selectedExercise}
-                    onChange={(event, value) => updateDayField(dayIndex, "selectedExercise", value)}
-                    renderInput={(params) => <TextField {...params} label="Seleccionar ejercicio" />}
-                  />
+                    <Autocomplete
+                      options={exercises}
+                      getOptionLabel={(option) => option.name}
+                      value={day.selectedExercise}
+                      onChange={(event, value) => updateDayField(dayIndex, "selectedExercise", value)}
+                      renderInput={(params) => <TextField {...params} label="Seleccionar ejercicio" />}
+                    />
 
-                  <Button variant="contained" color="success" onClick={() => addExerciseToDay(dayIndex)}>
-                    Agregar ejercicio
-                  </Button>
+                    <Button variant="contained" color="success" onClick={() => addExerciseToDay(dayIndex)}>
+                      Agregar ejercicio
+                    </Button>
 
-                  <Divider />
+                    <Divider />
 
-                  <SortableList
-                    items={day.exercises}
-                    getId={(item) => `${item.exerciseId}-${item.order}`}
-                    setItems={(newItems) => {
-                      const updated = [...days];
+                    <SortableList
+                      items={day.exercises}
+                      getId={(item) => `${item.exerciseId}-${item.order}`}
+                      setItems={(newItems) => {
+                        const updated = [...days];
 
-                      updated[dayIndex].exercises = newItems.map((ex, i) => ({
-                        ...ex,
-                        order: i + 1,
-                      }));
+                        updated[dayIndex].exercises = newItems.map((ex, i) => ({
+                          ...ex,
+                          order: i + 1,
+                        }));
 
-                      updated[dayIndex].muscles = calculateDayMuscles(updated[dayIndex].exercises);
+                        updated[dayIndex].muscles = calculateDayMuscles(updated[dayIndex].exercises);
 
-                      setDays(updated);
-                    }}
-                  >
-                    {day.exercises.map((ex, i) => (
-                      <SortableItem key={`${ex.exerciseId}-${ex.order}`} id={`${ex.exerciseId}-${ex.order}`}>
-                        <Card>
-                          <CardContent>
-                            <Stack
-                              direction="row"
-                              alignItems="center"
-                              justifyContent="space-between"
-                              sx={{ width: "100%" }}
-                            >
-                              {/* IZQUIERDA */}
-                              <Stack direction="row" spacing={2} alignItems="center">
-                                <Typography sx={{ width: 220 }}>
-                                  {i + 1}. {ex.exerciseName}
-                                </Typography>
-
-                                <IconButton onClick={() => removeExerciseFromDay(dayIndex, i)}>
-                                  <DeleteIcon color="error" />
-                                </IconButton>
-                              </Stack>
-
-                              {/* DERECHA (HANDLE) */}
-                              <Box
-                                sx={{
-                                  display: "grid",
-                                  gridTemplateColumns: "repeat(2, 8px)",
-                                  gap: "5px",
-                                  p: 0.5,
-                                  cursor: "grab",
-                                  mr: 1.5,
-                                  "&:active": { cursor: "grabbing" },
-                                }}
+                        setDays(updated);
+                      }}
+                    >
+                      {day.exercises.map((ex, i) => (
+                        <SortableItem key={`${ex.exerciseId}-${ex.order}`} id={`${ex.exerciseId}-${ex.order}`}>
+                          <Card>
+                            <CardContent>
+                              <Stack
+                                direction="row"
+                                alignItems="center"
+                                justifyContent="space-between"
+                                sx={{ width: "100%" }}
                               >
-                                {[...Array(6)].map((_, idx) => (
-                                  <Box
-                                    key={idx}
-                                    sx={{
-                                      width: 6,
-                                      height: 6,
-                                      backgroundColor: "#888",
-                                      borderRadius: "50%",
-                                    }}
-                                  />
-                                ))}
-                              </Box>
-                            </Stack>
-                          </CardContent>
-                        </Card>
-                      </SortableItem>
-                    ))}
-                  </SortableList>
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
-          ))}
+                                {/* IZQUIERDA */}
+                                <Stack direction="row" spacing={2} alignItems="center">
+                                  <Typography sx={{ width: 220 }}>
+                                    {i + 1}. {ex.exerciseName}
+                                  </Typography>
 
-          <Button variant="contained" color="success" onClick={addDay}>
-            Agregar día
-          </Button>
+                                  <IconButton onClick={() => removeExerciseFromDay(dayIndex, i)}>
+                                    <DeleteIcon color="error" />
+                                  </IconButton>
+                                </Stack>
 
-          <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
+                                {/* DERECHA (HANDLE) */}
+                                <Box
+                                  sx={{
+                                    display: "grid",
+                                    gridTemplateColumns: "repeat(2, 8px)",
+                                    gap: "5px",
+                                    p: 0.5,
+                                    cursor: "grab",
+                                    mr: 1.5,
+                                    "&:active": { cursor: "grabbing" },
+                                  }}
+                                >
+                                  {[...Array(6)].map((_, idx) => (
+                                    <Box
+                                      key={idx}
+                                      sx={{
+                                        width: 6,
+                                        height: 6,
+                                        backgroundColor: "#888",
+                                        borderRadius: "50%",
+                                      }}
+                                    />
+                                  ))}
+                                </Box>
+                              </Stack>
+                            </CardContent>
+                          </Card>
+                        </SortableItem>
+                      ))}
+                    </SortableList>
+                  </Stack>
+                </AccordionDetails>
+              </Accordion>
+            ))}
 
-          <Stack direction="row" spacing={2}>
-            {selectedTemplateId && (
-              <Button variant="contained" color="error" onClick={handleDelete}>
-                Eliminar Plantilla
-              </Button>
-            )}
-
-            <Button variant="contained" color="success" onClick={handleSubmit}>
-              {selectedTemplateId ? "Actualizar Plantilla" : "Guardar Plantilla"}
+            <Button variant="contained" color="success" onClick={addDay}>
+              Agregar día
             </Button>
+
+            <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
+
+            <Stack direction="row" spacing={2}>
+              {selectedTemplateId && (
+                <Button variant="contained" color="error" onClick={handleDelete}>
+                  Eliminar Plantilla
+                </Button>
+              )}
+
+              <Button variant="contained" color="success" onClick={handleSubmit}>
+                {selectedTemplateId ? "Actualizar Plantilla" : "Guardar Plantilla"}
+              </Button>
+            </Stack>
           </Stack>
-        </Stack>
-      </Paper>
-    </Container>
+        </Paper>
+      </Container>
+    </Box>
   );
 }

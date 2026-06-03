@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.gymapp</groupId>
     <artifactId>gymapp</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1</version>
     <name>gymapp</name>
     <description>Gym application</description>
     <properties>
