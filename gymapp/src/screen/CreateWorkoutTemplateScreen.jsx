@@ -48,6 +48,7 @@ import FileUploadField from "../components/FileUploadField";
 import AppSnackbar from "../components/AppSnackbar";
 import SortableList from "../components/sortable/SortableList";
 import SortableItem from "../components/sortable/SortableItem";
+import ExerciseSelectionModal from "../components/ExerciseSelectionModal";
 
 export default function CreateWorkoutTemplateScreen() {
   useRequireAuth();
@@ -64,6 +65,9 @@ export default function CreateWorkoutTemplateScreen() {
   const [messageType, setMessageType] = useState("info");
 
   const [expandedDays, setExpandedDays] = useState([]);
+
+  const [exerciseModalOpen, setExerciseModalOpen] = useState(false);
+  const [selectedDayIndex, setSelectedDayIndex] = useState(null);
 
   useEffect(() => {
     loadTemplates();
@@ -545,16 +549,15 @@ export default function CreateWorkoutTemplateScreen() {
                       )}
                     />
 
-                    <Autocomplete
-                      options={exercises}
-                      getOptionLabel={(option) => option.name}
-                      value={day.selectedExercise}
-                      onChange={(event, value) => updateDayField(dayIndex, "selectedExercise", value)}
-                      renderInput={(params) => <TextField {...params} label="Seleccionar ejercicio" />}
-                    />
-
-                    <Button variant="contained" color="success" onClick={() => addExerciseToDay(dayIndex)}>
-                      Agregar ejercicio
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => {
+                        setSelectedDayIndex(dayIndex);
+                        setExerciseModalOpen(true);
+                      }}
+                    >
+                      Seleccionar ejercicios
                     </Button>
 
                     <Divider />
@@ -650,6 +653,34 @@ export default function CreateWorkoutTemplateScreen() {
             </Stack>
           </Stack>
         </Paper>
+
+        {/* MODAL SELECCIÓN DE EJERCICIOS */}
+        <ExerciseSelectionModal
+          open={exerciseModalOpen}
+          onClose={() => setExerciseModalOpen(false)}
+          exercises={exercises}
+          alreadyAddedExercises={selectedDayIndex !== null ? days[selectedDayIndex].exercises : []}
+          initialSelected={[]}
+          onConfirm={(selectedExercises) => {
+            if (selectedDayIndex === null) return;
+
+            const updated = [...days];
+
+            const currentExercises = updated[selectedDayIndex].exercises;
+
+            const mapped = selectedExercises.map((ex, index) => ({
+              exerciseId: ex.id,
+              exerciseName: ex.name,
+              order: currentExercises.length + index + 1,
+            }));
+
+            updated[selectedDayIndex].exercises = [...currentExercises, ...mapped];
+
+            updated[selectedDayIndex].muscles = calculateDayMuscles(updated[selectedDayIndex].exercises);
+
+            setDays(updated);
+          }}
+        />
       </Container>
     </Box>
   );

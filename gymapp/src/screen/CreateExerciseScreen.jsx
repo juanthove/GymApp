@@ -23,11 +23,14 @@ import {
   Checkbox,
   FormControlLabel,
   Box,
+  Autocomplete,
 } from "@mui/material";
 
 import BackButton from "../components/BackButton";
 import FileUploadField from "../components/FileUploadField";
 import AppSnackbar from "../components/AppSnackbar";
+
+import { muscleLabels } from "../config/muscleConfig";
 
 export default function CreateExerciseScreen() {
   useRequireAuth();
@@ -65,20 +68,16 @@ export default function CreateExerciseScreen() {
     };
   }, [iconPreview, imagePreview, videoPreview]);
 
-  const muscleOptions = [
-    { value: "CHEST", label: "Pecho" },
-    { value: "BACK", label: "Espalda" },
-    { value: "SHOULDERS", label: "Hombros" },
-    { value: "BICEPS", label: "Bíceps" },
-    { value: "TRICEPS", label: "Tríceps" },
-    { value: "FOREARMS", label: "Antebrazos" },
-    { value: "QUADRICEPS", label: "Cuádriceps" },
-    { value: "GLUTES", label: "Glúteos" },
-    { value: "HAMSTRINGS", label: "Femorales" },
-    { value: "ADDUCTORS", label: "Aductores" },
-    { value: "ABDUCTORS", label: "Abductores" },
-    { value: "CALVES", label: "Gemelos" },
-    { value: "ABDOMINALS", label: "Abdominales" },
+  const muscleOptions = Object.entries(muscleLabels).map(([value, label]) => ({
+    value,
+    label,
+  }));
+
+  const typeOptions = [
+    { value: "PRIMARY", label: "Primario" },
+    { value: "SECONDARY", label: "Secundario" },
+    { value: "TERTIARY", label: "Terciario" },
+    { value: "ABDOMINAL", label: "Abdominal" },
   ];
 
   useEffect(() => {
@@ -302,25 +301,32 @@ export default function CreateExerciseScreen() {
               onChange={(e) => setDescription(e.target.value)}
             />
 
-            <TextField select label="Músculo trabajado" value={muscle} onChange={(e) => setMuscle(e.target.value)}>
-              {muscleOptions.map((m) => (
-                <MenuItem key={m.value} value={m.value}>
-                  {m.label}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Autocomplete
+              autoHighlight
+              options={muscleOptions}
+              getOptionLabel={(option) => option.label}
+              value={muscleOptions.find((m) => m.value === muscle) || null}
+              onChange={(_, newValue) => {
+                setMuscle(newValue?.value || "");
+              }}
+              renderInput={(params) => <TextField {...params} label="Músculo trabajado" />}
+            />
 
             {/* SELECT TIPO DE EJERCICIO */}
 
-            <TextField select label="Tipo de ejercicio" value={type} onChange={(e) => setType(e.target.value)}>
-              <MenuItem value="PRIMARY">Primario</MenuItem>
-
-              <MenuItem value="SECONDARY">Secundario</MenuItem>
-
-              <MenuItem value="TERTIARY">Terciario</MenuItem>
-
-              <MenuItem value="ABDOMINAL">Abdominal</MenuItem>
-            </TextField>
+            <Autocomplete
+              autoHighlight
+              autoSelect
+              selectOnFocus
+              clearOnBlur={false}
+              options={typeOptions}
+              getOptionLabel={(option) => option.label}
+              value={typeOptions.find((t) => t.value === type) || null}
+              onChange={(_, newValue) => {
+                setType(newValue?.value || "");
+              }}
+              renderInput={(params) => <TextField {...params} label="Tipo de ejercicio" />}
+            />
 
             {/* ICON */}
 

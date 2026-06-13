@@ -93,8 +93,6 @@ function isAuthFreeRequest(url, options) {
 }
 
 export function redirectToLogin() {
-  console.log("redirectToLogin ejecutado");
-
   localStorage.removeItem("systemUser");
 
   if (!window.location.pathname.startsWith("/login")) {
@@ -122,7 +120,6 @@ export async function apiRequest(url, options = {}, responseType = "json") {
 
   if (!response.ok) {
     if ((response.status === 401 || response.status === 403) && !isAuthFreeRequest(url, options)) {
-      console.log("401 detectado");
       redirectToLogin();
     }
     throw await toApiError(response);

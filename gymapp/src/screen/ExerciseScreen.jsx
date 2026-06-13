@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import useRequireAuth from "../hooks/useRequireAuth";
 
 import backgroundImg from "../assets/gymproIcon.png";
-import { muscleLabels } from "../config/muscleConfig";
+import { muscleLabels, typeLabels } from "../config/muscleConfig";
+import { normalizeText } from "../utils/stringUtils";
 
 import {
   getWorkoutExercises,
@@ -96,6 +97,7 @@ export default function ExerciseScreen() {
 
   const [filterType, setFilterType] = useState("ALL");
   const [filterMuscle, setFilterMuscle] = useState("ALL");
+  const [filterName, setFilterName] = useState("");
 
   const availableMuscles = ["ALL", ...Array.from(new Set(allExercises.map((ex) => ex.exerciseMuscle).filter(Boolean)))];
 
@@ -213,22 +215,16 @@ export default function ExerciseScreen() {
     return `${day}/${month}/${year}`;
   };
 
-  const formatExerciseType = (type) => {
-    const map = {
-      PRIMARY: "Primario",
-      SECONDARY: "Secundario",
-      TERTIARY: "Terciario",
-      ABDOMINAL: "Abdominal",
-    };
-    return map[type] || type;
-  };
-
   const filteredExercises = allExercises.filter((ex) => {
     if (isAbdominal && ex.type !== "ABDOMINAL") return false;
 
     if (filterType !== "ALL" && ex.type !== filterType) return false;
 
     if (filterMuscle !== "ALL" && ex.exerciseMuscle !== filterMuscle) return false;
+
+    if (filterName && !normalizeText(ex.exerciseName ?? ex.exercise?.name).includes(normalizeText(filterName))) {
+      return false;
+    }
 
     return true;
   });
@@ -1114,7 +1110,23 @@ export default function ExerciseScreen() {
               }}
             >
               {!isAbdominal && (
-                <Stack spacing={1} mb={1}>
+                <Stack spacing={1} mb={1} sx={{ mt: 0.8 }}>
+                  <TextField
+                    label="Buscar ejercicio"
+                    value={filterName}
+                    onChange={(e) => setFilterName(e.target.value)}
+                    placeholder="Ej: Press banca"
+                    sx={{
+                      width: "94%",
+                      alignSelf: "center",
+                      "& .MuiInputBase-input": {
+                        fontSize: "1.5rem",
+                      },
+                      "& .MuiInputLabel-root": {
+                        fontSize: "1.4rem",
+                      },
+                    }}
+                  />
                   <Box sx={{ display: "flex", justifyContent: "center" }}>
                     <Tabs
                       value={filterType}
@@ -1129,7 +1141,6 @@ export default function ExerciseScreen() {
                       <Tab label="Primario" value="PRIMARY" />
                       <Tab label="Secundario" value="SECONDARY" />
                       <Tab label="Terciario" value="TERTIARY" />
-                      <Tab label="Abdominal" value="ABDOMINAL" />
                     </Tabs>
                   </Box>
 
@@ -1211,7 +1222,8 @@ export default function ExerciseScreen() {
                         </Typography>
 
                         <Typography color="text.secondary" fontWeight={600} fontSize={{ xs: "1rem", md: "1.2rem" }}>
-                          {formatExerciseType(ex.type)}
+                          {ex.type !== "ABDOMINAL" && `${typeLabels[ex.type]} | `}
+                          {muscleLabels[ex.exerciseMuscle]}
                         </Typography>
 
                         <Typography fontSize={{ xs: "1rem", md: "1.3rem" }}>

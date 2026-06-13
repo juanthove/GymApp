@@ -1,6 +1,6 @@
 export const muscleLabels = {
-  CHEST: "Pecho",
-  BACK: "Espalda",
+  CHEST: "Pectorales",
+  BACK: "Dorsales",
   SHOULDERS: "Hombros",
   BICEPS: "Bíceps",
   TRICEPS: "Tríceps",
@@ -46,4 +46,11 @@ export const muscleGroups = {
   ADDUCTORS: "LEG",
   ABDUCTORS: "LEG",
   CALVES: "LEG",
+};
+
+export const typeLabels = {
+  PRIMARY: "Primario",
+  SECONDARY: "Secundario",
+  TERTIARY: "Terciario",
+  ABDOMINAL: "Abdominal",
 };
