@@ -31,6 +31,7 @@ import FileUploadField from "../components/FileUploadField";
 import AppSnackbar from "../components/AppSnackbar";
 
 import { muscleLabels } from "../config/muscleConfig";
+import { normalizeText } from "../utils/stringUtils";
 
 export default function CreateExerciseScreen() {
   useRequireAuth();
@@ -276,20 +277,44 @@ export default function CreateExerciseScreen() {
           </Box>
 
           <Stack spacing={3}>
-            <TextField
-              select
-              label="Seleccionar ejercicio"
-              value={selectedId}
-              onChange={(e) => handleSelect(e.target.value)}
-            >
-              <MenuItem value="new">Nuevo ejercicio</MenuItem>
+            <Autocomplete
+              autoHighlight
+              options={[
+                {
+                  id: "new",
+                  label: "Nuevo ejercicio",
+                },
+                ...exercises.map((ex) => ({
+                  id: ex.id,
+                  label: `${ex.name} (${formatExerciseType(ex.type)})`,
+                  name: ex.name,
+                })),
+              ]}
+              value={
+                selectedId === "new"
+                  ? { id: "new", label: "Nuevo ejercicio" }
+                  : exercises
+                      .map((ex) => ({
+                        id: ex.id,
+                        label: `${ex.name} (${formatExerciseType(ex.type)})`,
+                        name: ex.name,
+                      }))
+                      .find((ex) => ex.id === Number(selectedId)) || null
+              }
+              onChange={(_, value) => {
+                handleSelect(value?.id ?? "new");
+              }}
+              filterOptions={(options, state) => {
+                const search = normalizeText(state.inputValue);
 
-              {exercises.map((ex) => (
-                <MenuItem key={ex.id} value={ex.id}>
-                  {ex.name} ({formatExerciseType(ex.type)})
-                </MenuItem>
-              ))}
-            </TextField>
+                return options.filter((option) => {
+                  if (option.id === "new") return true;
+
+                  return normalizeText(option.name).startsWith(search);
+                });
+              }}
+              renderInput={(params) => <TextField {...params} label="Seleccionar ejercicio" />}
+            />
 
             <TextField label="Nombre" value={name} onChange={(e) => setName(e.target.value)} />
 
@@ -309,6 +334,11 @@ export default function CreateExerciseScreen() {
               onChange={(_, newValue) => {
                 setMuscle(newValue?.value || "");
               }}
+              filterOptions={(options, state) => {
+                const search = normalizeText(state.inputValue);
+
+                return options.filter((option) => normalizeText(option.label).startsWith(search));
+              }}
               renderInput={(params) => <TextField {...params} label="Músculo trabajado" />}
             />
 
@@ -324,6 +354,11 @@ export default function CreateExerciseScreen() {
               value={typeOptions.find((t) => t.value === type) || null}
               onChange={(_, newValue) => {
                 setType(newValue?.value || "");
+              }}
+              filterOptions={(options, state) => {
+                const search = normalizeText(state.inputValue);
+
+                return options.filter((option) => normalizeText(option.label).startsWith(search));
               }}
               renderInput={(params) => <TextField {...params} label="Tipo de ejercicio" />}
             />

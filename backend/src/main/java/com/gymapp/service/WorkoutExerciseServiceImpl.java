@@ -125,7 +125,7 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
         return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName, exerciseMuscle, type,
                 exercise.getExerciseOrder(), exercise.getWeight(), description, exercise.getComment(),
                 exercise.isCompleted(),
-                exercise.getNextWeight(), image, video, icon, selected, null, null);
+                exercise.getNextWeight(), image, video, icon, selected, null);
     }
 
     @Override

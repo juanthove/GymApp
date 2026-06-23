@@ -634,15 +634,17 @@ export default function WorkoutScreen() {
                 }}
               />
 
-              <img
-                src={
-                  selectedDay?.muscleImage ? getWorkoutDayImageUrl(selectedDay.muscleImage) : "/body-placeholder.png"
-                }
-                style={{
-                  width: "100%",
-                  maxWidth: "400px",
-                }}
-              />
+              {selectedDay?.muscleImage && (
+                <img
+                  src={
+                    selectedDay?.muscleImage ? getWorkoutDayImageUrl(selectedDay.muscleImage) : "/body-placeholder.png"
+                  }
+                  style={{
+                    width: "100%",
+                    maxWidth: "400px",
+                  }}
+                />
+              )}
             </Box>
           </AnimatedDialog>
         </Container>

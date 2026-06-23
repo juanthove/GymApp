@@ -176,72 +176,75 @@ export default function LoginScreen() {
                 </Typography>
               </Box>
 
-              <Stack spacing={3} sx={{ mt: 9 }}>
-                {/* USER */}
-                <TextField
-                  label="Usuario"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  fullWidth
-                  InputLabelProps={{
-                    sx: {
-                      fontSize: "1.8rem",
+              <form onSubmit={handleLogin}>
+                <Stack spacing={3} sx={{ mt: 9 }}>
+                  {/* USER */}
+                  <TextField
+                    label="Usuario"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    fullWidth
+                    InputLabelProps={{
+                      sx: {
+                        fontSize: "1.8rem",
 
-                      "&.MuiInputLabel-shrink": {
-                        fontSize: "1.6rem",
-                        transform: "translate(11px, -18px) scale(1)",
+                        "&.MuiInputLabel-shrink": {
+                          fontSize: "1.6rem",
+                          transform: "translate(11px, -18px) scale(1)",
+                        },
                       },
-                    },
-                  }}
-                  sx={{
-                    "& .MuiInputBase-root": {
-                      height: 80,
-                      fontSize: "2rem",
-                    },
-                  }}
-                />
-
-                {/* PASSWORD */}
-                <TextField
-                  label="Contraseña"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  fullWidth
-                  InputLabelProps={{
-                    sx: {
-                      fontSize: "1.8rem",
-
-                      "&.MuiInputLabel-shrink": {
-                        fontSize: "1.6rem",
-                        transform: "translate(11px, -18px) scale(1)",
+                    }}
+                    sx={{
+                      "& .MuiInputBase-root": {
+                        height: 80,
+                        fontSize: "2rem",
                       },
-                    },
-                  }}
-                  sx={{
-                    "& .MuiInputBase-root": {
-                      height: 80,
-                      fontSize: "2rem",
-                    },
-                  }}
-                />
+                    }}
+                  />
 
-                <Button
-                  size="lg"
-                  variant="contained"
-                  onClick={handleLogin}
-                  disabled={loading}
-                  sx={{
-                    py: 1.3,
-                    fontWeight: 700,
-                    fontSize: "1.7rem",
-                    background: "linear-gradient(135deg, #ff2020, #f16744)",
-                    boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
-                  }}
-                >
-                  {loading ? "Entrando..." : "Login"}
-                </Button>
-              </Stack>
+                  {/* PASSWORD */}
+                  <TextField
+                    label="Contraseña"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    fullWidth
+                    InputLabelProps={{
+                      sx: {
+                        fontSize: "1.8rem",
+
+                        "&.MuiInputLabel-shrink": {
+                          fontSize: "1.6rem",
+                          transform: "translate(11px, -18px) scale(1)",
+                        },
+                      },
+                    }}
+                    sx={{
+                      "& .MuiInputBase-root": {
+                        height: 80,
+                        fontSize: "2rem",
+                      },
+                    }}
+                  />
+
+                  <Button
+                    size="lg"
+                    variant="contained"
+                    type="submit"
+                    onClick={handleLogin}
+                    disabled={loading}
+                    sx={{
+                      py: 1.3,
+                      fontWeight: 700,
+                      fontSize: "1.7rem",
+                      background: "linear-gradient(135deg, #ff2020, #f16744)",
+                      boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
+                    }}
+                  >
+                    {loading ? "Entrando..." : "Login"}
+                  </Button>
+                </Stack>
+              </form>
             </Stack>
           </CardContent>
         </Card>

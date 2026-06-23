@@ -659,22 +659,23 @@ export default function CreateWorkoutTemplateScreen() {
           open={exerciseModalOpen}
           onClose={() => setExerciseModalOpen(false)}
           exercises={exercises}
-          alreadyAddedExercises={selectedDayIndex !== null ? days[selectedDayIndex].exercises : []}
-          initialSelected={[]}
+          initialSelected={
+            selectedDayIndex !== null
+              ? days[selectedDayIndex]?.exercises
+                  .map((e) => exercises.find((ex) => ex.id === e.exerciseId))
+                  .filter(Boolean)
+              : []
+          }
           onConfirm={(selectedExercises) => {
             if (selectedDayIndex === null) return;
 
             const updated = [...days];
 
-            const currentExercises = updated[selectedDayIndex].exercises;
-
-            const mapped = selectedExercises.map((ex, index) => ({
+            updated[selectedDayIndex].exercises = selectedExercises.map((ex, index) => ({
               exerciseId: ex.id,
               exerciseName: ex.name,
-              order: currentExercises.length + index + 1,
+              order: index + 1,
             }));
-
-            updated[selectedDayIndex].exercises = [...currentExercises, ...mapped];
 
             updated[selectedDayIndex].muscles = calculateDayMuscles(updated[selectedDayIndex].exercises);
 

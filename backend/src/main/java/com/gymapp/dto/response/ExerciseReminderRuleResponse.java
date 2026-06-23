@@ -1,7 +1,10 @@
 package com.gymapp.dto.response;
 
+import java.util.List;
+
 public record ExerciseReminderRuleResponse(
         Long id,
-        Long exerciseId,
-        Integer weeks
-) {}
+        String name,
+        List<Long> exerciseIds,
+        Integer weeks) {
+}

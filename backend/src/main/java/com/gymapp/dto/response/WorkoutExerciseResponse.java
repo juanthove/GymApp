@@ -22,7 +22,6 @@ public record WorkoutExerciseResponse(
         String video,
         String icon,
         boolean selected,
-        ExerciseAlertResponse alert,
         LocalDate lastPerformedDate
 
 ) {

@@ -173,15 +173,25 @@ export default function ExerciseScreen() {
       const exercises = workoutDayData.exercises ?? [];
       setAllExercises(exercises);
 
-      const overdueExercises = exercises.filter((ex) => ex.alert && ex.alert.overdue && !ex.selected);
+      const alerts = workoutDayData.alerts ?? [];
+      const selectedIds = workoutDayData.selectedExerciseIds ?? [];
 
-      setAlertExercises(overdueExercises);
+      // Convertir workoutExerciseId -> exerciseId
+      const selectedExerciseIdsSet = new Set(
+        exercises.filter((ex) => selectedIds.includes(ex.id)).map((ex) => ex.exerciseId),
+      );
 
-      if (overdueExercises.length > 0) {
+      const visibleAlerts = alerts.filter(
+        (alertRule) =>
+          alertRule.alert?.overdue &&
+          !alertRule.exerciseIds.some((exerciseId) => selectedExerciseIdsSet.has(exerciseId)),
+      );
+
+      setAlertExercises(visibleAlerts);
+
+      if (visibleAlerts.length > 0) {
         setAlertModalOpen(true);
       }
-
-      const selectedIds = workoutDayData.selectedExerciseIds ?? [];
 
       const exerciseMap = new Map(exercises.map((ex) => [ex.id, ex]));
 
@@ -1192,9 +1202,6 @@ export default function ExerciseScreen() {
                       }}
                     >
                       <Box
-                        component="img"
-                        src={getExerciseIconUrl(ex.icon)}
-                        alt={ex.exerciseName}
                         sx={{
                           width: { xs: 80, md: 100 },
                           height: { xs: 80, md: 100 },
@@ -1205,7 +1212,20 @@ export default function ExerciseScreen() {
                           flexShrink: 0,
                           transform: { xs: "translateX(20px)", md: "translateX(30px)" },
                         }}
-                      />
+                      >
+                        {ex.icon && (
+                          <Box
+                            component="img"
+                            src={getExerciseIconUrl(ex.icon)}
+                            alt={ex.exerciseName}
+                            sx={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "contain",
+                            }}
+                          />
+                        )}
+                      </Box>
 
                       <Box
                         sx={{
@@ -1424,9 +1444,9 @@ export default function ExerciseScreen() {
               </Typography>
 
               <Stack spacing={2}>
-                {alertExercises.map((ex) => (
+                {alertExercises.map((alert) => (
                   <Box
-                    key={ex.id}
+                    key={alert.ruleId}
                     sx={{
                       p: 2,
                       borderRadius: 2,
@@ -1434,17 +1454,17 @@ export default function ExerciseScreen() {
                     }}
                   >
                     <Typography sx={{ fontWeight: 700, fontSize: { xs: "1.4rem", md: "1.8rem" } }}>
-                      {ex.exerciseName}
+                      {alert.ruleName}
                     </Typography>
 
                     <Typography sx={{ fontSize: { xs: "1.3rem", md: "1.6rem" }, color: "text.secondary" }}>
-                      Última vez: {formatDate(ex.alert.lastPerformedDate)}
+                      Última vez: {formatDate(alert.alert.lastPerformedDate)}
                     </Typography>
 
-                    {ex.alert.weeksSinceLastPerformed > 0 && (
+                    {alert.alert.weeksSinceLastPerformed > 0 && (
                       <Typography sx={{ fontSize: { xs: "1.2rem", md: "1.5rem" } }} color="error">
-                        Hace {ex.alert.weeksSinceLastPerformed}{" "}
-                        {ex.alert.weeksSinceLastPerformed === 1 ? "semana" : "semanas"} que no lo hacés
+                        Hace {alert.alert.weeksSinceLastPerformed}{" "}
+                        {alert.alert.weeksSinceLastPerformed === 1 ? "semana" : "semanas"} que no lo hacés
                       </Typography>
                     )}
                   </Box>

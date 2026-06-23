@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ExerciseReminderRuleServiceImpl implements ExerciseReminderRuleService {
@@ -34,18 +35,34 @@ public class ExerciseReminderRuleServiceImpl implements ExerciseReminderRuleServ
 
     @Override
     public ExerciseReminderRuleResponse getExerciseReminderRuleByExercise(Long exerciseId) {
-        return toResponse(exerciseReminderRuleRepository.findByExerciseId(exerciseId)
-                .orElseThrow(() -> new ResourceNotFoundException("ExerciseReminderRule no encontrado para el ejercicio")));
+        return toResponse(
+                exerciseReminderRuleRepository.findByExercises_Id(exerciseId)
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "ExerciseReminderRule no encontrado para el ejercicio")));
     }
 
     @Override
     public ExerciseReminderRuleResponse createExerciseReminderRule(ExerciseReminderRuleRequest request) {
-        if (exerciseReminderRuleRepository.existsByExerciseId(request.exerciseId())) {
-            throw new IllegalArgumentException("Ya existe una regla de recordatorio para este ejercicio");
+        for (Long exerciseId : request.exerciseIds()) {
+
+            Exercise exercise = findExercise(exerciseId);
+
+            var existingRule = exerciseReminderRuleRepository.findByExercises_Id(exerciseId);
+
+            if (existingRule.isPresent()) {
+                throw new IllegalArgumentException(
+                        "El ejercicio '" + exercise.getName()
+                                + "' ya pertenece a la regla '"
+                                + existingRule.get().getName() + "'");
+            }
         }
 
         ExerciseReminderRule rule = new ExerciseReminderRule();
-        rule.setExercise(findExercise(request.exerciseId()));
+        rule.setName(request.name());
+        rule.setExercises(
+                request.exerciseIds().stream()
+                        .map(this::findExercise)
+                        .collect(Collectors.toSet()));
         rule.setWeeks(request.weeks());
 
         return toResponse(exerciseReminderRuleRepository.save(rule));
@@ -56,13 +73,27 @@ public class ExerciseReminderRuleServiceImpl implements ExerciseReminderRuleServ
         ExerciseReminderRule rule = exerciseReminderRuleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ExerciseReminderRule no encontrado"));
 
-        Exercise exercise = findExercise(request.exerciseId());
-        if (!exercise.getId().equals(rule.getExercise().getId())
-                && exerciseReminderRuleRepository.existsByExerciseId(request.exerciseId())) {
-            throw new IllegalArgumentException("Ya existe una regla de recordatorio para este ejercicio");
+        for (Long exerciseId : request.exerciseIds()) {
+
+            Exercise exercise = findExercise(exerciseId);
+
+            var existingRule = exerciseReminderRuleRepository.findByExerciseIdAndNotRuleId(
+                    exerciseId,
+                    id);
+
+            if (existingRule.isPresent()) {
+                throw new IllegalArgumentException(
+                        "El ejercicio '" + exercise.getName()
+                                + "' ya pertenece a la regla '"
+                                + existingRule.get().getName() + "'");
+            }
         }
 
-        rule.setExercise(exercise);
+        rule.setName(request.name());
+        rule.setExercises(
+                request.exerciseIds().stream()
+                        .map(this::findExercise)
+                        .collect(Collectors.toSet()));
         rule.setWeeks(request.weeks());
 
         return toResponse(exerciseReminderRuleRepository.save(rule));
@@ -84,8 +115,11 @@ public class ExerciseReminderRuleServiceImpl implements ExerciseReminderRuleServ
     private ExerciseReminderRuleResponse toResponse(ExerciseReminderRule rule) {
         return new ExerciseReminderRuleResponse(
                 rule.getId(),
-                rule.getExercise() != null ? rule.getExercise().getId() : null,
-                rule.getWeeks()
-        );
+                rule.getName(),
+                rule.getExercises()
+                        .stream()
+                        .map(Exercise::getId)
+                        .toList(),
+                rule.getWeeks());
     }
 }

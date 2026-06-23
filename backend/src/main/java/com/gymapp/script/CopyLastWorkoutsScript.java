@@ -8,6 +8,8 @@ import com.gymapp.repository.UserRepository;
 import com.gymapp.repository.WorkoutDayRepository;
 import com.gymapp.repository.WorkoutExerciseRepository;
 import com.gymapp.repository.WorkoutRepository;
+import com.gymapp.service.SelectedWorkoutExerciseService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,21 +37,20 @@ public class CopyLastWorkoutsScript {
     @Autowired
     private WorkoutExerciseRepository workoutExerciseRepository;
 
+    @Autowired
+    private SelectedWorkoutExerciseService selectedWorkoutExerciseService;
+
     @Transactional
     public void execute() {
         List<User> users = userRepository.findAll();
 
         for (User user : users) {
-            List<Workout> workouts = workoutRepository
-                    .findByUserIdAndStartDateIsNotNullOrderByStartDateDescIdDesc(user.getId());
-            if (workouts.isEmpty()) {
-                System.out.println("[CopyLastWorkoutsScript] Usuario " + user.getId()
-                        + " (" + user.getName() + " " + user.getSurname()
-                        + ") no tiene workouts con fecha de inicio. Se omite.");
+            Workout lastWorkout = user.getCurrentWorkout();
+
+            if (lastWorkout == null) {
+                System.out.println("Usuario sin workout actual");
                 continue;
             }
-
-            Workout lastWorkout = workouts.get(0);
 
             // Crear nuevo workout como copia desplazada una semana hacia adelante.
             // Se asume que la semana anterior empieza el lunes y termina el domingo.
@@ -71,6 +72,16 @@ public class CopyLastWorkoutsScript {
             userRepository.save(user);
 
             List<WorkoutDay> days = workoutDayRepository.findByWorkoutIdOrderByDayOrder(lastWorkout.getId());
+
+            // Cerrar días que quedaron iniciados pero no finalizados
+            for (WorkoutDay day : days) {
+                if (day.getStartedAt() != null && day.getFinishedAt() == null) {
+                    day.setFinishedAt(lastWorkout.getEndDate().atTime(23, 58, 59));
+                    workoutDayRepository.save(day);
+
+                    selectedWorkoutExerciseService.deleteSelectedFile(day.getId());
+                }
+            }
 
             for (WorkoutDay oldDay : days) {
                 WorkoutDay newDay = new WorkoutDay();

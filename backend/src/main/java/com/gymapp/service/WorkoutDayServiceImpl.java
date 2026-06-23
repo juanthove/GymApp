@@ -2,6 +2,7 @@ package com.gymapp.service;
 
 import com.gymapp.dto.request.WorkoutDayRequest;
 import com.gymapp.dto.response.ExerciseAlertResponse;
+import com.gymapp.dto.response.RuleAlertResponse;
 import com.gymapp.dto.response.WorkoutDayCountResponse;
 import com.gymapp.dto.response.WorkoutDayExercisesResponse;
 import com.gymapp.dto.response.WorkoutDayResponse;
@@ -10,6 +11,8 @@ import com.gymapp.dto.response.WorkoutExerciseResponse;
 import com.gymapp.dto.response.WorkoutFrequencyResponse;
 import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.User;
+import com.gymapp.model.Exercise;
+import com.gymapp.model.ExerciseReminderRule;
 import com.gymapp.model.ExerciseType;
 import com.gymapp.model.Granularity;
 import com.gymapp.model.MuscleType;
@@ -36,6 +39,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Map;
 import java.time.LocalDateTime;
@@ -43,6 +47,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.Objects;
 
 @Service
 public class WorkoutDayServiceImpl implements WorkoutDayService {
@@ -296,10 +301,11 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
         Long userId = day.getWorkout().getUser().getId();
 
-        Map<Long, ExerciseAlertResponse> alertMap = buildAlertMap(userId);
+        List<RuleAlertResponse> alerts = buildRuleAlerts(userId);
 
         // Traer ejercicios una sola vez
-        List<WorkoutExercise> exercises = workoutExerciseRepository.findByWorkoutDayIdOrderByExerciseOrder(dayId);
+        List<WorkoutExercise> exercises = workoutExerciseRepository
+                .findByWorkoutDayIdOrderByExerciseOrder(dayId);
 
         // Obtengo todos los exerciseId
         List<Long> exerciseIds = exercises.stream()
@@ -322,7 +328,6 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         var exerciseResponses = exercises.stream()
                 .map(ex -> toWorkoutExerciseResponse(
                         ex,
-                        alertMap,
                         lastPerformedMap.get(ex.getExercise().getId())))
                 .toList();
 
@@ -330,7 +335,8 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
                 dayId,
                 reps,
                 selectedIds,
-                exerciseResponses);
+                exerciseResponses,
+                alerts);
     }
 
     private LocalDate resolveDate(LocalDate date, Granularity granularity) {
@@ -463,16 +469,9 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
                 lastPerformedDate.toString());
     }
 
-    private Map<Long, ExerciseAlertResponse> buildAlertMap(Long userId) {
+    private List<RuleAlertResponse> buildRuleAlerts(Long userId) {
 
-        // Reglas
-        Map<Long, Integer> rules = exerciseReminderRuleRepository.findAll()
-                .stream()
-                .collect(Collectors.toMap(
-                        r -> r.getExercise().getId(),
-                        r -> r.getWeeks()));
-
-        // Ultima fecha por ejercicio
+        // Última fecha realizada por ejercicio
         Map<Long, LocalDate> lastDates = workoutExerciseRepository
                 .findLastPerformedDatesByUser(userId)
                 .stream()
@@ -480,23 +479,37 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
                         row -> (Long) row[0],
                         row -> ((LocalDateTime) row[1]).toLocalDate()));
 
-        // Construir alerts
-        Map<Long, ExerciseAlertResponse> result = new java.util.HashMap<>();
+        List<RuleAlertResponse> result = new ArrayList<>();
 
-        for (Map.Entry<Long, Integer> entry : rules.entrySet()) {
-            Long exerciseId = entry.getKey();
-            Integer weeks = entry.getValue();
+        for (ExerciseReminderRule rule : exerciseReminderRuleRepository.findAll()) {
 
-            LocalDate last = lastDates.get(exerciseId);
+            // Fecha más reciente de cualquier ejercicio de la regla
+            LocalDate lastPerformed = rule.getExercises()
+                    .stream()
+                    .map(ex -> lastDates.get(ex.getId()))
+                    .filter(Objects::nonNull)
+                    .max(LocalDate::compareTo)
+                    .orElse(null);
 
-            result.put(exerciseId, calculateExerciseAlert(last, weeks));
+            ExerciseAlertResponse alert = calculateExerciseAlert(lastPerformed, rule.getWeeks());
+
+            if (alert.overdue()) {
+                result.add(
+                        new RuleAlertResponse(
+                                rule.getId(),
+                                rule.getName(),
+                                rule.getExercises()
+                                        .stream()
+                                        .map(Exercise::getId)
+                                        .toList(),
+                                alert));
+            }
         }
 
         return result;
     }
 
-    private WorkoutExerciseResponse toWorkoutExerciseResponse(WorkoutExercise exercise,
-            Map<Long, ExerciseAlertResponse> alertMap, LocalDate lastPerformedDate) {
+    private WorkoutExerciseResponse toWorkoutExerciseResponse(WorkoutExercise exercise, LocalDate lastPerformedDate) {
         Long dayId = exercise.getWorkoutDay() != null ? exercise.getWorkoutDay().getId() : null;
         Long exerciseId = exercise.getExercise() != null ? exercise.getExercise().getId() : null;
         String exerciseName = exercise.getExercise() != null ? exercise.getExercise().getName() : null;
@@ -506,18 +519,13 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         String video = exercise.getExercise() != null ? exercise.getExercise().getVideo() : null;
         String icon = exercise.getExercise() != null ? exercise.getExercise().getIcon() : null;
 
-        ExerciseAlertResponse alert = null;
-        if (exercise.getExercise() != null) {
-            alert = alertMap.get(exercise.getExercise().getId());
-        }
-
         boolean selected = dayId != null && exercise.getId() != null
                 && selectedWorkoutExerciseService.isSelected(dayId, exercise.getId());
         ExerciseType type = exercise.getExercise() != null ? exercise.getExercise().getType() : null;
         return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName, exerciseMuscle, type,
                 exercise.getExerciseOrder(), exercise.getWeight(), description, exercise.getComment(),
                 exercise.isCompleted(),
-                exercise.getNextWeight(), image, video, icon, selected, alert, lastPerformedDate);
+                exercise.getNextWeight(), image, video, icon, selected, lastPerformedDate);
     }
 
     private WorkoutDayResponse toResponse(WorkoutDay day) {

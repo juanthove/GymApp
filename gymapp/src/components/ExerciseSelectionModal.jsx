@@ -4,17 +4,11 @@ import AnimatedDialog from "./AnimatedDialog";
 
 import { muscleLabels, typeLabels } from "../config/muscleConfig";
 import { getExerciseIconUrl } from "../services/exerciseService";
+import { normalizeText } from "../utils/stringUtils";
 
 import { Box, Button, Stack, Tabs, Tab, Typography, TextField } from "@mui/material";
 
-export default function ExerciseSelectionModal({
-  open,
-  onClose,
-  exercises = [],
-  initialSelected = [],
-  alreadyAddedExercises = [],
-  onConfirm,
-}) {
+export default function ExerciseSelectionModal({ open, onClose, exercises = [], initialSelected = [], onConfirm }) {
   const [filterType, setFilterType] = useState("ALL");
   const [filterMuscle, setFilterMuscle] = useState("ALL");
   const [searchText, setSearchText] = useState("");
@@ -23,13 +17,9 @@ export default function ExerciseSelectionModal({
 
   useEffect(() => {
     if (open) {
-      setSelectedExercises([]);
+      setSelectedExercises(initialSelected || []);
     }
-  }, [open]);
-
-  const alreadyAddedIds = useMemo(() => {
-    return new Set(alreadyAddedExercises.map((e) => e.exerciseId));
-  }, [alreadyAddedExercises]);
+  }, [open, initialSelected]);
 
   const availableMuscles = useMemo(
     () => ["ALL", ...Array.from(new Set(exercises.map((e) => e.muscle).filter(Boolean)))],
@@ -46,7 +36,10 @@ export default function ExerciseSelectionModal({
         return false;
       }
 
-      if (searchText && !ex.name.toLowerCase().includes(searchText.toLowerCase())) {
+      const normalizedSearch = normalizeText(searchText);
+      const normalizedName = normalizeText(ex.name);
+
+      if (normalizedSearch && !normalizedName.includes(normalizedSearch)) {
         return false;
       }
 
@@ -55,10 +48,6 @@ export default function ExerciseSelectionModal({
   }, [exercises, filterType, filterMuscle, searchText]);
 
   const toggleExercise = (exercise) => {
-    if (alreadyAddedIds.has(exercise.id)) {
-      return;
-    }
-
     const exists = selectedExercises.some((e) => e.id === exercise.id);
 
     if (exists) {
@@ -134,7 +123,6 @@ export default function ExerciseSelectionModal({
           {filteredExercises.map((exercise) => {
             const orderNumber = getOrderNumber(exercise.id);
             const selected = orderNumber !== null;
-            const alreadyAdded = alreadyAddedIds.has(exercise.id);
 
             return (
               <Box
@@ -150,32 +138,40 @@ export default function ExerciseSelectionModal({
                 sx={{
                   p: 2,
                   borderRadius: 2,
-                  border: alreadyAdded ? "2px solid #1976d2" : `2px solid ${selected ? "#4caf50" : "#ddd"}`,
-
-                  cursor: alreadyAdded ? "not-allowed" : "pointer",
-
-                  opacity: alreadyAdded ? 0.65 : 1,
-
-                  backgroundColor: alreadyAdded ? "rgba(25,118,210,0.08)" : selected ? "rgba(76,175,80,0.08)" : "#fff",
-
+                  border: `2px solid ${selected ? "#4caf50" : "#ddd"}`,
+                  cursor: "pointer",
+                  backgroundColor: selected ? "rgba(76,175,80,0.08)" : "#fff",
                   position: "relative",
                   display: "flex",
                   alignItems: "center",
                   gap: 2,
                 }}
               >
-                {exercise.icon && (
-                  <Box
-                    component="img"
-                    src={getExerciseIconUrl(exercise.icon)}
-                    alt={exercise.name}
-                    sx={{
-                      width: 80,
-                      height: 80,
-                      objectFit: "contain",
-                    }}
-                  />
-                )}
+                <Box
+                  sx={{
+                    width: { xs: 90, md: 110 },
+                    height: { xs: 90, md: 110 },
+                    flexShrink: 0,
+                    ml: 3,
+
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {exercise.icon && (
+                    <Box
+                      component="img"
+                      src={getExerciseIconUrl(exercise.icon)}
+                      alt={exercise.name}
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                      }}
+                    />
+                  )}
+                </Box>
 
                 <Box sx={{ flex: 1 }}>
                   <Typography
@@ -193,39 +189,41 @@ export default function ExerciseSelectionModal({
                       ? muscleLabels[exercise.muscle]
                       : `${typeLabels[exercise.type]} | ${muscleLabels[exercise.muscle]}`}
                   </Typography>
-
-                  {alreadyAdded && (
-                    <Typography
-                      sx={{
-                        color: "#1976d2",
-                        fontWeight: 700,
-                        fontSize: "0.9rem",
-                        mt: 0.5,
-                      }}
-                    >
-                      Ya agregado
-                    </Typography>
-                  )}
                 </Box>
 
-                {selected && !alreadyAdded && (
-                  <Box
-                    sx={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: "50%",
-                      backgroundColor: "#4caf50",
-                      color: "#fff",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontWeight: 700,
-                      fontSize: "1.1rem",
-                    }}
-                  >
-                    {orderNumber}
-                  </Box>
-                )}
+                <Box
+                  sx={{
+                    width: 50,
+                    height: 50,
+                    mr: 4,
+                    flexShrink: 0,
+
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {selected && (
+                    <Box
+                      sx={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: "50%",
+                        backgroundColor: "#4caf50",
+                        color: "#fff",
+
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+
+                        fontWeight: 700,
+                        fontSize: "1.3rem",
+                      }}
+                    >
+                      {orderNumber}
+                    </Box>
+                  )}
+                </Box>
               </Box>
             );
           })}

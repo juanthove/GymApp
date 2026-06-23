@@ -3,6 +3,8 @@ import useRequireAuth from "../hooks/useRequireAuth";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
+import { normalizeText } from "../utils/stringUtils";
+
 import { getUsers, getCurrentWorkout, setCurrentWorkout, getUserById } from "../services/userService";
 import { getExercises } from "../services/exerciseService";
 import {
@@ -552,12 +554,14 @@ export default function CreateWorkoutScreen() {
           </Box>
 
           <Stack spacing={3}>
-            <TextField
-              select
-              label="Usuario"
-              value={selectedUser}
-              onChange={async (e) => {
-                const userId = e.target.value;
+            <Autocomplete
+              autoHighlight
+              options={users}
+              getOptionLabel={(option) => `${option.name} ${option.surname}`}
+              value={users.find((u) => u.id === Number(selectedUser)) || null}
+              onChange={async (_, value) => {
+                const userId = value?.id || "";
+
                 setExpandedDays([]);
 
                 requestAnimationFrame(async () => {
@@ -573,17 +577,18 @@ export default function CreateWorkoutScreen() {
                   }
                 });
               }}
-            >
-              <MenuItem value="" disabled>
-                Seleccionar usuario
-              </MenuItem>
+              filterOptions={(options, state) => {
+                const search = normalizeText(state.inputValue);
 
-              {users.map((u) => (
-                <MenuItem key={u.id} value={u.id}>
-                  {u.name} {u.surname}
-                </MenuItem>
-              ))}
-            </TextField>
+                return options.filter((option) => {
+                  const name = normalizeText(option.name);
+                  const surname = normalizeText(option.surname);
+
+                  return name.startsWith(search) || surname.startsWith(search);
+                });
+              }}
+              renderInput={(params) => <TextField {...params} label="Usuario" />}
+            />
 
             {selectedUser && (
               <TextField select label="Origen" value={source} onChange={(e) => handleSourceChange(e.target.value)}>
@@ -856,22 +861,28 @@ export default function CreateWorkoutScreen() {
           open={exerciseModalOpen}
           onClose={() => setExerciseModalOpen(false)}
           exercises={exercises}
-          alreadyAddedExercises={selectedDayIndex !== null ? days[selectedDayIndex].exercises : []}
-          initialSelected={[]}
+          initialSelected={
+            selectedDayIndex !== null
+              ? days[selectedDayIndex]?.exercises.map((e) => exercisesById[e.exerciseId]).filter(Boolean)
+              : []
+          }
           onConfirm={(selectedExercises) => {
             if (selectedDayIndex === null) return;
 
             const updated = [...days];
 
-            const currentExercises = updated[selectedDayIndex].exercises;
+            const previousExercises = updated[selectedDayIndex].exercises;
 
-            const mapped = selectedExercises.map((ex, index) => ({
-              exerciseId: ex.id,
-              exerciseName: ex.name,
-              order: currentExercises.length + index + 1,
-            }));
+            updated[selectedDayIndex].exercises = selectedExercises.map((ex, index) => {
+              const existing = previousExercises.find((e) => e.exerciseId === ex.id);
 
-            updated[selectedDayIndex].exercises = [...currentExercises, ...mapped];
+              return {
+                id: existing?.id ?? crypto.randomUUID(),
+                exerciseId: ex.id,
+                order: index + 1,
+                weight: existing?.weight ?? "",
+              };
+            });
 
             updated[selectedDayIndex].muscles = calculateDayMuscles(updated[selectedDayIndex].exercises);
 

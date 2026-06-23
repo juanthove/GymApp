@@ -30,7 +30,7 @@ public class ExerciseServiceImpl implements ExerciseService {
 
     @Override
     public List<ExerciseResponse> getAllExercises() {
-        return exerciseRepository.findAll().stream().map(this::toResponse).toList();
+        return exerciseRepository.findAllOrdered().stream().map(this::toResponse).toList();
     }
 
     @Override
@@ -41,8 +41,8 @@ public class ExerciseServiceImpl implements ExerciseService {
 
     @Override
     public ExerciseResponse createExercise(String name, String description, ExerciseType type,
-                                   MuscleType muscle,
-                                   MultipartFile image, MultipartFile video, MultipartFile icon) throws IOException {
+            MuscleType muscle,
+            MultipartFile image, MultipartFile video, MultipartFile icon) throws IOException {
         Exercise exercise = new Exercise();
         exercise.setName(name);
         exercise.setDescription(description);
@@ -54,9 +54,9 @@ public class ExerciseServiceImpl implements ExerciseService {
 
     @Override
     public ExerciseResponse updateExercise(Long id, String name, String description, ExerciseType type,
-                                   MuscleType muscle,
-                                   MultipartFile image, MultipartFile video, MultipartFile icon,
-                                   Boolean deleteImage, Boolean deleteVideo, Boolean deleteIcon) throws IOException {
+            MuscleType muscle,
+            MultipartFile image, MultipartFile video, MultipartFile icon,
+            Boolean deleteImage, Boolean deleteVideo, Boolean deleteIcon) throws IOException {
 
         Exercise exercise = exerciseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ejercicio no encontrado"));
@@ -124,21 +124,24 @@ public class ExerciseServiceImpl implements ExerciseService {
                 String ext = getExtension(exercise.getImage());
                 Path oldFile = imagePath.resolve(oldSafeName + "." + ext);
                 Path newFile = imagePath.resolve(newSafeName + "." + ext);
-                if (Files.exists(oldFile)) Files.move(oldFile, newFile, StandardCopyOption.REPLACE_EXISTING);
+                if (Files.exists(oldFile))
+                    Files.move(oldFile, newFile, StandardCopyOption.REPLACE_EXISTING);
                 exercise.setImage(newSafeName + "." + ext);
             }
             if (exercise.getVideo() != null) {
                 String ext = getExtension(exercise.getVideo());
                 Path oldFile = videoPath.resolve(oldSafeName + "." + ext);
                 Path newFile = videoPath.resolve(newSafeName + "." + ext);
-                if (Files.exists(oldFile)) Files.move(oldFile, newFile, StandardCopyOption.REPLACE_EXISTING);
+                if (Files.exists(oldFile))
+                    Files.move(oldFile, newFile, StandardCopyOption.REPLACE_EXISTING);
                 exercise.setVideo(newSafeName + "." + ext);
             }
             if (exercise.getIcon() != null) {
                 String ext = getExtension(exercise.getIcon());
                 Path oldFile = iconPath.resolve(oldSafeName + "." + ext);
                 Path newFile = iconPath.resolve(newSafeName + "." + ext);
-                if (Files.exists(oldFile)) Files.move(oldFile, newFile, StandardCopyOption.REPLACE_EXISTING);
+                if (Files.exists(oldFile))
+                    Files.move(oldFile, newFile, StandardCopyOption.REPLACE_EXISTING);
                 exercise.setIcon(newSafeName + "." + ext);
             }
         }
@@ -150,9 +153,12 @@ public class ExerciseServiceImpl implements ExerciseService {
     public void deleteExercise(Long id) throws IOException {
         Exercise exercise = exerciseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Exercise not found"));
-        if (exercise.getImage() != null) Files.deleteIfExists(imagePath.resolve(exercise.getImage()));
-        if (exercise.getVideo() != null) Files.deleteIfExists(videoPath.resolve(exercise.getVideo()));
-        if (exercise.getIcon() != null) Files.deleteIfExists(iconPath.resolve(exercise.getIcon()));
+        if (exercise.getImage() != null)
+            Files.deleteIfExists(imagePath.resolve(exercise.getImage()));
+        if (exercise.getVideo() != null)
+            Files.deleteIfExists(videoPath.resolve(exercise.getVideo()));
+        if (exercise.getIcon() != null)
+            Files.deleteIfExists(iconPath.resolve(exercise.getIcon()));
         exerciseRepository.deleteById(id);
     }
 
@@ -160,7 +166,8 @@ public class ExerciseServiceImpl implements ExerciseService {
     public ResponseEntity<Resource> getExerciseImage(String filename) throws IOException {
         Path filePath = imagePath.resolve(filename).normalize();
         Resource resource = new UrlResource(filePath.toUri());
-        if (!resource.exists()) throw new RuntimeException("Imagen no encontrada");
+        if (!resource.exists())
+            throw new RuntimeException("Imagen no encontrada");
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(filePath))
                 .body(resource);
@@ -170,7 +177,8 @@ public class ExerciseServiceImpl implements ExerciseService {
     public ResponseEntity<Resource> getExerciseVideo(String filename) throws IOException {
         Path filePath = videoPath.resolve(filename).normalize();
         Resource resource = new UrlResource(filePath.toUri());
-        if (!resource.exists()) throw new RuntimeException("Video no encontrado");
+        if (!resource.exists())
+            throw new RuntimeException("Video no encontrado");
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(filePath))
                 .body(resource);
@@ -180,13 +188,15 @@ public class ExerciseServiceImpl implements ExerciseService {
     public ResponseEntity<Resource> getExerciseIcon(String filename) throws IOException {
         Path filePath = iconPath.resolve(filename).normalize();
         Resource resource = new UrlResource(filePath.toUri());
-        if (!resource.exists()) throw new RuntimeException("Icono no encontrado");
+        if (!resource.exists())
+            throw new RuntimeException("Icono no encontrado");
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(filePath))
                 .body(resource);
     }
 
-    private void saveFiles(Exercise exercise, String name, MultipartFile image, MultipartFile video, MultipartFile icon) throws IOException {
+    private void saveFiles(Exercise exercise, String name, MultipartFile image, MultipartFile video, MultipartFile icon)
+            throws IOException {
         String safeName = name.toLowerCase().replace(" ", "_");
         Files.createDirectories(imagePath);
         Files.createDirectories(videoPath);
@@ -216,6 +226,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     private ExerciseResponse toResponse(Exercise e) {
-        return new ExerciseResponse(e.getId(), e.getName(), e.getDescription(), e.getType(), e.getMuscle(), e.getImage(), e.getVideo(), e.getIcon());
+        return new ExerciseResponse(e.getId(), e.getName(), e.getDescription(), e.getType(), e.getMuscle(),
+                e.getImage(), e.getVideo(), e.getIcon());
     }
 }

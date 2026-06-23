@@ -1,3 +1,6 @@
+backend/uploads/achievements/*
+!backend/uploads/achievements/.gitkeep
+
 backend/uploads/day/*
 !backend/uploads/day/.gitkeep
 

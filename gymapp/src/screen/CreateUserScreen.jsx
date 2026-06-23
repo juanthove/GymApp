@@ -31,6 +31,7 @@ import {
   DialogActions,
   Slider,
   Box,
+  Autocomplete,
 } from "@mui/material";
 
 import BackButton from "../components/BackButton";
@@ -304,20 +305,44 @@ export default function CreateUserScreen() {
           </Box>
 
           <Stack spacing={3}>
-            <TextField
-              select
-              label="Seleccionar usuario"
-              value={selectedId}
-              onChange={(e) => handleSelect(e.target.value)}
-            >
-              <MenuItem value="new">Nuevo Usuario</MenuItem>
+            <Autocomplete
+              options={[
+                { id: "new", label: "Nuevo Usuario" },
+                ...users.map((u) => ({
+                  id: u.id,
+                  label: `${u.name} ${u.surname}`,
+                  name: u.name,
+                  surname: u.surname,
+                })),
+              ]}
+              value={
+                selectedId === "new"
+                  ? { id: "new", label: "Nuevo Usuario" }
+                  : users
+                      .map((u) => ({
+                        id: u.id,
+                        label: `${u.name} ${u.surname}`,
+                        name: u.name,
+                        surname: u.surname,
+                      }))
+                      .find((u) => u.id === Number(selectedId)) || null
+              }
+              onChange={(event, value) => {
+                handleSelect(value?.id ?? "new");
+              }}
+              filterOptions={(options, state) => {
+                const search = state.inputValue.trim().toLowerCase();
 
-              {users.map((u) => (
-                <MenuItem key={u.id} value={u.id}>
-                  {u.name} {u.surname}
-                </MenuItem>
-              ))}
-            </TextField>
+                return options.filter((option) => {
+                  if (option.id === "new") return true;
+
+                  return (
+                    option.name?.toLowerCase().startsWith(search) || option.surname?.toLowerCase().startsWith(search)
+                  );
+                });
+              }}
+              renderInput={(params) => <TextField {...params} label="Seleccionar usuario" />}
+            />
 
             <TextField label="Nombre" value={name} onChange={(e) => setName(e.target.value)} />
             <TextField label="Apellido" value={surname} onChange={(e) => setSurname(e.target.value)} />
@@ -330,13 +355,21 @@ export default function CreateUserScreen() {
               onChange={(e) => setGymDays(e.target.value)}
             />
 
-            <TextField select label="Nivel" value={selectedLevel} onChange={(e) => setSelectedLevel(e.target.value)}>
-              {levels.map((level) => (
-                <MenuItem key={level.id} value={level.id}>
-                  {level.name}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Autocomplete
+              options={levels}
+              getOptionLabel={(option) => option.name}
+              value={levels.find((l) => l.id === selectedLevel) || null}
+              onChange={(event, value) => {
+                setSelectedLevel(value?.id || "");
+              }}
+              autoHighlight
+              renderInput={(params) => <TextField {...params} label="Nivel" />}
+              filterOptions={(options, state) => {
+                const search = state.inputValue.trim().toLowerCase();
+
+                return options.filter((option) => option.name.toLowerCase().startsWith(search));
+              }}
+            />
 
             <Stack spacing={1}>
               <Typography>Foto de perfil</Typography>
