@@ -14,6 +14,12 @@ import {
 } from "../services/workoutTemplateService";
 import { createWorkout, updateWorkout, getWorkoutById } from "../services/workoutService";
 import { uploadWorkoutDayImage, getWorkoutDayImageUrl } from "../services/workoutDayService";
+import {
+  getWorkoutSaveById,
+  getWorkoutSavesByUser,
+  createWorkoutSave,
+  updateWorkoutSave,
+} from "../services/workoutSaveService";
 
 import {
   Container,
@@ -35,6 +41,10 @@ import {
   Autocomplete,
   LinearProgress,
   Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -72,6 +82,7 @@ export default function CreateWorkoutScreen() {
   const [workoutId, setWorkoutId] = useState(null);
   const [hasCurrentWorkout, setHasCurrentWorkout] = useState(false);
   const [isLastWorkout, setIsLastWorkout] = useState(false);
+  const [savedWorkouts, setSavedWorkouts] = useState([]);
 
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("info");
@@ -90,6 +101,10 @@ export default function CreateWorkoutScreen() {
 
   const [exerciseModalOpen, setExerciseModalOpen] = useState(false);
   const [selectedDayIndex, setSelectedDayIndex] = useState(null);
+
+  const [favoriteModalOpen, setFavoriteModalOpen] = useState(false);
+  const [selectedFavoriteId, setSelectedFavoriteId] = useState("new");
+  const [favoriteName, setFavoriteName] = useState("");
 
   useEffect(() => {
     loadUsers();
@@ -181,6 +196,15 @@ export default function CreateWorkoutScreen() {
     setTemplates(data);
   };
 
+  const loadSavedWorkouts = async (userId) => {
+    try {
+      const data = await getWorkoutSavesByUser(userId);
+      setSavedWorkouts(data);
+    } catch {
+      setSavedWorkouts([]);
+    }
+  };
+
   const loadExercises = async () => {
     const data = await getExercises();
     setExercises(data);
@@ -265,12 +289,49 @@ export default function CreateWorkoutScreen() {
           id: crypto.randomUUID(),
           exerciseId: ex.exerciseId,
           order: ex.order,
-          weight: ex.weight,
+          weight: ex.nextWeight ?? ex.weight,
         })),
     }));
 
     setDays(loadedDays);
     setIsLastWorkout(true);
+  };
+
+  const loadSavedWorkout = async (id) => {
+    const save = await getWorkoutSaveById(id);
+
+    const workout = await getWorkoutById(save.workoutId);
+
+    setWorkoutId(null);
+    setIsLastWorkout(false);
+
+    setWorkoutName(save.name);
+    setGlobalReps(workout.reps || "");
+
+    setStartDate(workout.startDate?.split("T")[0] || "");
+    setEndDate(workout.endDate?.split("T")[0] || "");
+
+    const loadedDays = workout.days.map((day) => ({
+      id: crypto.randomUUID(),
+      name: day.name,
+      muscles: day.muscles || [],
+      dayOrder: day.dayOrder,
+      image: null,
+      deleteImage: false,
+      sourceMuscleImage: day.muscleImage || null,
+      preview: day.muscleImage ? getWorkoutDayImageUrl(day.muscleImage) : null,
+
+      exercises: day.exercises
+        .sort((a, b) => a.order - b.order)
+        .map((ex) => ({
+          id: crypto.randomUUID(),
+          exerciseId: ex.exerciseId,
+          order: ex.order,
+          weight: ex.nextWeight ?? ex.weight,
+        })),
+    }));
+
+    setDays(loadedDays);
   };
 
   const handleSourceChange = async (value) => {
@@ -285,6 +346,11 @@ export default function CreateWorkoutScreen() {
 
     if (value === "last") {
       await loadLastWorkout();
+    }
+
+    if (value.startsWith("saved-")) {
+      const id = value.split("-")[1];
+      await loadSavedWorkout(id);
     }
 
     if (value.startsWith("template")) {
@@ -494,6 +560,44 @@ export default function CreateWorkoutScreen() {
     }
   };
 
+  const handleFavoriteChange = (value) => {
+    setSelectedFavoriteId(value);
+
+    if (value === "new") {
+      setFavoriteName("");
+      return;
+    }
+
+    const save = savedWorkouts.find((s) => s.id === value);
+
+    if (save) {
+      setFavoriteName(save.name);
+    }
+  };
+
+  const handleSaveFavorite = async () => {
+    if (!favoriteName.trim()) return;
+
+    if (selectedFavoriteId === "new") {
+      await createWorkoutSave({
+        name: favoriteName,
+        workoutId,
+      });
+    } else {
+      await updateWorkoutSave(selectedFavoriteId, {
+        name: favoriteName,
+        workoutId,
+      });
+    }
+
+    await loadSavedWorkouts(selectedUser);
+
+    setFavoriteModalOpen(false);
+
+    setMessage("Favorito guardado");
+    setMessageType("success");
+  };
+
   return (
     <Box
       sx={{
@@ -574,6 +678,10 @@ export default function CreateWorkoutScreen() {
 
                     const user = await getUserById(userId);
                     setGymDaysPerWeek(user.gymDaysPerWeek || 0);
+
+                    await loadSavedWorkouts(userId);
+                  } else {
+                    setSavedWorkouts([]);
                   }
                 });
               }}
@@ -595,6 +703,12 @@ export default function CreateWorkoutScreen() {
                 <MenuItem value="empty">Planilla vacía</MenuItem>
 
                 {hasCurrentWorkout && <MenuItem value="last">Última planilla</MenuItem>}
+
+                {savedWorkouts.map((s) => (
+                  <MenuItem key={s.id} value={`saved-${s.id}`}>
+                    💾 {s.name}
+                  </MenuItem>
+                ))}
 
                 {templates.map((t) => (
                   <MenuItem key={t.id} value={`template-${t.id}`}>
@@ -844,9 +958,23 @@ export default function CreateWorkoutScreen() {
 
             <Stack direction="row" spacing={2}>
               {isLastWorkout && (
-                <Button variant="contained" color="success" onClick={handleUpdateWorkout}>
-                  Actualizar última planilla
-                </Button>
+                <>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => {
+                      setSelectedFavoriteId("new");
+                      setFavoriteName("");
+                      setFavoriteModalOpen(true);
+                    }}
+                  >
+                    Guardar favorito
+                  </Button>
+
+                  <Button variant="contained" color="success" onClick={handleUpdateWorkout}>
+                    Actualizar última planilla
+                  </Button>
+                </>
               )}
 
               <Button variant="contained" color="success" onClick={handleCreateWorkout}>
@@ -889,6 +1017,60 @@ export default function CreateWorkoutScreen() {
             setDays(updated);
           }}
         />
+
+        {/* MODAL FAVORITOS */}
+        <Dialog open={favoriteModalOpen} onClose={() => setFavoriteModalOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Guardar favorito</DialogTitle>
+
+          <DialogContent>
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <TextField
+                select
+                label="Favorito"
+                value={selectedFavoriteId}
+                onChange={(e) => {
+                  const value = e.target.value;
+
+                  setSelectedFavoriteId(value);
+
+                  if (value === "new") {
+                    setFavoriteName("");
+                    return;
+                  }
+
+                  const save = savedWorkouts.find((s) => s.id === value);
+
+                  if (save) {
+                    setFavoriteName(save.name);
+                  }
+                }}
+              >
+                <MenuItem value="new">Nuevo favorito</MenuItem>
+
+                {savedWorkouts.map((save) => (
+                  <MenuItem key={save.id} value={save.id}>
+                    {save.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              <TextField
+                label="Nombre"
+                value={favoriteName}
+                onChange={(e) => setFavoriteName(e.target.value)}
+                fullWidth
+              />
+            </Stack>
+          </DialogContent>
+
+          <DialogActions>
+            <Button onClick={() => setFavoriteModalOpen(false)}>Cancelar</Button>
+
+            <Button variant="contained" color="primary" onClick={handleSaveFavorite} disabled={!favoriteName.trim()}>
+              {selectedFavoriteId === "new" ? "Guardar favorito" : "Actualizar favorito"}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </Box>
   );

@@ -13,8 +13,7 @@ public record WorkoutFullResponse(
         LocalDate startDate,
         LocalDate endDate,
         Long userId,
-        List<DayItem> days
-) {
+        List<DayItem> days) {
     public record DayItem(
             Long id,
             String name,
@@ -25,8 +24,8 @@ public record WorkoutFullResponse(
             LocalDateTime startedAt,
             LocalDateTime finishedAt,
             String status,
-            List<ExerciseItem> exercises
-    ) {}
+            List<ExerciseItem> exercises) {
+    }
 
     public record ExerciseItem(
             Long id,
@@ -35,6 +34,7 @@ public record WorkoutFullResponse(
             Integer order,
             Double weight,
             String comment,
-            boolean completed
-    ) {}
+            boolean completed,
+            Double nextWeight) {
+    }
 }

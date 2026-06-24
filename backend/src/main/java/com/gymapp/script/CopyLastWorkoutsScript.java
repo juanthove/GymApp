@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -52,6 +53,27 @@ public class CopyLastWorkoutsScript {
                 continue;
             }
 
+            // Ver si el workout no terminó
+            if (lastWorkout.getEndDate().isAfter(LocalDate.now())) {
+                continue;
+            }
+
+            // Traigo los dias del workout
+            List<WorkoutDay> days = workoutDayRepository.findByWorkoutIdOrderByDayOrder(lastWorkout.getId());
+
+            // Verificar si algun día fue iniciado, si no solo se mueve la fecha
+            boolean startedAnyDay = days.stream()
+                    .anyMatch(day -> day.getStartedAt() != null);
+
+            if (!startedAnyDay) {
+                lastWorkout.setStartDate(lastWorkout.getStartDate().plusDays(7));
+                lastWorkout.setEndDate(lastWorkout.getEndDate().plusDays(7));
+
+                workoutRepository.save(lastWorkout);
+
+                continue;
+            }
+
             // Crear nuevo workout como copia desplazada una semana hacia adelante.
             // Se asume que la semana anterior empieza el lunes y termina el domingo.
             Workout newWorkout = new Workout();
@@ -70,8 +92,6 @@ public class CopyLastWorkoutsScript {
 
             user.setCurrentWorkout(newWorkout);
             userRepository.save(user);
-
-            List<WorkoutDay> days = workoutDayRepository.findByWorkoutIdOrderByDayOrder(lastWorkout.getId());
 
             // Cerrar días que quedaron iniciados pero no finalizados
             for (WorkoutDay day : days) {

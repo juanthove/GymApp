@@ -110,10 +110,12 @@ public class WorkoutServiceImpl implements WorkoutService {
             List<WorkoutFullResponse.ExerciseItem> exerciseList = exercises.stream()
                     .map(ex -> new WorkoutFullResponse.ExerciseItem(
                             ex.getId(), ex.getExercise().getId(), ex.getExercise().getName(),
-                            ex.getExerciseOrder(), ex.getWeight(), ex.getComment(), ex.isCompleted()))
+                            ex.getExerciseOrder(), ex.getWeight(), ex.getComment(), ex.isCompleted(),
+                            ex.getNextWeight()))
                     .toList();
             dayList.add(new WorkoutFullResponse.DayItem(
-                    day.getId(), day.getName(), muscleService.getMusclesFromWorkoutDay(day), day.getDayOrder(), day.getMuscleImage(),
+                    day.getId(), day.getName(), muscleService.getMusclesFromWorkoutDay(day), day.getDayOrder(),
+                    day.getMuscleImage(),
                     day.isAbdominal(), day.getStartedAt(), day.getFinishedAt(), day.getStatus(), exerciseList));
         }
 
@@ -169,9 +171,9 @@ public class WorkoutServiceImpl implements WorkoutService {
 
         List<WorkoutDay> existingDays = workoutDayRepository.findByWorkoutIdOrderByDayOrder(id);
         Set<String> previousImageNames = existingDays.stream()
-            .map(WorkoutDay::getMuscleImage)
-            .filter(Objects::nonNull)
-            .collect(java.util.stream.Collectors.toSet());
+                .map(WorkoutDay::getMuscleImage)
+                .filter(Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
 
         for (WorkoutDay day : existingDays) {
             workoutExerciseRepository.deleteByWorkoutDayId(day.getId());
