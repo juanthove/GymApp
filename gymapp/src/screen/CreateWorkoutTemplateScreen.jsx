@@ -49,6 +49,7 @@ import AppSnackbar from "../components/AppSnackbar";
 import SortableList from "../components/sortable/SortableList";
 import SortableItem from "../components/sortable/SortableItem";
 import ExerciseSelectionModal from "../components/ExerciseSelectionModal";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 export default function CreateWorkoutTemplateScreen() {
   useRequireAuth();
@@ -68,6 +69,8 @@ export default function CreateWorkoutTemplateScreen() {
 
   const [exerciseModalOpen, setExerciseModalOpen] = useState(false);
   const [selectedDayIndex, setSelectedDayIndex] = useState(null);
+
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   useEffect(() => {
     loadTemplates();
@@ -353,8 +356,6 @@ export default function CreateWorkoutTemplateScreen() {
 
   const handleDelete = async () => {
     if (!selectedTemplateId) return;
-
-    if (!window.confirm("Eliminar este template?")) return;
 
     try {
       await deleteWorkoutTemplate(selectedTemplateId);
@@ -642,7 +643,7 @@ export default function CreateWorkoutTemplateScreen() {
 
             <Stack direction="row" spacing={2}>
               {selectedTemplateId && (
-                <Button variant="contained" color="error" onClick={handleDelete}>
+                <Button variant="contained" color="error" onClick={() => setConfirmDeleteOpen(true)}>
                   Eliminar Plantilla
                 </Button>
               )}
@@ -653,6 +654,20 @@ export default function CreateWorkoutTemplateScreen() {
             </Stack>
           </Stack>
         </Paper>
+
+        {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
+        <ConfirmDialog
+          open={confirmDeleteOpen}
+          onClose={() => setConfirmDeleteOpen(false)}
+          onConfirm={async () => {
+            await handleDelete();
+            setConfirmDeleteOpen(false);
+          }}
+          title="Eliminar plantilla"
+          message="¿Estás seguro de que deseas eliminar esta plantilla?"
+          confirmText="Eliminar"
+          confirmColor="error"
+        />
 
         {/* MODAL SELECCIÓN DE EJERCICIOS */}
         <ExerciseSelectionModal

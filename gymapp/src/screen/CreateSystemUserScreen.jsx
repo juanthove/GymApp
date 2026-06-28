@@ -9,6 +9,7 @@ import { Container, Paper, Typography, TextField, MenuItem, Button, Stack, Box }
 
 import BackButton from "../components/BackButton";
 import AppSnackbar from "../components/AppSnackbar";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 export default function CreateSystemUserScreen() {
   useRequireAuth();
@@ -22,6 +23,8 @@ export default function CreateSystemUserScreen() {
 
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("info");
+
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -109,19 +112,17 @@ export default function CreateSystemUserScreen() {
   const handleDelete = async () => {
     if (!currentUser) return;
 
-    if (window.confirm("¿Seguro que deseas eliminar este usuario?")) {
-      try {
-        await deleteSystemUser(currentUser.id);
+    try {
+      await deleteSystemUser(currentUser.id);
 
-        setMessage("Usuario eliminado correctamente");
-        setMessageType("success");
+      setMessage("Usuario eliminado correctamente");
+      setMessageType("success");
 
-        resetForm();
-        loadUsers();
-      } catch {
-        setMessage("Error al eliminar usuario");
-        setMessageType("error");
-      }
+      resetForm();
+      loadUsers();
+    } catch {
+      setMessage("Error al eliminar usuario");
+      setMessageType("error");
     }
   };
 
@@ -228,7 +229,7 @@ export default function CreateSystemUserScreen() {
             {/* BOTONES */}
             <Stack direction="row" spacing={2}>
               {currentUser && (
-                <Button variant="contained" color="error" onClick={handleDelete}>
+                <Button variant="contained" color="error" onClick={() => setConfirmDeleteOpen(true)}>
                   Eliminar Usuario
                 </Button>
               )}
@@ -239,6 +240,20 @@ export default function CreateSystemUserScreen() {
             </Stack>
           </Stack>
         </Paper>
+
+        {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
+        <ConfirmDialog
+          open={confirmDeleteOpen}
+          onClose={() => setConfirmDeleteOpen(false)}
+          onConfirm={async () => {
+            await handleDelete();
+            setConfirmDeleteOpen(false);
+          }}
+          title="Eliminar usuario"
+          message="¿Estás seguro de que deseas eliminar este usuario?"
+          confirmText="Eliminar"
+          confirmColor="error"
+        />
       </Container>
     </Box>
   );

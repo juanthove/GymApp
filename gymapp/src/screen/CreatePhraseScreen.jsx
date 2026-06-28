@@ -9,6 +9,7 @@ import { Container, Paper, Typography, TextField, MenuItem, Button, Stack, Box }
 
 import BackButton from "../components/BackButton";
 import AppSnackbar from "../components/AppSnackbar";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 export default function CreatePhraseScreen() {
   useRequireAuth();
@@ -20,6 +21,8 @@ export default function CreatePhraseScreen() {
 
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("info");
+
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   useEffect(() => {
     loadPhrases();
@@ -88,19 +91,17 @@ export default function CreatePhraseScreen() {
   const handleDelete = async () => {
     if (!currentPhrase) return;
 
-    if (window.confirm("¿Seguro que deseas eliminar esta frase?")) {
-      try {
-        await deletePhrase(currentPhrase.id);
+    try {
+      await deletePhrase(currentPhrase.id);
 
-        setMessage("Frase eliminada correctamente");
-        setMessageType("success");
+      setMessage("Frase eliminada correctamente");
+      setMessageType("success");
 
-        resetForm();
-        loadPhrases();
-      } catch {
-        setMessage("Error al eliminar frase");
-        setMessageType("error");
-      }
+      resetForm();
+      loadPhrases();
+    } catch {
+      setMessage("Error al eliminar frase");
+      setMessageType("error");
     }
   };
 
@@ -186,7 +187,7 @@ export default function CreatePhraseScreen() {
             {/* BOTONES */}
             <Stack direction="row" spacing={2}>
               {currentPhrase && (
-                <Button variant="contained" color="error" onClick={handleDelete}>
+                <Button variant="contained" color="error" onClick={() => setConfirmDeleteOpen(true)}>
                   Eliminar
                 </Button>
               )}
@@ -197,6 +198,20 @@ export default function CreatePhraseScreen() {
             </Stack>
           </Stack>
         </Paper>
+
+        {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
+        <ConfirmDialog
+          open={confirmDeleteOpen}
+          onClose={() => setConfirmDeleteOpen(false)}
+          onConfirm={async () => {
+            await handleDelete();
+            setConfirmDeleteOpen(false);
+          }}
+          title="Eliminar frase"
+          message="¿Estás seguro de que deseas eliminar esta frase?"
+          confirmText="Eliminar"
+          confirmColor="error"
+        />
 
         {/* SNACKBAR */}
         <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />

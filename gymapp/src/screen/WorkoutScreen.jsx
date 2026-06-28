@@ -14,18 +14,7 @@ import {
 } from "../services/workoutDayService";
 import { getRandomPhrase } from "../services/phraseService";
 
-import {
-  Container,
-  Typography,
-  Stack,
-  Box,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  CircularProgress,
-} from "@mui/material";
+import { Container, Typography, Stack, Box, Button, CircularProgress } from "@mui/material";
 
 import { fontSize, keyframes } from "@mui/system";
 

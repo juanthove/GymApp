@@ -29,6 +29,7 @@ import {
 import BackButton from "../components/BackButton";
 import FileUploadField from "../components/FileUploadField";
 import AppSnackbar from "../components/AppSnackbar";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 import { muscleLabels } from "../config/muscleConfig";
 import { normalizeText } from "../utils/stringUtils";
@@ -60,6 +61,7 @@ export default function CreateExerciseScreen() {
   const [messageType, setMessageType] = useState("info");
 
   const [fileKey, setFileKey] = useState(0);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -201,8 +203,6 @@ export default function CreateExerciseScreen() {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("¿Eliminar ejercicio?")) return;
-
     try {
       await deleteExercise(selectedId);
 
@@ -409,7 +409,7 @@ export default function CreateExerciseScreen() {
 
             <Stack direction="row" spacing={2}>
               {selectedId !== "new" && (
-                <Button variant="contained" color="error" onClick={handleDelete}>
+                <Button variant="contained" color="error" onClick={() => setConfirmDeleteOpen(true)}>
                   Eliminar ejercicio
                 </Button>
               )}
@@ -420,6 +420,20 @@ export default function CreateExerciseScreen() {
             </Stack>
           </Stack>
         </Paper>
+
+        {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
+        <ConfirmDialog
+          open={confirmDeleteOpen}
+          onClose={() => setConfirmDeleteOpen(false)}
+          onConfirm={async () => {
+            await handleDelete();
+            setConfirmDeleteOpen(false);
+          }}
+          title="Eliminar ejercicio"
+          message="¿Estás seguro de que deseas eliminar este ejercicio?"
+          confirmText="Eliminar"
+          confirmColor="error"
+        />
       </Container>
     </Box>
   );

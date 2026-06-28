@@ -17,6 +17,7 @@ import { Container, Paper, Typography, TextField, MenuItem, Button, Stack, Box }
 import BackButton from "../components/BackButton";
 import AppSnackbar from "../components/AppSnackbar";
 import ExerciseSelectionModal from "../components/ExerciseSelectionModal";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 export default function CreateExerciseReminderRuleScreen() {
   useRequireAuth();
@@ -35,6 +36,7 @@ export default function CreateExerciseReminderRuleScreen() {
   const [messageType, setMessageType] = useState("info");
 
   const [exerciseModalOpen, setExerciseModalOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -132,19 +134,17 @@ export default function CreateExerciseReminderRuleScreen() {
   const handleDelete = async () => {
     if (!currentRule) return;
 
-    if (window.confirm("¿Seguro que deseas eliminar esta regla?")) {
-      try {
-        await deleteExerciseReminderRule(currentRule.id);
+    try {
+      await deleteExerciseReminderRule(currentRule.id);
 
-        setMessage("Regla eliminada correctamente");
-        setMessageType("success");
+      setMessage("Regla eliminada correctamente");
+      setMessageType("success");
 
-        resetForm();
-        await loadData();
-      } catch {
-        setMessage("Error al eliminar regla");
-        setMessageType("error");
-      }
+      resetForm();
+      await loadData();
+    } catch {
+      setMessage("Error al eliminar regla");
+      setMessageType("error");
     }
   };
 
@@ -255,7 +255,7 @@ export default function CreateExerciseReminderRuleScreen() {
 
             <Stack direction="row" spacing={2}>
               {currentRule && (
-                <Button variant="contained" color="error" onClick={handleDelete}>
+                <Button variant="contained" color="error" onClick={() => setConfirmDeleteOpen(true)}>
                   Eliminar
                 </Button>
               )}
@@ -267,6 +267,21 @@ export default function CreateExerciseReminderRuleScreen() {
           </Stack>
         </Paper>
 
+        {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
+        <ConfirmDialog
+          open={confirmDeleteOpen}
+          onClose={() => setConfirmDeleteOpen(false)}
+          onConfirm={async () => {
+            await handleDelete();
+            setConfirmDeleteOpen(false);
+          }}
+          title="Eliminar aviso"
+          message="¿Estás seguro de que deseas eliminar este aviso?"
+          confirmText="Eliminar"
+          confirmColor="error"
+        />
+
+        {/* MODAL SELECCIÓN DE EJERCICIOS */}
         <ExerciseSelectionModal
           open={exerciseModalOpen}
           onClose={() => setExerciseModalOpen(false)}

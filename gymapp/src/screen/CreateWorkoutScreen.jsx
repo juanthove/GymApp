@@ -19,7 +19,11 @@ import {
   getWorkoutSavesByUser,
   createWorkoutSave,
   updateWorkoutSave,
+  deleteWorkoutSave,
 } from "../services/workoutSaveService";
+
+import AnimatedDialog from "../components/AnimatedDialog";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 import {
   Container,
@@ -41,10 +45,6 @@ import {
   Autocomplete,
   LinearProgress,
   Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from "@mui/material";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -105,6 +105,7 @@ export default function CreateWorkoutScreen() {
   const [favoriteModalOpen, setFavoriteModalOpen] = useState(false);
   const [selectedFavoriteId, setSelectedFavoriteId] = useState("new");
   const [favoriteName, setFavoriteName] = useState("");
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -598,6 +599,26 @@ export default function CreateWorkoutScreen() {
     setMessageType("success");
   };
 
+  const handleDeleteFavorite = async () => {
+    if (selectedFavoriteId === "new") return;
+
+    try {
+      await deleteWorkoutSave(selectedFavoriteId);
+
+      await loadSavedWorkouts(selectedUser);
+
+      setSelectedFavoriteId("new");
+      setFavoriteName("");
+      setFavoriteModalOpen(false);
+
+      setMessage("Favorito eliminado");
+      setMessageType("success");
+    } catch (e) {
+      setMessage(e.message);
+      setMessageType("error");
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -1019,58 +1040,76 @@ export default function CreateWorkoutScreen() {
         />
 
         {/* MODAL FAVORITOS */}
-        <Dialog open={favoriteModalOpen} onClose={() => setFavoriteModalOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Guardar favorito</DialogTitle>
+        <AnimatedDialog
+          open={favoriteModalOpen}
+          onClose={() => setFavoriteModalOpen(false)}
+          title="Guardar favorito"
+          actions={
+            <>
+              {selectedFavoriteId !== "new" && (
+                <Button variant="contained" color="error" onClick={() => setConfirmDeleteOpen(true)}>
+                  Eliminar favorito
+                </Button>
+              )}
 
-          <DialogContent>
-            <Stack spacing={2} sx={{ mt: 1 }}>
-              <TextField
-                select
-                label="Favorito"
-                value={selectedFavoriteId}
-                onChange={(e) => {
-                  const value = e.target.value;
+              <Button variant="contained" onClick={handleSaveFavorite} disabled={!favoriteName.trim()}>
+                {selectedFavoriteId === "new" ? "Guardar favorito" : "Actualizar favorito"}
+              </Button>
+            </>
+          }
+        >
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              select
+              label="Favorito"
+              value={selectedFavoriteId}
+              onChange={(e) => {
+                const value = e.target.value;
 
-                  setSelectedFavoriteId(value);
+                setSelectedFavoriteId(value);
 
-                  if (value === "new") {
-                    setFavoriteName("");
-                    return;
-                  }
+                if (value === "new") {
+                  setFavoriteName("");
+                  return;
+                }
 
-                  const save = savedWorkouts.find((s) => s.id === value);
+                const save = savedWorkouts.find((s) => s.id === value);
 
-                  if (save) {
-                    setFavoriteName(save.name);
-                  }
-                }}
-              >
-                <MenuItem value="new">Nuevo favorito</MenuItem>
+                if (save) {
+                  setFavoriteName(save.name);
+                }
+              }}
+            >
+              <MenuItem value="new">Nuevo favorito</MenuItem>
 
-                {savedWorkouts.map((save) => (
-                  <MenuItem key={save.id} value={save.id}>
-                    {save.name}
-                  </MenuItem>
-                ))}
-              </TextField>
+              {savedWorkouts.map((save) => (
+                <MenuItem key={save.id} value={save.id}>
+                  {save.name}
+                </MenuItem>
+              ))}
+            </TextField>
 
-              <TextField
-                label="Nombre"
-                value={favoriteName}
-                onChange={(e) => setFavoriteName(e.target.value)}
-                fullWidth
-              />
-            </Stack>
-          </DialogContent>
+            <TextField
+              label="Nombre"
+              value={favoriteName}
+              onChange={(e) => setFavoriteName(e.target.value)}
+              fullWidth
+            />
+          </Stack>
+        </AnimatedDialog>
 
-          <DialogActions>
-            <Button onClick={() => setFavoriteModalOpen(false)}>Cancelar</Button>
-
-            <Button variant="contained" color="primary" onClick={handleSaveFavorite} disabled={!favoriteName.trim()}>
-              {selectedFavoriteId === "new" ? "Guardar favorito" : "Actualizar favorito"}
-            </Button>
-          </DialogActions>
-        </Dialog>
+        <ConfirmDialog
+          open={confirmDeleteOpen}
+          onClose={() => setConfirmDeleteOpen(false)}
+          onConfirm={async () => {
+            await handleDeleteFavorite();
+            setConfirmDeleteOpen(false);
+          }}
+          title="Eliminar favorito"
+          message="¿Seguro que deseas eliminar este favorito?"
+          confirmText="Eliminar"
+          confirmColor="error"
+        />
       </Container>
     </Box>
   );
