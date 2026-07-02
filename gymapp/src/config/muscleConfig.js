@@ -2,6 +2,7 @@ export const muscleLabels = {
   CHEST: "Pectorales",
   BACK: "Dorsales",
   SHOULDERS: "Hombros",
+  TRAPS: "Trapecios",
   BICEPS: "Bíceps",
   TRICEPS: "Tríceps",
   FOREARMS: "Antebrazos",
@@ -18,6 +19,7 @@ export const muscleColors = {
   CHEST: "#ef5350",
   BACK: "#42a5f5",
   SHOULDERS: "#ffb74d",
+  TRAPS: "#78909c",
   BICEPS: "#66bb6a",
   TRICEPS: "#26a69a",
   FOREARMS: "#8d6e63",
@@ -36,6 +38,7 @@ export const muscleGroups = {
   ABDOMINALS: "CHEST",
 
   SHOULDERS: "ARM",
+  TRAPS: "ARM",
   BICEPS: "ARM",
   TRICEPS: "ARM",
   FOREARMS: "ARM",

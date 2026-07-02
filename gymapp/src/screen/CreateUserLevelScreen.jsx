@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import useRequireAuth from "../hooks/useRequireAuth";
+import useSnackbar from "../hooks/useSnackbar";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -18,8 +19,6 @@ import {
   Box,
 } from "@mui/material";
 
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 import BackButton from "../components/BackButton";
@@ -32,8 +31,7 @@ export default function CreateUserLevel() {
   const [levels, setLevels] = useState([]);
   const [newName, setNewName] = useState("");
 
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("info");
+  const { message, messageType, showMessage, clearMessage } = useSnackbar();
 
   useEffect(() => {
     loadLevels();
@@ -42,17 +40,6 @@ export default function CreateUserLevel() {
   const loadLevels = async () => {
     const data = await getUserLevels();
     setLevels(data.sort((a, b) => a.levelOrder - b.levelOrder));
-  };
-
-  const moveLevel = (index, direction) => {
-    const updated = [...levels];
-    const newIndex = index + direction;
-
-    if (newIndex < 0 || newIndex >= updated.length) return;
-
-    [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
-
-    setLevels(updated);
   };
 
   const handleSaveOrder = async () => {
@@ -64,13 +51,11 @@ export default function CreateUserLevel() {
 
       await updateUserLevelsOrder(payload);
 
-      setMessage("Orden guardado correctamente");
-      setMessageType("success");
+      showMessage("Orden guardado correctamente", "success");
 
-      loadLevels();
+      await loadLevels();
     } catch (e) {
-      setMessage("Error al guardar el orden");
-      setMessageType("error");
+      showMessage("Error al guardar el orden", "error");
     }
   };
 
@@ -80,14 +65,12 @@ export default function CreateUserLevel() {
     try {
       await createUserLevel({ name: newName });
 
-      setMessage("Nivel creado correctamente");
-      setMessageType("success");
+      showMessage("Nivel creado correctamente", "success");
 
       setNewName("");
-      loadLevels();
+      await loadLevels();
     } catch (e) {
-      setMessage("Error al crear el nivel");
-      setMessageType("error");
+      showMessage("Error al crear el nivel", "error");
     }
   };
 
@@ -95,13 +78,11 @@ export default function CreateUserLevel() {
     try {
       await deleteUserLevel(id);
 
-      setMessage("Nivel eliminado");
-      setMessageType("success");
+      showMessage("Nivel eliminado", "success");
 
-      loadLevels();
+      await loadLevels();
     } catch (e) {
-      setMessage("Error al eliminar");
-      setMessageType("error");
+      showMessage("Error al eliminar", "error");
     }
   };
 
@@ -224,8 +205,8 @@ export default function CreateUserLevel() {
               Guardar orden
             </Button>
           </Stack>
-          <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
         </Paper>
+        <AppSnackbar message={message} type={messageType} onClose={clearMessage} />
       </Container>
     </Box>
   );

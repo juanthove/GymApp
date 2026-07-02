@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import useRequireAuth from "../hooks/useRequireAuth";
+import useSnackbar from "../hooks/useSnackbar";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -17,10 +18,10 @@ export default function CreatePhraseScreen() {
   const [selectedId, setSelectedId] = useState("new");
   const [currentPhrase, setCurrentPhrase] = useState(null);
 
+  const textInputRef = useRef(null);
   const [text, setText] = useState("");
 
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("info");
+  const { message, messageType, showMessage, clearMessage } = useSnackbar();
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
@@ -49,42 +50,46 @@ export default function CreatePhraseScreen() {
 
     const phrase = phrases.find((p) => p.id === Number(id));
 
+    if (!phrase) return;
+
     setCurrentPhrase(phrase);
     setText(phrase.text);
   };
 
   const validateForm = () => {
     if (!text.trim()) {
-      setMessage("La frase no puede estar vacía");
-      setMessageType("warning");
+      showMessage("La frase no puede estar vacía", "warning");
       return false;
     }
     return true;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const savePhrase = async () => {
+    if (selectedId === "new") {
+      await createPhrase({ text });
+      return "Frase creada correctamente";
+    }
 
+    await updatePhrase(selectedId, { text });
+    return "Frase actualizada correctamente";
+  };
+
+  const handleSubmit = async () => {
     if (!validateForm()) return;
 
     try {
-      if (selectedId === "new") {
-        await createPhrase({ text });
+      const message = await savePhrase();
 
-        setMessage("Frase creada correctamente");
-        setMessageType("success");
-      } else {
-        await updatePhrase(selectedId, { text });
-
-        setMessage("Frase actualizada correctamente");
-        setMessageType("success");
-      }
+      showMessage(message, "success");
 
       resetForm();
-      loadPhrases();
+      await loadPhrases();
+
+      requestAnimationFrame(() => {
+        textInputRef.current?.focus();
+      });
     } catch (error) {
-      setMessage("Error: " + error.message);
-      setMessageType("error");
+      showMessage(error.message, "error");
     }
   };
 
@@ -94,14 +99,12 @@ export default function CreatePhraseScreen() {
     try {
       await deletePhrase(currentPhrase.id);
 
-      setMessage("Frase eliminada correctamente");
-      setMessageType("success");
+      showMessage("Frase eliminada correctamente", "success");
 
       resetForm();
-      loadPhrases();
+      await loadPhrases();
     } catch {
-      setMessage("Error al eliminar frase");
-      setMessageType("error");
+      showMessage("Error al eliminar frase", "error");
     }
   };
 
@@ -182,7 +185,14 @@ export default function CreatePhraseScreen() {
             </TextField>
 
             {/* INPUT */}
-            <TextField label="Frase" multiline minRows={3} value={text} onChange={(e) => setText(e.target.value)} />
+            <TextField
+              label="Frase"
+              multiline
+              minRows={3}
+              value={text}
+              inputRef={textInputRef}
+              onChange={(e) => setText(e.target.value)}
+            />
 
             {/* BOTONES */}
             <Stack direction="row" spacing={2}>
@@ -214,7 +224,7 @@ export default function CreatePhraseScreen() {
         />
 
         {/* SNACKBAR */}
-        <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
+        <AppSnackbar message={message} type={messageType} onClose={clearMessage} />
       </Container>
     </Box>
   );

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import useRequireAuth from "../hooks/useRequireAuth";
+import useSnackbar from "../hooks/useSnackbar";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -29,6 +30,7 @@ import {
   IconButton,
   Divider,
   Box,
+  Autocomplete,
 } from "@mui/material";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -37,6 +39,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import BackButton from "../components/BackButton";
 import AppSnackbar from "../components/AppSnackbar";
 import FileUploadField from "../components/FileUploadField";
+
+import { normalizeText } from "../utils/stringUtils";
 
 export default function CreateAchievementScreen() {
   useRequireAuth();
@@ -47,14 +51,27 @@ export default function CreateAchievementScreen() {
   const [imagePreviews, setImagePreviews] = useState({});
   const [deleteImages, setDeleteImages] = useState({});
 
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("info");
-
-  const muscleOptions = Object.keys(muscleLabels);
+  const { message, messageType, showMessage, clearMessage } = useSnackbar();
 
   useEffect(() => {
     loadData();
   }, []);
+
+  const muscleOptions = [
+    { value: "", label: "Ninguno" },
+    ...Object.entries(muscleLabels).map(([value, label]) => ({
+      value,
+      label,
+    })),
+  ];
+
+  const exerciseOptions = [
+    { value: "", label: "Ninguno" },
+    ...exercises.map((ex) => ({
+      value: ex.id,
+      label: ex.name,
+    })),
+  ];
 
   const loadData = async () => {
     const [levelsData, achievementsData, exercisesData] = await Promise.all([
@@ -172,8 +189,7 @@ export default function CreateAchievementScreen() {
         }
       }
 
-      setMessage("Logros guardados correctamente");
-      setMessageType("success");
+      showMessage("Logros guardados correctamente", "success");
 
       loadData();
 
@@ -181,8 +197,7 @@ export default function CreateAchievementScreen() {
       setImagePreviews({});
       setDeleteImages({});
     } catch (e) {
-      setMessage("Error: " + e.message);
-      setMessageType("error");
+      showMessage("Error: " + e.message, "error");
     }
   };
 
@@ -207,6 +222,11 @@ export default function CreateAchievementScreen() {
     });
   };
 
+  const validationError = (message) => {
+    showMessage(message, "warning");
+    return false;
+  };
+
   const validateAchievements = () => {
     const seen = new Set();
 
@@ -214,46 +234,34 @@ export default function CreateAchievementScreen() {
       for (const ach of level.achievements) {
         //Nombre
         if (!ach.name?.trim()) {
-          setMessage("Todos los logros deben tener nombre");
-          setMessageType("warning");
-          return false;
+          return validationError("Todos los logros deben tener nombre");
         }
 
         //Tipo
         if (!ach.type) {
-          setMessage(`El logro "${ach.name}" debe tener tipo`);
-          setMessageType("warning");
-          return false;
+          return validationError(`El logro "${ach.name}" debe tener tipo`);
         }
 
         //Valor requerido
         if (!ach.requiredValue || ach.requiredValue <= 0) {
-          setMessage(`El logro "${ach.name}" debe tener un valor válido (> 0)`);
-          setMessageType("warning");
-          return false;
+          return validationError(`El logro "${ach.name}" debe tener un valor válido (> 0)`);
         }
 
         //VALIDACIONES POR TIPO
 
         if (ach.type === "VOLUME") {
           if (ach.exercise && ach.muscle) {
-            setMessage(`El logro "${ach.name}" no puede tener ejercicio y músculo al mismo tiempo`);
-            setMessageType("warning");
-            return false;
+            return validationError(`El logro "${ach.name}" no puede tener ejercicio y músculo al mismo tiempo`);
           }
         }
 
         if (ach.type === "CONSISTENCY" || ach.type === "STREAK") {
           if (ach.exercise) {
-            setMessage(`El logro "${ach.name}" no debe tener ejercicio`);
-            setMessageType("warning");
-            return false;
+            return validationError(`El logro "${ach.name}" no debe tener ejercicio`);
           }
 
           if (ach.muscle) {
-            setMessage(`El logro "${ach.name}" no debe tener músculo`);
-            setMessageType("warning");
-            return false;
+            return validationError(`El logro "${ach.name}" no debe tener músculo`);
           }
         }
 
@@ -263,9 +271,7 @@ export default function CreateAchievementScreen() {
         const key = `${level.id}-${ach.type}-${exerciseKey}-${muscleKey}-${requiredValue}`;
 
         if (seen.has(key)) {
-          setMessage(`Tenés logros duplicados en el nivel "${level.name}"`);
-          setMessageType("warning");
-          return false;
+          return validationError(`Tenés logros duplicados en el nivel "${level.name}"`);
         }
 
         seen.add(key);
@@ -391,38 +397,41 @@ export default function CreateAchievementScreen() {
                               }
                             />
 
-                            <TextField
-                              select
-                              label="Músculo"
-                              value={ach.muscle || ""}
-                              onChange={(e) => updateAchievementField(levelIndex, achIndex, "muscle", e.target.value)}
-                            >
-                              <MenuItem value="">Ninguno</MenuItem>
-
-                              {Object.entries(muscleLabels).map(([key, label]) => (
-                                <MenuItem key={key} value={key}>
-                                  {label}
-                                </MenuItem>
-                              ))}
-                            </TextField>
-
-                            <TextField
-                              select
-                              label="Ejercicio"
-                              value={ach.exercise?.id || ""}
-                              onChange={(e) => {
-                                const ex = exercises.find((x) => x.id === e.target.value);
-                                updateAchievementField(levelIndex, achIndex, "exercise", ex);
+                            <Autocomplete
+                              autoHighlight
+                              options={muscleOptions}
+                              getOptionLabel={(option) => option.label}
+                              value={muscleOptions.find((m) => m.value === (ach.muscle || "")) || muscleOptions[0]}
+                              onChange={(_, newValue) => {
+                                updateAchievementField(levelIndex, achIndex, "muscle", newValue?.value || "");
                               }}
-                            >
-                              <MenuItem value="">Ninguno</MenuItem>
+                              filterOptions={(options, state) => {
+                                const search = normalizeText(state.inputValue);
 
-                              {exercises.map((ex) => (
-                                <MenuItem key={ex.id} value={ex.id}>
-                                  {ex.name}
-                                </MenuItem>
-                              ))}
-                            </TextField>
+                                return options.filter((option) => normalizeText(option.label).startsWith(search));
+                              }}
+                              renderInput={(params) => <TextField {...params} label="Músculo" />}
+                            />
+
+                            <Autocomplete
+                              autoHighlight
+                              options={exerciseOptions}
+                              getOptionLabel={(option) => option.label}
+                              value={
+                                exerciseOptions.find((e) => e.value === (ach.exercise?.id || "")) || exerciseOptions[0]
+                              }
+                              onChange={(_, newValue) => {
+                                const exercise = exercises.find((e) => e.id === newValue?.value) || null;
+
+                                updateAchievementField(levelIndex, achIndex, "exercise", exercise);
+                              }}
+                              filterOptions={(options, state) => {
+                                const search = normalizeText(state.inputValue);
+
+                                return options.filter((option) => normalizeText(option.label).startsWith(search));
+                              }}
+                              renderInput={(params) => <TextField {...params} label="Ejercicio" />}
+                            />
 
                             <FileUploadField
                               label="Imagen del logro"
@@ -474,10 +483,9 @@ export default function CreateAchievementScreen() {
             <Button variant="contained" color="success" onClick={saveAll}>
               Guardar todos los logros
             </Button>
-
-            <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
           </Stack>
         </Paper>
+        <AppSnackbar message={message} type={messageType} onClose={clearMessage} />
       </Container>
     </Box>
   );

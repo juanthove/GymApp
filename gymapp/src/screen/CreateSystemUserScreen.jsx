@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import useRequireAuth from "../hooks/useRequireAuth";
+import useSnackbar from "../hooks/useSnackbar";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -21,8 +22,7 @@ export default function CreateSystemUserScreen() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("ADMIN");
 
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("info");
+  const { message, messageType, showMessage, clearMessage } = useSnackbar();
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
@@ -53,6 +53,8 @@ export default function CreateSystemUserScreen() {
 
     const user = users.find((u) => u.id === Number(id));
 
+    if (!user) return;
+
     setCurrentUser(user);
     setUsername(user.username);
     setPassword("");
@@ -61,51 +63,50 @@ export default function CreateSystemUserScreen() {
 
   const validateForm = () => {
     if (!username.trim()) {
-      setMessage("El usuario es obligatorio");
-      setMessageType("warning");
+      showMessage("El usuario es obligatorio", "warning");
       return false;
     }
 
     if (!password.trim() && selectedId === "new") {
-      setMessage("La contraseña es obligatoria");
-      setMessageType("warning");
+      showMessage("La contraseña es obligatoria", "warning");
       return false;
     }
 
     return true;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const saveUser = async () => {
+    if (selectedId === "new") {
+      await createSystemUser({
+        username,
+        password,
+        role,
+      });
 
+      return "Usuario del sistema creado correctamente";
+    }
+
+    await updateSystemUser(selectedId, {
+      username,
+      password: password || null,
+      role,
+    });
+
+    return "Usuario actualizado correctamente";
+  };
+
+  const handleSubmit = async (e) => {
     if (!validateForm()) return;
 
     try {
-      if (selectedId === "new") {
-        await createSystemUser({
-          username,
-          password,
-          role,
-        });
+      const message = await saveUser();
 
-        setMessage("Usuario del sistema creado correctamente");
-        setMessageType("success");
-      } else {
-        await updateSystemUser(selectedId, {
-          username,
-          password: password || null,
-          role,
-        });
-
-        setMessage("Usuario actualizado correctamente");
-        setMessageType("success");
-      }
+      showMessage(message, "success");
 
       resetForm();
-      loadUsers();
+      await loadUsers();
     } catch (error) {
-      setMessage("Error: " + error.message);
-      setMessageType("error");
+      showMessage("Error: " + error.message, "error");
     }
   };
 
@@ -115,14 +116,12 @@ export default function CreateSystemUserScreen() {
     try {
       await deleteSystemUser(currentUser.id);
 
-      setMessage("Usuario eliminado correctamente");
-      setMessageType("success");
+      showMessage("Usuario eliminado correctamente", "success");
 
       resetForm();
-      loadUsers();
+      await loadUsers();
     } catch {
-      setMessage("Error al eliminar usuario");
-      setMessageType("error");
+      showMessage("Error al eliminar usuario", "error");
     }
   };
 
@@ -223,9 +222,6 @@ export default function CreateSystemUserScreen() {
               <MenuItem value="STAFF">Común</MenuItem>
             </TextField>
 
-            {/* MENSAJES */}
-            <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
-
             {/* BOTONES */}
             <Stack direction="row" spacing={2}>
               {currentUser && (
@@ -254,6 +250,9 @@ export default function CreateSystemUserScreen() {
           confirmText="Eliminar"
           confirmColor="error"
         />
+
+        {/* MENSAJES */}
+        <AppSnackbar message={message} type={messageType} onClose={clearMessage} />
       </Container>
     </Box>
   );

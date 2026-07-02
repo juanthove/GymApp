@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import useRequireAuth from "../hooks/useRequireAuth";
+import useSnackbar from "../hooks/useSnackbar";
+
 import Cropper from "react-easy-crop";
 
 import backgroundImg from "../assets/gymproIcon.png";
@@ -60,8 +62,7 @@ export default function CreateUserScreen() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const fileInputRef = useRef(null);
 
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("info");
+  const { message, messageType, showMessage, clearMessage } = useSnackbar();
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
@@ -105,6 +106,8 @@ export default function CreateUserScreen() {
 
     const user = users.find((u) => u.id === Number(id));
 
+    if (!user) return;
+
     setCurrentUser(user);
     setName(user.name);
     setSurname(user.surname);
@@ -115,35 +118,30 @@ export default function CreateUserScreen() {
     setPreview(user.image ? getUserImageUrl(user.image) : null);
   };
 
+  const validationError = (message) => {
+    showMessage(message, "warning");
+    return false;
+  };
+
   const validateForm = () => {
     if (!name.trim()) {
-      setMessage("El nombre es obligatorio");
-      setMessageType("warning");
-      return false;
+      return validationError("El nombre es obligatorio");
     }
 
     if (!surname.trim()) {
-      setMessage("El apellido es obligatorio");
-      setMessageType("warning");
-      return false;
+      return validationError("El apellido es obligatorio");
     }
 
     if (!gymDays) {
-      setMessage("Debes indicar los días de gimnasio por semana");
-      setMessageType("warning");
-      return false;
+      return validationError("Debes indicar los días de gimnasio por semana");
     }
 
     if (gymDays < 1 || gymDays > 7) {
-      setMessage("Los días de gimnasio deben ser entre 1 y 7");
-      setMessageType("warning");
-      return false;
+      return validationError("Los días de gimnasio deben ser entre 1 y 7");
     }
 
     if (!selectedLevel) {
-      setMessage("Debes seleccionar un nivel");
-      setMessageType("warning");
-      return false;
+      return validationError("Debes seleccionar un nivel");
     }
 
     return true;
@@ -183,6 +181,13 @@ export default function CreateUserScreen() {
     setShowCropModal(false);
   };
 
+  const payload = {
+    name,
+    surname,
+    gymDaysPerWeek: Number(gymDays),
+    userLevelId: selectedLevel,
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -190,26 +195,15 @@ export default function CreateUserScreen() {
 
     try {
       if (selectedId === "new") {
-        const created = await createUser({
-          name,
-          surname,
-          gymDaysPerWeek: parseInt(gymDays, 10),
-          userLevelId: selectedLevel,
-        });
+        const created = await createUser(payload);
 
         if (image) {
           await uploadUserImage(created.id, image);
         }
 
-        setMessage("Usuario creado correctamente");
-        setMessageType("success");
+        showMessage("Usuario creado correctamente", "success");
       } else {
-        await updateUser(selectedId, {
-          name,
-          surname,
-          gymDaysPerWeek: parseInt(gymDays, 10),
-          userLevelId: selectedLevel,
-        });
+        await updateUser(selectedId, payload);
 
         if (image) {
           await uploadUserImage(Number(selectedId), image);
@@ -217,15 +211,13 @@ export default function CreateUserScreen() {
           await deleteUserImage(Number(selectedId));
         }
 
-        setMessage("Usuario actualizado correctamente");
-        setMessageType("success");
+        showMessage("Usuario actualizado correctamente", "success");
       }
 
       resetForm();
-      loadUsers();
+      await loadUsers();
     } catch (error) {
-      setMessage("Error: " + error.message);
-      setMessageType("error");
+      showMessage("Error: " + error.message, "error");
     }
   };
 
@@ -235,14 +227,12 @@ export default function CreateUserScreen() {
     try {
       await deleteUser(currentUser.id);
 
-      setMessage("Usuario eliminado correctamente");
-      setMessageType("success");
+      showMessage("Usuario eliminado correctamente", "success");
 
       resetForm();
-      loadUsers();
+      await loadUsers();
     } catch {
-      setMessage("Error al eliminar usuario");
-      setMessageType("error");
+      showMessage("Error al eliminar usuario", "error");
     }
   };
 
@@ -434,8 +424,6 @@ export default function CreateUserScreen() {
               </Stack>
             )}
 
-            <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
-
             <Stack direction="row" spacing={2}>
               {currentUser && (
                 <Button variant="contained" color="error" onClick={() => setConfirmDeleteOpen(true)}>
@@ -490,6 +478,7 @@ export default function CreateUserScreen() {
             </Button>
           </DialogActions>
         </Dialog>
+        <AppSnackbar message={message} type={messageType} onClose={clearMessage} />
       </Container>
     </Box>
   );

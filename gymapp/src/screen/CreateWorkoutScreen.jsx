@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import useRequireAuth from "../hooks/useRequireAuth";
+import useSnackbar from "../hooks/useSnackbar";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -36,8 +37,6 @@ import {
   Card,
   CardContent,
   IconButton,
-  FormControlLabel,
-  Checkbox,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -66,6 +65,7 @@ export default function CreateWorkoutScreen() {
   const [users, setUsers] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [exercises, setExercises] = useState([]);
+  const userInputRef = useRef(null);
 
   const [selectedUser, setSelectedUser] = useState("");
   const [source, setSource] = useState("empty");
@@ -73,8 +73,6 @@ export default function CreateWorkoutScreen() {
   const [workoutName, setWorkoutName] = useState("");
   const [days, setDays] = useState([]);
   const [gymDaysPerWeek, setGymDaysPerWeek] = useState(0);
-
-  const [selectedExercises, setSelectedExercises] = useState({});
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -84,8 +82,7 @@ export default function CreateWorkoutScreen() {
   const [isLastWorkout, setIsLastWorkout] = useState(false);
   const [savedWorkouts, setSavedWorkouts] = useState([]);
 
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("info");
+  const { message, messageType, showMessage, clearMessage } = useSnackbar();
 
   const [expandedDays, setExpandedDays] = useState([]);
 
@@ -113,64 +110,52 @@ export default function CreateWorkoutScreen() {
     loadExercises();
   }, []);
 
+  const validationError = (message) => {
+    showMessage(message, "warning");
+    return false;
+  };
+
   const validateWorkout = () => {
     if (!workoutName.trim()) {
-      setMessage("El nombre de la plantilla es obligatorio");
-      setMessageType("warning");
-      return false;
+      return validationError("El nombre de la plantilla es obligatorio");
     }
 
     if (!startDate || !endDate) {
-      setMessage("Debes seleccionar fecha de inicio y fin");
-      setMessageType("warning");
-      return false;
+      return validationError("Debes seleccionar fecha de inicio y fin");
     }
 
     if (!globalReps) {
-      setMessage("Debes seleccionar las repeticiones del workout");
-      setMessageType("warning");
-      return false;
+      return validationError("Debes seleccionar las repeticiones del workout");
     }
 
     if (days.length === 0) {
-      setMessage("Debes agregar al menos un día");
-      setMessageType("warning");
-      return false;
+      return validationError("Debes agregar al menos un día");
     }
 
     if (gymDaysPerWeek && days.length > gymDaysPerWeek) {
-      setMessage(`La planilla tiene ${days.length} días pero el usuario solo entrena ${gymDaysPerWeek}`);
-      setMessageType("warning");
-      return false;
+      return validationError(`La planilla tiene ${days.length} días pero el usuario solo entrena ${gymDaysPerWeek}`);
     }
 
     for (let d = 0; d < days.length; d++) {
       const day = days[d];
 
       if (!day.name.trim()) {
-        setMessage(`El día ${d + 1} debe tener nombre`);
-        setMessageType("warning");
-        return false;
+        return validationError(`El día ${d + 1} debe tener nombre`);
       }
 
       if (day.exercises.length === 0) {
-        setMessage(`El día ${d + 1} debe tener al menos un ejercicio`);
-        setMessageType("warning");
-        return false;
+        return validationError(`El día ${d + 1} debe tener al menos un ejercicio`);
       }
 
       for (let e = 0; e < day.exercises.length; e++) {
         const ex = day.exercises[e];
 
         if (ex.weight === "" || ex.weight === null) {
-          setMessage(`Un ejercicio del día ${d + 1} necesita peso`);
-          setMessageType("warning");
-          return false;
+          return validationError(`Un ejercicio del día ${d + 1} necesita peso`);
         }
       }
     }
 
-    setMessage("");
     return true;
   };
 
@@ -183,7 +168,6 @@ export default function CreateWorkoutScreen() {
     setWorkoutId(null);
     setIsLastWorkout(false);
     setGlobalReps("");
-    setSelectedExercises({});
     setExpandedDays([]);
   };
 
@@ -215,7 +199,7 @@ export default function CreateWorkoutScreen() {
     const musclesSet = new Set();
 
     dayExercises.forEach((ex) => {
-      const fullExercise = exercises.find((e) => e.id === ex.exerciseId);
+      const fullExercise = exercisesById[ex.exerciseId];
 
       if (fullExercise?.muscle) {
         musclesSet.add(fullExercise.muscle);
@@ -234,31 +218,55 @@ export default function CreateWorkoutScreen() {
     }
   };
 
-  const loadTemplate = async (id) => {
-    const template = await getWorkoutTemplateById(id);
-
-    setIsLastWorkout(false);
-    setWorkoutId(null);
-
-    const loadedDays = template.days.map((day) => ({
-      id: crypto.randomUUID(),
+  const mapWorkoutDays = (sourceDays, editable, isTemplate = false) => {
+    return sourceDays.map((day) => ({
+      id: editable ? day.id : crypto.randomUUID(),
       name: day.name,
       muscles: day.muscles || [],
       dayOrder: day.dayOrder,
+
       image: null,
       deleteImage: false,
+
       sourceMuscleImage: day.muscleImage || null,
-      preview: day.muscleImage ? getWorkoutTemplateDayImageUrl(day.muscleImage) : null,
 
-      exercises: day.exercises.map((ex) => ({
-        id: crypto.randomUUID(),
-        exerciseId: ex.exerciseId,
-        order: ex.order,
-        weight: "",
-      })),
+      preview: day.muscleImage
+        ? isTemplate
+          ? getWorkoutTemplateDayImageUrl(day.muscleImage)
+          : getWorkoutDayImageUrl(day.muscleImage)
+        : null,
+
+      exercises: day.exercises
+        .sort((a, b) => a.order - b.order)
+        .map((ex) => ({
+          id: crypto.randomUUID(),
+          exerciseId: ex.exerciseId,
+          order: ex.order,
+          weight: isTemplate ? "" : (ex.nextWeight ?? ex.weight),
+        })),
     }));
+  };
 
-    setDays(loadedDays);
+  const loadTemplate = async (id) => {
+    const template = await getWorkoutTemplateById(id);
+
+    setWorkoutId(null);
+    setIsLastWorkout(false);
+
+    setDays(mapWorkoutDays(template.days, false, true));
+  };
+
+  const loadWorkout = (workout, name, editable) => {
+    setWorkoutId(editable ? workout.id : null);
+    setIsLastWorkout(editable);
+
+    setWorkoutName(name);
+    setGlobalReps(workout.reps || "");
+
+    setStartDate(workout.startDate?.split("T")[0] || "");
+    setEndDate(workout.endDate?.split("T")[0] || "");
+
+    setDays(mapWorkoutDays(workout.days, editable));
   };
 
   const loadLastWorkout = async () => {
@@ -267,35 +275,7 @@ export default function CreateWorkoutScreen() {
 
     const workout = await getWorkoutById(workoutBasic.id);
 
-    setWorkoutId(workout.id);
-    setWorkoutName(workout.name || "");
-    setGlobalReps(workout.reps || "");
-
-    setStartDate(workout.startDate?.split("T")[0] || "");
-    setEndDate(workout.endDate?.split("T")[0] || "");
-
-    const loadedDays = workout.days.map((day) => ({
-      id: day.id,
-      name: day.name,
-      muscles: day.muscles || [],
-      dayOrder: day.dayOrder,
-      image: null,
-      deleteImage: false,
-      sourceMuscleImage: day.muscleImage || null,
-      preview: day.muscleImage ? getWorkoutDayImageUrl(day.muscleImage) : null,
-
-      exercises: day.exercises
-        .sort((a, b) => a.order - b.order)
-        .map((ex) => ({
-          id: crypto.randomUUID(),
-          exerciseId: ex.exerciseId,
-          order: ex.order,
-          weight: ex.nextWeight ?? ex.weight,
-        })),
-    }));
-
-    setDays(loadedDays);
-    setIsLastWorkout(true);
+    loadWorkout(workout, workout.name, true);
   };
 
   const loadSavedWorkout = async (id) => {
@@ -303,36 +283,7 @@ export default function CreateWorkoutScreen() {
 
     const workout = await getWorkoutById(save.workoutId);
 
-    setWorkoutId(null);
-    setIsLastWorkout(false);
-
-    setWorkoutName(save.name);
-    setGlobalReps(workout.reps || "");
-
-    setStartDate(workout.startDate?.split("T")[0] || "");
-    setEndDate(workout.endDate?.split("T")[0] || "");
-
-    const loadedDays = workout.days.map((day) => ({
-      id: crypto.randomUUID(),
-      name: day.name,
-      muscles: day.muscles || [],
-      dayOrder: day.dayOrder,
-      image: null,
-      deleteImage: false,
-      sourceMuscleImage: day.muscleImage || null,
-      preview: day.muscleImage ? getWorkoutDayImageUrl(day.muscleImage) : null,
-
-      exercises: day.exercises
-        .sort((a, b) => a.order - b.order)
-        .map((ex) => ({
-          id: crypto.randomUUID(),
-          exerciseId: ex.exerciseId,
-          order: ex.order,
-          weight: ex.nextWeight ?? ex.weight,
-        })),
-    }));
-
-    setDays(loadedDays);
+    loadWorkout(workout, save.name, false);
   };
 
   const handleSourceChange = async (value) => {
@@ -343,20 +294,12 @@ export default function CreateWorkoutScreen() {
       setWorkoutName("");
       setWorkoutId(null);
       setIsLastWorkout(false);
-    }
-
-    if (value === "last") {
+    } else if (value === "last") {
       await loadLastWorkout();
-    }
-
-    if (value.startsWith("saved-")) {
-      const id = value.split("-")[1];
-      await loadSavedWorkout(id);
-    }
-
-    if (value.startsWith("template")) {
-      const id = value.split("-")[1];
-      await loadTemplate(id);
+    } else if (value.startsWith("saved-")) {
+      await loadSavedWorkout(value.split("-")[1]);
+    } else if (value.startsWith("template-")) {
+      await loadTemplate(value.split("-")[1]);
     }
   };
 
@@ -397,29 +340,6 @@ export default function CreateWorkoutScreen() {
     const updated = [...days];
     updated[index][field] = value;
     setDays(updated);
-  };
-
-  const addExerciseToDay = (dayIndex) => {
-    const selected = selectedExercises[dayIndex];
-    if (!selected) return;
-
-    const updated = [...days];
-
-    updated[dayIndex].exercises.push({
-      id: crypto.randomUUID(),
-      exerciseId: selected.id,
-      order: updated[dayIndex].exercises.length + 1,
-      weight: "",
-    });
-
-    updated[dayIndex].muscles = calculateDayMuscles(updated[dayIndex].exercises);
-
-    setDays(updated);
-
-    setSelectedExercises((prev) => ({
-      ...prev,
-      [dayIndex]: null,
-    }));
   };
 
   const removeExerciseFromDay = (dayIndex, exIndex) => {
@@ -469,95 +389,64 @@ export default function CreateWorkoutScreen() {
     setDays(updated);
   };
 
-  const handleCreateWorkout = async () => {
-    if (!validateWorkout()) return;
+  const buildWorkoutData = () => ({
+    name: workoutName,
+    reps: Number(globalReps),
+    userId: Number(selectedUser),
+    startDate,
+    endDate,
+    days: days.map((day, index) => ({
+      name: day.name,
+      muscleImage: day.deleteImage || day.image ? null : day.sourceMuscleImage || null,
+      exercises: day.exercises.map((ex) => ({
+        exerciseId: ex.exerciseId,
+        weight: ex.weight,
+        order: ex.order,
+      })),
+      dayOrder: index + 1,
+    })),
+  });
 
-    try {
-      const workoutData = {
-        name: workoutName,
-        reps: Number(globalReps),
-        userId: Number(selectedUser),
-        startDate,
-        endDate,
-        days: days.map((day, index) => ({
-          name: day.name,
-          muscleImage: day.deleteImage || day.image ? null : day.sourceMuscleImage || null,
-          exercises: day.exercises.map((ex) => ({
-            exerciseId: ex.exerciseId,
-            weight: ex.weight,
-            order: ex.order,
-          })),
-          dayOrder: index + 1,
-        })),
-      };
+  const uploadDayImages = async (id) => {
+    const fullWorkout = await getWorkoutById(id);
 
-      const newWorkout = await createWorkout(workoutData);
+    for (let i = 0; i < fullWorkout.days.length; i++) {
+      const backendDay = fullWorkout.days[i];
+      const frontDay = days[i];
 
-      await setCurrentWorkout(Number(selectedUser), newWorkout.id);
-
-      const fullWorkout = await getWorkoutById(newWorkout.id);
-
-      for (let i = 0; i < fullWorkout.days.length; i++) {
-        const backendDay = fullWorkout.days[i];
-        const frontDay = days[i];
-
-        if (frontDay?.image) {
-          await uploadWorkoutDayImage(backendDay.id, frontDay.image);
-        }
+      if (frontDay?.image) {
+        await uploadWorkoutDayImage(backendDay.id, frontDay.image);
       }
-
-      resetForm();
-
-      setMessage("Planilla creada");
-      setMessageType("success");
-    } catch (e) {
-      setMessage(e.message);
-      setMessageType("error");
     }
   };
 
-  const handleUpdateWorkout = async () => {
+  const saveWorkout = async (update) => {
     if (!validateWorkout()) return;
 
     try {
-      const workoutData = {
-        name: workoutName,
-        reps: Number(globalReps),
-        userId: Number(selectedUser),
-        startDate,
-        endDate,
-        days: days.map((day, index) => ({
-          name: day.name,
-          muscleImage: day.deleteImage || day.image ? null : day.sourceMuscleImage || null,
-          exercises: day.exercises.map((ex) => ({
-            exerciseId: ex.exerciseId,
-            weight: ex.weight,
-            order: ex.order,
-          })),
-          dayOrder: index + 1,
-        })),
-      };
+      let id = workoutId;
 
-      await updateWorkout(workoutId, workoutData);
+      if (update) {
+        await updateWorkout(workoutId, buildWorkoutData());
+      } else {
+        const workout = await createWorkout(buildWorkoutData());
 
-      const fullWorkout = await getWorkoutById(workoutId);
+        id = workout.id;
 
-      for (let i = 0; i < fullWorkout.days.length; i++) {
-        const backendDay = fullWorkout.days[i];
-        const frontDay = days[i];
-
-        if (frontDay?.image) {
-          await uploadWorkoutDayImage(backendDay.id, frontDay.image);
-        }
+        await setCurrentWorkout(Number(selectedUser), id);
       }
+
+      await uploadDayImages(id);
 
       resetForm();
 
-      setMessage("Planilla actualizada");
-      setMessageType("success");
+      requestAnimationFrame(() => {
+        userInputRef.current?.focus();
+      });
+
+      showMessage(update ? "Planilla actualizada" : "Planilla creada", "success");
     } catch (e) {
-      setMessage(e.message);
-      setMessageType("error");
+      showMessage(e.message, "error");
     }
   };
 
@@ -595,8 +484,7 @@ export default function CreateWorkoutScreen() {
 
     setFavoriteModalOpen(false);
 
-    setMessage("Favorito guardado");
-    setMessageType("success");
+    showMessage("Favorito guardado", "success");
   };
 
   const handleDeleteFavorite = async () => {
@@ -611,11 +499,9 @@ export default function CreateWorkoutScreen() {
       setFavoriteName("");
       setFavoriteModalOpen(false);
 
-      setMessage("Favorito eliminado");
-      setMessageType("success");
+      showMessage("Favorito eliminado", "success");
     } catch (e) {
-      setMessage(e.message);
-      setMessageType("error");
+      showMessage(e.message, "error");
     }
   };
 
@@ -689,22 +575,20 @@ export default function CreateWorkoutScreen() {
 
                 setExpandedDays([]);
 
-                requestAnimationFrame(async () => {
-                  resetForm();
+                resetForm();
 
-                  setSelectedUser(userId);
+                setSelectedUser(userId);
 
-                  if (userId) {
-                    await checkCurrentWorkout(userId);
+                if (userId) {
+                  await checkCurrentWorkout(userId);
 
-                    const user = await getUserById(userId);
-                    setGymDaysPerWeek(user.gymDaysPerWeek || 0);
+                  const user = await getUserById(userId);
+                  setGymDaysPerWeek(user.gymDaysPerWeek || 0);
 
-                    await loadSavedWorkouts(userId);
-                  } else {
-                    setSavedWorkouts([]);
-                  }
-                });
+                  await loadSavedWorkouts(userId);
+                } else {
+                  setSavedWorkouts([]);
+                }
               }}
               filterOptions={(options, state) => {
                 const search = normalizeText(state.inputValue);
@@ -716,7 +600,7 @@ export default function CreateWorkoutScreen() {
                   return name.startsWith(search) || surname.startsWith(search);
                 });
               }}
-              renderInput={(params) => <TextField {...params} label="Usuario" />}
+              renderInput={(params) => <TextField {...params} label="Usuario" inputRef={userInputRef} />}
             />
 
             {selectedUser && (
@@ -975,8 +859,6 @@ export default function CreateWorkoutScreen() {
               Agregar día
             </Button>
 
-            <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
-
             <Stack direction="row" spacing={2}>
               {isLastWorkout && (
                 <>
@@ -992,13 +874,13 @@ export default function CreateWorkoutScreen() {
                     Guardar favorito
                   </Button>
 
-                  <Button variant="contained" color="success" onClick={handleUpdateWorkout}>
+                  <Button variant="contained" color="success" onClick={() => saveWorkout(true)}>
                     Actualizar última planilla
                   </Button>
                 </>
               )}
 
-              <Button variant="contained" color="success" onClick={handleCreateWorkout}>
+              <Button variant="contained" color="success" onClick={() => saveWorkout(false)}>
                 Crear nueva planilla
               </Button>
             </Stack>
@@ -1063,22 +945,7 @@ export default function CreateWorkoutScreen() {
               select
               label="Favorito"
               value={selectedFavoriteId}
-              onChange={(e) => {
-                const value = e.target.value;
-
-                setSelectedFavoriteId(value);
-
-                if (value === "new") {
-                  setFavoriteName("");
-                  return;
-                }
-
-                const save = savedWorkouts.find((s) => s.id === value);
-
-                if (save) {
-                  setFavoriteName(save.name);
-                }
-              }}
+              onChange={(e) => handleFavoriteChange(e.target.value)}
             >
               <MenuItem value="new">Nuevo favorito</MenuItem>
 
@@ -1110,6 +977,7 @@ export default function CreateWorkoutScreen() {
           confirmText="Eliminar"
           confirmColor="error"
         />
+        <AppSnackbar message={message} type={messageType} onClose={clearMessage} />
       </Container>
     </Box>
   );

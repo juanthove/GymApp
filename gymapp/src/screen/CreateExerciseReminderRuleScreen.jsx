@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import useRequireAuth from "../hooks/useRequireAuth";
+import useSnackbar from "../hooks/useSnackbar";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -32,8 +33,9 @@ export default function CreateExerciseReminderRuleScreen() {
   const [selectedExercises, setSelectedExercises] = useState([]);
   const [weeks, setWeeks] = useState("");
 
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("info");
+  const nameInputRef = useRef(null);
+
+  const { message, messageType, showMessage, clearMessage } = useSnackbar();
 
   const [exerciseModalOpen, setExerciseModalOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -77,57 +79,57 @@ export default function CreateExerciseReminderRuleScreen() {
     setWeeks(rule.weeks);
   };
 
+  const validationError = (message) => {
+    showMessage(message, "warning");
+    return false;
+  };
+
   const validateForm = () => {
     if (!name.trim()) {
-      setMessage("Debes ingresar un nombre");
-      setMessageType("warning");
-      return false;
+      return validationError("Debes ingresar un nombre");
     }
 
     if (selectedExercises.length === 0) {
-      setMessage("Debes seleccionar al menos un ejercicio");
-      setMessageType("warning");
-      return false;
+      return validationError("Debes seleccionar al menos un ejercicio");
     }
 
     if (!weeks || Number(weeks) <= 0) {
-      setMessage("El intervalo debe ser mayor a 0 semanas");
-      setMessageType("warning");
-      return false;
+      return validationError("El intervalo debe ser mayor a 0 semanas");
     }
 
     return true;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const saveRule = async (payload) => {
+    if (selectedId === "new") {
+      await createExerciseReminderRule(payload);
+      return "Regla creada correctamente";
+    }
 
+    await updateExerciseReminderRule(selectedId, payload);
+    return "Regla actualizada correctamente";
+  };
+
+  const handleSubmit = async () => {
     if (!validateForm()) return;
 
     try {
-      const payload = {
+      const message = await saveRule({
         name: name.trim(),
         exerciseIds: selectedExercises.map((e) => e.id),
         weeks: Number(weeks),
-      };
+      });
 
-      if (selectedId === "new") {
-        await createExerciseReminderRule(payload);
-
-        setMessage("Regla creada correctamente");
-        setMessageType("success");
-      } else {
-        await updateExerciseReminderRule(selectedId, payload);
-
-        setMessage("Regla actualizada correctamente");
-        setMessageType("success");
-      }
+      showMessage(message, "success");
 
       resetForm();
       await loadData();
+
+      requestAnimationFrame(() => {
+        nameInputRef.current?.focus();
+      });
     } catch (error) {
-      setMessage("Error: " + error.message);
-      setMessageType("error");
+      showMessage(error.message, "error");
     }
   };
 
@@ -137,14 +139,12 @@ export default function CreateExerciseReminderRuleScreen() {
     try {
       await deleteExerciseReminderRule(currentRule.id);
 
-      setMessage("Regla eliminada correctamente");
-      setMessageType("success");
+      showMessage("Regla eliminada correctamente", "success");
 
       resetForm();
       await loadData();
     } catch {
-      setMessage("Error al eliminar regla");
-      setMessageType("error");
+      showMessage("Error al eliminar regla", "error");
     }
   };
 
@@ -227,7 +227,12 @@ export default function CreateExerciseReminderRuleScreen() {
               ))}
             </TextField>
 
-            <TextField label="Nombre de la regla" value={name} onChange={(e) => setName(e.target.value)} />
+            <TextField
+              label="Nombre de la regla"
+              value={name}
+              inputRef={nameInputRef}
+              onChange={(e) => setName(e.target.value)}
+            />
 
             <Button variant="contained" color="primary" onClick={() => setExerciseModalOpen(true)}>
               Seleccionar ejercicios
@@ -292,7 +297,7 @@ export default function CreateExerciseReminderRuleScreen() {
           }}
         />
 
-        <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
+        <AppSnackbar message={message} type={messageType} onClose={clearMessage} />
       </Container>
     </Box>
   );

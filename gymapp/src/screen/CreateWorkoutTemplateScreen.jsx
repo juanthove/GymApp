@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import useRequireAuth from "../hooks/useRequireAuth";
+import useSnackbar from "../hooks/useSnackbar";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -62,15 +63,18 @@ export default function CreateWorkoutTemplateScreen() {
   const [description, setDescription] = useState("");
   const [days, setDays] = useState([]);
 
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("info");
+  const { message, messageType, showMessage, clearMessage } = useSnackbar();
 
   const [expandedDays, setExpandedDays] = useState([]);
 
   const [exerciseModalOpen, setExerciseModalOpen] = useState(false);
   const [selectedDayIndex, setSelectedDayIndex] = useState(null);
 
+  const nameInputRef = useRef(null);
+
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+  const exercisesById = Object.fromEntries(exercises.map((ex) => [ex.id, ex]));
 
   useEffect(() => {
     loadTemplates();
@@ -91,7 +95,7 @@ export default function CreateWorkoutTemplateScreen() {
     const musclesSet = new Set();
 
     dayExercises.forEach((ex) => {
-      const fullExercise = exercises.find((e) => e.id === ex.exerciseId);
+      const fullExercise = exercisesById[ex.exerciseId];
 
       if (fullExercise?.muscle) {
         musclesSet.add(fullExercise.muscle);
@@ -109,36 +113,32 @@ export default function CreateWorkoutTemplateScreen() {
     setExpandedDays([]);
   };
 
+  const validationError = (message) => {
+    showMessage(message, "warning");
+    return false;
+  };
+
   const validateTemplate = () => {
     if (!name.trim()) {
-      setMessage("La plantilla debe tener nombre");
-      setMessageType("warning");
-      return false;
+      return validationError("La plantilla debe tener nombre");
     }
 
     if (days.length === 0) {
-      setMessage("Debes agregar al menos un día");
-      setMessageType("warning");
-      return false;
+      return validationError("Debes agregar al menos un día");
     }
 
     for (let d = 0; d < days.length; d++) {
       const day = days[d];
 
       if (!day.name.trim()) {
-        setMessage(`El día ${d + 1} debe tener nombre`);
-        setMessageType("warning");
-        return false;
+        return validationError(`El día ${d + 1} debe tener nombre`);
       }
 
       if (day.exercises.length === 0) {
-        setMessage(`El día ${d + 1} debe tener al menos un ejercicio`);
-        setMessageType("warning");
-        return false;
+        return validationError(`El día ${d + 1} debe tener al menos un ejercicio`);
       }
     }
 
-    setMessage("");
     return true;
   };
 
@@ -168,8 +168,6 @@ export default function CreateWorkoutTemplateScreen() {
         order: ex.order,
       })),
 
-      selectedExercise: null,
-
       image: null,
       deleteImage: false,
       sourceMuscleImage: day.muscleImage || null,
@@ -189,7 +187,6 @@ export default function CreateWorkoutTemplateScreen() {
         name: `Día ${days.length + 1}`,
         muscles: [],
         exercises: [],
-        selectedExercise: null,
         image: null,
         deleteImage: false,
         sourceMuscleImage: null,
@@ -220,25 +217,6 @@ export default function CreateWorkoutTemplateScreen() {
   const updateDayField = (index, field, value) => {
     const updated = [...days];
     updated[index][field] = value;
-
-    setDays(updated);
-  };
-
-  const addExerciseToDay = (dayIndex) => {
-    const selected = days[dayIndex].selectedExercise;
-    if (!selected) return;
-
-    const updated = [...days];
-
-    updated[dayIndex].exercises.push({
-      exerciseId: selected.id,
-      exerciseName: selected.name,
-      order: updated[dayIndex].exercises.length + 1,
-    });
-
-    updated[dayIndex].muscles = calculateDayMuscles(updated[dayIndex].exercises);
-
-    updated[dayIndex].selectedExercise = null;
 
     setDays(updated);
   };
@@ -283,7 +261,6 @@ export default function CreateWorkoutTemplateScreen() {
       id: null,
       name: dayToCopy.name + " copia",
       exercises: dayToCopy.exercises.map((ex) => ({ ...ex })),
-      selectedExercise: null,
       image: null,
       deleteImage: false,
       sourceMuscleImage: null,
@@ -322,14 +299,12 @@ export default function CreateWorkoutTemplateScreen() {
         await updateWorkoutTemplate(selectedTemplateId, templateData);
         templateId = selectedTemplateId;
 
-        setMessage("Template actualizado correctamente");
-        setMessageType("success");
+        showMessage("Template actualizado correctamente", "success");
       } else {
         const res = await createWorkoutTemplate(templateData);
         templateId = res.id;
 
-        setMessage("Template creado correctamente");
-        setMessageType("success");
+        showMessage("Template creado correctamente", "success");
       }
 
       //Obtener template
@@ -348,9 +323,12 @@ export default function CreateWorkoutTemplateScreen() {
       //Reset
       resetForm();
       loadTemplates();
+
+      requestAnimationFrame(() => {
+        nameInputRef.current?.focus();
+      });
     } catch (e) {
-      setMessage(e.message);
-      setMessageType("error");
+      showMessage(e.message, "error");
     }
   };
 
@@ -360,14 +338,12 @@ export default function CreateWorkoutTemplateScreen() {
     try {
       await deleteWorkoutTemplate(selectedTemplateId);
 
-      setMessage("Template eliminado");
-      setMessageType("success");
+      showMessage("Template eliminado", "success");
 
       resetForm();
       loadTemplates();
     } catch (e) {
-      setMessage(e.message);
-      setMessageType("error");
+      showMessage(e.message, "error");
     }
   };
 
@@ -453,7 +429,12 @@ export default function CreateWorkoutTemplateScreen() {
               ))}
             </TextField>
 
-            <TextField label="Nombre de la plantilla" value={name} onChange={(e) => setName(e.target.value)} />
+            <TextField
+              label="Nombre de la plantilla"
+              value={name}
+              inputRef={nameInputRef}
+              onChange={(e) => setName(e.target.value)}
+            />
 
             <TextField
               label="Descripción"
@@ -635,11 +616,9 @@ export default function CreateWorkoutTemplateScreen() {
               </Accordion>
             ))}
 
-            <Button variant="contained" color="success" onClick={addDay}>
+            <Button variant="contained" color="success" onClick={addDay} disabled={days.length >= 7}>
               Agregar día
             </Button>
-
-            <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
 
             <Stack direction="row" spacing={2}>
               {selectedTemplateId && (
@@ -697,6 +676,7 @@ export default function CreateWorkoutTemplateScreen() {
             setDays(updated);
           }}
         />
+        <AppSnackbar message={message} type={messageType} onClose={clearMessage} />
       </Container>
     </Box>
   );

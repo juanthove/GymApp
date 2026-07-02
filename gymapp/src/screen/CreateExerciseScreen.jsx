@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import useRequireAuth from "../hooks/useRequireAuth";
+import useSnackbar from "../hooks/useSnackbar";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -8,6 +9,7 @@ import {
   createExercise,
   updateExercise,
   deleteExercise,
+  getExerciseIconUrl,
   getExerciseImageUrl,
   getExerciseVideoUrl,
 } from "../services/exerciseService";
@@ -20,18 +22,21 @@ import {
   MenuItem,
   Button,
   Stack,
-  Checkbox,
-  FormControlLabel,
   Box,
   Autocomplete,
+  Tabs,
+  Tab,
 } from "@mui/material";
+
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 import BackButton from "../components/BackButton";
 import FileUploadField from "../components/FileUploadField";
 import AppSnackbar from "../components/AppSnackbar";
 import ConfirmDialog from "../components/ConfirmDialog";
+import AnimatedDialog from "../components/AnimatedDialog";
 
-import { muscleLabels } from "../config/muscleConfig";
+import { muscleLabels, typeLabels } from "../config/muscleConfig";
 import { normalizeText } from "../utils/stringUtils";
 
 export default function CreateExerciseScreen() {
@@ -56,11 +61,18 @@ export default function CreateExerciseScreen() {
   const [deleteIcon, setDeleteIcon] = useState(false);
 
   const [currentExercise, setCurrentExercise] = useState(null);
+  const [exerciseSearch, setExerciseSearch] = useState("");
 
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("info");
+  const nameInputRef = useRef(null);
 
-  const [fileKey, setFileKey] = useState(0);
+  const [isSelectionModalOpen, setSelectionModalOpen] = useState(false);
+
+  const [filterName, setFilterName] = useState("");
+  const [filterType, setFilterType] = useState("ALL");
+  const [filterMuscle, setFilterMuscle] = useState("ALL");
+
+  const { message, messageType, showMessage, clearMessage } = useSnackbar();
+
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   useEffect(() => {
@@ -76,12 +88,22 @@ export default function CreateExerciseScreen() {
     label,
   }));
 
-  const typeOptions = [
-    { value: "PRIMARY", label: "Primario" },
-    { value: "SECONDARY", label: "Secundario" },
-    { value: "TERTIARY", label: "Terciario" },
-    { value: "ABDOMINAL", label: "Abdominal" },
-  ];
+  const typeOptions = Object.entries(typeLabels).map(([value, label]) => ({
+    value,
+    label,
+  }));
+
+  const availableMuscles = ["ALL", ...new Set(exercises.map((e) => e.muscle).filter(Boolean))];
+
+  const filteredExercises = exercises.filter((ex) => {
+    const matchesName = normalizeText(ex.name).includes(normalizeText(filterName));
+
+    const matchesType = filterType === "ALL" || ex.type === filterType;
+
+    const matchesMuscle = filterMuscle === "ALL" || ex.muscle === filterMuscle;
+
+    return matchesName && matchesType && matchesMuscle;
+  });
 
   useEffect(() => {
     loadExercises();
@@ -94,6 +116,7 @@ export default function CreateExerciseScreen() {
 
   const resetForm = () => {
     setSelectedId("new");
+    setExerciseSearch("");
     setName("");
     setDescription("");
     setType("PRIMARY");
@@ -108,29 +131,21 @@ export default function CreateExerciseScreen() {
     setDeleteVideo(false);
     setDeleteIcon(false);
     setCurrentExercise(null);
-    setFileKey((prev) => prev + 3);
   };
 
-  const formatExerciseType = (type) => {
-    const map = {
-      PRIMARY: "Primario",
-      SECONDARY: "Secundario",
-      TERTIARY: "Terciario",
-      ABDOMINAL: "Abdominal",
-    };
-
-    return map[type] || type;
-  };
+  const formatExerciseType = (type) => typeLabels[type] || type;
 
   const handleSelect = (id) => {
     setSelectedId(id);
 
     if (id === "new") {
+      setExerciseSearch("");
       resetForm();
       return;
     }
 
     const ex = exercises.find((e) => e.id === Number(id));
+    setExerciseSearch(`${ex.name} (${formatExerciseType(ex.type)})`);
 
     setCurrentExercise(ex);
     setName(ex.name);
@@ -151,14 +166,12 @@ export default function CreateExerciseScreen() {
     e.preventDefault();
 
     if (!name.trim()) {
-      setMessage("El nombre del ejercicio es obligatorio");
-      setMessageType("warning");
+      showMessage("El nombre del ejercicio es obligatorio", "warning");
       return;
     }
 
     if (!muscle) {
-      setMessage("El músculo es obligatorio");
-      setMessageType("warning");
+      showMessage("El músculo es obligatorio", "warning");
       return;
     }
 
@@ -174,8 +187,7 @@ export default function CreateExerciseScreen() {
           icon,
         });
 
-        setMessage("Ejercicio registrado correctamente");
-        setMessageType("success");
+        showMessage("Ejercicio registrado correctamente", "success");
       } else {
         await updateExercise(selectedId, {
           name,
@@ -190,15 +202,17 @@ export default function CreateExerciseScreen() {
           deleteIcon,
         });
 
-        setMessage("Ejercicio actualizado correctamente");
-        setMessageType("success");
+        showMessage("Ejercicio actualizado correctamente", "success");
       }
 
       resetForm();
-      loadExercises();
+      await loadExercises();
+
+      requestAnimationFrame(() => {
+        nameInputRef.current?.focus();
+      });
     } catch (err) {
-      setMessage("Error al guardar el ejercicio");
-      setMessageType("error");
+      showMessage("Error al guardar el ejercicio", "error");
     }
   };
 
@@ -206,14 +220,12 @@ export default function CreateExerciseScreen() {
     try {
       await deleteExercise(selectedId);
 
-      setMessage("Ejercicio eliminado");
-      setMessageType("success");
+      showMessage("Ejercicio eliminado", "success");
 
       resetForm();
-      loadExercises();
+      await loadExercises();
     } catch {
-      setMessage("Error al eliminar ejercicio");
-      setMessageType("error");
+      showMessage("Error al eliminar ejercicio", "error");
     }
   };
 
@@ -277,46 +289,27 @@ export default function CreateExerciseScreen() {
           </Box>
 
           <Stack spacing={3}>
-            <Autocomplete
-              autoHighlight
-              options={[
-                {
-                  id: "new",
-                  label: "Nuevo ejercicio",
-                },
-                ...exercises.map((ex) => ({
-                  id: ex.id,
-                  label: `${ex.name} (${formatExerciseType(ex.type)})`,
-                  name: ex.name,
-                })),
-              ]}
-              value={
-                selectedId === "new"
-                  ? { id: "new", label: "Nuevo ejercicio" }
-                  : exercises
-                      .map((ex) => ({
-                        id: ex.id,
-                        label: `${ex.name} (${formatExerciseType(ex.type)})`,
-                        name: ex.name,
-                      }))
-                      .find((ex) => ex.id === Number(selectedId)) || null
-              }
-              onChange={(_, value) => {
-                handleSelect(value?.id ?? "new");
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={() => setSelectionModalOpen(true)}
+              sx={{
+                height: 48,
+                justifyContent: "space-between",
+                px: 2,
+                textTransform: "none",
+                fontSize: "1rem",
+                fontWeight: 400,
+                color: "text.primary",
+                borderColor: "rgba(0,0,0,0.23)",
               }}
-              filterOptions={(options, state) => {
-                const search = normalizeText(state.inputValue);
+            >
+              <Typography noWrap>{selectedId === "new" ? "Nuevo ejercicio" : exerciseSearch}</Typography>
 
-                return options.filter((option) => {
-                  if (option.id === "new") return true;
+              <KeyboardArrowDownIcon />
+            </Button>
 
-                  return normalizeText(option.name).startsWith(search);
-                });
-              }}
-              renderInput={(params) => <TextField {...params} label="Seleccionar ejercicio" />}
-            />
-
-            <TextField label="Nombre" value={name} onChange={(e) => setName(e.target.value)} />
+            <TextField label="Nombre" value={name} inputRef={nameInputRef} onChange={(e) => setName(e.target.value)} />
 
             <TextField
               label="Descripción"
@@ -371,7 +364,7 @@ export default function CreateExerciseScreen() {
               setFile={setIcon}
               preview={iconPreview}
               setPreview={setIconPreview}
-              existingUrl={currentExercise?.icon && `/api/exercises/icon/${currentExercise.icon}`}
+              existingUrl={currentExercise?.icon && getExerciseIconUrl(currentExercise.icon)}
               deleteFlag={deleteIcon}
               setDeleteFlag={setDeleteIcon}
               renderPreview={(src) => <img src={src} style={{ maxWidth: "100px", borderRadius: "8px" }} />}
@@ -405,8 +398,6 @@ export default function CreateExerciseScreen() {
               renderPreview={(src) => <video src={src} controls style={{ maxWidth: "400px" }} />}
             />
 
-            <AppSnackbar message={message} type={messageType} onClose={() => setMessage("")} />
-
             <Stack direction="row" spacing={2}>
               {selectedId !== "new" && (
                 <Button variant="contained" color="error" onClick={() => setConfirmDeleteOpen(true)}>
@@ -421,6 +412,197 @@ export default function CreateExerciseScreen() {
           </Stack>
         </Paper>
 
+        {/* MODAL DE SELECCIÓN DE EJERCICIOS */}
+        <AnimatedDialog
+          open={isSelectionModalOpen}
+          onClose={() => setSelectionModalOpen(false)}
+          title="Seleccionar ejercicio"
+          titleSize="2rem"
+          headerSx={{ py: { xs: 0.4, md: 1.5 } }}
+          maxWidth={false}
+          paperSx={{
+            width: { xs: "95%", md: "80%" },
+            maxWidth: "900px",
+          }}
+        >
+          <Stack spacing={2}>
+            <Stack spacing={1} mb={1} sx={{ mt: 0.8 }}>
+              <TextField
+                label="Buscar ejercicio"
+                value={filterName}
+                onChange={(e) => setFilterName(e.target.value)}
+                placeholder="Ej: Press banca"
+              />
+
+              <Box sx={{ display: "flex", justifyContent: "center" }}>
+                <Tabs
+                  value={filterType}
+                  onChange={(e, val) => setFilterType(val)}
+                  variant="scrollable"
+                  scrollButtons="auto"
+                >
+                  <Tab label="Todos" value="ALL" />
+                  <Tab label="Primario" value="PRIMARY" />
+                  <Tab label="Secundario" value="SECONDARY" />
+                  <Tab label="Terciario" value="TERTIARY" />
+                  <Tab label="Abdominal" value="ABDOMINAL" />
+                </Tabs>
+              </Box>
+
+              <Box sx={{ display: "flex", justifyContent: "center" }}>
+                <Tabs
+                  value={filterMuscle}
+                  onChange={(e, val) => setFilterMuscle(val)}
+                  variant="scrollable"
+                  scrollButtons="auto"
+                >
+                  {availableMuscles.map((muscle) => (
+                    <Tab
+                      key={muscle}
+                      value={muscle}
+                      label={muscle === "ALL" ? "Todos" : muscleLabels[muscle] || muscle}
+                    />
+                  ))}
+                </Tabs>
+              </Box>
+            </Stack>
+
+            <Stack spacing={1}>
+              {/* Opción Nuevo ejercicio */}
+              <Box
+                tabIndex={0}
+                onClick={() => {
+                  handleSelect("new");
+                  setSelectionModalOpen(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleSelect("new");
+                    setSelectionModalOpen(false);
+                  }
+                }}
+                sx={{
+                  minHeight: 120,
+                  p: 2,
+                  borderRadius: 2,
+                  border: `2px solid ${selectedId === "new" ? "#4caf50" : "#ddd"}`,
+                  cursor: "pointer",
+                  backgroundColor: selectedId === "new" ? "rgba(76,175,80,0.08)" : "#fff",
+
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <Box
+                  sx={{
+                    width: { xs: 90, md: 110 },
+                    height: { xs: 90, md: 110 },
+                    ml: 3,
+                    flexShrink: 0,
+                  }}
+                />
+
+                <Box sx={{ flex: 1 }}>
+                  <Typography
+                    fontWeight={700}
+                    fontSize={{
+                      xs: "1.1rem",
+                      md: "1.3rem",
+                    }}
+                  >
+                    Nuevo ejercicio
+                  </Typography>
+
+                  <Typography color="text.secondary">Crear un ejercicio desde cero</Typography>
+                </Box>
+              </Box>
+
+              {filteredExercises.map((ex) => {
+                const isSelected = selectedId === ex.id;
+
+                return (
+                  <Box
+                    key={ex.id}
+                    tabIndex={0}
+                    onClick={() => {
+                      handleSelect(ex.id);
+                      setSelectionModalOpen(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleSelect(ex.id);
+                        setSelectionModalOpen(false);
+                      }
+                    }}
+                    sx={{
+                      p: 2,
+                      borderRadius: 2,
+                      border: `2px solid ${isSelected ? "#4caf50" : "#ddd"}`,
+                      cursor: "pointer",
+                      backgroundColor: isSelected ? "rgba(76, 175, 80, 0.08)" : "#fff",
+
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: { xs: 90, md: 110 },
+                        height: { xs: 90, md: 110 },
+                        flexShrink: 0,
+                        ml: 2,
+
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {ex.icon && (
+                        <Box
+                          component="img"
+                          src={getExerciseIconUrl(ex.icon)}
+                          alt={ex.name}
+                          sx={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "contain",
+                          }}
+                        />
+                      )}
+                    </Box>
+
+                    <Box
+                      sx={{
+                        flex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: { xs: "1.1rem", md: "1.3rem" },
+                        }}
+                      >
+                        {ex.name}
+                      </Typography>
+
+                      <Typography color="text.secondary">
+                        {typeLabels[ex.type]}
+                        {ex.type !== "ABDOMINAL" && ` | ${muscleLabels[ex.muscle]}`}
+                      </Typography>
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Stack>
+          </Stack>
+        </AnimatedDialog>
+
         {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
         <ConfirmDialog
           open={confirmDeleteOpen}
@@ -434,6 +616,8 @@ export default function CreateExerciseScreen() {
           confirmText="Eliminar"
           confirmColor="error"
         />
+
+        <AppSnackbar message={message} type={messageType} onClose={clearMessage} />
       </Container>
     </Box>
   );

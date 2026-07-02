@@ -9,6 +9,7 @@ import { lightenColor, darkenColor } from "../utils/colorUtils";
 import ChestIcon from "../assets/muscles/chest.svg?react";
 import BackIcon from "../assets/muscles/back.svg?react";
 import ShouldersIcon from "../assets/muscles/shoulders.svg?react";
+import TrapsIcon from "../assets/muscles/traps.svg?react";
 import BicepsIcon from "../assets/muscles/biceps.svg?react";
 import TricepsIcon from "../assets/muscles/triceps.svg?react";
 import ForearmsIcon from "../assets/muscles/forearms.svg?react";
@@ -24,6 +25,7 @@ const muscleIcons = {
   CHEST: ChestIcon,
   BACK: BackIcon,
   SHOULDERS: ShouldersIcon,
+  TRAPS: TrapsIcon,
   BICEPS: BicepsIcon,
   TRICEPS: TricepsIcon,
   FOREARMS: ForearmsIcon,
@@ -40,6 +42,7 @@ const strokeMap = {
   CHEST: 900,
   BACK: 1200,
   SHOULDERS: 900,
+  TRAPS: 1200,
   BICEPS: 4800,
   TRICEPS: 4200,
   FOREARMS: 1600,
