@@ -129,7 +129,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
         updateStreakAchievements(user);
 
         // Crear nuevos logros si el usuario tiene progreso
-        ensureAchievementsCreated(user);
+        // ensureAchievementsCreated(user);
 
         UserLevel userLevel = user.getUserLevel();
 
@@ -236,94 +236,6 @@ public class UserAchievementServiceImpl implements UserAchievementService {
         }
 
         // Guardar solo si hay cambios reales
-        if (!toSave.isEmpty()) {
-            userAchievementRepository.saveAll(toSave);
-        }
-    }
-
-    // Calcular el progreso de los logros que no esten creados
-    private void ensureAchievementsCreated(User user) {
-
-        List<Achievement> achievements = achievementRepository
-                .findByLevelIdGreaterThanEqual(user.getUserLevel().getId());
-
-        Map<Long, UserAchievement> existing = userAchievementRepository.findByUserId(user.getId())
-                .stream()
-                .collect(Collectors.toMap(
-                        ua -> ua.getAchievement().getId(),
-                        ua -> ua));
-
-        // Traer todo
-        double totalVolume = workoutSetRepository.sumTotalVolumeAll(user.getId());
-
-        Map<Long, Double> volumeByExercise = workoutSetRepository.sumVolumeGroupedByExercise(user.getId())
-                .stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> (Double) row[1]));
-
-        Map<MuscleType, Double> volumeByMuscle = workoutSetRepository.sumVolumeGroupedByMuscle(user.getId())
-                .stream()
-                .collect(Collectors.toMap(
-                        row -> (MuscleType) row[0],
-                        row -> (Double) row[1]));
-
-        List<UserAchievement> toSave = new ArrayList<>();
-
-        for (Achievement ach : achievements) {
-
-            if (existing.containsKey(ach.getId()))
-                continue;
-
-            double progress = 0;
-
-            switch (ach.getType()) {
-
-                case VOLUME -> {
-
-                    if (!ach.getExercises().isEmpty()) {
-
-                        progress = ach.getExercises().stream()
-                                .mapToDouble(ex -> volumeByExercise.getOrDefault(ex.getId(), 0.0))
-                                .sum();
-
-                    } else if (ach.getMuscle() != null) {
-                        progress = volumeByMuscle.getOrDefault(
-                                ach.getMuscle(), 0.0);
-
-                    } else {
-                        progress = totalVolume;
-                    }
-                }
-
-                case STREAK -> {
-                    if (user.getStreakStartDate() != null) {
-                        progress = ChronoUnit.DAYS.between(
-                                user.getStreakStartDate(),
-                                LocalDate.now()) + 1;
-                    }
-                }
-
-                case CONSISTENCY -> {
-                    progress = user.getTotalWorkoutDays();
-                }
-            }
-
-            if (progress <= 0)
-                continue;
-
-            UserAchievement ua = new UserAchievement();
-            ua.setUser(user);
-            ua.setAchievement(ach);
-            ua.setProgress(progress);
-
-            if (progress >= ach.getRequiredValue()) {
-                ua.setUnlockedAt(LocalDateTime.now());
-            }
-
-            toSave.add(ua);
-        }
-
         if (!toSave.isEmpty()) {
             userAchievementRepository.saveAll(toSave);
         }
@@ -512,12 +424,17 @@ public class UserAchievementServiceImpl implements UserAchievementService {
     // Recalcular el progreso de todos los logros de los usuario que esten asociados
     // a un logro que se modificó
     @Override
-    public void refreshAchievementProgress(Achievement ach) {
+    public void syncAchievementProgress(Achievement ach) {
 
-        List<UserAchievement> userAchievements = userAchievementRepository.findByAchievementId(ach.getId());
+        List<User> users = userRepository.findAll();
 
-        if (userAchievements.isEmpty())
-            return;
+        // Traer los UserAchievement existentes de este logro
+        Map<Long, UserAchievement> existingByUser = userAchievementRepository
+                .findByAchievementId(ach.getId())
+                .stream()
+                .collect(Collectors.toMap(
+                        ua -> ua.getUser().getId(),
+                        ua -> ua));
 
         Map<Long, Double> progressByUser = new HashMap<>();
 
@@ -534,31 +451,44 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                                 .toList());
 
             } else if (ach.getMuscle() != null) {
+
                 rows = workoutSetRepository
                         .sumVolumeByMuscleGroupedByUser(ach.getMuscle());
 
             } else {
-                rows = workoutSetRepository
-                        .sumTotalVolumeByUser();
+
+                rows = workoutSetRepository.sumTotalVolumeByUser();
             }
 
             for (Object[] row : rows) {
-                Long userId = (Long) row[0];
-                Double volume = (Double) row[1];
-                progressByUser.put(userId, volume);
+                progressByUser.put(
+                        (Long) row[0],
+                        (Double) row[1]);
             }
         }
 
         List<UserAchievement> toSave = new ArrayList<>();
 
-        // Recalcular por usuario
-        for (UserAchievement ua : userAchievements) {
-
-            User user = ua.getUser();
+        for (User user : users) {
 
             double progress = calculateFullProgress(user, ach, progressByUser);
 
+            UserAchievement ua = existingByUser.get(user.getId());
+
+            // Si no existe y no tiene progreso, no crear nada
+            if (ua == null && progress <= 0) {
+                continue;
+            }
+
             boolean changed = false;
+
+            // Crear si no existe
+            if (ua == null) {
+                ua = new UserAchievement();
+                ua.setUser(user);
+                ua.setAchievement(ach);
+                changed = true;
+            }
 
             // Actualizar progreso
             if (!Objects.equals(ua.getProgress(), progress)) {
@@ -566,15 +496,18 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                 changed = true;
             }
 
-            // Estado de desbloqueo
+            // Actualizar estado de desbloqueo
             if (progress >= ach.getRequiredValue()) {
+
                 if (ua.getUnlockedAt() == null) {
                     ua.setUnlockedAt(LocalDateTime.now());
                     changed = true;
                 }
+
             } else {
+
                 if (ua.getUnlockedAt() != null) {
-                    ua.setUnlockedAt(null); // Descompletar
+                    ua.setUnlockedAt(null);
                     changed = true;
                 }
             }

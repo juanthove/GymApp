@@ -95,7 +95,11 @@ public class AchievementServiceImpl implements AchievementService {
             achievement.setImage(fileName);
         }
 
-        return toResponse(achievementRepository.save(achievement));
+        Achievement savedAchievement = achievementRepository.save(achievement);
+
+        userAchievementService.syncAchievementProgress(savedAchievement);
+
+        return toResponse(savedAchievement);
     }
 
     @Override
@@ -175,7 +179,7 @@ public class AchievementServiceImpl implements AchievementService {
 
         achievementRepository.save(achievement);
 
-        userAchievementService.refreshAchievementProgress(achievement);
+        userAchievementService.syncAchievementProgress(achievement);
 
         return toResponse(achievement);
     }
