@@ -189,17 +189,17 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
             """)
     Double sumVolumeByMuscle(Long userId, MuscleType muscle, Long workoutDayId);
 
-    // Obtener todos los sets de un ejercicio excepto el del dia de hoy
+    // Obtener todos los sets de los ejercicios excepto el del dia de hoy
     @Query("""
                 SELECT COALESCE(SUM(ws.weight * ws.reps), 0)
                 FROM WorkoutSet ws
                 JOIN ws.workoutExercise we
                 JOIN we.workoutDay wd
                 WHERE ws.user.id = :userId
-                AND we.exercise.id = :exerciseId
+                AND we.exercise.id IN :exerciseIds
                 AND wd.id <> :workoutDayId
             """)
-    Double sumVolumeByExercise(Long userId, Long exerciseId, Long workoutDayId);
+    Double sumVolumeByExercises(Long userId, List<Long> exerciseIds, Long workoutDayId);
 
     // Obtiene todos los sets de un usuario
     @Query("""
@@ -247,13 +247,13 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
             """)
     List<Object[]> sumVolumeByMuscleGroupedByUser(MuscleType muscle);
 
-    // Obtener el volumen total de un ejercicio agrupado por usuario
+    // Obtener el volumen total de la lista de ejercicios agrupado por usuario
     @Query("""
-                SELECT ws.user.id, COALESCE(SUM(ws.weight * ws.reps), 0)
+                SELECT ws.user.id, COALESCE(SUM(ws.weight * ws.reps),0)
                 FROM WorkoutSet ws
                 JOIN ws.workoutExercise we
-                WHERE we.exercise.id = :exerciseId
+                WHERE we.exercise.id IN :exerciseIds
                 GROUP BY ws.user.id
             """)
-    List<Object[]> sumVolumeByExerciseGroupedByUser(Long exerciseId);
+    List<Object[]> sumVolumeByExercisesGroupedByUser(List<Long> exerciseIds);
 }

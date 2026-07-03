@@ -1,5 +1,6 @@
 package com.gymapp.service;
 
+import com.gymapp.dto.response.AchievementExerciseResponse;
 import com.gymapp.dto.response.UserAchievementResponse;
 import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.Achievement;
@@ -104,6 +105,15 @@ public class UserAchievementServiceImpl implements UserAchievementService {
         userAchievementRepository.deleteById(id);
     }
 
+    private AchievementExerciseResponse toExerciseResponse(Exercise exercise) {
+        return new AchievementExerciseResponse(
+                exercise.getId(),
+                exercise.getName(),
+                exercise.getMuscle(),
+                exercise.getType(),
+                exercise.getIcon());
+    }
+
     // Obtener todos los logros del usuario, ya sean bloqueados o desbloqueados
     @Override
     public List<UserAchievementResponse> getUserAchievements(Long userId) {
@@ -153,9 +163,9 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                     achievement.getRequiredValue(),
                     achievement.getImage(),
                     achievement.getMuscle(),
-                    achievement.getExercise() != null ? achievement.getExercise().getId() : null,
-                    achievement.getExercise() != null ? achievement.getExercise().getName() : null,
-                    achievement.getExercise() != null ? achievement.getExercise().getMuscle() : null,
+                    achievement.getExercises().stream()
+                            .map(this::toExerciseResponse)
+                            .toList(),
                     achievement.getLevel().getId(),
                     achievement.getLevel().getName(),
                     unlocked,
@@ -271,9 +281,11 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
                 case VOLUME -> {
 
-                    if (ach.getExercise() != null) {
-                        progress = volumeByExercise.getOrDefault(
-                                ach.getExercise().getId(), 0.0);
+                    if (!ach.getExercises().isEmpty()) {
+
+                        progress = ach.getExercises().stream()
+                                .mapToDouble(ex -> volumeByExercise.getOrDefault(ex.getId(), 0.0))
+                                .sum();
 
                     } else if (ach.getMuscle() != null) {
                         progress = volumeByMuscle.getOrDefault(
@@ -358,7 +370,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                 .filter(ach -> {
 
                     // Global
-                    if (ach.getMuscle() == null && ach.getExercise() == null) {
+                    if (ach.getMuscle() == null && ach.getExercises().isEmpty()) {
                         return true;
                     }
 
@@ -368,8 +380,9 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                     }
 
                     // Por ejercicio
-                    if (ach.getExercise() != null) {
-                        return volumeByExercise.containsKey(ach.getExercise().getId());
+                    if (!ach.getExercises().isEmpty()) {
+                        return ach.getExercises().stream()
+                                .anyMatch(ex -> volumeByExercise.containsKey(ex.getId()));
                     }
 
                     return false;
@@ -408,9 +421,11 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
                 case VOLUME -> {
 
-                    if (ach.getExercise() != null) {
-                        progressToAdd = volumeByExercise.getOrDefault(
-                                ach.getExercise().getId(), 0.0);
+                    if (!ach.getExercises().isEmpty()) {
+
+                        progressToAdd = ach.getExercises().stream()
+                                .mapToDouble(ex -> volumeByExercise.getOrDefault(ex.getId(), 0.0))
+                                .sum();
 
                     } else if (ach.getMuscle() != null) {
                         progressToAdd = volumeByMuscle.getOrDefault(
@@ -462,10 +477,13 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
             case VOLUME -> {
 
-                if (ach.getExercise() != null) {
-                    return workoutSetRepository.sumVolumeByExercise(
+                if (!ach.getExercises().isEmpty()) {
+
+                    return workoutSetRepository.sumVolumeByExercises(
                             user.getId(),
-                            ach.getExercise().getId(),
+                            ach.getExercises().stream()
+                                    .map(Exercise::getId)
+                                    .toList(),
                             workoutDayId);
 
                 } else if (ach.getMuscle() != null) {
@@ -508,9 +526,12 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
             List<Object[]> rows;
 
-            if (ach.getExercise() != null) {
-                rows = workoutSetRepository
-                        .sumVolumeByExerciseGroupedByUser(ach.getExercise().getId());
+            if (!ach.getExercises().isEmpty()) {
+
+                rows = workoutSetRepository.sumVolumeByExercisesGroupedByUser(
+                        ach.getExercises().stream()
+                                .map(Exercise::getId)
+                                .toList());
 
             } else if (ach.getMuscle() != null) {
                 rows = workoutSetRepository
@@ -609,9 +630,9 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                 a.getRequiredValue(),
                 a.getImage(),
                 a.getMuscle(),
-                a.getExercise() != null ? a.getExercise().getId() : null,
-                a.getExercise() != null ? a.getExercise().getName() : null,
-                a.getExercise() != null ? a.getExercise().getMuscle() : null,
+                a.getExercises().stream()
+                        .map(this::toExerciseResponse)
+                        .toList(),
                 a.getLevel() != null ? a.getLevel().getId() : null,
                 a.getLevel() != null ? a.getLevel().getName() : null,
                 true,

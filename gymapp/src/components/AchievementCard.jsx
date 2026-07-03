@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Box, Typography, Stack, LinearProgress } from "@mui/material";
 
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
@@ -8,6 +9,7 @@ import ChestIcon from "../assets/musclesAchievements/chest.svg";
 import LegIcon from "../assets/musclesAchievements/leg.svg";
 
 import AchievementChip from "../components/AchievementChip";
+import AchievementExercisesModal from "../components/AchievementExercisesModal";
 
 import { muscleLabels, muscleGroups } from "../config/muscleConfig";
 import { achievementColors } from "../config/achievementConfig";
@@ -19,14 +21,19 @@ const muscleGroupIcons = {
   CHEST: ChestIcon,
 };
 
+const achievementTypeLabels = {
+  VOLUME: "Volumen",
+  STREAK: "Racha",
+  CONSISTENCY: "Consistencia",
+};
+
 export default function AchievementCard({ achievement }) {
+  const [openExercises, setOpenExercises] = useState(false);
+
   const isUnlocked = achievement.unlocked;
 
   const isStreak = achievement.type === "STREAK";
-  const isConsistency = achievement.type === "CONSISTENCY";
   const isVolume = achievement.type === "VOLUME";
-
-  const isGeneralVolume = !achievement.muscle && !achievement.exerciseName && isVolume;
 
   const originalColor = achievementColors[achievement.type] || "#9e9e9e";
 
@@ -54,7 +61,9 @@ export default function AchievementCard({ achievement }) {
     ? Math.min(achievement.progress, achievement.requiredValue)
     : achievement.progress;
 
-  const effectiveMuscle = achievement.muscle || achievement.exerciseMuscle;
+  const firstExercise = achievement.exercises?.[0];
+
+  const effectiveMuscle = achievement.muscle || firstExercise?.muscle;
 
   const muscleGroup = effectiveMuscle ? muscleGroups[effectiveMuscle] : null;
 
@@ -72,6 +81,16 @@ export default function AchievementCard({ achievement }) {
       }}
     />
   ) : null;
+
+  let chipIcon;
+
+  if (effectiveMuscle) {
+    chipIcon = iconElement;
+  } else if (isVolume) {
+    chipIcon = <FitnessCenterIcon />;
+  } else {
+    chipIcon = <CalendarMonthIcon />;
+  }
 
   return (
     <Box
@@ -119,7 +138,6 @@ export default function AchievementCard({ achievement }) {
           <LockIcon sx={{ fontSize: 36, color: "#fff" }} />
         </Box>
       )}
-
       <Box
         sx={{
           width: "100%",
@@ -194,37 +212,55 @@ export default function AchievementCard({ achievement }) {
           {achievement.name}
         </Typography>
       </Box>
-
       {/* INFO */}
-      <Stack direction="row" spacing={1} alignItems="center" justifyContent="center" flexWrap="wrap">
-        {/* STREAK / CONSISTENCY */}
-        {(isStreak || isConsistency) && (
-          <AchievementChip label="General" color={baseColor} icon={<CalendarMonthIcon />} />
-        )}
+      <Stack spacing={2} alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
+        <AchievementChip label={achievementTypeLabels[achievement.type]} color={baseColor} icon={chipIcon} />
 
-        {/* MÚSCULO */}
-        {achievement.muscle && (
-          <AchievementChip label={muscleLabels[achievement.muscle]} color={baseColor} icon={iconElement} />
-        )}
-
-        {/* EJERCICIO */}
-        {achievement.exerciseName && (
-          <AchievementChip
-            label={achievement.exerciseName}
-            color={baseColor}
-            icon={iconElement}
-            variant="outlined"
+        {/* LISTA DE EJERCICIOS */}
+        {achievement.exercises?.length > 0 && (
+          <Box
+            onClick={() => setOpenExercises(true)}
             sx={{
-              borderColor: baseColor,
-              color: baseColor,
+              mt: 1,
+              cursor: "pointer",
+              borderRadius: 2,
+              px: 1,
+              py: 0.5,
+              transition: "0.2s",
+              "&:hover": {
+                backgroundColor: "rgba(255,255,255,0.08)",
+              },
             }}
-          />
+          >
+            {achievement.exercises.slice(0, 2).map((exercise) => (
+              <Typography
+                key={exercise.id}
+                sx={{
+                  color: "#fff",
+                  fontWeight: 600,
+                  fontSize: "0.95rem",
+                  textAlign: "center",
+                }}
+              >
+                {exercise.name}
+              </Typography>
+            ))}
+
+            {achievement.exercises.length > 2 && (
+              <Typography
+                sx={{
+                  color: "#fff",
+                  opacity: 0.8,
+                  fontSize: "0.9rem",
+                  textAlign: "center",
+                }}
+              >
+                +{achievement.exercises.length - 2} ejercicios
+              </Typography>
+            )}
+          </Box>
         )}
-
-        {/* GENERAL VOLUMEN */}
-        {isGeneralVolume && <AchievementChip label="General" color={baseColor} icon={<FitnessCenterIcon />} />}
       </Stack>
-
       {/* OBJETIVO */}
       <Typography
         sx={{
@@ -235,7 +271,6 @@ export default function AchievementCard({ achievement }) {
       >
         {formatNumber(achievement.requiredValue)} {isVolume ? "kg" : isStreak ? "días seguidos" : "días entrenados"}
       </Typography>
-
       {/* PROGRESO */}
       <Box sx={{ width: "100%", mt: 1 }}>
         <LinearProgress
@@ -284,7 +319,6 @@ export default function AchievementCard({ achievement }) {
           {formatNumber(displayProgress ?? 0)} / {formatNumber(achievement.requiredValue)}
         </Typography>
       </Box>
-
       {/* COMPLETADO */}
       {isUnlocked && achievement.unlockedAt && (
         <Typography
@@ -298,6 +332,12 @@ export default function AchievementCard({ achievement }) {
           Completado el {formatDate(achievement.unlockedAt)}
         </Typography>
       )}
+      {/* MODAL DE EJERCICIOS */}
+      <AchievementExercisesModal
+        open={openExercises}
+        onClose={() => setOpenExercises(false)}
+        exercises={achievement.exercises}
+      />
     </Box>
   );
 }

@@ -40,7 +40,7 @@ public class AchievementController {
             @RequestParam("levelId") Long levelId,
             @RequestParam("requiredValue") Double requiredValue,
             @RequestParam(value = "muscle", required = false) MuscleType muscle,
-            @RequestParam(value = "exerciseId", required = false) Long exerciseId,
+            @RequestParam(value = "exerciseIds", required = false) List<Long> exerciseIds,
             @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
 
         AchievementRequest request = new AchievementRequest(
@@ -49,7 +49,7 @@ public class AchievementController {
                 levelId,
                 requiredValue,
                 muscle,
-                exerciseId);
+                exerciseIds);
 
         return achievementService.createAchievement(request, image);
     }
@@ -62,7 +62,7 @@ public class AchievementController {
             @RequestParam("levelId") Long levelId,
             @RequestParam("requiredValue") Double requiredValue,
             @RequestParam(value = "muscle", required = false) MuscleType muscle,
-            @RequestParam(value = "exerciseId", required = false) Long exerciseId,
+            @RequestParam(value = "exerciseIds", required = false) List<Long> exerciseIds,
             @RequestParam(value = "image", required = false) MultipartFile image,
             @RequestParam(value = "deleteImage", required = false) Boolean deleteImage) throws IOException {
 
@@ -72,7 +72,7 @@ public class AchievementController {
                 levelId,
                 requiredValue,
                 muscle,
-                exerciseId);
+                exerciseIds);
 
         return achievementService.updateAchievement(id, request, image, deleteImage);
     }

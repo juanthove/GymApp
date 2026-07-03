@@ -1,6 +1,7 @@
 package com.gymapp.service;
 
 import com.gymapp.dto.request.AchievementRequest;
+import com.gymapp.dto.response.AchievementExerciseResponse;
 import com.gymapp.dto.response.AchievementResponse;
 import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.Achievement;
@@ -20,7 +21,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class AchievementServiceImpl implements AchievementService {
@@ -70,10 +74,14 @@ public class AchievementServiceImpl implements AchievementService {
             achievement.setLevel(level);
         }
 
-        if (request.exerciseId() != null) {
-            Exercise exercise = exerciseRepository.findById(request.exerciseId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Ejercicio no encontrado"));
-            achievement.setExercise(exercise);
+        if (request.exerciseIds() != null && !request.exerciseIds().isEmpty()) {
+
+            Set<Exercise> exercises = request.exerciseIds().stream()
+                    .map(id -> exerciseRepository.findById(id)
+                            .orElseThrow(() -> new ResourceNotFoundException("Ejercicio no encontrado")))
+                    .collect(Collectors.toSet());
+
+            achievement.setExercises(exercises);
         }
 
         Files.createDirectories(imagePath);
@@ -152,12 +160,17 @@ public class AchievementServiceImpl implements AchievementService {
             achievement.setLevel(null);
         }
 
-        if (request.exerciseId() != null) {
-            Exercise exercise = exerciseRepository.findById(request.exerciseId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Ejercicio no encontrado"));
-            achievement.setExercise(exercise);
+        if (request.exerciseIds() != null && !request.exerciseIds().isEmpty()) {
+
+            Set<Exercise> exercises = request.exerciseIds().stream()
+                    .map(exerciseId -> exerciseRepository.findById(exerciseId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Ejercicio no encontrado")))
+                    .collect(Collectors.toSet());
+
+            achievement.setExercises(exercises);
+
         } else {
-            achievement.setExercise(null);
+            achievement.setExercises(new HashSet<>());
         }
 
         achievementRepository.save(achievement);
@@ -195,6 +208,15 @@ public class AchievementServiceImpl implements AchievementService {
                 .body(resource);
     }
 
+    private AchievementExerciseResponse toExerciseResponse(Exercise exercise) {
+        return new AchievementExerciseResponse(
+                exercise.getId(),
+                exercise.getName(),
+                exercise.getMuscle(),
+                exercise.getType(),
+                exercise.getIcon());
+    }
+
     private AchievementResponse toResponse(Achievement achievement) {
         return new AchievementResponse(
                 achievement.getId(),
@@ -205,8 +227,9 @@ public class AchievementServiceImpl implements AchievementService {
                 achievement.getRequiredValue(),
                 achievement.getImage(),
                 achievement.getMuscle(),
-                achievement.getExercise() != null ? achievement.getExercise().getId() : null,
-                achievement.getExercise() != null ? achievement.getExercise().getName() : null);
+                achievement.getExercises().stream()
+                        .map(this::toExerciseResponse)
+                        .toList());
     }
 
     private String getExtension(String fileName) {

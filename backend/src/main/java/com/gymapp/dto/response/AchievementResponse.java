@@ -2,6 +2,7 @@ package com.gymapp.dto.response;
 
 import com.gymapp.model.AchievementType;
 import com.gymapp.model.MuscleType;
+import java.util.List;
 
 public record AchievementResponse(
         Long id,
@@ -12,6 +13,5 @@ public record AchievementResponse(
         Double requiredValue,
         String image,
         MuscleType muscle,
-        Long exerciseId,
-        String exerciseName) {
+        List<AchievementExerciseResponse> exercises) {
 }

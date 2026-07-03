@@ -1,7 +1,9 @@
 package com.gymapp.model;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -31,8 +33,9 @@ public class Achievement {
     @Enumerated(EnumType.STRING)
     private MuscleType muscle;
 
-    @ManyToOne
-    private Exercise exercise;
+    @ManyToMany
+    @JoinTable(name = "achievement_exercises", joinColumns = @JoinColumn(name = "achievement_id"), inverseJoinColumns = @JoinColumn(name = "exercise_id"))
+    private Set<Exercise> exercises = new HashSet<>();
 
     @OneToMany(mappedBy = "achievement", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserAchievement> userAchievements = new ArrayList<>();

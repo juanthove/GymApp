@@ -25,8 +25,10 @@ export async function createAchievement(achievement) {
     formData.append("muscle", achievement.muscle);
   }
 
-  if (achievement.exerciseId) {
-    formData.append("exerciseId", achievement.exerciseId);
+  if (achievement.exerciseIds?.length) {
+    achievement.exerciseIds.forEach((id) => {
+      formData.append("exerciseIds", id);
+    });
   }
 
   if (achievement.image) {
@@ -52,8 +54,10 @@ export async function updateAchievement(id, achievement) {
     formData.append("muscle", achievement.muscle);
   }
 
-  if (achievement.exerciseId) {
-    formData.append("exerciseId", achievement.exerciseId);
+  if (achievement.exerciseIds?.length) {
+    achievement.exerciseIds.forEach((id) => {
+      formData.append("exerciseIds", id);
+    });
   }
 
   if (achievement.image) {

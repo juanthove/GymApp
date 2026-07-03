@@ -9,6 +9,7 @@ import {
   createAchievement,
   updateAchievement,
   deleteAchievement,
+  getAchievementImageUrl,
 } from "../services/achievementService";
 
 import { getUserLevels } from "../services/userLevelService";
@@ -39,6 +40,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import BackButton from "../components/BackButton";
 import AppSnackbar from "../components/AppSnackbar";
 import FileUploadField from "../components/FileUploadField";
+import ExerciseSelectionModal from "../components/ExerciseSelectionModal";
 
 import { normalizeText } from "../utils/stringUtils";
 
@@ -51,11 +53,20 @@ export default function CreateAchievementScreen() {
   const [imagePreviews, setImagePreviews] = useState({});
   const [deleteImages, setDeleteImages] = useState({});
 
+  const [editingAchievement, setEditingAchievement] = useState(null);
+  const [isSelectionModalOpen, setSelectionModalOpen] = useState(false);
+
   const { message, messageType, showMessage, clearMessage } = useSnackbar();
 
   useEffect(() => {
     loadData();
   }, []);
+
+  const achievementTypes = [
+    { value: "VOLUME", label: "Volumen" },
+    { value: "CONSISTENCY", label: "Consistencia" },
+    { value: "STREAK", label: "Racha" },
+  ];
 
   const muscleOptions = [
     { value: "", label: "Ninguno" },
@@ -87,7 +98,7 @@ export default function CreateAchievementScreen() {
         .filter((a) => a.levelId === level.id)
         .map((a) => ({
           ...a,
-          exercise: exercisesData.find((ex) => ex.id === a.exerciseId) || null,
+          exercises: a.exercises || [],
         })),
     }));
 
@@ -123,7 +134,7 @@ export default function CreateAchievementScreen() {
       type: "VOLUME",
       requiredValue: "",
       muscle: "",
-      exercise: null,
+      exercises: [],
     });
 
     setLevels(updated);
@@ -176,7 +187,7 @@ export default function CreateAchievementScreen() {
             levelId: level.id,
             requiredValue: Number(ach.requiredValue),
             muscle: ach.muscle || null,
-            exerciseId: ach.exercise ? ach.exercise.id : null,
+            exerciseIds: ach.exercises?.map((e) => e.id) || [],
             image: images[key] || null,
             deleteImage: deleteImages[key] || false,
           };
@@ -250,13 +261,13 @@ export default function CreateAchievementScreen() {
         //VALIDACIONES POR TIPO
 
         if (ach.type === "VOLUME") {
-          if (ach.exercise && ach.muscle) {
+          if (ach.exercises?.length > 0 && ach.muscle) {
             return validationError(`El logro "${ach.name}" no puede tener ejercicio y músculo al mismo tiempo`);
           }
         }
 
         if (ach.type === "CONSISTENCY" || ach.type === "STREAK") {
-          if (ach.exercise) {
+          if (ach.exercises?.length > 0) {
             return validationError(`El logro "${ach.name}" no debe tener ejercicio`);
           }
 
@@ -265,7 +276,13 @@ export default function CreateAchievementScreen() {
           }
         }
 
-        const exerciseKey = ach.exercise?.id ?? ach.exerciseId ?? "none";
+        const exerciseKey =
+          ach.exercises?.length > 0
+            ? ach.exercises
+                .map((e) => e.id)
+                .sort((a, b) => a - b)
+                .join("-")
+            : "none";
         const muscleKey = ach.muscle ? ach.muscle : "none";
         const requiredValue = Number(ach.requiredValue);
         const key = `${level.id}-${ach.type}-${exerciseKey}-${muscleKey}-${requiredValue}`;
@@ -371,16 +388,14 @@ export default function CreateAchievementScreen() {
                               onChange={(e) => updateAchievementField(levelIndex, achIndex, "name", e.target.value)}
                             />
 
-                            <TextField
-                              select
-                              label="Tipo"
-                              value={ach.type || ""}
-                              onChange={(e) => handleTypeChange(levelIndex, achIndex, e.target.value)}
-                            >
-                              <MenuItem value="VOLUME">Volumen</MenuItem>
-                              <MenuItem value="CONSISTENCY">Consistencia</MenuItem>
-                              <MenuItem value="STREAK">Racha</MenuItem>
-                            </TextField>
+                            <Autocomplete
+                              options={achievementTypes}
+                              value={achievementTypes.find((t) => t.value === ach.type) ?? null}
+                              onChange={(_, value) => handleTypeChange(levelIndex, achIndex, value?.value ?? "")}
+                              getOptionLabel={(option) => option.label}
+                              isOptionEqualToValue={(option, value) => option.value === value.value}
+                              renderInput={(params) => <TextField {...params} label="Tipo" />}
+                            />
 
                             <TextField
                               type="number"
@@ -413,25 +428,33 @@ export default function CreateAchievementScreen() {
                               renderInput={(params) => <TextField {...params} label="Músculo" />}
                             />
 
-                            <Autocomplete
-                              autoHighlight
-                              options={exerciseOptions}
-                              getOptionLabel={(option) => option.label}
-                              value={
-                                exerciseOptions.find((e) => e.value === (ach.exercise?.id || "")) || exerciseOptions[0]
-                              }
-                              onChange={(_, newValue) => {
-                                const exercise = exercises.find((e) => e.id === newValue?.value) || null;
+                            <Button
+                              variant="contained"
+                              onClick={() => {
+                                setEditingAchievement({
+                                  levelIndex,
+                                  achIndex,
+                                });
 
-                                updateAchievementField(levelIndex, achIndex, "exercise", exercise);
+                                setSelectionModalOpen(true);
                               }}
-                              filterOptions={(options, state) => {
-                                const search = normalizeText(state.inputValue);
+                            >
+                              Seleccionar ejercicios
+                            </Button>
 
-                                return options.filter((option) => normalizeText(option.label).startsWith(search));
-                              }}
-                              renderInput={(params) => <TextField {...params} label="Ejercicio" />}
-                            />
+                            {ach.exercises?.length > 0 && (
+                              <Paper variant="outlined" sx={{ p: 2 }}>
+                                <Typography fontWeight={700} mb={1}>
+                                  Ejercicios seleccionados
+                                </Typography>
+
+                                <Stack spacing={0.5}>
+                                  {ach.exercises?.map((ex) => (
+                                    <Typography key={ex.id}>{ex.name}</Typography>
+                                  ))}
+                                </Stack>
+                              </Paper>
+                            )}
 
                             <FileUploadField
                               label="Imagen del logro"
@@ -445,7 +468,7 @@ export default function CreateAchievementScreen() {
                                 const key = getKey(ach);
                                 setImagePreviews((prev) => ({ ...prev, [key]: preview }));
                               }}
-                              existingUrl={ach.image ? `/api/achievements/image/${ach.image}` : null}
+                              existingUrl={ach.image ? getAchievementImageUrl(ach.image) : null}
                               deleteFlag={deleteImages[getKey(ach)] || false}
                               setDeleteFlag={(value) => {
                                 const key = getKey(ach);
@@ -485,6 +508,24 @@ export default function CreateAchievementScreen() {
             </Button>
           </Stack>
         </Paper>
+
+        {/*SELECCION EJERCICIOS*/}
+        <ExerciseSelectionModal
+          open={isSelectionModalOpen}
+          onClose={() => setSelectionModalOpen(false)}
+          exercises={exercises}
+          initialSelected={
+            editingAchievement
+              ? levels[editingAchievement.levelIndex].achievements[editingAchievement.achIndex].exercises
+              : []
+          }
+          onConfirm={(selected) => {
+            if (!editingAchievement) return;
+
+            updateAchievementField(editingAchievement.levelIndex, editingAchievement.achIndex, "exercises", selected);
+          }}
+        />
+
         <AppSnackbar message={message} type={messageType} onClose={clearMessage} />
       </Container>
     </Box>

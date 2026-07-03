@@ -4,6 +4,7 @@ import com.gymapp.model.AchievementType;
 import com.gymapp.model.MuscleType;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record UserAchievementResponse(
         Long id,
@@ -12,9 +13,7 @@ public record UserAchievementResponse(
         Double requiredValue,
         String image,
         MuscleType muscle,
-        Long exerciseId,
-        String exerciseName,
-        MuscleType exerciseMuscle,
+        List<AchievementExerciseResponse> exercises,
         Long levelId,
         String levelName,
         boolean unlocked,
