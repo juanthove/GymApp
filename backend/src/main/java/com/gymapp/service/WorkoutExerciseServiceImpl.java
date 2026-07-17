@@ -94,11 +94,53 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
 
     @Override
     public WorkoutExerciseResponse completeWorkoutExercise(Long id, Double nextWeight) {
-        WorkoutExercise exercise = workoutExerciseRepository.findById(id)
+
+        WorkoutExercise completedExercise = workoutExerciseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
-        exercise.setCompleted(true);
-        exercise.setNextWeight(nextWeight);
-        return toResponse(workoutExerciseRepository.save(exercise));
+
+        completedExercise.setCompleted(true);
+        completedExercise.setNextWeight(nextWeight);
+
+        workoutExerciseRepository.save(completedExercise);
+
+        Long workoutId = completedExercise.getWorkoutDay()
+                .getWorkout()
+                .getId();
+
+        Long exerciseId = completedExercise.getExercise()
+                .getId();
+
+        List<WorkoutExercise> exercises = workoutExerciseRepository.findByWorkoutDayWorkoutIdAndExerciseId(
+                workoutId,
+                exerciseId);
+
+        for (WorkoutExercise exercise : exercises) {
+
+            if (exercise.getId().equals(completedExercise.getId())) {
+                continue;
+            }
+
+            if (exercise.isCompleted()) {
+
+                Double currentNextWeight = exercise.getNextWeight();
+
+                if (currentNextWeight == null || nextWeight > currentNextWeight) {
+                    exercise.setNextWeight(nextWeight);
+                }
+
+            } else {
+
+                Double currentWeight = exercise.getWeight();
+
+                if (currentWeight == null || nextWeight > currentWeight) {
+                    exercise.setWeight(nextWeight);
+                }
+            }
+        }
+
+        workoutExerciseRepository.saveAll(exercises);
+
+        return toResponse(completedExercise);
     }
 
     @Override

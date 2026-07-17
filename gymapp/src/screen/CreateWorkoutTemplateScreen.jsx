@@ -273,7 +273,7 @@ export default function CreateWorkoutTemplateScreen() {
     setDays(updated);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (update) => {
     if (!validateTemplate()) return;
 
     try {
@@ -281,7 +281,7 @@ export default function CreateWorkoutTemplateScreen() {
         name,
         description,
         days: days.map((day, index) => ({
-          id: day.id || null,
+          id: update ? day.id || null : null,
           name: day.name,
           dayOrder: index + 1,
           muscleImage: day.deleteImage || day.image ? null : day.sourceMuscleImage || null,
@@ -294,8 +294,7 @@ export default function CreateWorkoutTemplateScreen() {
 
       let templateId;
 
-      //Crear o actualizar full
-      if (selectedTemplateId) {
+      if (update) {
         await updateWorkoutTemplate(selectedTemplateId, templateData);
         templateId = selectedTemplateId;
 
@@ -307,10 +306,10 @@ export default function CreateWorkoutTemplateScreen() {
         showMessage("Template creado correctamente", "success");
       }
 
-      //Obtener template
+      // Obtener template
       const fullTemplate = await getWorkoutTemplateById(templateId);
 
-      //Imagenes
+      // Subir imágenes
       for (let i = 0; i < fullTemplate.days.length; i++) {
         const backendDay = fullTemplate.days[i];
         const frontDay = days[i];
@@ -320,7 +319,6 @@ export default function CreateWorkoutTemplateScreen() {
         }
       }
 
-      //Reset
       resetForm();
       loadTemplates();
 
@@ -622,13 +620,19 @@ export default function CreateWorkoutTemplateScreen() {
 
             <Stack direction="row" spacing={2}>
               {selectedTemplateId && (
-                <Button variant="contained" color="error" onClick={() => setConfirmDeleteOpen(true)}>
-                  Eliminar Plantilla
-                </Button>
+                <>
+                  <Button variant="contained" color="error" onClick={() => setConfirmDeleteOpen(true)}>
+                    Eliminar Plantilla
+                  </Button>
+
+                  <Button variant="contained" color="primary" onClick={() => handleSubmit(true)}>
+                    Actualizar Plantilla
+                  </Button>
+                </>
               )}
 
-              <Button variant="contained" color="success" onClick={handleSubmit}>
-                {selectedTemplateId ? "Actualizar Plantilla" : "Guardar Plantilla"}
+              <Button variant="contained" color="success" onClick={() => handleSubmit(false)}>
+                Crear Plantilla
               </Button>
             </Stack>
           </Stack>

@@ -66,6 +66,7 @@ export default function CreateWorkoutScreen() {
   const [templates, setTemplates] = useState([]);
   const [exercises, setExercises] = useState([]);
   const userInputRef = useRef(null);
+  const weightInputRefs = useRef({});
 
   const [selectedUser, setSelectedUser] = useState("");
   const [source, setSource] = useState("empty");
@@ -360,7 +361,15 @@ export default function CreateWorkoutScreen() {
   const updateExerciseField = (dayIndex, exIndex, field, value) => {
     const updated = [...days];
 
-    updated[dayIndex].exercises[exIndex][field] = value;
+    const exerciseId = updated[dayIndex].exercises[exIndex].exerciseId;
+
+    updated.forEach((day) => {
+      day.exercises.forEach((exercise) => {
+        if (exercise.exerciseId === exerciseId) {
+          exercise[field] = value;
+        }
+      });
+    });
 
     setDays(updated);
   };
@@ -503,6 +512,20 @@ export default function CreateWorkoutScreen() {
     } catch (e) {
       showMessage(e.message, "error");
     }
+  };
+
+  const handleWeightEnter = (e, dayIndex, exIndex) => {
+    if (e.key !== "Enter") return;
+
+    e.preventDefault();
+
+    const nextIndex = e.shiftKey ? exIndex - 1 : exIndex + 1;
+
+    if (nextIndex < 0 || nextIndex >= days[dayIndex].exercises.length) {
+      return;
+    }
+
+    weightInputRefs.current[`${dayIndex}-${nextIndex}`]?.focus();
   };
 
   return (
@@ -809,6 +832,12 @@ export default function CreateWorkoutScreen() {
                                       size="small"
                                       value={ex.weight}
                                       onChange={(e) => updateExerciseField(dayIndex, i, "weight", e.target.value)}
+                                      inputRef={(el) => {
+                                        if (el) {
+                                          weightInputRefs.current[`${dayIndex}-${i}`] = el;
+                                        }
+                                      }}
+                                      onKeyDown={(e) => handleWeightEnter(e, dayIndex, i)}
                                     />
 
                                     <IconButton onClick={() => removeExerciseFromDay(dayIndex, i)}>

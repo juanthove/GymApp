@@ -53,4 +53,8 @@ public interface WorkoutExerciseRepository extends JpaRepository<WorkoutExercise
             @Param("workoutId") Long workoutId,
             @Param("currentDayId") Long currentDayId,
             @Param("exerciseIds") List<Long> exerciseIds);
+
+    List<WorkoutExercise> findByWorkoutDayWorkoutIdAndExerciseId(
+            Long workoutId,
+            Long exerciseId);
 }
