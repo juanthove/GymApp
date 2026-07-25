@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.Optional;
+import java.util.List;
 
 public interface ExerciseReminderRuleRepository extends JpaRepository<ExerciseReminderRule, Long> {
 
@@ -22,4 +23,7 @@ public interface ExerciseReminderRuleRepository extends JpaRepository<ExerciseRe
     Optional<ExerciseReminderRule> findByExerciseIdAndNotRuleId(
             Long exerciseId,
             Long ruleId);
+
+    // Traer las reglas que contengan al menos un ejercicio de los que se les pasa
+    List<ExerciseReminderRule> findDistinctByExercises_IdIn(List<Long> exerciseIds);
 }

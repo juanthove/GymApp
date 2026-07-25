@@ -92,6 +92,8 @@ export default function ExerciseScreen() {
   const lastSaveTimeRef = useRef({});
   const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
+  const repsRefs = useRef({});
+
   const [confirmFinish, setConfirmFinish] = useState(false);
   const [isAbdominal, setIsAbdominal] = useState(false);
 
@@ -403,6 +405,12 @@ export default function ExerciseScreen() {
     const updated = [...sets];
     updated[setIndex].push({ reps: "", weight: "", id: null });
     setSets(updated);
+
+    const newBlockIndex = updated[setIndex].length - 1;
+
+    setTimeout(() => {
+      repsRefs.current[`${setIndex}-${newBlockIndex}`]?.focus();
+    }, 0);
   };
 
   const removeBlock = (setIndex, blockIndex) => {
@@ -436,7 +444,26 @@ export default function ExerciseScreen() {
     setMessageType("info");
   };
 
-  const saveSet = async (setIndex, showMessage = true, existingSets = null) => {
+  const copyPreviousSet = async (setIndex) => {
+    if (setIndex === 0) return;
+
+    const previousSet = sets[setIndex - 1];
+
+    const copied = previousSet.map((block) => ({
+      reps: block.reps,
+      weight: block.weight,
+      id: null,
+    }));
+
+    const updated = [...sets];
+    updated[setIndex] = copied;
+
+    setSets(updated);
+
+    await saveSet(setIndex, false, null, updated);
+  };
+
+  const saveSet = async (setIndex, showMessage = true, existingSets = null, setsToUse = sets) => {
     const now = Date.now();
 
     //Evitar doble ejecución muy rápida
@@ -448,7 +475,7 @@ export default function ExerciseScreen() {
 
     if (savingSetsRef.current[setIndex]) return;
 
-    const blocks = sets[setIndex];
+    const blocks = setsToUse[setIndex];
 
     const existing = existingSets ?? (await getWorkoutSetsByWorkoutExercise(selectedExercise.id));
 
@@ -914,7 +941,13 @@ export default function ExerciseScreen() {
               )}
 
               {selectedExercise?.description && (
-                <Typography fontSize={"1.5em"} color="text.secondary">
+                <Typography
+                  fontSize={"1.5em"}
+                  color="text.secondary"
+                  sx={{
+                    whiteSpace: "pre-line",
+                  }}
+                >
                   {selectedExercise.description}
                 </Typography>
               )}
@@ -926,6 +959,8 @@ export default function ExerciseScreen() {
                 const allFull = set.every((b) => hasValue(b.reps) && hasValue(b.weight));
                 const isInvalid = !allEmpty && !allFull;
                 const hasData = set.some((b) => b.id);
+                const previousHasData =
+                  setIndex > 0 && sets[setIndex - 1].some((b) => hasValue(b.reps) || hasValue(b.weight));
 
                 return (
                   <Box
@@ -971,6 +1006,9 @@ export default function ExerciseScreen() {
                             type="number"
                             inputMode="numeric"
                             pattern="[0-9]*"
+                            inputRef={(el) => {
+                              repsRefs.current[`${setIndex}-${blockIndex}`] = el;
+                            }}
                             disabled={selectedExercise?.completed}
                             onChange={(e) => handleChange(setIndex, blockIndex, "reps", e.target.value)}
                             onBlur={() => handleAutoSave(setIndex)}
@@ -1058,16 +1096,31 @@ export default function ExerciseScreen() {
                         </Stack>
                       ))}
 
-                      <Button
-                        fullWidth
-                        variant="outlined"
-                        color="error"
-                        onClick={() => deleteSet(setIndex)}
-                        disabled={!hasData || selectedExercise?.completed}
-                        sx={{ fontSize: "1.2rem", py: 1.2 }}
-                      >
-                        Eliminar
-                      </Button>
+                      <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          onClick={() => deleteSet(setIndex)}
+                          disabled={!hasData || selectedExercise?.completed}
+                          sx={{ fontSize: "1.2rem", py: 1.2, width: setIndex > 0 ? "42%" : "100%" }}
+                        >
+                          Eliminar
+                        </Button>
+                        {setIndex > 0 && (
+                          <Button
+                            fullWidth
+                            variant="outlined"
+                            onClick={() => copyPreviousSet(setIndex)}
+                            disabled={!previousHasData || selectedExercise?.completed}
+                            sx={{
+                              fontSize: "1.2rem", //CAMBIAR LETRA
+                              py: 1.2,
+                            }}
+                          >
+                            Igual que la anterior
+                          </Button>
+                        )}
+                      </Stack>
                     </Stack>
                   </Box>
                 );
@@ -1075,7 +1128,7 @@ export default function ExerciseScreen() {
 
               <Button
                 fullWidth
-                variant="outlined"
+                variant="contained"
                 onClick={addSet}
                 disabled={selectedExercise?.completed}
                 sx={{ mt: 2, fontSize: "1.3rem", py: { xs: 1, md: 1.2 } }}
@@ -1102,9 +1155,10 @@ export default function ExerciseScreen() {
                 fullWidth
                 variant="contained"
                 onClick={() => {
-                  const chosen = allExercises.filter((ex) => selectedExerciseIds.includes(ex.id));
+                  const chosen = selectedExerciseIds
+                    .map((id) => allExercises.find((ex) => ex.id === id))
+                    .filter(Boolean);
                   setDisplayedExercises(chosen);
-                  setSelectedExerciseIds(chosen.map((ex) => ex.id));
                   setIsSelectionModalOpen(false);
                 }}
                 sx={{ mt: 1 }}
@@ -1384,6 +1438,12 @@ export default function ExerciseScreen() {
                 label="Peso"
                 value={nextWeight}
                 onChange={(e) => setNextWeight(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    confirmCompleteWithWeight();
+                  }
+                }}
                 placeholder={`${pendingExercise?.weight ?? 0}`}
                 type="number"
                 sx={{

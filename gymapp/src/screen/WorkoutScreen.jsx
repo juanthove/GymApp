@@ -207,12 +207,7 @@ export default function WorkoutScreen() {
 
   const isComplete = completedDays === totalDays;
 
-  const isAnotherDayInProgress = (dayId) => {
-    return Object.entries(dayStatus).some(([id, status]) => status === "IN_PROGRESS" && Number(id) !== dayId);
-  };
-
   const status = dayStatus[selectedDay?.id];
-  const anotherInProgress = isAnotherDayInProgress(selectedDay?.id);
 
   const handleCancelWorkoutDay = async () => {
     if (!selectedDay) return;
@@ -590,7 +585,7 @@ export default function WorkoutScreen() {
                 <Button
                   variant="contained"
                   onClick={handleStartWorkout}
-                  disabled={status === "COMPLETED" || anotherInProgress}
+                  disabled={status === "COMPLETED"}
                   sx={{
                     flex: 2,
                     fontSize: {
@@ -606,9 +601,7 @@ export default function WorkoutScreen() {
                     ? "Entrenamiento completado"
                     : status === "IN_PROGRESS"
                       ? "Continuar entrenamiento"
-                      : anotherInProgress
-                        ? "Ya hay un entrenamiento en curso"
-                        : "Comenzar entrenamiento"}
+                      : "Comenzar entrenamiento"}
                 </Button>
               </>
             }

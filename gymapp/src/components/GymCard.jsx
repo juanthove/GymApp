@@ -86,7 +86,24 @@ export default function GymCard({
         }}
       />
 
-      <CardActionArea sx={{ height: "100%" }} onClick={onClick}>
+      <CardActionArea
+        sx={{ height: "100%" }}
+        onClick={onClick}
+        disableRipple
+        disableTouchRipple
+        sx={{
+          height: "100%",
+          "&:hover": {
+            backgroundColor: "transparent",
+          },
+          "&:active": {
+            backgroundColor: "transparent",
+          },
+          "&.Mui-focusVisible": {
+            backgroundColor: "transparent",
+          },
+        }}
+      >
         {variant === "exercise" ? (
           <CardContent sx={{ width: "100%", p: 0 }}>{children}</CardContent>
         ) : (

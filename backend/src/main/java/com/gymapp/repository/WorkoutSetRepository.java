@@ -122,23 +122,24 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
 
     // Contar ejercicios completados de un workoutDay
     @Query(value = """
+            SELECT
+                SUM(
+                    CASE
+                        WHEN set_count >= 3 THEN FLOOR(set_count / 3)
+                        ELSE 1
+                    END
+                ) AS total_exercises
+            FROM (
                 SELECT
-                    SUM(
-                        CASE
-                            WHEN set_count >= 3 THEN FLOOR(set_count / 3)
-                            ELSE 1
-                        END
-                    ) AS total_exercises
-                FROM (
-                    SELECT
-                        we.id,
-                        COUNT(ws.id) AS set_count
-                    FROM workout_set ws
-                    JOIN workout_exercise we ON ws.workout_exercise_id = we.id
-                    WHERE we.workout_day_id = :dayId
-                        AND ws.user_id = :userId
-                    GROUP BY we.id
-                ) t
+                    we.id,
+                    COUNT(DISTINCT ws.set_number) AS set_count
+                FROM workout_set ws
+                JOIN workout_exercise we
+                    ON ws.workout_exercise_id = we.id
+                WHERE we.workout_day_id = :dayId
+                  AND ws.user_id = :userId
+                GROUP BY we.id
+            ) t
             """, nativeQuery = true)
     Integer countExercisesByDayCustom(
             @Param("userId") Long userId,

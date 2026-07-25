@@ -299,10 +299,6 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
         List<Long> selectedIds = selectedWorkoutExerciseService.getSelectedIds(dayId);
 
-        Long userId = day.getWorkout().getUser().getId();
-
-        List<RuleAlertResponse> alerts = buildRuleAlerts(userId);
-
         // Traer ejercicios una sola vez
         List<WorkoutExercise> exercises = workoutExerciseRepository
                 .findByWorkoutDayIdOrderByExerciseOrder(dayId);
@@ -330,6 +326,11 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
                         ex,
                         lastPerformedMap.get(ex.getExercise().getId())))
                 .toList();
+
+        // Obtener las alertas
+        Long userId = day.getWorkout().getUser().getId();
+
+        List<RuleAlertResponse> alerts = buildRuleAlerts(userId, exerciseIds);
 
         return new WorkoutDayExercisesResponse(
                 dayId,
@@ -469,7 +470,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
                 lastPerformedDate.toString());
     }
 
-    private List<RuleAlertResponse> buildRuleAlerts(Long userId) {
+    private List<RuleAlertResponse> buildRuleAlerts(Long userId, List<Long> exerciseIds) {
 
         // Última fecha realizada por ejercicio
         Map<Long, LocalDate> lastDates = workoutExerciseRepository
@@ -481,7 +482,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
         List<RuleAlertResponse> result = new ArrayList<>();
 
-        for (ExerciseReminderRule rule : exerciseReminderRuleRepository.findAll()) {
+        for (ExerciseReminderRule rule : exerciseReminderRuleRepository.findDistinctByExercises_IdIn(exerciseIds)) {
 
             // Fecha más reciente de cualquier ejercicio de la regla
             LocalDate lastPerformed = rule.getExercises()
