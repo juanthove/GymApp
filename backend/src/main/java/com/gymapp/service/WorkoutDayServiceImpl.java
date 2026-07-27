@@ -3,6 +3,7 @@ package com.gymapp.service;
 import com.gymapp.dto.request.WorkoutDayRequest;
 import com.gymapp.dto.response.ExerciseAlertResponse;
 import com.gymapp.dto.response.RuleAlertResponse;
+import com.gymapp.dto.response.TrainingSummaryResponse;
 import com.gymapp.dto.response.WorkoutDayCountResponse;
 import com.gymapp.dto.response.WorkoutDayExercisesResponse;
 import com.gymapp.dto.response.WorkoutDayResponse;
@@ -25,6 +26,7 @@ import com.gymapp.repository.WorkoutRepository;
 import com.gymapp.repository.WorkoutExerciseRepository;
 import com.gymapp.repository.templates.WorkoutTemplateDayRepository;
 import com.gymapp.repository.projection.WorkoutDayCountProjection;
+import com.gymapp.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -80,6 +82,9 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private WorkoutTemplateDayRepository workoutTemplateDayRepository;
@@ -414,6 +419,35 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
                 .toList();
 
         return new WorkoutFrequencyResponse(resolvedGranularity, data);
+    }
+
+    private List<WorkoutDayCountResponse> getWorkoutDays(Long userId) {
+        return workoutDayRepository
+                .countWorkoutDaysByDate(userId)
+                .stream()
+                .map(d -> new WorkoutDayCountResponse(
+                        d.getDate(),
+                        d.getCount()))
+                .toList();
+    }
+
+    @Override
+    public TrainingSummaryResponse getTrainingSummary(Long userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        int currentStreak = 0;
+
+        if (user.getStreakStartDate() != null) {
+            currentStreak = (int) ChronoUnit.DAYS.between(
+                    user.getStreakStartDate(),
+                    LocalDate.now()) + 1;
+        }
+
+        return new TrainingSummaryResponse(
+                currentStreak,
+                getWorkoutDays(userId));
     }
 
     @Override

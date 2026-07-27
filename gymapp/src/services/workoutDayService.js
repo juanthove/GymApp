@@ -8,25 +8,25 @@ export async function getWorkoutDays(workoutId) {
 
 export async function startWorkoutDay(id) {
   return apiRequest(`${DAY_API}/${id}/start`, {
-    method: "PATCH"
+    method: "PATCH",
   });
 }
 
 export async function cancelWorkoutDay(id) {
   return apiRequest(`${DAY_API}/${id}/cancel`, {
-    method: "PATCH"
+    method: "PATCH",
   });
 }
 
 export async function completeWorkoutDay(id) {
   return apiRequest(`${DAY_API}/${id}/complete`, {
-    method: "PATCH"
+    method: "PATCH",
   });
 }
 
 export async function markAbdominalWorkoutDay(id) {
   return apiRequest(`${DAY_API}/${id}/abdominal`, {
-    method: "PATCH"
+    method: "PATCH",
   });
 }
 
@@ -79,9 +79,11 @@ export async function getWorkoutFrequency(userId, from, to, granularity) {
 
   const query = params.toString();
 
-  return apiRequest(
-    `${DAY_API}/user/${userId}/workout-frequency${query ? `?${query}` : ""}`
-  );
+  return apiRequest(`${DAY_API}/user/${userId}/workout-frequency${query ? `?${query}` : ""}`);
+}
+
+export async function getTrainingSummary(userId) {
+  return apiRequest(`${DAY_API}/user/${userId}/training-summary`);
 }
 
 export async function getWorkoutDaySummary(userId, dayId) {
@@ -91,7 +93,5 @@ export async function getWorkoutDaySummary(userId, dayId) {
 
   const query = params.toString();
 
-  return apiRequest(
-    `${DAY_API}/summary${query ? `?${query}` : ""}`
-  );
+  return apiRequest(`${DAY_API}/summary${query ? `?${query}` : ""}`);
 }

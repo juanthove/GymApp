@@ -66,7 +66,7 @@ import {
   getVolumeByUserAndDateRange,
 } from "../services/workoutSetService";
 
-import { getWorkoutFrequency } from "../services/workoutDayService";
+import { getWorkoutFrequency, getTrainingSummary } from "../services/workoutDayService";
 
 import { getPersonalRecordsByUser } from "../services/personalRecordService";
 
@@ -106,6 +106,7 @@ export default function StatsScreen() {
   const [shouldAnimate, setShouldAnimate] = useState(true);
   const [calendarData, setCalendarData] = useState([]);
   const [calendarMonth, setCalendarMonth] = useState(dayjs());
+  const [currentStreak, setCurrentStreak] = useState(0);
 
   const [prs, setPrs] = useState([]);
 
@@ -459,9 +460,10 @@ export default function StatsScreen() {
 
   const loadCalendarData = async () => {
     try {
-      const res = await getWorkoutFrequency(userId, null, null, "DAY");
+      const res = await getTrainingSummary(userId);
 
-      setCalendarData(res.data || []);
+      setCalendarData(res.trainedDays || []);
+      setCurrentStreak(res.currentStreak || 0);
     } catch (e) {
       console.error("Error calendario", e);
     }
@@ -1445,10 +1447,61 @@ export default function StatsScreen() {
                           letterSpacing: 1,
                         }}
                       >
-                        días entrenados
+                        entrenamientos
                       </Typography>
                     </Box>
                   )}
+                </CardContent>
+              </Card>
+
+              <Card
+                sx={{
+                  background: "rgba(255, 255, 255, 0.7)",
+                  backdropFilter: "blur(6px)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 3,
+                }}
+              >
+                <CardContent>
+                  <Stack spacing={1} sx={{ mb: 3 }}>
+                    <Typography variant="h5" fontWeight={800}>
+                      Días sin faltar
+                    </Typography>
+
+                    <Box
+                      sx={{
+                        width: 60,
+                        height: 4,
+                        borderRadius: 10,
+                        background: RED_GRADIENT,
+                      }}
+                    />
+                  </Stack>
+
+                  <Box
+                    sx={{
+                      py: 3,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Typography variant="h1" fontWeight={900}>
+                      {currentStreak}
+                    </Typography>
+
+                    <Typography
+                      sx={{
+                        mt: 1,
+                        fontSize: "1.3rem",
+                        opacity: 0.75,
+                        letterSpacing: 1,
+                      }}
+                    >
+                      días consecutivos
+                    </Typography>
+                  </Box>
                 </CardContent>
               </Card>
 

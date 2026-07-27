@@ -2,6 +2,7 @@ package com.gymapp.controller;
 
 import com.gymapp.dto.request.WorkoutDayRequest;
 import com.gymapp.dto.response.WorkoutFrequencyResponse;
+import com.gymapp.dto.response.TrainingSummaryResponse;
 import com.gymapp.dto.response.WorkoutDayExercisesResponse;
 import com.gymapp.dto.response.WorkoutDayResponse;
 import com.gymapp.dto.response.WorkoutDaySummaryResponse;
@@ -117,16 +118,20 @@ public class WorkoutDayController {
             @PathVariable Long userId,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
-            @RequestParam(required = false) Granularity granularity
-    ) {
+            @RequestParam(required = false) Granularity granularity) {
         return workoutDayService.getWorkoutFrequency(userId, from, to, granularity);
+    }
+
+    @GetMapping("/user/{userId}/training-summary")
+    public TrainingSummaryResponse getTrainingSummary(
+            @PathVariable Long userId) {
+        return workoutDayService.getTrainingSummary(userId);
     }
 
     @GetMapping("/summary")
     public WorkoutDaySummaryResponse getSummary(
-        @RequestParam Long userId,
-        @RequestParam Long dayId
-    ) {
+            @RequestParam Long userId,
+            @RequestParam Long dayId) {
         return workoutDayService.getWorkoutDaySummary(userId, dayId);
     }
 }
