@@ -8,6 +8,11 @@ export default function GymCard({
   subtitle,
   children,
   onClick,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onPointerLeave,
+  onPointerCancel,
   sx,
   status = "NORMAL", //"COMPLETED", "IN_PROGRESS", "NORMAL"
   showArrow = false,
@@ -91,6 +96,11 @@ export default function GymCard({
         onClick={onClick}
         disableRipple
         disableTouchRipple
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerLeave}
+        onPointerCancel={onPointerCancel}
         sx={{
           height: "100%",
           "&:hover": {
@@ -214,6 +224,11 @@ GymCard.propTypes = {
   subtitle: PropTypes.node,
   children: PropTypes.node,
   onClick: PropTypes.func,
+  onPointerDown: PropTypes.func,
+  onPointerMove: PropTypes.func,
+  onPointerUp: PropTypes.func,
+  onPointerLeave: PropTypes.func,
+  onPointerCancel: PropTypes.func,
   sx: PropTypes.object,
   status: PropTypes.oneOf(["COMPLETED", "IN_PROGRESS", "NORMAL"]),
   showArrow: PropTypes.bool,

@@ -39,6 +39,10 @@ export default function WorkoutScreen() {
 
   const [animatedProgress, setAnimatedProgress] = useState(0);
 
+  const holdTimer = useRef(null);
+  const longPressTriggered = useRef(false);
+  const startPoint = useRef({ x: 0, y: 0 });
+
   useEffect(() => {
     loadData();
   }, []);
@@ -87,8 +91,47 @@ export default function WorkoutScreen() {
     loadPhrase();
   }, []);
 
-  const openDay = (day) => {
+  //Cuando se presiona un dia
+  const handleDayClick = (day) => {
+    if (longPressTriggered.current) {
+      longPressTriggered.current = false;
+      return;
+    }
+
+    if (dayStatus[day.id] === "IN_PROGRESS") {
+      navigate(`/exercise/${userId}/${day.id}`);
+      return;
+    }
+
     setSelectedDay(day);
+  };
+
+  //Cuando se mantiene presionado un dia
+  const handleDayPressStart = (e, day) => {
+    longPressTriggered.current = false;
+
+    startPoint.current = {
+      x: e.clientX,
+      y: e.clientY,
+    };
+
+    holdTimer.current = setTimeout(() => {
+      longPressTriggered.current = true;
+      setSelectedDay(day);
+    }, 500);
+  };
+
+  const handleDayMove = (e) => {
+    const dx = Math.abs(e.pageX - startPoint.current.x);
+    const dy = Math.abs(e.pageY - startPoint.current.y);
+
+    if (dx > 10 || dy > 10) {
+      clearTimeout(holdTimer.current);
+    }
+  };
+
+  const handleDayPressEnd = () => {
+    clearTimeout(holdTimer.current);
   };
 
   const handleStartWorkout = async () => {
@@ -543,7 +586,12 @@ export default function WorkoutScreen() {
                     key={day.id}
                     title={day.name}
                     subtitle={<MuscleChips muscles={day.muscles} chipSx={{ fontWeight: 600, fontSize: "1.05rem" }} />}
-                    onClick={() => openDay(day)}
+                    onClick={() => handleDayClick(day)}
+                    onPointerDown={(e) => handleDayPressStart(e, day)}
+                    onPointerMove={handleDayMove}
+                    onPointerUp={handleDayPressEnd}
+                    onPointerLeave={handleDayPressEnd}
+                    onPointerCancel={handleDayPressEnd}
                     status={status}
                     showArrow={true}
                   />

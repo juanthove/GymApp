@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import useRequireAuth from "../hooks/useRequireAuth";
 import { useParams, useNavigate } from "react-router-dom";
 
-import { getUserById } from "../services/userService";
+import { getUserById, getCurrentWorkout, logoutUser } from "../services/userService";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
-import { getWorkoutDaySummary } from "../services/workoutDayService";
+import { getWorkoutById } from "../services/workoutService";
+
+import { getWorkoutDaySummary, getWorkoutDayStatus } from "../services/workoutDayService";
 
 import { Container, Typography, Stack, Button, Box } from "@mui/material";
 
@@ -20,15 +22,18 @@ import StatCard from "../components/StatCard";
 export default function FinalResumeScreen() {
   useRequireAuth();
   const { userId, workoutDayId } = useParams();
+  const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
   const [totalVolume, setTotalVolume] = useState(0);
   const [muscleVolume, setMuscleVolume] = useState([]);
   const [duration, setDuration] = useState(0);
   const [totalExercises, setTotalExercises] = useState(0);
+  const [dayInProgress, setDayInProgress] = useState(false);
 
   useEffect(() => {
     loadData();
+    checkDayInProgress();
   }, []);
 
   const loadData = async () => {
@@ -89,6 +94,44 @@ export default function FinalResumeScreen() {
 
     if (h > 0) return `${h}h ${m}m`;
     return `${m} min`;
+  };
+
+  const hasDayInProgress = async () => {
+    try {
+      const current = await getCurrentWorkout(userId);
+
+      if (!current) {
+        return false;
+      }
+
+      const workout = await getWorkoutById(current.id);
+
+      for (const day of workout.days) {
+        const status = await getWorkoutDayStatus(day.id);
+
+        if (status === "IN_PROGRESS") {
+          return true;
+        }
+      }
+
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const checkDayInProgress = async () => {
+    setDayInProgress(await hasDayInProgress());
+  };
+
+  const handleLogout = async () => {
+    if (await hasDayInProgress()) {
+      alert("No podés cerrar sesión mientras hay un entrenamiento en curso");
+      return;
+    }
+
+    logoutUser(userId);
+    navigate("/home");
   };
 
   if (!user) return null;
@@ -319,9 +362,29 @@ export default function FinalResumeScreen() {
               justifyContent: "center",
               zIndex: 10,
               pb: 2,
+              gap: 4,
             }}
           >
-            <PrimaryButton label="Volver" to={`/workout/${userId}`} />
+            <PrimaryButton
+              label="Volver"
+              to={`/workout/${userId}`}
+              sx={{
+                fontSize: "1.2rem",
+              }}
+            />
+
+            <PrimaryButton
+              label="Cerrar sesión"
+              onClick={handleLogout}
+              disabled={dayInProgress}
+              sx={{
+                fontSize: "1.2rem",
+                px: 1.2,
+                py: 0.2,
+                background: "linear-gradient(145deg, #ff6b6b, #c62828)",
+                opacity: 0.9,
+              }}
+            />
           </Box>
         </Stack>
       </Container>

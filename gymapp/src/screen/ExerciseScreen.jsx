@@ -58,6 +58,7 @@ import {
   DialogContent,
   DialogActions,
   Box,
+  Popover,
 } from "@mui/material";
 
 import GroupIcon from "@mui/icons-material/Group";
@@ -115,6 +116,12 @@ export default function ExerciseScreen() {
     [{ reps: "", weight: "", id: null }],
   ];
 
+  //POPOVER descripcion ejercicio
+  const [popoverAnchor, setPopoverAnchor] = useState(null);
+  const [popoverExercise, setPopoverExercise] = useState(null);
+  const holdTimer = useRef(null);
+  const longPressTriggered = useRef(false);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -131,7 +138,21 @@ export default function ExerciseScreen() {
     const data = await getWorkoutSetsByWorkoutExercise(selectedExercise.id);
 
     if (!data || data.length === 0) {
-      setSets(emptySets);
+      const defaultWeight = selectedExercise?.weight ?? "";
+      const defaultReps = reps ?? "";
+
+      const defaultSets = [
+        [{ reps: defaultReps, weight: defaultWeight, id: null }],
+        [{ reps: defaultReps, weight: defaultWeight, id: null }],
+        [{ reps: defaultReps, weight: defaultWeight, id: null }],
+      ];
+
+      setSets(defaultSets);
+
+      for (let i = 0; i < defaultSets.length; i++) {
+        await saveSet(i, false, data, defaultSets);
+      }
+
       return;
     }
 
@@ -317,8 +338,16 @@ export default function ExerciseScreen() {
       return;
     }
 
-    setPendingExercise(ex);
-    setNextWeight(ex.weight ?? "");
+    const maxWeight = Math.max(
+      ex.weight ?? 0,
+      ...sets
+        .flat()
+        .map((s) => Number(s.weight))
+        .filter((w) => !isNaN(w)),
+    );
+
+    setPendingExercise({ ...ex, weight: maxWeight });
+    setNextWeight(maxWeight);
     setWeightModalOpen(true);
   };
 
@@ -588,6 +617,28 @@ export default function ExerciseScreen() {
     }
 
     setSelectedExercise(null);
+  };
+
+  //POPOVER
+  const handleExercisePressStart = (event, exercise) => {
+    longPressTriggered.current = false;
+
+    const anchor = event.currentTarget;
+
+    holdTimer.current = setTimeout(() => {
+      longPressTriggered.current = true;
+      setPopoverExercise(exercise);
+      setPopoverAnchor(anchor);
+    }, 500);
+  };
+
+  const handleExercisePressEnd = () => {
+    clearTimeout(holdTimer.current);
+  };
+
+  const handleClosePopover = () => {
+    setPopoverAnchor(null);
+    setPopoverExercise(null);
   };
 
   return (
@@ -1000,17 +1051,14 @@ export default function ExerciseScreen() {
                       {set.map((block, blockIndex) => (
                         <Stack direction="row" spacing={1} key={blockIndex} alignItems="center">
                           <TextField
-                            label="Reps"
+                            label="Peso"
                             size="small"
-                            value={block.reps}
+                            value={block.weight}
                             type="number"
                             inputMode="numeric"
                             pattern="[0-9]*"
-                            inputRef={(el) => {
-                              repsRefs.current[`${setIndex}-${blockIndex}`] = el;
-                            }}
                             disabled={selectedExercise?.completed}
-                            onChange={(e) => handleChange(setIndex, blockIndex, "reps", e.target.value)}
+                            onChange={(e) => handleChange(setIndex, blockIndex, "weight", e.target.value)}
                             onBlur={() => handleAutoSave(setIndex)}
                             sx={{
                               width: 100,
@@ -1035,14 +1083,17 @@ export default function ExerciseScreen() {
                           />
 
                           <TextField
-                            label="Peso"
+                            label="Reps"
                             size="small"
-                            value={block.weight}
+                            value={block.reps}
                             type="number"
                             inputMode="numeric"
                             pattern="[0-9]*"
+                            inputRef={(el) => {
+                              repsRefs.current[`${setIndex}-${blockIndex}`] = el;
+                            }}
                             disabled={selectedExercise?.completed}
-                            onChange={(e) => handleChange(setIndex, blockIndex, "weight", e.target.value)}
+                            onChange={(e) => handleChange(setIndex, blockIndex, "reps", e.target.value)}
                             onBlur={() => handleAutoSave(setIndex)}
                             sx={{
                               width: 100,
@@ -1237,8 +1288,20 @@ export default function ExerciseScreen() {
                   return (
                     <Box
                       key={ex.id}
+                      onMouseDown={(e) => handleExercisePressStart(e, ex)}
+                      onMouseUp={handleExercisePressEnd}
+                      onMouseLeave={handleExercisePressEnd}
+                      onTouchStart={(e) => handleExercisePressStart(e, ex)}
+                      onTouchEnd={handleExercisePressEnd}
+                      onTouchCancel={handleExercisePressEnd}
+                      onTouchMove={handleExercisePressEnd}
+                      onMouseMove={handleExercisePressEnd}
                       onClick={() => {
                         if (ex.completed) return;
+                        if (longPressTriggered.current) {
+                          longPressTriggered.current = false;
+                          return;
+                        }
                         toggleSelectedExercise(ex);
                       }}
                       sx={{
@@ -1346,6 +1409,46 @@ export default function ExerciseScreen() {
               </Stack>
             </Box>
           </AnimatedDialog>
+
+          {/* POPOVER */}
+          <Popover
+            open={Boolean(popoverAnchor)}
+            anchorEl={popoverAnchor}
+            onClose={handleClosePopover}
+            anchorOrigin={{
+              vertical: "center",
+              horizontal: "center",
+            }}
+            transformOrigin={{
+              vertical: "top",
+              horizontal: "center",
+            }}
+            PaperProps={{
+              sx: {
+                p: 2,
+                borderRadius: 3,
+                maxWidth: 320,
+              },
+            }}
+          >
+            <Typography
+              sx={{
+                fontWeight: 700,
+                fontSize: "1.2rem",
+                mb: 1,
+              }}
+            >
+              {popoverExercise?.name}
+            </Typography>
+
+            <Typography
+              sx={{
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {popoverExercise?.description || "Este ejercicio no tiene descripción."}
+            </Typography>
+          </Popover>
 
           {/* MODAL ABDOMINALES */}
 
