@@ -9,6 +9,8 @@ import CreateUserLevelScreen from "./screen/CreateUserLevelScreen";
 import CreateAchievementScreen from "./screen/CreateAchievementScreen";
 import AdminScreen from "./screen/AdminScreen";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { GlobalStyles } from "@mui/material";
+import { useEffect } from "react";
 import ScrollToTop from "./components/ScrollToTop";
 
 import HomeScreen from "./screen/HomeScreen";
@@ -43,102 +45,142 @@ function AdminRoute({ children }) {
 }
 
 function App() {
+  useEffect(() => {
+    const handleContextMenu = (e) => {
+      if (e.target.tagName === "IMG") {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener("contextmenu", handleContextMenu);
+
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+    };
+  }, []);
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <Routes>
-        <Route path="/home" element={<HomeScreen />} />
-        <Route path="/workout/:userId" element={<WorkoutScreen />} />
-        <Route path="/exercise/:userId/:workoutDayId" element={<ExerciseScreen />} />
-        <Route path="/final/:userId/:workoutDayId" element={<FinalResumeScreen />} />
-        <Route path="/stats/:userId" element={<StatsScreen />} />
-        <Route path="/achievements/:userId" element={<AchievementsScreen />} />
+    <>
+      <GlobalStyles
+        styles={{
+          "html, body, #root": {
+            userSelect: "none",
+            WebkitUserSelect: "none",
+            WebkitTouchCallout: "none",
+            WebkitTapHighlightColor: "transparent",
+            overscrollBehavior: "none",
+          },
 
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <AdminScreen />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/users"
-          element={
-            <AdminRoute>
-              <CreateUserScreen />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/system-users"
-          element={
-            <AdminRoute>
-              <CreateSystemUserScreen />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/exercises"
-          element={
-            <AdminRoute>
-              <CreateExerciseScreen />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/workout-templates"
-          element={
-            <AdminRoute>
-              <CreateWorkoutTemplateScreen />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/workouts"
-          element={
-            <AdminRoute>
-              <CreateWorkoutScreen />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/phrases"
-          element={
-            <AdminRoute>
-              <CreatePhraseScreen />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/rules"
-          element={
-            <AdminRoute>
-              <CreateExerciseReminderRule />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/user-level"
-          element={
-            <AdminRoute>
-              <CreateUserLevelScreen />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/achievements"
-          element={
-            <AdminRoute>
-              <CreateAchievementScreen />
-            </AdminRoute>
-          }
-        />
+          "input, textarea, [contenteditable='true']": {
+            userSelect: "text",
+            WebkitUserSelect: "text",
+            WebkitTouchCallout: "default",
+          },
 
-        <Route path="/login" element={<LoginScreen />} />
-        <Route path="/" element={<LoginScreen />} />
-      </Routes>
-    </BrowserRouter>
+          img: {
+            userSelect: "none",
+            WebkitUserSelect: "none",
+            WebkitTouchCallout: "none",
+            WebkitUserDrag: "none",
+            userDrag: "none",
+          },
+        }}
+      />
+      <BrowserRouter>
+        <ScrollToTop />
+        <Routes>
+          <Route path="/home" element={<HomeScreen />} />
+          <Route path="/workout/:userId" element={<WorkoutScreen />} />
+          <Route path="/exercise/:userId/:workoutDayId" element={<ExerciseScreen />} />
+          <Route path="/final/:userId/:workoutDayId" element={<FinalResumeScreen />} />
+          <Route path="/stats/:userId" element={<StatsScreen />} />
+          <Route path="/achievements/:userId" element={<AchievementsScreen />} />
+
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminScreen />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <AdminRoute>
+                <CreateUserScreen />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/system-users"
+            element={
+              <AdminRoute>
+                <CreateSystemUserScreen />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/exercises"
+            element={
+              <AdminRoute>
+                <CreateExerciseScreen />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/workout-templates"
+            element={
+              <AdminRoute>
+                <CreateWorkoutTemplateScreen />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/workouts"
+            element={
+              <AdminRoute>
+                <CreateWorkoutScreen />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/phrases"
+            element={
+              <AdminRoute>
+                <CreatePhraseScreen />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/rules"
+            element={
+              <AdminRoute>
+                <CreateExerciseReminderRule />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/user-level"
+            element={
+              <AdminRoute>
+                <CreateUserLevelScreen />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/achievements"
+            element={
+              <AdminRoute>
+                <CreateAchievementScreen />
+              </AdminRoute>
+            }
+          />
+
+          <Route path="/login" element={<LoginScreen />} />
+          <Route path="/" element={<LoginScreen />} />
+        </Routes>
+      </BrowserRouter>
+    </>
   );
 }
 

@@ -44,6 +44,7 @@ import PrimaryButton from "../components/PrimaryButton";
 import CloseButton from "../components/CloseButton";
 import AnimatedDialog from "../components/AnimatedDialog";
 import AppSnackbar from "../components/AppSnackbar";
+import ExerciseTooltip from "../components/ExerciseTooltip";
 
 import {
   Container,
@@ -58,7 +59,6 @@ import {
   DialogContent,
   DialogActions,
   Box,
-  Popover,
 } from "@mui/material";
 
 import GroupIcon from "@mui/icons-material/Group";
@@ -117,10 +117,15 @@ export default function ExerciseScreen() {
   ];
 
   //POPOVER descripcion ejercicio
-  const [popoverAnchor, setPopoverAnchor] = useState(null);
   const [popoverExercise, setPopoverExercise] = useState(null);
   const holdTimer = useRef(null);
   const longPressTriggered = useRef(false);
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({
+    x: 0,
+    y: 0,
+  });
+  const tooltipWasOpen = useRef(false);
 
   useEffect(() => {
     loadData();
@@ -621,14 +626,25 @@ export default function ExerciseScreen() {
 
   //POPOVER
   const handleExercisePressStart = (event, exercise) => {
+    if (tooltipOpen) return;
+
     longPressTriggered.current = false;
 
-    const anchor = event.currentTarget;
+    clearTimeout(holdTimer.current);
+
+    const { clientX, clientY } = event;
 
     holdTimer.current = setTimeout(() => {
       longPressTriggered.current = true;
+
       setPopoverExercise(exercise);
-      setPopoverAnchor(anchor);
+
+      setTooltipPosition({
+        x: clientX,
+        y: clientY,
+      });
+
+      setTooltipOpen(true);
     }, 500);
   };
 
@@ -636,8 +652,12 @@ export default function ExerciseScreen() {
     clearTimeout(holdTimer.current);
   };
 
-  const handleClosePopover = () => {
-    setPopoverAnchor(null);
+  const closeExerciseTooltip = () => {
+    handleExercisePressEnd();
+
+    longPressTriggered.current = false;
+
+    setTooltipOpen(false);
     setPopoverExercise(null);
   };
 
@@ -647,6 +667,11 @@ export default function ExerciseScreen() {
         position: "relative",
         minHeight: "100vh",
         overflow: "hidden",
+      }}
+      onPointerDown={() => {
+        if (tooltipOpen) {
+          closeExerciseTooltip();
+        }
       }}
     >
       {/* BACKGROUND */}
@@ -1223,6 +1248,7 @@ export default function ExerciseScreen() {
                 maxHeight: "60vh",
                 overflowY: "auto",
               }}
+              onScroll={closeExerciseTooltip}
             >
               {!isAbdominal && (
                 <Stack spacing={1} mb={1} sx={{ mt: 0.8 }}>
@@ -1288,20 +1314,33 @@ export default function ExerciseScreen() {
                   return (
                     <Box
                       key={ex.id}
-                      onMouseDown={(e) => handleExercisePressStart(e, ex)}
-                      onMouseUp={handleExercisePressEnd}
-                      onMouseLeave={handleExercisePressEnd}
-                      onTouchStart={(e) => handleExercisePressStart(e, ex)}
-                      onTouchEnd={handleExercisePressEnd}
-                      onTouchCancel={handleExercisePressEnd}
-                      onTouchMove={handleExercisePressEnd}
-                      onMouseMove={handleExercisePressEnd}
-                      onClick={() => {
-                        if (ex.completed) return;
-                        if (longPressTriggered.current) {
-                          longPressTriggered.current = false;
+                      onPointerDown={(e) => {
+                        e.stopPropagation();
+                        tooltipWasOpen.current = tooltipOpen;
+
+                        if (tooltipOpen) {
+                          closeExerciseTooltip();
                           return;
                         }
+
+                        handleExercisePressStart(e, ex);
+                      }}
+                      onPointerLeave={handleExercisePressEnd}
+                      onPointerCancel={handleExercisePressEnd}
+                      onPointerUp={() => {
+                        handleExercisePressEnd();
+
+                        if (tooltipWasOpen.current) {
+                          tooltipWasOpen.current = false;
+                          return;
+                        }
+
+                        if (longPressTriggered.current) {
+                          return;
+                        }
+
+                        if (ex.completed) return;
+
                         toggleSelectedExercise(ex);
                       }}
                       sx={{
@@ -1410,45 +1449,8 @@ export default function ExerciseScreen() {
             </Box>
           </AnimatedDialog>
 
-          {/* POPOVER */}
-          <Popover
-            open={Boolean(popoverAnchor)}
-            anchorEl={popoverAnchor}
-            onClose={handleClosePopover}
-            anchorOrigin={{
-              vertical: "center",
-              horizontal: "center",
-            }}
-            transformOrigin={{
-              vertical: "top",
-              horizontal: "center",
-            }}
-            PaperProps={{
-              sx: {
-                p: 2,
-                borderRadius: 3,
-                maxWidth: 320,
-              },
-            }}
-          >
-            <Typography
-              sx={{
-                fontWeight: 700,
-                fontSize: "1.2rem",
-                mb: 1,
-              }}
-            >
-              {popoverExercise?.name}
-            </Typography>
-
-            <Typography
-              sx={{
-                whiteSpace: "pre-wrap",
-              }}
-            >
-              {popoverExercise?.description || "Este ejercicio no tiene descripción."}
-            </Typography>
-          </Popover>
+          {/* DESCRIPCION EJERCICIOS */}
+          <ExerciseTooltip open={tooltipOpen} exercise={popoverExercise} position={tooltipPosition} />
 
           {/* MODAL ABDOMINALES */}
 
