@@ -15,6 +15,7 @@ import com.gymapp.model.User;
 import com.gymapp.model.Exercise;
 import com.gymapp.model.ExerciseReminderRule;
 import com.gymapp.model.ExerciseType;
+import com.gymapp.model.ExerciseMode;
 import com.gymapp.model.Granularity;
 import com.gymapp.model.MuscleType;
 import com.gymapp.model.Workout;
@@ -557,7 +558,9 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         boolean selected = dayId != null && exercise.getId() != null
                 && selectedWorkoutExerciseService.isSelected(dayId, exercise.getId());
         ExerciseType type = exercise.getExercise() != null ? exercise.getExercise().getType() : null;
+        ExerciseMode mode = exercise.getExercise() != null ? exercise.getExercise().getMode() : null;
         return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName, exerciseMuscle, type,
+                mode,
                 exercise.getExerciseOrder(), exercise.getWeight(), description, exercise.getComment(),
                 exercise.isCompleted(),
                 exercise.getNextWeight(), image, video, icon, selected, lastPerformedDate);

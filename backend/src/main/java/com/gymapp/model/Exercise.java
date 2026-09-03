@@ -29,4 +29,7 @@ public class Exercise {
 
     @Enumerated(EnumType.STRING)
     private ExerciseType type;
+
+    @Enumerated(EnumType.STRING)
+    private ExerciseMode mode;
 }

@@ -30,5 +30,9 @@ public class WorkoutSet {
 
     private Double weight;
 
+    private Integer multiplier = 1;
+
+    private ExerciseSide side;
+
     private LocalDateTime performedAt;
 }

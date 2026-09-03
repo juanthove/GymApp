@@ -1,6 +1,7 @@
 package com.gymapp.dto.response;
 
 import com.gymapp.model.ExerciseType;
+import com.gymapp.model.ExerciseMode;
 import com.gymapp.model.MuscleType;
 
 public record ExerciseResponse(
@@ -8,8 +9,9 @@ public record ExerciseResponse(
         String name,
         String description,
         ExerciseType type,
+        ExerciseMode mode,
         MuscleType muscle,
         String image,
         String video,
-        String icon
-) {}
+        String icon) {
+}

@@ -36,7 +36,7 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
                     SELECT
                         e.muscle,
                         DATE_TRUNC('week', ws.performed_at) AS week_start,
-                        SUM(ws.weight * ws.reps) AS weekly_volume
+                        SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)) AS weekly_volume
                     FROM workout_set ws
                     JOIN workout_exercise we ON ws.workout_exercise_id = we.id
                     JOIN exercise e ON we.exercise_id = e.id
@@ -91,7 +91,7 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
     @Query(value = """
                 SELECT
                     e.muscle,
-                    SUM(ws.weight * ws.reps) AS total_volume
+                    SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)) AS total_volume
                 FROM workout_set ws
                 JOIN workout_exercise we ON ws.workout_exercise_id = we.id
                 JOIN exercise e ON we.exercise_id = e.id
@@ -148,7 +148,7 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
     // Obtener el volumen total de un workoutDay
     @Query(value = """
                 SELECT
-                    COALESCE(SUM(ws.weight * ws.reps), 0)
+                    COALESCE(SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)), 0)
                 FROM workout_set ws
                 JOIN workout_exercise we ON ws.workout_exercise_id = we.id
                 WHERE we.workout_day_id = :dayId
@@ -169,7 +169,7 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
 
     // Obtener el volumen total de todos los set excepto el del dia de hoy
     @Query("""
-                SELECT COALESCE(SUM(ws.weight * ws.reps), 0)
+                SELECT COALESCE(SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)), 0)
                 FROM WorkoutSet ws
                 JOIN ws.workoutExercise we
                 JOIN we.workoutDay wd
@@ -180,7 +180,7 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
 
     // Obtener todos los sets de un musculo excepto el del dia de hoy
     @Query("""
-                SELECT COALESCE(SUM(ws.weight * ws.reps), 0)
+                SELECT COALESCE(SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)), 0)
                 FROM WorkoutSet ws
                 JOIN ws.workoutExercise we
                 JOIN we.workoutDay wd
@@ -192,7 +192,7 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
 
     // Obtener todos los sets de los ejercicios excepto el del dia de hoy
     @Query("""
-                SELECT COALESCE(SUM(ws.weight * ws.reps), 0)
+                SELECT COALESCE(SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)), 0)
                 FROM WorkoutSet ws
                 JOIN ws.workoutExercise we
                 JOIN we.workoutDay wd
@@ -204,7 +204,7 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
 
     // Obtiene todos los sets de un usuario
     @Query("""
-                SELECT COALESCE(SUM(ws.weight * ws.reps), 0)
+                SELECT COALESCE(SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)), 0)
                 FROM WorkoutSet ws
                 WHERE ws.user.id = :userId
             """)
@@ -212,7 +212,7 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
 
     // Obtiene todos los sets de un usuario agrupado por musculo
     @Query("""
-                SELECT we.exercise.muscle, COALESCE(SUM(ws.weight * ws.reps), 0)
+                SELECT we.exercise.muscle, COALESCE(SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)), 0)
                 FROM WorkoutSet ws
                 JOIN ws.workoutExercise we
                 WHERE ws.user.id = :userId
@@ -222,7 +222,7 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
 
     // Obtiene todos los sets de un usuario agrupado por ejercicio
     @Query("""
-                SELECT we.exercise.id, COALESCE(SUM(ws.weight * ws.reps), 0)
+                SELECT we.exercise.id, COALESCE(SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)), 0)
                 FROM WorkoutSet ws
                 JOIN ws.workoutExercise we
                 WHERE ws.user.id = :userId
@@ -232,7 +232,7 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
 
     // Obtener el volumen total agrupado por usuario
     @Query("""
-                SELECT ws.user.id, COALESCE(SUM(ws.weight * ws.reps), 0)
+                SELECT ws.user.id, COALESCE(SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)), 0)
                 FROM WorkoutSet ws
                 GROUP BY ws.user.id
             """)
@@ -240,7 +240,7 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
 
     // Obtener el volumen total de un musculo agrupado por usuario
     @Query("""
-                SELECT ws.user.id, COALESCE(SUM(ws.weight * ws.reps), 0)
+                SELECT ws.user.id, COALESCE(SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)), 0)
                 FROM WorkoutSet ws
                 JOIN ws.workoutExercise we
                 WHERE we.exercise.muscle = :muscle
@@ -250,7 +250,7 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
 
     // Obtener el volumen total de la lista de ejercicios agrupado por usuario
     @Query("""
-                SELECT ws.user.id, COALESCE(SUM(ws.weight * ws.reps),0)
+                SELECT ws.user.id, COALESCE(SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)),0)
                 FROM WorkoutSet ws
                 JOIN ws.workoutExercise we
                 WHERE we.exercise.id IN :exerciseIds

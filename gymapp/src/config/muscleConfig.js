@@ -57,3 +57,9 @@ export const typeLabels = {
   TERTIARY: "Terciario",
   ABDOMINAL: "Abdominal",
 };
+
+export const modeLabels = {
+  COMMON: "Común",
+  DUMBBEL: "Mancuernas",
+  UNILATERAL: "Unilateral",
+};

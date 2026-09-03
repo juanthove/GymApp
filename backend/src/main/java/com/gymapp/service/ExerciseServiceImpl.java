@@ -4,6 +4,7 @@ import com.gymapp.dto.response.ExerciseResponse;
 import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.Exercise;
 import com.gymapp.model.ExerciseType;
+import com.gymapp.model.ExerciseMode;
 import com.gymapp.model.MuscleType;
 import com.gymapp.repository.ExerciseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,13 +41,14 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
-    public ExerciseResponse createExercise(String name, String description, ExerciseType type,
+    public ExerciseResponse createExercise(String name, String description, ExerciseType type, ExerciseMode mode,
             MuscleType muscle,
             MultipartFile image, MultipartFile video, MultipartFile icon) throws IOException {
         Exercise exercise = new Exercise();
         exercise.setName(name);
         exercise.setDescription(description);
         exercise.setType(type);
+        exercise.setMode(mode);
         exercise.setMuscle(muscle);
         saveFiles(exercise, name, image, video, icon);
         return toResponse(exerciseRepository.save(exercise));
@@ -54,6 +56,7 @@ public class ExerciseServiceImpl implements ExerciseService {
 
     @Override
     public ExerciseResponse updateExercise(Long id, String name, String description, ExerciseType type,
+            ExerciseMode mode,
             MuscleType muscle,
             MultipartFile image, MultipartFile video, MultipartFile icon,
             Boolean deleteImage, Boolean deleteVideo, Boolean deleteIcon) throws IOException {
@@ -67,6 +70,7 @@ public class ExerciseServiceImpl implements ExerciseService {
         exercise.setName(name);
         exercise.setDescription(description);
         exercise.setType(type);
+        exercise.setMode(mode);
         exercise.setMuscle(muscle);
 
         Files.createDirectories(imagePath);
@@ -226,7 +230,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     private ExerciseResponse toResponse(Exercise e) {
-        return new ExerciseResponse(e.getId(), e.getName(), e.getDescription(), e.getType(), e.getMuscle(),
+        return new ExerciseResponse(e.getId(), e.getName(), e.getDescription(), e.getType(), e.getMode(), e.getMuscle(),
                 e.getImage(), e.getVideo(), e.getIcon());
     }
 }

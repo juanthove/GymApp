@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import useRequireAuth from "../hooks/useRequireAuth";
 
+import ClearIcon from "@mui/icons-material/Clear";
+
 import backgroundImg from "../assets/gymproIcon.png";
 import { muscleLabels, typeLabels } from "../config/muscleConfig";
 import { normalizeText } from "../utils/stringUtils";
@@ -59,6 +61,8 @@ import {
   DialogContent,
   DialogActions,
   Box,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
 
 import GroupIcon from "@mui/icons-material/Group";
@@ -94,6 +98,7 @@ export default function ExerciseScreen() {
   const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
   const repsRefs = useRef({});
+  const weightRefs = useRef({});
 
   const [confirmFinish, setConfirmFinish] = useState(false);
   const [isAbdominal, setIsAbdominal] = useState(false);
@@ -137,19 +142,48 @@ export default function ExerciseScreen() {
     loadSets();
   }, [selectedExercise]);
 
+  const createSet = (mode, reps = "", weight = "") => {
+    if (mode === "UNILATERAL") {
+      return [
+        {
+          reps,
+          weight,
+          id: null,
+          side: "LEFT",
+        },
+        {
+          reps,
+          weight,
+          id: null,
+          side: "RIGHT",
+        },
+      ];
+    }
+
+    return [
+      {
+        reps,
+        weight,
+        id: null,
+        side: null,
+      },
+    ];
+  };
+
   const loadSets = async () => {
     setSets(emptySets);
 
     const data = await getWorkoutSetsByWorkoutExercise(selectedExercise.id);
 
+    // No hay sets guardados todavía
     if (!data || data.length === 0) {
       const defaultWeight = selectedExercise?.weight ?? "";
       const defaultReps = reps ?? "";
 
       const defaultSets = [
-        [{ reps: defaultReps, weight: defaultWeight, id: null }],
-        [{ reps: defaultReps, weight: defaultWeight, id: null }],
-        [{ reps: defaultReps, weight: defaultWeight, id: null }],
+        createSet(selectedExercise?.mode, defaultReps, defaultWeight),
+        createSet(selectedExercise?.mode, defaultReps, defaultWeight),
+        createSet(selectedExercise?.mode, defaultReps, defaultWeight),
       ];
 
       setSets(defaultSets);
@@ -164,22 +198,39 @@ export default function ExerciseScreen() {
     const grouped = {};
 
     data.forEach((s) => {
-      if (!grouped[s.setNumber]) grouped[s.setNumber] = [];
+      if (!grouped[s.setNumber]) {
+        grouped[s.setNumber] = [];
+      }
 
       grouped[s.setNumber].push({
         id: s.id,
         reps: s.reps,
         weight: s.weight,
+        side: s.side,
       });
     });
 
-    //3 series minimo
+    // Mínimo 3 series
     const maxSetNumber = Math.max(...Object.keys(grouped).map(Number), 3);
 
     const result = [];
 
     for (let i = 1; i <= maxSetNumber; i++) {
-      result.push(grouped[i] || [{ reps: "", weight: "", id: null }]);
+      const currentSet = grouped[i];
+
+      // No existe esta serie en BD
+      if (!currentSet) {
+        result.push(createSet(selectedExercise?.mode));
+        continue;
+      }
+
+      if (selectedExercise?.mode === "UNILATERAL") {
+        const sortedSet = [...currentSet].sort((a, b) => a.id - b.id);
+
+        result.push(sortedSet);
+      } else {
+        result.push(currentSet);
+      }
     }
 
     setSets(result);
@@ -435,21 +486,70 @@ export default function ExerciseScreen() {
     setSets(updated);
   };
 
-  const addBlock = (setIndex) => {
-    const updated = [...sets];
-    updated[setIndex].push({ reps: "", weight: "", id: null });
+  const addBlock = (setIndex, side = null) => {
+    const updated = sets.map((set) => [...set]);
+
+    if (selectedExercise?.mode === "UNILATERAL") {
+      updated[setIndex].push({
+        reps: "",
+        weight: "",
+        id: null,
+        side,
+      });
+
+      setSets(updated);
+
+      // Buscar el índice real del nuevo bloque
+      const newBlockIndex = updated[setIndex].length - 1;
+
+      setTimeout(() => {
+        weightRefs.current[`${setIndex}-${newBlockIndex}`]?.focus();
+      }, 0);
+
+      return;
+    }
+
+    // Ejercicio normal
+    updated[setIndex].push({
+      reps: "",
+      weight: "",
+      id: null,
+      side: null,
+    });
+
     setSets(updated);
 
     const newBlockIndex = updated[setIndex].length - 1;
 
     setTimeout(() => {
-      repsRefs.current[`${setIndex}-${newBlockIndex}`]?.focus();
+      weightRefs.current[`${setIndex}-${newBlockIndex}`]?.focus();
     }, 0);
   };
 
-  const removeBlock = (setIndex, blockIndex) => {
-    const updated = [...sets];
-    updated[setIndex].splice(blockIndex, 1);
+  const removeBlock = (setIndex, side) => {
+    const updated = sets.map((set) => [...set]);
+
+    if (selectedExercise?.mode === "UNILATERAL") {
+      const sideIndexes = updated[setIndex]
+        .map((block, index) => (block.side === side ? index : -1))
+        .filter((index) => index !== -1);
+
+      // Siempre dejar al menos una fila de ese lado
+      if (sideIndexes.length <= 1) return;
+
+      const lastIndex = sideIndexes[sideIndexes.length - 1];
+
+      updated[setIndex].splice(lastIndex, 1);
+
+      setSets(updated);
+      return;
+    }
+
+    // Ejercicio normal
+    if (updated[setIndex].length <= 1) return;
+
+    updated[setIndex].splice(updated[setIndex].length - 1, 1);
+
     setSets(updated);
   };
 
@@ -471,7 +571,35 @@ export default function ExerciseScreen() {
     }
 
     const updated = [...sets];
-    updated[setIndex] = [{ reps: "", weight: "", id: null }];
+
+    if (selectedExercise?.mode === "UNILATERAL") {
+      // Dejar un solo par LEFT + RIGHT vacío
+      updated[setIndex] = [
+        {
+          reps: "",
+          weight: "",
+          id: null,
+          side: "LEFT",
+        },
+        {
+          reps: "",
+          weight: "",
+          id: null,
+          side: "RIGHT",
+        },
+      ];
+    } else {
+      // Ejercicio normal: dejar un solo bloque vacío
+      updated[setIndex] = [
+        {
+          reps: "",
+          weight: "",
+          id: null,
+          side: null,
+        },
+      ];
+    }
+
     setSets(updated);
 
     setMessage(`Serie ${setNumber} eliminada`);
@@ -487,6 +615,7 @@ export default function ExerciseScreen() {
       reps: block.reps,
       weight: block.weight,
       id: null,
+      side: block.side,
     }));
 
     const updated = [...sets];
@@ -559,14 +688,18 @@ export default function ExerciseScreen() {
         return;
       }
 
+      const multiplier = selectedExercise?.mode === "DUMBBEL" ? 2 : 1;
+
       //SAVE
-      for (const b of blocks) {
+      for (const [blockIndex, b] of blocks.entries()) {
         if (b.id) {
           await updateWorkoutSet(b.id, {
             reps: b.reps,
             weight: b.weight,
             setNumber,
             workoutExerciseId: selectedExercise.id,
+            multiplier,
+            side: selectedExercise?.mode === "UNILATERAL" ? b.side : null,
           });
         } else {
           const created = await createWorkoutSet({
@@ -574,6 +707,8 @@ export default function ExerciseScreen() {
             weight: b.weight,
             setNumber,
             workoutExerciseId: selectedExercise.id,
+            multiplier,
+            side: selectedExercise?.mode === "UNILATERAL" ? b.side : null,
           });
 
           b.id = created.id;
@@ -626,8 +761,6 @@ export default function ExerciseScreen() {
 
   //POPOVER
   const handleExercisePressStart = (event, exercise) => {
-    if (tooltipOpen) return;
-
     longPressTriggered.current = false;
 
     clearTimeout(holdTimer.current);
@@ -659,6 +792,13 @@ export default function ExerciseScreen() {
 
     setTooltipOpen(false);
     setPopoverExercise(null);
+  };
+
+  //PERMITIR SOLO NÚMEROS
+  const handleNumericBeforeInput = (e) => {
+    if (e.data && !/^\d+$/.test(e.data)) {
+      e.preventDefault();
+    }
   };
 
   return (
@@ -977,7 +1117,7 @@ export default function ExerciseScreen() {
                   width: "100%",
                   maxHeight: "260px",
                   objectFit: "contain",
-                  background: "#000",
+                  background: "#ffffff00",
                   borderRadius: "8px",
                 }}
               />
@@ -988,7 +1128,7 @@ export default function ExerciseScreen() {
                   width: "100%",
                   maxHeight: "260px",
                   objectFit: "contain",
-                  background: "#000",
+                  background: "#ffffff00",
                   borderRadius: "8px",
                 }}
               />
@@ -1031,12 +1171,12 @@ export default function ExerciseScreen() {
 
             <Stack spacing={3} sx={{ mt: 3 }}>
               {sets.map((set, setIndex) => {
-                const allEmpty = set.every((b) => !hasValue(b.reps) && !hasValue(b.weight));
-                const allFull = set.every((b) => hasValue(b.reps) && hasValue(b.weight));
-                const isInvalid = !allEmpty && !allFull;
                 const hasData = set.some((b) => b.id);
                 const previousHasData =
                   setIndex > 0 && sets[setIndex - 1].some((b) => hasValue(b.reps) || hasValue(b.weight));
+
+                const leftBlocks = set.filter((block) => block.side === "LEFT");
+                const rightBlocks = set.filter((block) => block.side === "RIGHT");
 
                 return (
                   <Box
@@ -1073,115 +1213,413 @@ export default function ExerciseScreen() {
                     </Typography>
 
                     <Stack spacing={1} mt={1}>
-                      {set.map((block, blockIndex) => (
-                        <Stack direction="row" spacing={1} key={blockIndex} alignItems="center">
-                          <TextField
-                            label="Peso"
-                            size="small"
-                            value={block.weight}
-                            type="number"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            disabled={selectedExercise?.completed}
-                            onChange={(e) => handleChange(setIndex, blockIndex, "weight", e.target.value)}
-                            onBlur={() => handleAutoSave(setIndex)}
+                      {selectedExercise?.mode === "UNILATERAL" ? (
+                        <>
+                          {/* TÍTULOS DE LOS LADOS */}
+                          <Stack
+                            direction="row"
+                            spacing={1}
                             sx={{
-                              width: 100,
-                              "& .MuiInputBase-input": {
-                                fontSize: "1.5rem",
-                                paddingTop: "12px",
-                                paddingBottom: "4px",
-                              },
-
-                              "& .MuiInputLabel-root": {
-                                fontSize: "1.5rem",
-                              },
-
-                              "& .MuiInputLabel-root.MuiInputLabel-shrink": {
-                                fontSize: "1.6rem",
-                              },
-
-                              "& .MuiInputBase-root": {
-                                height: 65,
-                              },
-                            }}
-                          />
-
-                          <TextField
-                            label="Reps"
-                            size="small"
-                            value={block.reps}
-                            type="number"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            inputRef={(el) => {
-                              repsRefs.current[`${setIndex}-${blockIndex}`] = el;
-                            }}
-                            disabled={selectedExercise?.completed}
-                            onChange={(e) => handleChange(setIndex, blockIndex, "reps", e.target.value)}
-                            onBlur={() => handleAutoSave(setIndex)}
-                            sx={{
-                              width: 100,
-                              "& .MuiInputBase-input": {
-                                fontSize: "1.5rem",
-                                paddingTop: "12px",
-                                paddingBottom: "4px",
-                              },
-
-                              "& .MuiInputLabel-root": {
-                                fontSize: "1.5rem",
-                              },
-
-                              "& .MuiInputLabel-root.MuiInputLabel-shrink": {
-                                fontSize: "1.6rem",
-                              },
-
-                              "& .MuiInputBase-root": {
-                                height: 65,
-                              },
-                            }}
-                          />
-
-                          <Button
-                            onClick={() => addBlock(setIndex)}
-                            disabled={selectedExercise?.completed}
-                            sx={{
-                              fontSize: "1.8rem",
-                              minWidth: 40,
-                              height: 57,
-                              lineHeight: 1,
+                              justifyContent: "center",
+                              mb: 1,
                             }}
                           >
-                            +
-                          </Button>
+                            <Box sx={{ width: 225, textAlign: "center" }}>
+                              <Typography
+                                sx={{
+                                  fontWeight: 700,
+                                  fontSize: "1.2rem",
+                                }}
+                              >
+                                Izquierda
+                              </Typography>
+                            </Box>
 
-                          {set.length > 1 && (
+                            <Box sx={{ width: 225, textAlign: "center" }}>
+                              <Typography
+                                sx={{
+                                  fontWeight: 700,
+                                  fontSize: "1.2rem",
+                                }}
+                              >
+                                Derecha
+                              </Typography>
+                            </Box>
+                          </Stack>
+
+                          {/* FILAS */}
+                          {Array.from({
+                            length: Math.max(
+                              set.filter((block) => block.side === "LEFT").length,
+                              set.filter((block) => block.side === "RIGHT").length,
+                            ),
+                          }).map((_, rowIndex) => {
+                            const leftBlock = leftBlocks[rowIndex];
+                            const rightBlock = rightBlocks[rowIndex];
+
+                            const leftIndex = leftBlock ? set.indexOf(leftBlock) : -1;
+
+                            const rightIndex = rightBlock ? set.indexOf(rightBlock) : -1;
+
+                            return (
+                              <Stack
+                                key={rowIndex}
+                                direction="row"
+                                spacing={1}
+                                sx={{
+                                  justifyContent: "center",
+                                  mb: 1,
+                                }}
+                              >
+                                {/* IZQUIERDA */}
+                                <Stack
+                                  direction="row"
+                                  spacing={1}
+                                  sx={{
+                                    width: 225,
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  {leftBlock ? (
+                                    <>
+                                      <TextField
+                                        label="Peso"
+                                        size="small"
+                                        value={leftBlock.weight ?? ""}
+                                        type="number"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        inputRef={(el) => {
+                                          weightRefs.current[`${setIndex}-${leftIndex}`] = el;
+                                        }}
+                                        disabled={selectedExercise?.completed}
+                                        onBeforeInput={handleNumericBeforeInput}
+                                        onChange={(e) => handleChange(setIndex, leftIndex, "weight", e.target.value)}
+                                        onBlur={() => handleAutoSave(setIndex)}
+                                        sx={{
+                                          width: 100,
+                                          "& .MuiInputBase-input": {
+                                            fontSize: "1.5rem",
+                                            paddingTop: "12px",
+                                            paddingBottom: "4px",
+                                          },
+                                          "& .MuiInputLabel-root": {
+                                            fontSize: "1.5rem",
+                                          },
+                                          "& .MuiInputLabel-root.MuiInputLabel-shrink": {
+                                            fontSize: "1.6rem",
+                                          },
+                                          "& .MuiInputBase-root": {
+                                            height: 65,
+                                          },
+                                        }}
+                                      />
+
+                                      <TextField
+                                        label="Reps"
+                                        size="small"
+                                        value={leftBlock.reps ?? ""}
+                                        type="number"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        inputRef={(el) => {
+                                          repsRefs.current[`${setIndex}-${leftIndex}`] = el;
+                                        }}
+                                        disabled={selectedExercise?.completed}
+                                        onBeforeInput={handleNumericBeforeInput}
+                                        onChange={(e) => handleChange(setIndex, leftIndex, "reps", e.target.value)}
+                                        onBlur={() => handleAutoSave(setIndex)}
+                                        sx={{
+                                          width: 100,
+                                          "& .MuiInputBase-input": {
+                                            fontSize: "1.5rem",
+                                            paddingTop: "12px",
+                                            paddingBottom: "4px",
+                                          },
+                                          "& .MuiInputLabel-root": {
+                                            fontSize: "1.5rem",
+                                          },
+                                          "& .MuiInputLabel-root.MuiInputLabel-shrink": {
+                                            fontSize: "1.6rem",
+                                          },
+                                          "& .MuiInputBase-root": {
+                                            height: 65,
+                                          },
+                                        }}
+                                      />
+                                    </>
+                                  ) : (
+                                    <Box sx={{ width: 208 }} />
+                                  )}
+                                </Stack>
+
+                                {/* DERECHA */}
+                                <Stack
+                                  direction="row"
+                                  spacing={1}
+                                  sx={{
+                                    width: 225,
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  {rightBlock ? (
+                                    <>
+                                      <TextField
+                                        label="Peso"
+                                        size="small"
+                                        value={rightBlock.weight ?? ""}
+                                        type="number"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        inputRef={(el) => {
+                                          weightRefs.current[`${setIndex}-${rightIndex}`] = el;
+                                        }}
+                                        disabled={selectedExercise?.completed}
+                                        onBeforeInput={handleNumericBeforeInput}
+                                        onChange={(e) => handleChange(setIndex, rightIndex, "weight", e.target.value)}
+                                        onBlur={() => handleAutoSave(setIndex)}
+                                        sx={{
+                                          width: 100,
+                                          "& .MuiInputBase-input": {
+                                            fontSize: "1.5rem",
+                                            paddingTop: "12px",
+                                            paddingBottom: "4px",
+                                          },
+                                          "& .MuiInputLabel-root": {
+                                            fontSize: "1.5rem",
+                                          },
+                                          "& .MuiInputLabel-root.MuiInputLabel-shrink": {
+                                            fontSize: "1.6rem",
+                                          },
+                                          "& .MuiInputBase-root": {
+                                            height: 65,
+                                          },
+                                        }}
+                                      />
+
+                                      <TextField
+                                        label="Reps"
+                                        size="small"
+                                        value={rightBlock.reps ?? ""}
+                                        type="number"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        inputRef={(el) => {
+                                          repsRefs.current[`${setIndex}-${rightIndex}`] = el;
+                                        }}
+                                        disabled={selectedExercise?.completed}
+                                        onBeforeInput={handleNumericBeforeInput}
+                                        onChange={(e) => handleChange(setIndex, rightIndex, "reps", e.target.value)}
+                                        onBlur={() => handleAutoSave(setIndex)}
+                                        sx={{
+                                          width: 100,
+                                          "& .MuiInputBase-input": {
+                                            fontSize: "1.5rem",
+                                            paddingTop: "12px",
+                                            paddingBottom: "4px",
+                                          },
+                                          "& .MuiInputLabel-root": {
+                                            fontSize: "1.5rem",
+                                          },
+                                          "& .MuiInputLabel-root.MuiInputLabel-shrink": {
+                                            fontSize: "1.6rem",
+                                          },
+                                          "& .MuiInputBase-root": {
+                                            height: 65,
+                                          },
+                                        }}
+                                      />
+                                    </>
+                                  ) : (
+                                    <Box sx={{ width: 208 }} />
+                                  )}
+                                </Stack>
+                              </Stack>
+                            );
+                          })}
+
+                          {/* BOTONES POR LADO */}
+                          <Stack direction="row" spacing={1} justifyContent="center" sx={{ mt: 1 }}>
+                            {/* IZQUIERDA */}
+                            <Stack direction="row" spacing={0} justifyContent="center" sx={{ width: 225 }}>
+                              <Button
+                                onClick={() => addBlock(setIndex, "LEFT")}
+                                disabled={selectedExercise?.completed}
+                                sx={{
+                                  fontSize: "1.8rem",
+                                  minWidth: 40,
+                                  height: 50,
+                                  lineHeight: 1,
+                                }}
+                              >
+                                +
+                              </Button>
+
+                              {leftBlocks.length > 1 && (
+                                <Button
+                                  onClick={() => removeBlock(setIndex, "LEFT")}
+                                  disabled={selectedExercise?.completed}
+                                  sx={{
+                                    fontSize: "2rem",
+                                    minWidth: 40,
+                                    height: 50,
+                                    lineHeight: 1,
+                                  }}
+                                >
+                                  -
+                                </Button>
+                              )}
+                            </Stack>
+
+                            {/* DERECHA */}
+                            <Stack direction="row" spacing={0} justifyContent="center" sx={{ width: 225 }}>
+                              <Button
+                                onClick={() => addBlock(setIndex, "RIGHT")}
+                                disabled={selectedExercise?.completed}
+                                sx={{
+                                  fontSize: "1.8rem",
+                                  minWidth: 40,
+                                  height: 50,
+                                  lineHeight: 1,
+                                }}
+                              >
+                                +
+                              </Button>
+
+                              {rightBlocks.length > 1 && (
+                                <Button
+                                  onClick={() => removeBlock(setIndex, "RIGHT")}
+                                  disabled={selectedExercise?.completed}
+                                  sx={{
+                                    fontSize: "2rem",
+                                    minWidth: 40,
+                                    height: 50,
+                                    lineHeight: 1,
+                                  }}
+                                >
+                                  -
+                                </Button>
+                              )}
+                            </Stack>
+                          </Stack>
+                        </>
+                      ) : (
+                        /* EJERCICIO NORMAL */
+                        set.map((block, blockIndex) => (
+                          <Stack direction="row" spacing={1} key={blockIndex} alignItems="center">
+                            <TextField
+                              label="Peso"
+                              size="small"
+                              value={block.weight}
+                              type="number"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              inputRef={(el) => {
+                                weightRefs.current[`${setIndex}-${blockIndex}`] = el;
+                              }}
+                              disabled={selectedExercise?.completed}
+                              onBeforeInput={handleNumericBeforeInput}
+                              onChange={(e) => handleChange(setIndex, blockIndex, "weight", e.target.value)}
+                              onBlur={() => handleAutoSave(setIndex)}
+                              sx={{
+                                width: 100,
+                                "& .MuiInputBase-input": {
+                                  fontSize: "1.5rem",
+                                  paddingTop: "12px",
+                                  paddingBottom: "4px",
+                                },
+                                "& .MuiInputLabel-root": {
+                                  fontSize: "1.5rem",
+                                },
+                                "& .MuiInputLabel-root.MuiInputLabel-shrink": {
+                                  fontSize: "1.6rem",
+                                },
+                                "& .MuiInputBase-root": {
+                                  height: 65,
+                                },
+                              }}
+                            />
+
+                            <TextField
+                              label="Reps"
+                              size="small"
+                              value={block.reps}
+                              type="number"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              inputRef={(el) => {
+                                repsRefs.current[`${setIndex}-${blockIndex}`] = el;
+                              }}
+                              disabled={selectedExercise?.completed}
+                              onBeforeInput={handleNumericBeforeInput}
+                              onChange={(e) => handleChange(setIndex, blockIndex, "reps", e.target.value)}
+                              onBlur={() => handleAutoSave(setIndex)}
+                              sx={{
+                                width: 100,
+                                "& .MuiInputBase-input": {
+                                  fontSize: "1.5rem",
+                                  paddingTop: "12px",
+                                  paddingBottom: "4px",
+                                },
+                                "& .MuiInputLabel-root": {
+                                  fontSize: "1.5rem",
+                                },
+                                "& .MuiInputLabel-root.MuiInputLabel-shrink": {
+                                  fontSize: "1.6rem",
+                                },
+                                "& .MuiInputBase-root": {
+                                  height: 65,
+                                },
+                              }}
+                            />
+
                             <Button
-                              onClick={() => removeBlock(setIndex, blockIndex)}
+                              onClick={() => addBlock(setIndex)}
                               disabled={selectedExercise?.completed}
                               sx={{
-                                fontSize: "2rem",
+                                fontSize: "1.8rem",
                                 minWidth: 40,
                                 height: 57,
                                 lineHeight: 1,
                               }}
                             >
-                              -
+                              +
                             </Button>
-                          )}
-                        </Stack>
-                      ))}
 
+                            {set.length > 1 && (
+                              <Button
+                                onClick={() => removeBlock(setIndex, blockIndex)}
+                                disabled={selectedExercise?.completed}
+                                sx={{
+                                  fontSize: "2rem",
+                                  minWidth: 40,
+                                  height: 57,
+                                  lineHeight: 1,
+                                }}
+                              >
+                                -
+                              </Button>
+                            )}
+                          </Stack>
+                        ))
+                      )}
+
+                      {/* BOTONES GENERALES */}
                       <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
                         <Button
                           variant="outlined"
                           color="error"
                           onClick={() => deleteSet(setIndex)}
                           disabled={!hasData || selectedExercise?.completed}
-                          sx={{ fontSize: "1.2rem", py: 1.2, width: setIndex > 0 ? "42%" : "100%" }}
+                          sx={{
+                            fontSize: "1.2rem",
+                            py: 1.2,
+                            width: setIndex > 0 ? "42%" : "100%",
+                          }}
                         >
                           Eliminar
                         </Button>
+
                         {setIndex > 0 && (
                           <Button
                             fullWidth
@@ -1189,7 +1627,7 @@ export default function ExerciseScreen() {
                             onClick={() => copyPreviousSet(setIndex)}
                             disabled={!previousHasData || selectedExercise?.completed}
                             sx={{
-                              fontSize: "1.2rem", //CAMBIAR LETRA
+                              fontSize: "1.2rem",
                               py: 1.2,
                             }}
                           >
@@ -1267,6 +1705,15 @@ export default function ExerciseScreen() {
                         fontSize: "1.4rem",
                       },
                     }}
+                    InputProps={{
+                      endAdornment: filterName && (
+                        <InputAdornment position="end">
+                          <IconButton onClick={() => setFilterName("")} edge="end">
+                            <ClearIcon sx={{ fontSize: 40 }} />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
                   />
                   <Box sx={{ display: "flex", justifyContent: "center" }}>
                     <Tabs
@@ -1320,7 +1767,6 @@ export default function ExerciseScreen() {
 
                         if (tooltipOpen) {
                           closeExerciseTooltip();
-                          return;
                         }
 
                         handleExercisePressStart(e, ex);

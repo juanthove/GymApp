@@ -105,6 +105,8 @@ export default function CreateWorkoutScreen() {
   const [favoriteName, setFavoriteName] = useState("");
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
+
   useEffect(() => {
     loadUsers();
     loadTemplates();
@@ -170,6 +172,7 @@ export default function CreateWorkoutScreen() {
     setIsLastWorkout(false);
     setGlobalReps("");
     setExpandedDays([]);
+    setSelectedTemplateId("");
   };
 
   const loadUsers = async () => {
@@ -528,6 +531,123 @@ export default function CreateWorkoutScreen() {
     weightInputRefs.current[`${dayIndex}-${nextIndex}`]?.focus();
   };
 
+  const findExerciseWeightInOtherDays = (exerciseId, currentDayIndex) => {
+    for (let i = 0; i < days.length; i++) {
+      if (i === currentDayIndex) continue;
+
+      const exercise = days[i].exercises.find((ex) => ex.exerciseId === exerciseId);
+
+      if (exercise && exercise.weight !== "" && exercise.weight !== null) {
+        return exercise.weight;
+      }
+    }
+
+    return "";
+  };
+
+  const addMissingExercisesFromTemplate = (updatedDays, template) => {
+    const orderedTemplateDays = [...template.days].sort((a, b) => a.dayOrder - b.dayOrder);
+
+    orderedTemplateDays.forEach((templateDay, dayIndex) => {
+      const currentDay = updatedDays[dayIndex];
+
+      if (!currentDay) return;
+
+      const currentExercises = currentDay.exercises;
+
+      const exercisesByExerciseId = new Map(currentExercises.map((ex) => [ex.exerciseId, ex]));
+
+      const orderedTemplateExercises = [...templateDay.exercises].sort((a, b) => a.order - b.order);
+
+      const result = [];
+
+      // Recorrer la plantilla en su orden original
+      orderedTemplateExercises.forEach((templateExercise) => {
+        const existing = exercisesByExerciseId.get(templateExercise.exerciseId);
+
+        if (existing) {
+          // Ya existe: conservarlo tal cual,
+          // incluyendo su peso.
+          result.push(existing);
+          return;
+        }
+
+        // No existe: buscar si tiene peso en otro día
+        // de la última planilla.
+        const weightFromOtherDay = findExerciseWeightInOtherDays(templateExercise.exerciseId, dayIndex);
+
+        result.push({
+          id: crypto.randomUUID(),
+          exerciseId: templateExercise.exerciseId,
+          order: 0,
+          weight: weightFromOtherDay,
+        });
+      });
+
+      // Ejercicios que ya estaban en la última planilla
+      // pero que no forman parte de la plantilla.
+      const templateExerciseIds = new Set(orderedTemplateExercises.map((ex) => ex.exerciseId));
+
+      const exercisesNotInTemplate = currentExercises.filter((ex) => !templateExerciseIds.has(ex.exerciseId));
+
+      // Primero quedan los ejercicios de la plantilla,
+      // respetando su orden, y después los demás.
+      currentDay.exercises = [...result, ...exercisesNotInTemplate].map((ex, index) => ({
+        ...ex,
+        order: index + 1,
+      }));
+
+      currentDay.muscles = calculateDayMuscles(currentDay.exercises);
+    });
+
+    return updatedDays;
+  };
+
+  const loadTemplateImages = (updatedDays, template) => {
+    const orderedTemplateDays = [...template.days].sort((a, b) => a.dayOrder - b.dayOrder);
+
+    orderedTemplateDays.forEach((templateDay, dayIndex) => {
+      const currentDay = updatedDays[dayIndex];
+
+      if (!currentDay) return;
+
+      // Si el día ya tiene una imagen propia, no la reemplazamos
+      if (currentDay.image) return;
+
+      // Si ya tiene una imagen proveniente de otra planilla/plantilla,
+      // tampoco la reemplazamos.
+      if (currentDay.sourceMuscleImage) return;
+
+      // La plantilla no tiene imagen para este día
+      if (!templateDay.muscleImage) return;
+
+      currentDay.sourceMuscleImage = templateDay.muscleImage;
+      currentDay.preview = getWorkoutTemplateDayImageUrl(templateDay.muscleImage);
+    });
+  };
+
+  const addDataFromTemplate = async () => {
+    if (!selectedTemplateId) return;
+
+    try {
+      const template = await getWorkoutTemplateById(selectedTemplateId);
+
+      const updated = [...days];
+
+      // Agregar ejercicios faltantes
+      addMissingExercisesFromTemplate(updated, template);
+
+      // Agregar imágenes faltantes
+      loadTemplateImages(updated, template);
+
+      setDays(updated);
+
+      showMessage("Ejercicios e imágenes agregados correctamente", "success");
+    } catch (e) {
+      showMessage(e.message, "error");
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -698,6 +818,35 @@ export default function CreateWorkoutScreen() {
               </TextField>
             </Stack>
 
+            {/* SELECTOR PLANTILLAS PARA AGREGAR EJERCICIOS */}
+            {source === "last" && (
+              <Stack direction="row" spacing={2} alignItems="center">
+                <TextField
+                  select
+                  label="Plantilla para agregar ejercicios"
+                  value={selectedTemplateId}
+                  onChange={(e) => setSelectedTemplateId(e.target.value)}
+                  fullWidth
+                >
+                  {templates.map((template) => (
+                    <MenuItem key={template.id} value={template.id}>
+                      {template.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <Button
+                  variant="contained"
+                  onClick={addDataFromTemplate}
+                  disabled={!selectedTemplateId}
+                  sx={{ whiteSpace: "nowrap", fontSize: "0.9rem", px: 7 }}
+                >
+                  Agregar datos planilla
+                </Button>
+              </Stack>
+            )}
+
+            {/* DIAS DE LA PLANILLA */}
             {days.map((day, dayIndex) => (
               <Accordion
                 key={day.id}
@@ -936,11 +1085,13 @@ export default function CreateWorkoutScreen() {
             updated[selectedDayIndex].exercises = selectedExercises.map((ex, index) => {
               const existing = previousExercises.find((e) => e.exerciseId === ex.id);
 
+              const weightFromOtherDay = findExerciseWeightInOtherDays(ex.id, selectedDayIndex);
+
               return {
                 id: existing?.id ?? crypto.randomUUID(),
                 exerciseId: ex.id,
                 order: index + 1,
-                weight: existing?.weight ?? "",
+                weight: existing?.weight ?? weightFromOtherDay ?? "",
               };
             });
 

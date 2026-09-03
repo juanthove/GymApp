@@ -1,5 +1,7 @@
 package com.gymapp.dto.response;
 
+import com.gymapp.model.ExerciseSide;
+
 import java.time.LocalDateTime;
 
 public record WorkoutSetResponse(
@@ -9,5 +11,6 @@ public record WorkoutSetResponse(
         Integer setNumber,
         Integer reps,
         Double weight,
-        LocalDateTime performedAt
-) {}
+        ExerciseSide side,
+        LocalDateTime performedAt) {
+}

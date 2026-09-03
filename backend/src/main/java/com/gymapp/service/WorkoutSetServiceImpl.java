@@ -258,6 +258,9 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
         workoutSet.setSetNumber(request.setNumber());
         workoutSet.setReps(request.reps());
         workoutSet.setWeight(request.weight());
+        workoutSet.setMultiplier(
+                request.multiplier() != null ? request.multiplier() : 1);
+        workoutSet.setSide(request.side());
         workoutSet.setPerformedAt(LocalDateTime.now());
 
         return toResponse(workoutSetRepository.save(workoutSet));
@@ -278,6 +281,9 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
         workoutSet.setSetNumber(request.setNumber());
         workoutSet.setReps(request.reps());
         workoutSet.setWeight(request.weight());
+        workoutSet.setMultiplier(
+                request.multiplier() != null ? request.multiplier() : 1);
+        workoutSet.setSide(request.side());
         if (workoutSet.getPerformedAt() == null) {
             workoutSet.setPerformedAt(LocalDateTime.now());
         }
@@ -302,6 +308,7 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
                 workoutSet.getSetNumber(),
                 workoutSet.getReps(),
                 workoutSet.getWeight(),
+                workoutSet.getSide(),
                 workoutSet.getPerformedAt());
     }
 
@@ -317,7 +324,8 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
     private double calculateSetVolume(WorkoutSet set) {
         int reps = set.getReps() != null ? set.getReps() : 0;
         double weight = set.getWeight() != null ? set.getWeight() : 0.0;
-        return reps * weight;
+        int multiplier = set.getMultiplier() != null ? set.getMultiplier() : 1;
+        return reps * weight * multiplier;
     }
 
     private MuscleType resolveMuscle(WorkoutSet set) {

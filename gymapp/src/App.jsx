@@ -47,9 +47,9 @@ function AdminRoute({ children }) {
 function App() {
   useEffect(() => {
     const handleContextMenu = (e) => {
-      if (e.target.tagName === "IMG") {
-        e.preventDefault();
-      }
+      //if (e.target.tagName === "IMG") {
+      e.preventDefault();
+      //}
     };
 
     document.addEventListener("contextmenu", handleContextMenu);

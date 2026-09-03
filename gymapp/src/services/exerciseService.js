@@ -17,6 +17,9 @@ export async function createExercise(exercise) {
   formData.append("muscle", exercise.muscle);
 
   formData.append("type", exercise.type);
+  if (exercise.mode) {
+    formData.append("mode", exercise.mode);
+  }
 
   if (exercise.image) {
     formData.append("image", exercise.image);
@@ -44,6 +47,9 @@ export async function updateExercise(id, exercise) {
   formData.append("muscle", exercise.muscle);
 
   formData.append("type", exercise.type);
+  if (exercise.mode) {
+    formData.append("mode", exercise.mode);
+  }
 
   if (exercise.image) {
     formData.append("image", exercise.image);

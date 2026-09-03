@@ -2,6 +2,7 @@ package com.gymapp.service;
 
 import com.gymapp.dto.response.ExerciseResponse;
 import com.gymapp.model.ExerciseType;
+import com.gymapp.model.ExerciseMode;
 import com.gymapp.model.MuscleType;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
@@ -16,14 +17,14 @@ public interface ExerciseService {
 
     ExerciseResponse getExerciseById(Long id);
 
-    ExerciseResponse createExercise(String name, String description, ExerciseType type,
-                                    MuscleType muscle,
-                                    MultipartFile image, MultipartFile video, MultipartFile icon) throws IOException;
+    ExerciseResponse createExercise(String name, String description, ExerciseType type, ExerciseMode mode,
+            MuscleType muscle,
+            MultipartFile image, MultipartFile video, MultipartFile icon) throws IOException;
 
-    ExerciseResponse updateExercise(Long id, String name, String description, ExerciseType type,
-                                    MuscleType muscle,
-                                    MultipartFile image, MultipartFile video, MultipartFile icon,
-                                    Boolean deleteImage, Boolean deleteVideo, Boolean deleteIcon) throws IOException;
+    ExerciseResponse updateExercise(Long id, String name, String description, ExerciseType type, ExerciseMode mode,
+            MuscleType muscle,
+            MultipartFile image, MultipartFile video, MultipartFile icon,
+            Boolean deleteImage, Boolean deleteVideo, Boolean deleteIcon) throws IOException;
 
     void deleteExercise(Long id) throws IOException;
 

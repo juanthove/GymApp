@@ -36,7 +36,7 @@ import AppSnackbar from "../components/AppSnackbar";
 import ConfirmDialog from "../components/ConfirmDialog";
 import AnimatedDialog from "../components/AnimatedDialog";
 
-import { muscleLabels, typeLabels } from "../config/muscleConfig";
+import { muscleLabels, typeLabels, modeLabels } from "../config/muscleConfig";
 import { normalizeText } from "../utils/stringUtils";
 
 export default function CreateExerciseScreen() {
@@ -48,6 +48,7 @@ export default function CreateExerciseScreen() {
   const [description, setDescription] = useState("");
   const [muscle, setMuscle] = useState("");
   const [type, setType] = useState("PRIMARY");
+  const [mode, setMode] = useState(null);
 
   const [image, setImage] = useState(null);
   const [video, setVideo] = useState(null);
@@ -93,6 +94,11 @@ export default function CreateExerciseScreen() {
     label,
   }));
 
+  const modeOptions = Object.entries(modeLabels).map(([value, label]) => ({
+    value,
+    label,
+  }));
+
   const availableMuscles = ["ALL", ...new Set(exercises.map((e) => e.muscle).filter(Boolean))];
 
   const filteredExercises = exercises.filter((ex) => {
@@ -120,6 +126,7 @@ export default function CreateExerciseScreen() {
     setName("");
     setDescription("");
     setType("PRIMARY");
+    setMode(null);
     setMuscle("");
     setImage(null);
     setVideo(null);
@@ -152,6 +159,7 @@ export default function CreateExerciseScreen() {
     setDescription(ex.description || "");
     setMuscle(ex.muscle || "");
     setType(ex.type || "PRIMARY");
+    setMode(ex.mode || null);
 
     setIconPreview(null);
     setImagePreview(null);
@@ -182,6 +190,7 @@ export default function CreateExerciseScreen() {
           description,
           muscle,
           type,
+          mode,
           image,
           video,
           icon,
@@ -194,6 +203,7 @@ export default function CreateExerciseScreen() {
           description,
           muscle,
           type,
+          mode,
           image,
           video,
           icon,
@@ -354,6 +364,26 @@ export default function CreateExerciseScreen() {
                 return options.filter((option) => normalizeText(option.label).startsWith(search));
               }}
               renderInput={(params) => <TextField {...params} label="Tipo de ejercicio" />}
+            />
+
+            {/* SELECT MODO DE EJERCICIO */}
+
+            <Autocomplete
+              autoHighlight
+              autoSelect
+              selectOnFocus
+              clearOnBlur={false}
+              options={modeOptions}
+              getOptionLabel={(option) => option.label}
+              value={
+                mode === null
+                  ? modeOptions.find((m) => m.value === "COMMON")
+                  : modeOptions.find((m) => m.value === mode) || null
+              }
+              onChange={(_, newValue) => {
+                setMode(newValue?.value === "COMMON" ? null : newValue?.value || null);
+              }}
+              renderInput={(params) => <TextField {...params} label="Modo de ejercicio" />}
             />
 
             {/* ICON */}

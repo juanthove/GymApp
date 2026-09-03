@@ -3,6 +3,7 @@ package com.gymapp.dto.response;
 import java.time.LocalDate;
 
 import com.gymapp.model.ExerciseType;
+import com.gymapp.model.ExerciseMode;
 import com.gymapp.model.MuscleType;
 
 public record WorkoutExerciseResponse(
@@ -12,6 +13,7 @@ public record WorkoutExerciseResponse(
         String exerciseName,
         MuscleType exerciseMuscle,
         ExerciseType type,
+        ExerciseMode mode,
         Integer exerciseOrder,
         Double weight,
         String description,

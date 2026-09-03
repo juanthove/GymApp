@@ -5,6 +5,7 @@ import com.gymapp.dto.response.WorkoutExerciseResponse;
 import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.Exercise;
 import com.gymapp.model.ExerciseType;
+import com.gymapp.model.ExerciseMode;
 import com.gymapp.model.MuscleType;
 import com.gymapp.model.WorkoutDay;
 import com.gymapp.model.WorkoutExercise;
@@ -164,7 +165,9 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
         boolean selected = dayId != null && exercise.getId() != null
                 && selectedWorkoutExerciseService.isSelected(dayId, exercise.getId());
         ExerciseType type = exercise.getExercise() != null ? exercise.getExercise().getType() : null;
+        ExerciseMode mode = exercise.getExercise() != null ? exercise.getExercise().getMode() : null;
         return new WorkoutExerciseResponse(exercise.getId(), dayId, exerciseId, exerciseName, exerciseMuscle, type,
+                mode,
                 exercise.getExerciseOrder(), exercise.getWeight(), description, exercise.getComment(),
                 exercise.isCompleted(),
                 exercise.getNextWeight(), image, video, icon, selected, null);
