@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getLoggedUser, getNotLoggedUser, loginUser, getUserImageUrl } from "../services/userService";
 import { useNavigate } from "react-router-dom";
 import useRequireAuth from "../hooks/useRequireAuth";
+import { useDarkMode } from "../context/DarkModeContext";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -70,27 +71,29 @@ export default function HomeScreen() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [search, setSearch] = useState("");
   const [fullscreenEnabled, setFullscreenEnabled] = useState(isFullscreenActive());
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
-
-    return localStorage.getItem("gymapp-dark-mode") === "true";
-  });
+  const { darkMode, setDarkMode } = useDarkMode();
 
   const navigate = useNavigate();
 
-  const loadUsers = async () => {
-    try {
-      const data = await getLoggedUser();
-      setUsers(data);
-    } catch (error) {
-      console.error("Error cargando usuarios:", error);
-    }
-  };
-
   useEffect(() => {
-    loadUsers();
+    let active = true;
+
+    const loadUsers = async () => {
+      try {
+        const data = await getLoggedUser();
+        if (active) {
+          setUsers(data);
+        }
+      } catch (error) {
+        console.error("Error cargando usuarios:", error);
+      }
+    };
+
+    void loadUsers();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -338,7 +341,7 @@ export default function HomeScreen() {
                   justifyContent: "center",
                   cursor: "pointer",
                   transition: "0.2s",
-                  border: darkMode ? "2px solid rgba(255,255,255,0.35)" : "2px solid #d32f2f",
+                  border: "2px solid #d32f2f",
                   backgroundColor: darkMode ? "rgba(15, 23, 42, 0.8)" : "rgba(255,255,255,0.8)",
                   boxShadow: darkMode ? "0 10px 30px rgba(15,23,42,0.45)" : "none",
                   "&:hover": {
@@ -347,7 +350,7 @@ export default function HomeScreen() {
                   },
                 }}
               >
-                <AddIcon sx={{ fontSize: 70, color: darkMode ? "#f8fafc" : "#d32f2f" }} />
+                <AddIcon sx={{ fontSize: 70, color: "#d32f2f" }} />
               </Card>
             </Box>
           </Box>

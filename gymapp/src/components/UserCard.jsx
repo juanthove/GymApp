@@ -1,7 +1,8 @@
+import React, { memo } from "react";
 import { Card, CardActionArea, Typography, Box } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 
-export default function UserCard({ title, imageUrl, onClick, sx, darkMode = false }) {
+const UserCard = memo(function UserCard({ title, imageUrl, onClick, sx, darkMode = false }) {
   return (
     <Card
       sx={{
@@ -34,13 +35,25 @@ export default function UserCard({ title, imageUrl, onClick, sx, darkMode = fals
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            backgroundImage: imageUrl ? `url(${imageUrl})` : "none",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
             backgroundColor: "#ccc",
+            overflow: "hidden",
           }}
         >
-          {!imageUrl && (
+          {imageUrl ? (
+            <Box
+              component="img"
+              src={imageUrl}
+              alt={title}
+              loading="lazy"
+              decoding="async"
+              sx={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+          ) : (
             <PersonIcon
               sx={{
                 fontSize: {
@@ -90,4 +103,6 @@ export default function UserCard({ title, imageUrl, onClick, sx, darkMode = fals
       </CardActionArea>
     </Card>
   );
-}
+});
+
+export default UserCard;
