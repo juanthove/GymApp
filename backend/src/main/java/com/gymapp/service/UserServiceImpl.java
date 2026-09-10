@@ -11,6 +11,7 @@ import com.gymapp.model.Workout;
 import com.gymapp.repository.UserRepository;
 import com.gymapp.repository.WorkoutRepository;
 import com.gymapp.repository.UserLevelRepository;
+import com.gymapp.repository.WorkoutSetRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -20,6 +21,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -44,6 +46,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserLevelRepository userLevelRepository;
+
+    @Autowired
+    private WorkoutSetRepository workoutSetRepository;
 
     @Override
     public List<UserResponse> getAllUsers() {
@@ -319,11 +324,31 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    @Transactional
+    public UserResponse configRegisterSets(Long id, Boolean registerSets) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (user.isRegisterSets() && !registerSets) {
+
+            if (user.getCurrentWorkout() != null) {
+
+                workoutSetRepository.deleteSetsFromInProgressIncompleteExercises(
+                        user.getId(),
+                        user.getCurrentWorkout().getId());
+            }
+        }
+
+        user.setRegisterSets(registerSets);
+
+        return toResponse(userRepository.save(user));
+    }
+
     private UserResponse toResponse(User user) {
         Long currentWorkoutId = user.getCurrentWorkout() != null ? user.getCurrentWorkout().getId() : null;
         Long userLevelId = user.getUserLevel() != null ? user.getUserLevel().getId() : null;
         return new UserResponse(user.getId(), user.getName(), user.getSurname(), user.isLogged(),
-                user.getGymDaysPerWeek(), user.getImage(), currentWorkoutId, userLevelId);
+                user.getGymDaysPerWeek(), user.getImage(), currentWorkoutId, userLevelId, user.isRegisterSets());
     }
 
     private WorkoutResponse toWorkoutResponse(Workout workout) {

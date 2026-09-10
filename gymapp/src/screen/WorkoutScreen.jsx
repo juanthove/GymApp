@@ -4,7 +4,7 @@ import useRequireAuth from "../hooks/useRequireAuth";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
-import { getUserById, getCurrentWorkout, logoutUser } from "../services/userService";
+import { getUserById, getCurrentWorkout, logoutUser, configRegisterSets } from "../services/userService";
 import { getWorkoutById } from "../services/workoutService";
 import {
   startWorkoutDay,
@@ -14,7 +14,9 @@ import {
 } from "../services/workoutDayService";
 import { getRandomPhrase } from "../services/phraseService";
 
-import { Container, Typography, Stack, Box, Button, CircularProgress } from "@mui/material";
+import { Container, Typography, Stack, Box, Button, CircularProgress, Checkbox } from "@mui/material";
+
+import SettingsIcon from "@mui/icons-material/Settings";
 
 import { fontSize, keyframes } from "@mui/system";
 
@@ -23,6 +25,7 @@ import BackButton from "../components/BackButton";
 import MuscleChips from "../components/MuscleChips";
 import PrimaryButton from "../components/PrimaryButton";
 import AnimatedDialog from "../components/AnimatedDialog";
+import InfoTooltip from "../components/InfoTooltip";
 
 export default function WorkoutScreen() {
   useRequireAuth();
@@ -43,6 +46,16 @@ export default function WorkoutScreen() {
   const longPressTriggered = useRef(false);
   const startPoint = useRef({ x: 0, y: 0 });
 
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [registerSets, setRegisterSets] = useState(false);
+  const [showRegisterSetsWarning, setShowRegisterSetsWarning] = useState(false);
+
+  const [registerSetsWarningOpen, setRegisterSetsWarningOpen] = useState(false);
+  const [warningTooltipPosition, setWarningTooltipPosition] = useState({
+    x: 0,
+    y: 0,
+  });
+
   useEffect(() => {
     loadData();
   }, []);
@@ -50,6 +63,7 @@ export default function WorkoutScreen() {
   const loadData = async () => {
     const u = await getUserById(userId);
     setUser(u);
+    setRegisterSets(u.registerSets || false);
 
     let current = null;
 
@@ -271,6 +285,52 @@ export default function WorkoutScreen() {
     }
   };
 
+  const openSettings = () => {
+    setRegisterSets(user.registerSets || false);
+    setShowRegisterSetsWarning(false);
+    setSettingsOpen(true);
+  };
+
+  const handleSaveSettings = async () => {
+    if (user.registerSets !== registerSets) {
+      await registerSet(registerSets);
+    }
+
+    setSettingsOpen(false);
+  };
+
+  const handleRegisterSetChange = (event) => {
+    const value = event.target.checked;
+
+    setRegisterSets(value);
+
+    if (!value && hasDayInProgress() && user.registerSets) {
+      setShowRegisterSetsWarning(true);
+    } else {
+      setShowRegisterSetsWarning(false);
+    }
+  };
+
+  const registerSet = async (value) => {
+    try {
+      const updatedUser = await configRegisterSets(userId, value);
+      setUser(updatedUser);
+    } catch (error) {
+      console.error("Error al configurar el registro de series:", error);
+    }
+  };
+
+  const handleRegisterSetsWarningClick = (event) => {
+    const { clientX, clientY } = event;
+
+    setWarningTooltipPosition({
+      x: clientX,
+      y: clientY,
+    });
+
+    setRegisterSetsWarningOpen((prev) => !prev);
+  };
+
   if (!user) {
     return (
       <Box
@@ -293,6 +353,11 @@ export default function WorkoutScreen() {
         position: "relative",
         minHeight: "100vh",
         overflow: "hidden",
+      }}
+      onPointerDown={() => {
+        if (registerSetsWarningOpen) {
+          setRegisterSetsWarningOpen(false);
+        }
       }}
     >
       {/* BACKGROUND */}
@@ -356,18 +421,10 @@ export default function WorkoutScreen() {
           >
             <BackButton to="/home" sx={{ ml: { xs: 4, md: 8 } }} />
 
-            <PrimaryButton
-              label="Cerrar sesión"
-              onClick={handleLogout}
-              disabled={hasDayInProgress()}
-              sx={{
-                fontSize: "1.5rem",
-                px: 1.2,
-                py: 0.2,
-                background: "linear-gradient(145deg, #ff6b6b, #c62828)",
-                opacity: 0.9,
-              }}
-            />
+            {/*Boton Ajustes*/}
+            <Button onClick={openSettings} sx={{ color: "white", py: 0.5 }}>
+              <SettingsIcon sx={{ fontSize: "3rem" }} />
+            </Button>
           </Box>
 
           {/* TITULO */}
@@ -601,6 +658,18 @@ export default function WorkoutScreen() {
             <PrimaryButton label="📊 Estadísticas" to={`/stats/${userId}`} sx={{ fontSize: "1.2rem" }} />
 
             <PrimaryButton label="🏆 Logros" to={`/achievements/${userId}`} sx={{ fontSize: "1.2rem" }} />
+
+            <PrimaryButton
+              label="Cerrar sesión"
+              onClick={handleLogout}
+              disabled={hasDayInProgress()}
+              sx={{
+                fontSize: "1.5rem",
+                py: 0.7,
+                background: "linear-gradient(145deg, #ff6b6b, #c62828)",
+                opacity: 0.9,
+              }}
+            />
           </Stack>
 
           <AnimatedDialog
@@ -677,6 +746,130 @@ export default function WorkoutScreen() {
               )}
             </Box>
           </AnimatedDialog>
+
+          {/*SETTINGS*/}
+          <AnimatedDialog
+            open={settingsOpen}
+            onClose={() => setSettingsOpen(false)}
+            title="Configuración"
+            titleSize="1.7rem"
+            headerSx={{
+              py: 1.5,
+            }}
+            paperSx={{ minHeight: 360 }}
+            actions={
+              <PrimaryButton
+                label="Guardar configuración"
+                onClick={handleSaveSettings}
+                sx={{
+                  width: "100%",
+                  fontSize: "1.1rem",
+                  py: 1,
+                }}
+              />
+            }
+          >
+            <Box
+              sx={{
+                p: 1,
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 2,
+                  px: 2,
+                  py: 1.5,
+                  borderRadius: 2.5,
+                  background: registerSets ? "rgba(236, 30, 23, 0.41)" : "rgba(255,255,255,0.08)",
+                  border: registerSets ? "1px solid rgba(255, 45, 45, 0.77)" : "1px solid rgba(30, 30, 30, 0.29)",
+                  boxShadow: registerSets ? "0 4px 12px rgba(226, 38, 38, 0.51)" : "0 4px 12px rgba(0,0,0,0.2)",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: "1.3rem",
+                      fontWeight: 700,
+                      color: "#000",
+                    }}
+                  >
+                    Registrar series
+                  </Typography>
+
+                  <Typography
+                    sx={{
+                      fontSize: "1rem",
+                      color: "#000",
+                      mt: 0.3,
+                    }}
+                  >
+                    Guardar las series realizadas durante el entrenamiento
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Checkbox
+                    checked={registerSets}
+                    onChange={handleRegisterSetChange}
+                    sx={{
+                      color: "rgba(0,0,0,0.5)",
+                      mr: 1.5,
+                      pr: 0.2,
+                      pl: 0,
+
+                      "&.Mui-checked": {
+                        color: "#ec0c0c",
+                      },
+
+                      "& .MuiSvgIcon-root": {
+                        fontSize: "2.2rem",
+                      },
+                    }}
+                  />
+                  {showRegisterSetsWarning && (
+                    <Box
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRegisterSetsWarningClick(e);
+                      }}
+                      onPointerDown={(e) => {
+                        e.stopPropagation();
+                      }}
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: "50%",
+                        backgroundColor: "#d32f2f",
+                        color: "white",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 900,
+                        fontSize: "1rem",
+                        mr: 1,
+                      }}
+                    >
+                      !
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+            </Box>
+          </AnimatedDialog>
+          <InfoTooltip
+            open={registerSetsWarningOpen}
+            text="Al desactivar el registro, se eliminarán las series guardadas del día en curso."
+            position={warningTooltipPosition}
+            maxWidth={300}
+            sx={{ width: "min(200px, 70vw)" }}
+          />
         </Container>
       </Box>
     </Box>

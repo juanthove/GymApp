@@ -59,7 +59,7 @@ public class UserController {
 
     @PutMapping("/{id}")
     public UserResponse updateUser(@PathVariable Long id,
-                           @Valid @RequestBody UserRequest request) {
+            @Valid @RequestBody UserRequest request) {
 
         return userService.updateUser(id, request);
     }
@@ -93,7 +93,7 @@ public class UserController {
 
     @PutMapping("/{userId}/current-workout/{workoutId}")
     public UserResponse setCurrentWorkout(@PathVariable Long userId,
-                                  @PathVariable Long workoutId) {
+            @PathVariable Long workoutId) {
 
         return userService.setCurrentWorkout(userId, workoutId);
     }
@@ -111,6 +111,14 @@ public class UserController {
     @GetMapping("/{userId}/achievements")
     public List<UserAchievementResponse> getUserAchievements(@PathVariable Long userId) {
         return userAchievementService.getUserAchievements(userId);
+    }
+
+    @PatchMapping("/{id}/register-sets")
+    public UserResponse configRegisterSets(
+            @PathVariable Long id,
+            @RequestBody Boolean registerSets) {
+
+        return userService.configRegisterSets(id, registerSets);
     }
 
 }

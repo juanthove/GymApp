@@ -105,3 +105,12 @@ export async function setCurrentWorkout(userId, workoutId) {
 export async function getUserAchievements(userId) {
   return apiRequest(`${USER_API}/${userId}/achievements`);
 }
+
+//Configurar si el usuario quiere registrar sets
+export async function configRegisterSets(userId, registerSets) {
+  return apiRequest(`${USER_API}/${userId}/register-sets`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(registerSets),
+  });
+}

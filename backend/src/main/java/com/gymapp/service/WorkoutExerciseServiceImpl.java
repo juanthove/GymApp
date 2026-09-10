@@ -12,8 +12,11 @@ import com.gymapp.model.WorkoutExercise;
 import com.gymapp.repository.ExerciseRepository;
 import com.gymapp.repository.WorkoutDayRepository;
 import com.gymapp.repository.WorkoutExerciseRepository;
+import com.gymapp.repository.WorkoutSetRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -31,6 +34,9 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
 
     @Autowired
     private SelectedWorkoutExerciseService selectedWorkoutExerciseService;
+
+    @Autowired
+    private WorkoutSetRepository workoutSetRepository;
 
     @Override
     public List<WorkoutExerciseResponse> getAllWorkoutExercises() {
@@ -179,8 +185,10 @@ public class WorkoutExerciseServiceImpl implements WorkoutExerciseService {
     }
 
     @Override
+    @Transactional
     public void unmarkWorkoutExerciseSelected(Long dayId, Long workoutExerciseId) {
         selectedWorkoutExerciseService.unmarkSelected(dayId, workoutExerciseId);
+        workoutSetRepository.deleteByWorkoutExerciseId(workoutExerciseId);
     }
 
     @Override

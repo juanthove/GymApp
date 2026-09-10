@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "users", uniqueConstraints = {@UniqueConstraint(columnNames = {"name", "surname"})})
+@Table(name = "users", uniqueConstraints = { @UniqueConstraint(columnNames = { "name", "surname" }) })
 public class User {
 
     @Id
@@ -43,5 +43,7 @@ public class User {
     private LocalDate streakStartDate;
 
     private LocalDate lastWorkoutDate;
+
+    private boolean registerSets = true;
 
 }

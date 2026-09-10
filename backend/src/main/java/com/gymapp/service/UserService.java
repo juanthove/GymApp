@@ -48,4 +48,6 @@ public interface UserService {
 
     void updateUserStreakState(User user);
 
+    UserResponse configRegisterSets(Long id, Boolean registerSets);
+
 }

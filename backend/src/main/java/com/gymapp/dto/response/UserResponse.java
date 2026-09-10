@@ -8,5 +8,6 @@ public record UserResponse(
         Integer gymDaysPerWeek,
         String image,
         Long currentWorkoutId,
-        Long userLevelId
-) {}
+        Long userLevelId,
+        boolean registerSets) {
+}

@@ -3,6 +3,7 @@ package com.gymapp.repository;
 import com.gymapp.model.MuscleType;
 import com.gymapp.model.WorkoutSet;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -257,4 +258,26 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
                 GROUP BY ws.user.id
             """)
     List<Object[]> sumVolumeByExercisesGroupedByUser(List<Long> exerciseIds);
+
+    // Eliminar todos los sets de ejercicios incompletos de un dia en progreso
+    @Modifying
+    @Query(value = """
+            DELETE FROM workout_set
+            WHERE user_id = :userId
+              AND workout_exercise_id IN (
+                  SELECT we.id
+                  FROM workout_exercise we
+                  JOIN workout_day wd ON we.workout_day_id = wd.id
+                  WHERE wd.workout_id = :workoutId
+                    AND wd.started_at IS NOT NULL
+                    AND wd.finished_at IS NULL
+                    AND we.completed = false
+              )
+            """, nativeQuery = true)
+    void deleteSetsFromInProgressIncompleteExercises(
+            @Param("userId") Long userId,
+            @Param("workoutId") Long workoutId);
+
+    // ELiminar todos los sets de un ejercicio
+    void deleteByWorkoutExerciseId(Long workoutExerciseId);
 }
