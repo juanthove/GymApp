@@ -342,7 +342,7 @@ export default function HomeScreen() {
                   cursor: "pointer",
                   transition: "0.2s",
                   border: "2px solid #d32f2f",
-                  backgroundColor: darkMode ? "rgba(15, 23, 42, 0.8)" : "rgba(255,255,255,0.8)",
+                    backgroundColor: darkMode ? "#0f172a" : "#fff",
                   boxShadow: darkMode ? "0 10px 30px rgba(15,23,42,0.45)" : "none",
                   "&:hover": {
                     transform: "scale(1.1)",

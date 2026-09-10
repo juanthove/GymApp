@@ -20,6 +20,7 @@ const UserCard = memo(function UserCard({ title, imageUrl, onClick, sx, darkMode
         transition: "0.3s",
         cursor: "pointer",
         backgroundColor: darkMode ? "#0f172a" : "#fff",
+        border: darkMode ? "1px solid rgba(148,163,184,0.25)" : "1px solid rgba(0,0,0,0.08)",
         "&:hover": {
           transform: "scale(1.03)",
           boxShadow: 6,
@@ -35,7 +36,7 @@ const UserCard = memo(function UserCard({ title, imageUrl, onClick, sx, darkMode
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            backgroundColor: "#ccc",
+            backgroundColor: darkMode ? "#334155" : "#ccc",
             overflow: "hidden",
           }}
         >

@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import useRequireAuth from "../hooks/useRequireAuth";
+import { useDarkMode } from "../context/DarkModeContext";
 
 import backgroundImg from "../assets/gymproIcon.png";
 
@@ -32,6 +33,7 @@ export default function WorkoutScreen() {
   const { userId } = useParams();
   const navigate = useNavigate();
 
+  const { darkMode } = useDarkMode();
   const [user, setUser] = useState(null);
   const [workout, setWorkout] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null);
@@ -379,7 +381,7 @@ export default function WorkoutScreen() {
         sx={{
           position: "absolute",
           inset: 0,
-          backgroundColor: "rgba(44, 44, 44, 0.4)",
+          backgroundColor: darkMode ? "rgba(15, 23, 42, 0.78)" : "rgba(44, 44, 44, 0.4)",
           backdropFilter: "blur(6px)",
           zIndex: 1,
         }}
@@ -407,9 +409,9 @@ export default function WorkoutScreen() {
               mb: 3,
               borderRadius: 3,
               backdropFilter: "blur(10px)",
-              background: "rgba(255,255,255,0.15)",
-              border: "1px solid rgba(255,255,255,0.25)",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+              background: darkMode ? "rgba(15,23,42,0.65)" : "rgba(255,255,255,0.15)",
+              border: darkMode ? "1px solid rgba(148,163,184,0.24)" : "1px solid rgba(255,255,255,0.25)",
+              boxShadow: darkMode ? "0 4px 12px rgba(2,6,23,0.45)" : "0 4px 12px rgba(0,0,0,0.2)",
 
               width: {
                 xs: "90%",
@@ -422,7 +424,7 @@ export default function WorkoutScreen() {
             <BackButton to="/home" sx={{ ml: { xs: 4, md: 8 } }} />
 
             {/*Boton Ajustes*/}
-            <Button onClick={openSettings} sx={{ color: "white", py: 0.5 }}>
+            <Button onClick={openSettings} sx={{ color: darkMode ? "#f8fafc" : "white", py: 0.5 }}>
               <SettingsIcon sx={{ fontSize: "3rem" }} />
             </Button>
           </Box>
@@ -756,7 +758,11 @@ export default function WorkoutScreen() {
             headerSx={{
               py: 1.5,
             }}
-            paperSx={{ minHeight: 360 }}
+            paperSx={{
+              minHeight: 360,
+              backgroundColor: darkMode ? "#0f172a" : "#fff",
+              color: darkMode ? "#f8fafc" : "#111827",
+            }}
             actions={
               <PrimaryButton
                 label="Guardar configuración"
@@ -797,7 +803,7 @@ export default function WorkoutScreen() {
                     sx={{
                       fontSize: "1.3rem",
                       fontWeight: 700,
-                      color: "#000",
+                      color: darkMode ? "#f8fafc" : "#000",
                     }}
                   >
                     Registrar series
@@ -806,7 +812,7 @@ export default function WorkoutScreen() {
                   <Typography
                     sx={{
                       fontSize: "1rem",
-                      color: "#000",
+                      color: darkMode ? "#cbd5e1" : "#000",
                       mt: 0.3,
                     }}
                   >

@@ -2,6 +2,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Card, CardActionArea, CardContent, Box, Typography } from "@mui/material";
+import { useDarkMode } from "../context/DarkModeContext";
 
 export default function GymCard({
   title,
@@ -18,6 +19,8 @@ export default function GymCard({
   showArrow = false,
   variant = "day", //"day" o "exercise"
 }) {
+  const { darkMode } = useDarkMode();
+
   //Base style general de la Card
   const baseStyle = {
     borderRadius: 4,
@@ -25,35 +28,40 @@ export default function GymCard({
     overflow: "hidden",
     transition: "0.25s",
     cursor: onClick ? "pointer" : "default",
-    background: "linear-gradient(180deg, #ffffff, #f5f5f5)",
-    border: "1px solid rgba(255,255,255,0.9)",
-    boxShadow: `
+    background: darkMode
+      ? "linear-gradient(180deg, rgba(51,65,85,0.88), rgba(15,23,42,0.98))"
+      : "linear-gradient(180deg, #ffffff, #f5f5f5)",
+    border: darkMode ? "1px solid rgba(148,163,184,0.22)" : "1px solid rgba(255,255,255,0.9)",
+    boxShadow: darkMode
+      ? "0 6px 18px rgba(15,23,42,0.45), inset 0 1px 2px rgba(255,255,255,0.05)"
+      : `
       0 6px 18px rgba(0,0,0,0.12),
       inset 0 1px 2px rgba(255,255,255,0.8)
     `,
+    color: darkMode ? "#f8fafc" : "#111827",
     ...sx,
   };
 
   //Solo para day y status COMPLETED
   if (variant === "day" && status === "COMPLETED") {
     Object.assign(baseStyle, {
-      background: "rgba(230, 230, 230, 0.3)",
+      background: darkMode ? "rgba(71,85,105,0.6)" : "rgba(230, 230, 230, 0.3)",
       backdropFilter: "blur(12px)",
-      border: "1px solid rgba(255, 255, 255, 0.4)",
+      border: darkMode ? "1px solid rgba(148,163,184,0.22)" : "1px solid rgba(255, 255, 255, 0.4)",
       boxShadow: "none",
       opacity: 1,
 
       //Estilo para los textos generales (título, subtítulo)
       "& .MuiTypography-root": {
-        color: "rgba(255, 255, 255, 0.85)",
+        color: darkMode ? "rgba(248,250,252,0.9)" : "rgba(255, 255, 255, 0.85)",
         textShadow: "0px 1px 2px rgba(0,0,0,0.2)",
       },
 
       //Forzar verde para completo
       "& .status-text-completed": {
-        color: "#127919 !important",
+        color: darkMode ? "#86efac !important" : "#127919 !important",
         fontWeight: 800,
-        textShadow: "0px 1px 2px rgba(255, 255, 255, 0.41)",
+        textShadow: darkMode ? "0px 1px 2px rgba(0,0,0,0.4)" : "0px 1px 2px rgba(255, 255, 255, 0.41)",
       },
 
       "&:hover": {

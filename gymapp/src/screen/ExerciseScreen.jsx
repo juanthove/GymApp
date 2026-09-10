@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import useRequireAuth from "../hooks/useRequireAuth";
+import { useDarkMode } from "../context/DarkModeContext";
 
 import ClearIcon from "@mui/icons-material/Clear";
 
@@ -70,6 +71,7 @@ import GroupIcon from "@mui/icons-material/Group";
 export default function ExerciseScreen() {
   useRequireAuth();
   const { userId, workoutDayId } = useParams();
+  const { darkMode } = useDarkMode();
 
   const [user, setUser] = useState(null);
 
@@ -1680,6 +1682,8 @@ export default function ExerciseScreen() {
             paperSx={{
               width: { xs: "95%", md: "80%" },
               maxWidth: "900px",
+              backgroundColor: darkMode ? "#0f172a" : "#fff",
+              color: darkMode ? "#f8fafc" : "#111827",
             }}
             actions={
               <Button
@@ -1717,9 +1721,15 @@ export default function ExerciseScreen() {
                       alignSelf: "center",
                       "& .MuiInputBase-input": {
                         fontSize: "1.5rem",
+                        color: darkMode ? "#f8fafc" : "#111827",
                       },
                       "& .MuiInputLabel-root": {
                         fontSize: "1.4rem",
+                        color: darkMode ? "#cbd5e1" : "rgba(0,0,0,0.6)",
+                      },
+                      "& .MuiOutlinedInput-root": {
+                        backgroundColor: darkMode ? "rgba(15,23,42,0.55)" : "#fff",
+                        borderRadius: 2,
                       },
                     }}
                     InputProps={{
@@ -1756,7 +1766,14 @@ export default function ExerciseScreen() {
                       variant="scrollable"
                       scrollButtons="auto"
                       sx={{
-                        "& .MuiTab-root": { mb: { xs: 0.6, md: 1 }, fontSize: { xs: "0.9rem", md: "1.1rem" } },
+                        "& .MuiTab-root": {
+                          mb: { xs: 0.6, md: 1 },
+                          fontSize: { xs: "0.9rem", md: "1.1rem" },
+                          color: darkMode ? "#cbd5e1" : "inherit",
+                        },
+                        "& .Mui-selected": {
+                          color: darkMode ? "#f8fafc" : "#111827",
+                        },
                       }}
                     >
                       {availableMuscles.map((muscle) => (
@@ -1809,10 +1826,16 @@ export default function ExerciseScreen() {
                       sx={{
                         p: 2,
                         borderRadius: 2,
-                        border: `2px solid ${isSelected ? "#4caf50" : "#ddd"}`,
+                        border: `2px solid ${isSelected ? "#4caf50" : darkMode ? "rgba(148,163,184,0.35)" : "#ddd"}`,
                         cursor: ex.completed ? "not-allowed" : "pointer",
                         opacity: ex.completed ? 0.6 : 1,
-                        backgroundColor: isSelected ? "rgba(76, 175, 80, 0.08)" : "#fff",
+                        backgroundColor: isSelected
+                          ? darkMode
+                            ? "rgba(76, 175, 80, 0.18)"
+                            : "rgba(76, 175, 80, 0.08)"
+                          : darkMode
+                            ? "rgba(15, 23, 42, 0.5)"
+                            : "#fff",
 
                         position: "relative",
                         display: "flex",
@@ -1856,16 +1879,29 @@ export default function ExerciseScreen() {
                           pr: { xs: 15.7, md: 22.6 },
                         }}
                       >
-                        <Typography sx={{ fontWeight: 700, fontSize: { xs: "1.2rem", md: "1.5rem" } }}>
+                        <Typography
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: { xs: "1.2rem", md: "1.5rem" },
+                            color: darkMode ? "#f8fafc" : "#111827",
+                          }}
+                        >
                           {ex.exerciseName ?? ex.exercise?.name ?? "Ejercicio"}
                         </Typography>
 
-                        <Typography color="text.secondary" fontWeight={600} fontSize={{ xs: "1rem", md: "1.2rem" }}>
+                        <Typography
+                          color={darkMode ? "#cbd5e1" : "text.secondary"}
+                          fontWeight={600}
+                          fontSize={{ xs: "1rem", md: "1.2rem" }}
+                        >
                           {ex.type !== "ABDOMINAL" && `${typeLabels[ex.type]} | `}
                           {muscleLabels[ex.exerciseMuscle]}
                         </Typography>
 
-                        <Typography fontSize={{ xs: "1rem", md: "1.3rem" }}>
+                        <Typography
+                          fontSize={{ xs: "1rem", md: "1.3rem" }}
+                          sx={{ color: darkMode ? "#e2e8f0" : "#111827" }}
+                        >
                           Peso: {ex.weight ?? 0} kg • Reps: {reps ?? "-"}
                         </Typography>
                       </Box>
