@@ -70,8 +70,24 @@ export default function HomeScreen() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [search, setSearch] = useState("");
   const [fullscreenEnabled, setFullscreenEnabled] = useState(isFullscreenActive());
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return localStorage.getItem("gymapp-dark-mode") === "true";
+  });
 
   const navigate = useNavigate();
+
+  const loadUsers = async () => {
+    try {
+      const data = await getLoggedUser();
+      setUsers(data);
+    } catch (error) {
+      console.error("Error cargando usuarios:", error);
+    }
+  };
 
   useEffect(() => {
     loadUsers();
@@ -91,14 +107,11 @@ export default function HomeScreen() {
     };
   }, []);
 
-  const loadUsers = async () => {
-    try {
-      const data = await getLoggedUser();
-      setUsers(data);
-    } catch (error) {
-      console.error("Error cargando usuarios:", error);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("gymapp-dark-mode", String(darkMode));
     }
-  };
+  }, [darkMode]);
 
   const openModal = async () => {
     try {
@@ -138,6 +151,7 @@ export default function HomeScreen() {
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
         backgroundAttachment: "fixed",
+        backgroundColor: darkMode ? "#0f172a" : "#f5f5f5",
         pt: 6,
       }}
     >
@@ -146,7 +160,7 @@ export default function HomeScreen() {
         sx={{
           position: "absolute",
           inset: 0,
-          backgroundColor: "rgba(44, 44, 44, 0.4)",
+          backgroundColor: darkMode ? "rgba(15, 23, 42, 0.78)" : "rgba(44, 44, 44, 0.4)",
           backdropFilter: "blur(6px)",
           zIndex: 1,
         }}
@@ -160,11 +174,13 @@ export default function HomeScreen() {
               variant="h3"
               sx={{
                 fontWeight: 900,
-                color: "#fff",
+                color: darkMode ? "#f8fafc" : "#fff",
                 display: "inline-block",
                 lineHeight: 0.55,
                 letterSpacing: "1px",
-                textShadow: `
+                textShadow: darkMode
+                  ? "0 0 10px rgba(148,163,184,0.4), 0 4px 20px rgba(15,23,42,0.8)"
+                  : `
                   0 0 10px rgba(255,255,255,0.3),
                   0 4px 20px rgba(0,0,0,0.6)
                 `,
@@ -204,7 +220,7 @@ export default function HomeScreen() {
           >
             <Typography
               sx={{
-                color: "#fff",
+                color: darkMode ? "#f8fafc" : "#fff",
                 fontWeight: 700,
                 fontSize: { xs: "1.1rem", md: "1.5rem" },
               }}
@@ -212,33 +228,53 @@ export default function HomeScreen() {
               Conectados: {users.length}
             </Typography>
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography
-                sx={{
-                  color: "#fff",
-                  fontWeight: 700,
-                  fontSize: { xs: "1.05rem", md: "1.4rem" },
-                }}
-              >
-                Pantalla completa
-              </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, md: 2 }, flexWrap: "wrap", justifyContent: "flex-end" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  sx={{
+                    color: darkMode ? "#f8fafc" : "#fff",
+                    fontWeight: 700,
+                    fontSize: { xs: "0.95rem", md: "1.2rem" },
+                  }}
+                >
+                  Modo oscuro
+                </Typography>
 
-              <Switch
-                checked={fullscreenEnabled}
-                onChange={async (_event, checked) => {
-                  if (checked) {
-                    const ok = await requestFullscreen();
+                <Switch
+                  checked={darkMode}
+                  onChange={(_event, checked) => setDarkMode(checked)}
+                  color="warning"
+                />
+              </Box>
 
-                    if (!ok) {
-                      setFullscreenEnabled(false);
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  sx={{
+                    color: darkMode ? "#f8fafc" : "#fff",
+                    fontWeight: 700,
+                    fontSize: { xs: "0.95rem", md: "1.2rem" },
+                  }}
+                >
+                  Pantalla completa
+                </Typography>
+
+                <Switch
+                  checked={fullscreenEnabled}
+                  onChange={async (_event, checked) => {
+                    if (checked) {
+                      const ok = await requestFullscreen();
+
+                      if (!ok) {
+                        setFullscreenEnabled(false);
+                      }
+                      return;
                     }
-                    return;
-                  }
 
-                  await exitFullscreen();
-                }}
-                color="error"
-              />
+                    await exitFullscreen();
+                  }}
+                  color="error"
+                />
+              </Box>
             </Box>
           </Box>
 
@@ -270,6 +306,7 @@ export default function HomeScreen() {
                 title={`${user.name} ${user.surname}`}
                 imageUrl={user.image ? getUserImageUrl(user.image) : null}
                 onClick={() => goWorkoutWithUser(user)}
+                darkMode={darkMode}
                 sx={{
                   width: {
                     xs: "90%",
@@ -288,7 +325,6 @@ export default function HomeScreen() {
                 alignItems: "center",
                 justifyContent: "center",
                 width: "100%",
-                height: "100%",
               }}
             >
               <Card
@@ -302,14 +338,16 @@ export default function HomeScreen() {
                   justifyContent: "center",
                   cursor: "pointer",
                   transition: "0.2s",
-                  border: "2px solid #d32f2f",
+                  border: darkMode ? "2px solid rgba(255,255,255,0.35)" : "2px solid #d32f2f",
+                  backgroundColor: darkMode ? "rgba(15, 23, 42, 0.8)" : "rgba(255,255,255,0.8)",
+                  boxShadow: darkMode ? "0 10px 30px rgba(15,23,42,0.45)" : "none",
                   "&:hover": {
                     transform: "scale(1.1)",
                     boxShadow: 6,
                   },
                 }}
               >
-                <AddIcon sx={{ fontSize: 70, color: "mainRed.hover" }} />
+                <AddIcon sx={{ fontSize: 70, color: darkMode ? "#f8fafc" : "#d32f2f" }} />
               </Card>
             </Box>
           </Box>
@@ -331,6 +369,8 @@ export default function HomeScreen() {
             paperSx={{
               borderRadius: 4,
               maxHeight: "60vh",
+              backgroundColor: darkMode ? "#111827" : "#fff",
+              color: darkMode ? "#f8fafc" : "#111827",
             }}
             closeSx={{ p: 1, "& svg": { fontSize: 50 } }}
             actions={
@@ -363,19 +403,21 @@ export default function HomeScreen() {
               onChange={(e) => setSearch(e.target.value)}
               sx={{
                 mb: 2,
-
                 "& .MuiOutlinedInput-root": {
                   height: 80,
                   borderRadius: 3,
+                  backgroundColor: darkMode ? "rgba(255,255,255,0.04)" : "#fff",
                 },
 
                 "& .MuiInputBase-input": {
                   fontSize: "2rem",
+                  color: darkMode ? "#f8fafc" : "#111827",
                 },
 
                 "& .MuiInputBase-input::placeholder": {
                   fontSize: "2rem",
                   opacity: 0.7,
+                  color: darkMode ? "rgba(248,250,252,0.7)" : "rgba(17,24,39,0.7)",
                 },
               }}
               InputProps={{
@@ -402,6 +444,12 @@ export default function HomeScreen() {
                       mb: 1,
                       py: 2,
                       transition: "0.2s",
+                      color: darkMode ? "#f8fafc" : "#111827",
+                      backgroundColor: darkMode ? "rgba(255,255,255,0.02)" : "transparent",
+
+                      "&:hover": {
+                        backgroundColor: darkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+                      },
 
                       "&.Mui-selected": {
                         backgroundColor: "mainRed.main",
@@ -430,6 +478,7 @@ export default function HomeScreen() {
                       primaryTypographyProps={{
                         fontSize: "2rem",
                         fontWeight: selectedUser?.id === user.id ? 600 : 400,
+                        color: darkMode ? "#f8fafc" : "#111827",
                       }}
                     />
                   </ListItemButton>

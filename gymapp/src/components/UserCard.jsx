@@ -1,7 +1,7 @@
 import { Card, CardActionArea, Typography, Box } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 
-export default function UserCard({ title, imageUrl, onClick, sx }) {
+export default function UserCard({ title, imageUrl, onClick, sx, darkMode = false }) {
   return (
     <Card
       sx={{
@@ -18,6 +18,7 @@ export default function UserCard({ title, imageUrl, onClick, sx }) {
         },
         transition: "0.3s",
         cursor: "pointer",
+        backgroundColor: darkMode ? "#0f172a" : "#fff",
         "&:hover": {
           transform: "scale(1.03)",
           boxShadow: 6,
@@ -56,7 +57,7 @@ export default function UserCard({ title, imageUrl, onClick, sx }) {
         <Box
           sx={{
             height: "30%",
-            backgroundColor: "rgba(0,0,0,0.75)",
+            backgroundColor: darkMode ? "rgba(15,23,42,0.92)" : "rgba(0,0,0,0.75)",
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
@@ -67,7 +68,7 @@ export default function UserCard({ title, imageUrl, onClick, sx }) {
           <Typography
             variant="h6"
             sx={{
-              color: "#fff",
+              color: darkMode ? "#f8fafc" : "#fff",
               fontWeight: 600,
               textAlign: "center",
             }}
