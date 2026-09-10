@@ -680,6 +680,17 @@ export default function WorkoutScreen() {
             title="Músculos que vas a trabajar hoy"
             titleSize="1.7rem"
             headerSx={{ py: 1.5 }}
+            paperSx={{
+              backgroundColor: darkMode ? "#0f172a" : "#fff",
+              color: darkMode ? "#f8fafc" : "#111827",
+            }}
+            closeSx={{
+              color: darkMode ? "#f8fafc" : "#666",
+              "&:hover": {
+                backgroundColor: "transparent",
+                color: darkMode ? "#fff" : "#000",
+              },
+            }}
             actions={
               <>
                 {status === "IN_PROGRESS" && (

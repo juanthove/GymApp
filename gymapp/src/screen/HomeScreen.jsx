@@ -341,12 +341,12 @@ export default function HomeScreen() {
                   justifyContent: "center",
                   cursor: "pointer",
                   transition: "0.2s",
-                  border: "2px solid #d32f2f",
-                    backgroundColor: darkMode ? "#0f172a" : "#fff",
-                  boxShadow: darkMode ? "0 10px 30px rgba(15,23,42,0.45)" : "none",
+                  border: darkMode ? "1px solid rgba(148,163,184,0.18)" : "1px solid rgba(0,0,0,0.08)",
+                  backgroundColor: darkMode ? "#0f172a" : "rgba(255,255,255,0.8)",
+                  boxShadow: darkMode ? "0 6px 18px rgba(15,23,42,0.4)" : "0 6px 18px rgba(0,0,0,0.12)",
                   "&:hover": {
-                    transform: "scale(1.1)",
-                    boxShadow: 6,
+                    transform: "scale(1.05)",
+                    boxShadow: darkMode ? "0 10px 24px rgba(15,23,42,0.45)" : "0 10px 24px rgba(0,0,0,0.18)",
                   },
                 }}
               >
@@ -372,7 +372,7 @@ export default function HomeScreen() {
             paperSx={{
               borderRadius: 4,
               maxHeight: "60vh",
-              backgroundColor: darkMode ? "#111827" : "#fff",
+              backgroundColor: darkMode ? "#0f172a" : "#fff",
               color: darkMode ? "#f8fafc" : "#111827",
             }}
             closeSx={{ p: 1, "& svg": { fontSize: 50 } }}

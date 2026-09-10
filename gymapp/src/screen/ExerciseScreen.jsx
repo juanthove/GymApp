@@ -1110,7 +1110,19 @@ export default function ExerciseScreen() {
             maxWidth={false}
             titleSize="2rem"
             headerSx={{ py: { xs: 0.5, md: 1.5 } }}
-            paperSx={{ width: { xs: "95%", md: "80%" }, maxWidth: "900px" }}
+            paperSx={{
+              width: { xs: "95%", md: "80%" },
+              maxWidth: "900px",
+              backgroundColor: darkMode ? "#0f172a" : "#fff",
+              color: darkMode ? "#f8fafc" : "#111827",
+            }}
+            closeSx={{
+              color: darkMode ? "#f8fafc" : "#666",
+              "&:hover": {
+                backgroundColor: "transparent",
+                color: darkMode ? "#fff" : "#000",
+              },
+            }}
             actions={
               <Button
                 fullWidth
@@ -1961,6 +1973,15 @@ export default function ExerciseScreen() {
             paperSx={{
               maxWidth: 600,
               borderRadius: 3,
+              backgroundColor: darkMode ? "#0f172a" : "#fff",
+              color: darkMode ? "#f8fafc" : "#111827",
+            }}
+            closeSx={{
+              color: darkMode ? "#f8fafc" : "#666",
+              "&:hover": {
+                backgroundColor: "transparent",
+                color: darkMode ? "#fff" : "#000",
+              },
             }}
           >
             {/* CONTENIDO */}
