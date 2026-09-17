@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import useRequireAuth from "../hooks/useRequireAuth";
+import { useDarkMode } from "../context/DarkModeContext";
 
 import CountUpImport from "react-countup";
 const CountUp = CountUpImport?.default || CountUpImport;
@@ -88,6 +89,7 @@ function shiftDateIso(dateIso, days) {
 export default function StatsScreen() {
   useRequireAuth();
   const { userId } = useParams();
+  const { darkMode } = useDarkMode();
   const [loadingVolume, setLoadingVolume] = useState(false);
   const [loadingPR, setLoadingPR] = useState(false);
   const [loadingFrequency, setLoadingFrequency] = useState(false);
@@ -590,7 +592,7 @@ export default function StatsScreen() {
         sx={{
           position: "fixed",
           inset: 0,
-          backgroundColor: "rgba(44, 44, 44, 0.4)",
+          backgroundColor: darkMode ? "rgba(15, 23, 42, 0.78)" : "rgba(44, 44, 44, 0.4)",
           backdropFilter: "blur(6px)",
           zIndex: 1,
         }}
@@ -825,10 +827,11 @@ export default function StatsScreen() {
             <>
               <Card
                 sx={{
-                  background: "rgba(255, 255, 255, 0.7)",
+                  background: darkMode ? "rgba(15, 23, 42, 0.72)" : "rgba(255, 255, 255, 0.7)",
                   backdropFilter: "blur(6px)",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  border: darkMode ? "1px solid rgba(148,163,184,0.22)" : "1px solid rgba(255,255,255,0.1)",
                   borderRadius: 3,
+                  color: darkMode ? "#f8fafc" : "#111827",
                 }}
               >
                 <CardContent>
@@ -867,11 +870,12 @@ export default function StatsScreen() {
 
               <Card
                 sx={{
-                  background: "rgba(255, 255, 255, 0.7)",
+                  background: darkMode ? "rgba(15, 23, 42, 0.72)" : "rgba(255, 255, 255, 0.7)",
                   backdropFilter: "blur(6px)",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  border: darkMode ? "1px solid rgba(148,163,184,0.22)" : "1px solid rgba(255,255,255,0.1)",
                   borderRadius: 3,
                   overflow: "visible",
+                  color: darkMode ? "#f8fafc" : "#111827",
                 }}
               >
                 <CardContent>
@@ -1200,10 +1204,11 @@ export default function StatsScreen() {
           {activeTab === "pr" && (
             <Card
               sx={{
-                background: "rgba(255, 255, 255, 0.7)",
+                background: darkMode ? "rgba(15, 23, 42, 0.72)" : "rgba(255, 255, 255, 0.7)",
                 backdropFilter: "blur(6px)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                border: darkMode ? "1px solid rgba(148,163,184,0.22)" : "1px solid rgba(255,255,255,0.1)",
                 borderRadius: 3,
+                color: darkMode ? "#f8fafc" : "#111827",
               }}
             >
               <CardContent>
@@ -1275,10 +1280,11 @@ export default function StatsScreen() {
             <>
               <Card
                 sx={{
-                  background: "rgba(255, 255, 255, 0.7)",
+                  background: darkMode ? "rgba(15, 23, 42, 0.72)" : "rgba(255, 255, 255, 0.7)",
                   backdropFilter: "blur(6px)",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  border: darkMode ? "1px solid rgba(148,163,184,0.22)" : "1px solid rgba(255,255,255,0.1)",
                   borderRadius: 3,
+                  color: darkMode ? "#f8fafc" : "#111827",
                 }}
               >
                 <CardContent>
@@ -1456,10 +1462,11 @@ export default function StatsScreen() {
 
               <Card
                 sx={{
-                  background: "rgba(255, 255, 255, 0.7)",
+                  background: darkMode ? "rgba(15, 23, 42, 0.72)" : "rgba(255, 255, 255, 0.7)",
                   backdropFilter: "blur(6px)",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  border: darkMode ? "1px solid rgba(148,163,184,0.22)" : "1px solid rgba(255,255,255,0.1)",
                   borderRadius: 3,
+                  color: darkMode ? "#f8fafc" : "#111827",
                 }}
               >
                 <CardContent>
@@ -1507,10 +1514,11 @@ export default function StatsScreen() {
 
               <Card
                 sx={{
-                  background: "rgba(255, 255, 255, 0.7)",
+                  background: darkMode ? "rgba(15, 23, 42, 0.72)" : "rgba(255, 255, 255, 0.7)",
                   backdropFilter: "blur(6px)",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  border: darkMode ? "1px solid rgba(148,163,184,0.22)" : "1px solid rgba(255,255,255,0.1)",
                   borderRadius: 3,
+                  color: darkMode ? "#f8fafc" : "#111827",
                 }}
               >
                 <CardContent sx={{ height: { xs: 520, md: 620 } }}>

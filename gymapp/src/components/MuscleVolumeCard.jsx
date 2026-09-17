@@ -1,6 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { keyframes } from "@mui/system";
 import { useEffect, useRef, useState } from "react";
+import { useDarkMode } from "../context/DarkModeContext";
 import { useCountUp } from "react-countup";
 
 import { muscleLabels, muscleColors } from "../config/muscleConfig";
@@ -63,6 +64,7 @@ const pop = keyframes`
 `;
 
 export default function MuscleVolumeCard({ muscle, volume }) {
+  const { darkMode } = useDarkMode();
   const [animate, setAnimate] = useState(false);
   const countUpRef = useRef(null);
 
@@ -104,9 +106,11 @@ export default function MuscleVolumeCard({ muscle, volume }) {
         py: 1.5,
         borderRadius: "16px",
 
-        background: `linear-gradient(135deg, ${bgColor}, ${bgColorSoft})`,
-        border: "4px solid rgba(255,255,255,0.8)",
-        boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+        background: darkMode
+          ? `linear-gradient(135deg, rgba(51,65,85,0.95), rgba(15,23,42,0.98))`
+          : `linear-gradient(135deg, ${bgColor}, ${bgColorSoft})`,
+        border: darkMode ? "4px solid rgba(148,163,184,0.22)" : "4px solid rgba(255,255,255,0.8)",
+        boxShadow: darkMode ? "0 6px 18px rgba(15,23,42,0.45)" : "0 6px 18px rgba(0,0,0,0.08)",
 
         overflow: "hidden",
       }}
@@ -142,7 +146,7 @@ export default function MuscleVolumeCard({ muscle, volume }) {
         sx={{
           fontWeight: 700,
           fontSize: "1.3rem",
-          color: "#444",
+          color: darkMode ? "#e2e8f0" : "#444",
           textAlign: "center",
         }}
       >

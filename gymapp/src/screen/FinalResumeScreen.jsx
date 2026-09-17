@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import useRequireAuth from "../hooks/useRequireAuth";
 import { useParams, useNavigate } from "react-router-dom";
+import { useDarkMode } from "../context/DarkModeContext";
 
 import { getUserById, getCurrentWorkout, logoutUser } from "../services/userService";
 
@@ -23,6 +24,7 @@ export default function FinalResumeScreen() {
   useRequireAuth();
   const { userId, workoutDayId } = useParams();
   const navigate = useNavigate();
+  const { darkMode } = useDarkMode();
 
   const [user, setUser] = useState(null);
   const [totalVolume, setTotalVolume] = useState(0);
@@ -141,7 +143,7 @@ export default function FinalResumeScreen() {
       sx={{
         position: "relative",
         minHeight: "100vh",
-        backgroundColor: "#f5f5f5",
+        backgroundColor: darkMode ? "#0f172a" : "#f5f5f5",
         overflow: "hidden",
       }}
     >
@@ -164,7 +166,7 @@ export default function FinalResumeScreen() {
         sx={{
           position: "absolute",
           inset: 0,
-          backgroundColor: "rgba(44, 44, 44, 0.4)",
+          backgroundColor: darkMode ? "rgba(15, 23, 42, 0.78)" : "rgba(44, 44, 44, 0.4)",
           backdropFilter: "blur(6px)",
           zIndex: 1,
         }}

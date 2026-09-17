@@ -1,11 +1,13 @@
 import { Box, Typography } from "@mui/material";
 import { useCountUp } from "react-countup";
 import { useEffect, useRef } from "react";
+import { useDarkMode } from "../context/DarkModeContext";
 
 import { muscleColors } from "../config/muscleConfig";
 import { lightenColor, darkenColor } from "../utils/colorUtils";
 
 export default function PRCard({ row }) {
+  const { darkMode } = useDarkMode();
   const countUpRef = useRef(null);
 
   const baseColor = muscleColors[row.muscle] || "#999";
@@ -45,9 +47,11 @@ export default function PRCard({ row }) {
 
         gap: 1,
 
-        background: `linear-gradient(135deg, ${bgColor}, ${bgColorSoft})`,
-        border: "3px solid rgba(255,255,255,0.7)",
-        boxShadow: "0 6px 18px rgba(0,0,0,0.12)",
+        background: darkMode
+          ? `linear-gradient(135deg, rgba(51,65,85,0.95), rgba(15,23,42,0.98))`
+          : `linear-gradient(135deg, ${bgColor}, ${bgColorSoft})`,
+        border: darkMode ? "3px solid rgba(148,163,184,0.22)" : "3px solid rgba(255,255,255,0.7)",
+        boxShadow: darkMode ? "0 6px 18px rgba(15,23,42,0.45)" : "0 6px 18px rgba(0,0,0,0.12)",
 
         overflow: "hidden",
         textAlign: "center",
@@ -74,7 +78,7 @@ export default function PRCard({ row }) {
             xs: "1.2rem",
             md: "1.6rem",
           },
-          color: "#000000",
+          color: darkMode ? "#f8fafc" : "#000000",
           minHeight: {
             xs: "2.8rem",
             md: "3.8rem",
@@ -140,7 +144,7 @@ export default function PRCard({ row }) {
             xs: "1.2rem",
             md: "1.3rem",
           },
-          color: "#000000",
+          color: darkMode ? "#cbd5e1" : "#000000",
           opacity: 0.8,
           fontWeight: 500,
         }}

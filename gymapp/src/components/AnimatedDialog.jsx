@@ -1,6 +1,7 @@
 import { Dialog, Box, Typography, DialogContent, DialogActions, Slide } from "@mui/material";
 import { forwardRef } from "react";
 import CloseButton from "./CloseButton";
+import { useDarkMode } from "../context/DarkModeContext";
 
 const Transition = forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} timeout={300} {...props} />;
@@ -20,6 +21,8 @@ export default function AnimatedDialog({
   paperSx = {},
   closeSx = {},
 }) {
+  const { darkMode } = useDarkMode();
+
   return (
     <Dialog
       open={open}
@@ -36,8 +39,10 @@ export default function AnimatedDialog({
         paper: {
           sx: {
             borderRadius: 3,
-            background: "#fff",
-            boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
+            backgroundColor: darkMode ? "#0f172a" : "#fff",
+            color: darkMode ? "#f8fafc" : "#111827",
+            boxShadow: darkMode ? "0 10px 40px rgba(2,6,23,0.45)" : "0 10px 40px rgba(0,0,0,0.3)",
+            border: darkMode ? "1px solid rgba(148,163,184,0.22)" : "1px solid rgba(0,0,0,0.05)",
 
             ...paperSx,
           },
@@ -67,7 +72,17 @@ export default function AnimatedDialog({
           {title}
         </Typography>
 
-        <CloseButton onClick={onClose} sx={closeSx} />
+        <CloseButton
+          onClick={onClose}
+          sx={{
+            color: darkMode ? "#f8fafc" : "#666",
+            "&:hover": {
+              backgroundColor: "transparent",
+              color: darkMode ? "#fff" : "#000",
+            },
+            ...closeSx,
+          }}
+        />
       </Box>
 
       {/* CONTENT */}

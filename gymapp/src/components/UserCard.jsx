@@ -1,7 +1,8 @@
+import React, { memo } from "react";
 import { Card, CardActionArea, Typography, Box } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 
-export default function UserCard({ title, imageUrl, onClick, sx }) {
+const UserCard = memo(function UserCard({ title, imageUrl, onClick, sx, darkMode = false }) {
   return (
     <Card
       sx={{
@@ -18,6 +19,8 @@ export default function UserCard({ title, imageUrl, onClick, sx }) {
         },
         transition: "0.3s",
         cursor: "pointer",
+        backgroundColor: darkMode ? "#0f172a" : "#fff",
+        border: darkMode ? "1px solid rgba(148,163,184,0.25)" : "1px solid rgba(0,0,0,0.08)",
         "&:hover": {
           transform: "scale(1.03)",
           boxShadow: 6,
@@ -33,13 +36,25 @@ export default function UserCard({ title, imageUrl, onClick, sx }) {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            backgroundImage: imageUrl ? `url(${imageUrl})` : "none",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundColor: "#ccc",
+            backgroundColor: darkMode ? "#334155" : "#ccc",
+            overflow: "hidden",
           }}
         >
-          {!imageUrl && (
+          {imageUrl ? (
+            <Box
+              component="img"
+              src={imageUrl}
+              alt={title}
+              loading="lazy"
+              decoding="async"
+              sx={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+          ) : (
             <PersonIcon
               sx={{
                 fontSize: {
@@ -56,7 +71,7 @@ export default function UserCard({ title, imageUrl, onClick, sx }) {
         <Box
           sx={{
             height: "30%",
-            backgroundColor: "rgba(0,0,0,0.75)",
+            backgroundColor: darkMode ? "rgba(15,23,42,0.92)" : "rgba(0,0,0,0.75)",
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
@@ -67,7 +82,7 @@ export default function UserCard({ title, imageUrl, onClick, sx }) {
           <Typography
             variant="h6"
             sx={{
-              color: "#fff",
+              color: darkMode ? "#f8fafc" : "#fff",
               fontWeight: 600,
               textAlign: "center",
             }}
@@ -89,4 +104,6 @@ export default function UserCard({ title, imageUrl, onClick, sx }) {
       </CardActionArea>
     </Card>
   );
-}
+});
+
+export default UserCard;

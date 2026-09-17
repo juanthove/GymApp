@@ -2,8 +2,10 @@ import { Card, Typography, Box } from "@mui/material";
 import { useCountUp } from "react-countup";
 import { useEffect, useRef, useState } from "react";
 import { keyframes } from "@mui/system";
+import { useDarkMode } from "../context/DarkModeContext";
 
 export default function VolumeCard({ value }) {
+  const { darkMode } = useDarkMode();
   const pop = keyframes`
         0% {
             transform: scale(1);
@@ -52,8 +54,9 @@ export default function VolumeCard({ value }) {
         width: "100%",
         maxWidth: 520,
         textAlign: "center",
-        background: "#f7f7f7",
-        boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
+        background: darkMode ? "linear-gradient(180deg, rgba(30,41,59,0.96), rgba(15,23,42,0.98))" : "#f7f7f7",
+        border: darkMode ? "1px solid rgba(148,163,184,0.22)" : "1px solid rgba(255,255,255,0.9)",
+        boxShadow: darkMode ? "0 6px 20px rgba(15,23,42,0.45)" : "0 6px 20px rgba(0,0,0,0.15)",
       }}
     >
       {/* 🔤 TÍTULO */}
@@ -61,7 +64,7 @@ export default function VolumeCard({ value }) {
         sx={{
           fontSize: "1.3rem",
           fontWeight: 600,
-          color: "#555",
+          color: darkMode ? "#e2e8f0" : "#555",
           mb: 1,
         }}
       >
@@ -73,7 +76,7 @@ export default function VolumeCard({ value }) {
         sx={{
           height: "1px",
           width: "100%",
-          backgroundColor: "#ddd",
+          backgroundColor: darkMode ? "rgba(148,163,184,0.45)" : "#ddd",
           mb: 2,
         }}
       />
