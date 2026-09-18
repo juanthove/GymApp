@@ -231,7 +231,15 @@ export default function HomeScreen() {
               Conectados: {users.length}
             </Typography>
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, md: 2 }, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: { xs: 1, md: 2 },
+                flexWrap: "wrap",
+                justifyContent: "flex-end",
+              }}
+            >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography
                   sx={{
@@ -243,11 +251,7 @@ export default function HomeScreen() {
                   Modo oscuro
                 </Typography>
 
-                <Switch
-                  checked={darkMode}
-                  onChange={(_event, checked) => setDarkMode(checked)}
-                  color="warning"
-                />
+                <Switch checked={darkMode} onChange={(_event, checked) => setDarkMode(checked)} color="warning" />
               </Box>
 
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -328,6 +332,7 @@ export default function HomeScreen() {
                 alignItems: "center",
                 justifyContent: "center",
                 width: "100%",
+                height: "100%",
               }}
             >
               <Card

@@ -4,6 +4,8 @@ import useRequireAuth from "../hooks/useRequireAuth";
 import { useDarkMode } from "../context/DarkModeContext";
 
 import ClearIcon from "@mui/icons-material/Clear";
+import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
+import ImageIcon from "@mui/icons-material/Image";
 
 import backgroundImg from "../assets/gymproIcon.png";
 import { muscleLabels, typeLabels } from "../config/muscleConfig";
@@ -78,12 +80,14 @@ export default function ExerciseScreen() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("success");
 
+  //SELECTOR DE EJERCICIOS
   const [allExercises, setAllExercises] = useState([]);
   const [displayedExercises, setDisplayedExercises] = useState([]);
   const [selectedExerciseIds, setSelectedExerciseIds] = useState([]);
   const [reps, setReps] = useState(null);
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
 
   const [weightModalOpen, setWeightModalOpen] = useState(false);
   const [nextWeight, setNextWeight] = useState("");
@@ -91,9 +95,11 @@ export default function ExerciseScreen() {
 
   const navigate = useNavigate();
 
+  //ALERTAS
   const [alertExercises, setAlertExercises] = useState([]);
   const [alertModalOpen, setAlertModalOpen] = useState(false);
 
+  //SETS
   const [savingSets, setSavingSets] = useState({});
   const savingSetsRef = useRef({});
   const lastSaveTimeRef = useRef({});
@@ -102,9 +108,11 @@ export default function ExerciseScreen() {
   const repsRefs = useRef({});
   const weightRefs = useRef({});
 
+  //FINALIZAR
   const [confirmFinish, setConfirmFinish] = useState(false);
   const [isAbdominal, setIsAbdominal] = useState(false);
 
+  //FILTROS
   const [filterType, setFilterType] = useState("ALL");
   const [filterMuscle, setFilterMuscle] = useState("ALL");
   const [filterName, setFilterName] = useState("");
@@ -145,6 +153,7 @@ export default function ExerciseScreen() {
     if (!selectedExercise) return;
 
     loadSets();
+    setShowVideo(false);
   }, [selectedExercise]);
 
   const createSet = (mode, reps = "", weight = "") => {
@@ -1138,29 +1147,69 @@ export default function ExerciseScreen() {
             }
           >
             {/* MEDIA */}
-            {selectedExercise?.video ? (
-              <video
-                controls
-                src={getExerciseVideoUrl(selectedExercise.video)}
-                style={{
+            {selectedExercise?.image || selectedExercise?.video ? (
+              <Box
+                sx={{
+                  position: "relative",
                   width: "100%",
-                  maxHeight: "260px",
-                  objectFit: "contain",
-                  background: "#ffffff00",
-                  borderRadius: "8px",
+                  display: "flex",
+                  justifyContent: "center",
                 }}
-              />
-            ) : selectedExercise?.image ? (
-              <img
-                src={getExerciseImageUrl(selectedExercise.image)}
-                style={{
-                  width: "100%",
-                  maxHeight: "260px",
-                  objectFit: "contain",
-                  background: "#ffffff00",
-                  borderRadius: "8px",
-                }}
-              />
+              >
+                {/* IMAGEN */}
+                {!showVideo && selectedExercise?.image && (
+                  <img
+                    src={getExerciseImageUrl(selectedExercise.image)}
+                    alt={selectedExercise?.exerciseName ?? "Ejercicio"}
+                    style={{
+                      width: "100%",
+                      maxHeight: "260px",
+                      objectFit: "contain",
+                      background: "#ffffff00",
+                      borderRadius: "8px",
+                    }}
+                  />
+                )}
+
+                {/* VIDEO */}
+                {(showVideo || !selectedExercise?.image) && selectedExercise?.video && (
+                  <video
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    src={getExerciseVideoUrl(selectedExercise.video)}
+                    style={{
+                      width: "100%",
+                      maxHeight: "260px",
+                      objectFit: "contain",
+                      background: "#ffffff00",
+                      borderRadius: "8px",
+                    }}
+                  />
+                )}
+
+                {/* BOTÓN CAMBIAR MEDIA */}
+                {selectedExercise?.image && selectedExercise?.video && (
+                  <IconButton
+                    onClick={() => setShowVideo((prev) => !prev)}
+                    sx={{
+                      position: "absolute",
+                      top: 8,
+                      right: 8,
+                      backgroundColor: "rgba(0, 0, 0, 0.55)",
+                      color: "#fff",
+                      width: 50,
+                      height: 50,
+                      "&:hover": {
+                        backgroundColor: "rgba(0, 0, 0, 0.75)",
+                      },
+                    }}
+                  >
+                    {showVideo ? <ImageIcon sx={{ fontSize: 32 }} /> : <VideoLibraryIcon sx={{ fontSize: 32 }} />}
+                  </IconButton>
+                )}
+              </Box>
             ) : null}
 
             <Stack spacing={2} alignItems="center" textAlign="center" mt={2}>
