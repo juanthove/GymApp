@@ -164,6 +164,8 @@ export default function ExerciseSelectionModal({ open, onClose, exercises = [], 
                       component="img"
                       src={getExerciseIconUrl(exercise.icon)}
                       alt={exercise.name}
+                      loading="lazy"
+                      decoding="async"
                       sx={{
                         width: "100%",
                         height: "100%",
