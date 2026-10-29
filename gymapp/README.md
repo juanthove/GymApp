@@ -19,12 +19,14 @@ Aplicacion para gestion y ejecucion de rutinas de gimnasio, con frontend en Reac
 La app tiene dos flujos principales:
 
 1. Flujo de uso diario:
+
 - Seleccion de usuario activo en Home.
 - Visualizacion del workout actual del usuario.
 - Navegacion por dias y ejercicios.
 - Pantalla de cierre/resumen final.
 
 2. Flujo administrativo:
+
 - Alta/edicion de usuarios.
 - Alta/edicion de ejercicios (incluye imagen y video).
 - Creacion de plantillas de entrenamiento.
@@ -35,25 +37,30 @@ La app tiene dos flujos principales:
 La app esta pensada para guardar el entrenamiento en niveles, desde lo general a lo puntual:
 
 1. Usuario (`User`)
+
 - Representa la persona que entrena.
 - Puede tener un workout actual asignado.
 
 2. Plan de entrenamiento (`Workout`)
+
 - Datos principales: `name`, `startDate`, `endDate`, `userId`.
 - Campo clave: `reps`.
 - En este proyecto, `reps` se usa como referencia global de series/repeticiones objetivo del plan.
 
 3. Dia de entrenamiento (`WorkoutDay`)
+
 - Pertenece a un `Workout`.
 - Datos: `name`, `muscles`, `dayOrder`.
 - Seguimiento temporal: `startedAt`, `finishedAt`.
 - Estado calculado: `NOT_STARTED`, `IN_PROGRESS`, `COMPLETED`.
 
 4. Ejercicio dentro del dia (`WorkoutExercise`)
+
 - Relaciona un ejercicio base (`Exercise`) con un dia (`WorkoutDay`).
 - Datos operativos para entrenar: `exerciseOrder` (orden del ejercicio), `weight` (peso usado), `comment` (observaciones) y `completed` (si fue completado o no).
 
 5. Catalogo de ejercicios (`Exercise`)
+
 - Datos base: `name`, `description`, `type`.
 - Soporte multimedia: `image` y `video` para referencia tecnica.
 
@@ -99,12 +106,12 @@ Formato de respuesta de error:
 
 ```json
 {
-	"status": 400,
-	"error": "Bad Request",
-	"message": "Validation failed",
-	"fields": {
-		"name": "must not be blank"
-	}
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Validation failed",
+  "fields": {
+    "name": "must not be blank"
+  }
 }
 ```
 
@@ -186,3 +193,8 @@ Si cambias puertos de frontend o backend, actualiza:
 
 - `backend/src/main/java/com/gymapp/config/CorsConfig.java`
 - `gymapp/vite.config.js`
+
+## Logros
+
+- Los logros de consistencia guardan los días entrenados
+- Los logros de racha cuentan los dias desde el inicio de la racha

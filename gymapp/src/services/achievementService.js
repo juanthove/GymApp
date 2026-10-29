@@ -20,6 +20,9 @@ export async function createAchievement(achievement) {
   formData.append("type", achievement.type);
   formData.append("levelId", achievement.levelId);
   formData.append("requiredValue", achievement.requiredValue);
+  formData.append("minimumDate", achievement.minimumDate || "");
+  formData.append("timeLimit", achievement.timeLimit || "");
+  formData.append("timeLimitType", achievement.timeLimitType || "");
 
   if (achievement.muscle) {
     formData.append("muscle", achievement.muscle);
@@ -49,6 +52,9 @@ export async function updateAchievement(id, achievement) {
   formData.append("type", achievement.type);
   formData.append("levelId", achievement.levelId);
   formData.append("requiredValue", achievement.requiredValue);
+  formData.append("minimumDate", achievement.minimumDate || "");
+  formData.append("timeLimit", achievement.timeLimit || "");
+  formData.append("timeLimitType", achievement.timeLimitType || "");
 
   if (achievement.muscle) {
     formData.append("muscle", achievement.muscle);

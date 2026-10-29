@@ -27,6 +27,8 @@ public class UserAchievement {
     @Column(nullable = false)
     private Double progress = 0.0;
 
+    private LocalDateTime progressUpdatedAt;
+
     private LocalDateTime unlockedAt;
 
 }

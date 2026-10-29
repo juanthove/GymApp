@@ -5,7 +5,10 @@ import com.gymapp.dto.response.AchievementExerciseResponse;
 import com.gymapp.dto.response.AchievementResponse;
 import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.Achievement;
+import com.gymapp.model.AchievementType;
 import com.gymapp.model.Exercise;
+import com.gymapp.model.MuscleType;
+import com.gymapp.model.TimeLimitType;
 import com.gymapp.model.UserLevel;
 import com.gymapp.repository.AchievementRepository;
 import com.gymapp.repository.ExerciseRepository;
@@ -21,10 +24,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Objects;
 
 @Service
 public class AchievementServiceImpl implements AchievementService {
@@ -66,6 +71,9 @@ public class AchievementServiceImpl implements AchievementService {
         achievement.setName(request.name());
         achievement.setType(request.type());
         achievement.setRequiredValue(request.requiredValue());
+        achievement.setMinimumDate(request.minimumDate());
+        achievement.setTimeLimit(request.timeLimit());
+        achievement.setTimeLimitType(request.timeLimitType());
         achievement.setMuscle(request.muscle());
 
         if (request.levelId() != null) {
@@ -111,12 +119,32 @@ public class AchievementServiceImpl implements AchievementService {
         Achievement achievement = achievementRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Logro no encontrado"));
 
+        // Guardar datos anteriores que pueden afectar el progreso
+        AchievementType oldType = achievement.getType();
+        Double oldRequiredValue = achievement.getRequiredValue();
+        LocalDate oldMinimumDate = achievement.getMinimumDate();
+        Integer oldTimeLimit = achievement.getTimeLimit();
+        TimeLimitType oldTimeLimitType = achievement.getTimeLimitType();
+        MuscleType oldMuscle = achievement.getMuscle();
+
+        Set<Long> oldExerciseIds = achievement.getExercises()
+                .stream()
+                .map(Exercise::getId)
+                .collect(Collectors.toSet());
+
+        Long oldLevelId = achievement.getLevel() != null
+                ? achievement.getLevel().getId()
+                : null;
+
         String oldName = achievement.getName();
         String newSafeName = request.name().toLowerCase().replace(" ", "_");
 
         achievement.setName(request.name());
         achievement.setType(request.type());
         achievement.setRequiredValue(request.requiredValue());
+        achievement.setMinimumDate(request.minimumDate());
+        achievement.setTimeLimit(request.timeLimit());
+        achievement.setTimeLimitType(request.timeLimitType());
         achievement.setMuscle(request.muscle());
 
         Files.createDirectories(imagePath);
@@ -177,9 +205,31 @@ public class AchievementServiceImpl implements AchievementService {
             achievement.setExercises(new HashSet<>());
         }
 
+        // Verificar si cambió algún dato que afecta el progreso
+        boolean progressDataChanged = !Objects.equals(oldType, achievement.getType())
+                || !Objects.equals(oldRequiredValue, achievement.getRequiredValue())
+                || !Objects.equals(oldMinimumDate, achievement.getMinimumDate())
+                || !Objects.equals(oldTimeLimit, achievement.getTimeLimit())
+                || !Objects.equals(oldTimeLimitType, achievement.getTimeLimitType())
+                || !Objects.equals(oldMuscle, achievement.getMuscle())
+                || !Objects.equals(
+                        oldLevelId,
+                        achievement.getLevel() != null
+                                ? achievement.getLevel().getId()
+                                : null)
+                || !Objects.equals(
+                        oldExerciseIds,
+                        achievement.getExercises()
+                                .stream()
+                                .map(Exercise::getId)
+                                .collect(Collectors.toSet()));
+
         achievementRepository.save(achievement);
 
-        userAchievementService.syncAchievementProgress(achievement);
+        // Recalcular solo si hubo un cambio que afecte el progreso
+        if (progressDataChanged) {
+            userAchievementService.syncAchievementProgress(achievement);
+        }
 
         return toResponse(achievement);
     }
@@ -230,6 +280,9 @@ public class AchievementServiceImpl implements AchievementService {
                 achievement.getLevel() != null ? achievement.getLevel().getName() : null,
                 achievement.getRequiredValue(),
                 achievement.getImage(),
+                achievement.getMinimumDate(),
+                achievement.getTimeLimit(),
+                achievement.getTimeLimitType(),
                 achievement.getMuscle(),
                 achievement.getExercises().stream()
                         .map(this::toExerciseResponse)

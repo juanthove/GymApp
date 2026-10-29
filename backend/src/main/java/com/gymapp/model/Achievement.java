@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.time.LocalDate;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -29,6 +30,13 @@ public class Achievement {
     private Double requiredValue; // Valor requerido, dependiendo el tipo es lo que representa
 
     private String image;
+
+    private LocalDate minimumDate;
+
+    private Integer timeLimit;
+
+    @Enumerated(EnumType.STRING)
+    private TimeLimitType timeLimitType;
 
     @Enumerated(EnumType.STRING)
     private MuscleType muscle;

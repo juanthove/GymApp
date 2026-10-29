@@ -56,6 +56,8 @@ export default function CreateAchievementScreen() {
   const [editingAchievement, setEditingAchievement] = useState(null);
   const [isSelectionModalOpen, setSelectionModalOpen] = useState(false);
 
+  const [originalAchievements, setOriginalAchievements] = useState([]);
+
   const { message, messageType, showMessage, clearMessage } = useSnackbar();
 
   useEffect(() => {
@@ -68,19 +70,18 @@ export default function CreateAchievementScreen() {
     { value: "STREAK", label: "Racha" },
   ];
 
+  const timeLimitOptions = [
+    { value: "", label: "Ninguno" },
+    { value: "WEEK", label: "Semana" },
+    { value: "MONTH", label: "Mes" },
+    { value: "YEAR", label: "Año" },
+  ];
+
   const muscleOptions = [
     { value: "", label: "Ninguno" },
     ...Object.entries(muscleLabels).map(([value, label]) => ({
       value,
       label,
-    })),
-  ];
-
-  const exerciseOptions = [
-    { value: "", label: "Ninguno" },
-    ...exercises.map((ex) => ({
-      value: ex.id,
-      label: ex.name,
     })),
   ];
 
@@ -104,6 +105,7 @@ export default function CreateAchievementScreen() {
 
     setLevels(levelsWithAchievements);
     setExercises(exercisesData);
+    setOriginalAchievements(structuredClone(achievementsData));
   };
 
   const updateAchievementField = (levelIndex, achIndex, field, value) => {
@@ -133,6 +135,9 @@ export default function CreateAchievementScreen() {
       name: "",
       type: "VOLUME",
       requiredValue: "",
+      minimumDate: "",
+      timeLimit: "",
+      timeLimitType: "",
       muscle: "",
       exercises: [],
     });
@@ -172,6 +177,24 @@ export default function CreateAchievementScreen() {
     setLevels(updated);
   };
 
+  //Comparar los logros originales con los actuales para saber si hubo cambios
+  const achievementChanged = (original, current) => {
+    if (!original) return true;
+
+    return (
+      original.name !== current.name ||
+      original.type !== current.type ||
+      original.levelId !== current.levelId ||
+      Number(original.requiredValue) !== Number(current.requiredValue) ||
+      (original.minimumDate || null) !== (current.minimumDate || null) ||
+      (original.timeLimit || null) !== (current.timeLimit || null) ||
+      (original.timeLimitType || null) !== (current.timeLimitType || null) ||
+      (original.muscle || null) !== (current.muscle || null) ||
+      JSON.stringify(original.exercises?.map((e) => e.id).sort() || []) !==
+        JSON.stringify(current.exercises?.map((e) => e.id).sort() || [])
+    );
+  };
+
   const saveAll = async () => {
     if (!validateAchievements()) return;
 
@@ -181,11 +204,25 @@ export default function CreateAchievementScreen() {
           const ach = level.achievements[i];
           const key = getKey(ach);
 
+          //Encontrar cambios
+          const original = originalAchievements.find((a) => a.id === ach.id);
+          const imageChanged = images[key] !== undefined || deleteImages[key] === true;
+
+          const changed = achievementChanged(original, ach);
+
+          //Si no hubo cambios no hacer update
+          if (ach.id && !changed && !imageChanged) {
+            continue;
+          }
+
           const payload = {
             name: ach.name,
             type: ach.type,
             levelId: level.id,
             requiredValue: Number(ach.requiredValue),
+            minimumDate: ach.minimumDate || null,
+            timeLimit: ach.timeLimit ? Number(ach.timeLimit) : null,
+            timeLimitType: ach.timeLimitType || null,
             muscle: ach.muscle || null,
             exerciseIds: ach.exercises?.map((e) => e.id) || [],
             image: images[key] || null,
@@ -276,6 +313,15 @@ export default function CreateAchievementScreen() {
           }
         }
 
+        //VALIDACIONES LIMITE DE TIEMPO
+        if (ach.timeLimit && !ach.timeLimitType) {
+          return validationError(`El logro "${ach.name}" debe tener un período para el límite de tiempo`);
+        }
+
+        if (ach.timeLimitType && !ach.timeLimit) {
+          return validationError(`El logro "${ach.name}" debe tener un límite de tiempo`);
+        }
+
         const exerciseKey =
           ach.exercises?.length > 0
             ? ach.exercises
@@ -351,34 +397,65 @@ export default function CreateAchievementScreen() {
 
           <Stack spacing={3}>
             {levels.map((level, levelIndex) => (
-              <Accordion key={level.id}>
+              <Accordion
+                key={level.id}
+                sx={{
+                  boxShadow: "0 0 5px 2px #e41313a8",
+                  borderRadius: "8px !important",
+                  overflow: "hidden",
+                  "&:before": {
+                    display: "none",
+                  },
+                }}
+              >
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography>{level.name}</Typography>
+                  <Typography
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: "1.25rem",
+                      pl: 1,
+                      borderLeft: "3px solid",
+                      borderColor: "error.main",
+                      textShadow: "0 5px 5px rgba(0,0,0,0.15)",
+                    }}
+                  >
+                    {level.name}
+                  </Typography>
                 </AccordionSummary>
 
                 <AccordionDetails>
                   <Stack spacing={2}>
                     {level.achievements.map((ach, achIndex) => (
-                      <Accordion key={ach.id || ach.tempId}>
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                          <Stack
-                            direction="row"
-                            justifyContent="space-between"
-                            alignItems="center"
-                            sx={{ width: "100%" }}
-                          >
-                            <Typography>{ach.name || `Logro ${achIndex + 1}`}</Typography>
+                      <Accordion
+                        key={ach.id || ach.tempId}
+                        sx={{
+                          boxShadow: "0 0 5px 2px #00000083",
+                          borderRadius: "8px !important",
+                          overflow: "hidden",
+                          "&:before": {
+                            display: "none",
+                          },
+                        }}
+                      >
+                        <Box sx={{ position: "relative" }}>
+                          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <Typography sx={{ fontWeight: 700, textShadow: "0 3px 3px rgba(0,0,0,0.15)" }}>
+                              {ach.name || `Logro ${achIndex + 1}`}
+                            </Typography>
+                          </AccordionSummary>
 
-                            <IconButton
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeAchievement(levelIndex, achIndex);
-                              }}
-                            >
-                              <DeleteIcon color="error" />
-                            </IconButton>
-                          </Stack>
-                        </AccordionSummary>
+                          <IconButton
+                            onClick={() => removeAchievement(levelIndex, achIndex)}
+                            sx={{
+                              position: "absolute",
+                              right: 45,
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                            }}
+                          >
+                            <DeleteIcon color="error" />
+                          </IconButton>
+                        </Box>
 
                         <AccordionDetails>
                           <Stack spacing={2}>
@@ -411,6 +488,56 @@ export default function CreateAchievementScreen() {
                                 updateAchievementField(levelIndex, achIndex, "requiredValue", e.target.value)
                               }
                             />
+
+                            <TextField
+                              type="date"
+                              label="Fecha mínima"
+                              value={ach.minimumDate || ""}
+                              onChange={(e) =>
+                                updateAchievementField(levelIndex, achIndex, "minimumDate", e.target.value)
+                              }
+                              slotProps={{
+                                inputLabel: {
+                                  shrink: true,
+                                },
+                              }}
+                            />
+
+                            <Stack direction="row" spacing={2}>
+                              <TextField
+                                type="number"
+                                label="Límite de tiempo"
+                                value={ach.timeLimit || ""}
+                                onChange={(e) =>
+                                  updateAchievementField(levelIndex, achIndex, "timeLimit", e.target.value)
+                                }
+                                inputProps={{
+                                  min: 1,
+                                }}
+                                sx={{ flex: 1 }}
+                                disabled={!ach.timeLimitType || ach.type === "STREAK"}
+                              />
+
+                              <Autocomplete
+                                options={timeLimitOptions}
+                                value={
+                                  timeLimitOptions.find((option) => option.value === (ach.timeLimitType || "")) ||
+                                  timeLimitOptions[0]
+                                }
+                                onChange={(_, newValue) => {
+                                  updateAchievementField(levelIndex, achIndex, "timeLimitType", newValue?.value || "");
+
+                                  if (!newValue?.value) {
+                                    updateAchievementField(levelIndex, achIndex, "timeLimit", "");
+                                  }
+                                }}
+                                getOptionLabel={(option) => option.label}
+                                isOptionEqualToValue={(option, value) => option.value === value.value}
+                                renderInput={(params) => <TextField {...params} label="Período" />}
+                                sx={{ flex: 1 }}
+                                disabled={ach.type === "STREAK"}
+                              />
+                            </Stack>
 
                             <Autocomplete
                               autoHighlight

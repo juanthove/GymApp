@@ -259,6 +259,167 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
             """)
     List<Object[]> sumVolumeByExercisesGroupedByUser(List<Long> exerciseIds);
 
+    // ============================================================
+    // Consultas para obtener volumen para los logros
+    // ============================================================
+
+    // Obtener el volumen total de un usuario en un rango de fechas
+    @Query(value = """
+            SELECT COALESCE(
+                SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)),
+                0
+            )
+            FROM workout_set ws
+            WHERE ws.user_id = :userId
+              AND ws.performed_at >= COALESCE(
+                  CAST(:from AS timestamp),
+                  CAST('-infinity' AS timestamp)
+              )
+              AND ws.performed_at < COALESCE(
+                  CAST(:to AS timestamp),
+                  CAST('infinity' AS timestamp)
+              )
+            """, nativeQuery = true)
+    Double sumTotalVolumeByUserAndDateRange(
+            @Param("userId") Long userId,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    // Obtener el volumen de un musculo de un usuario en un rango de fechas
+    @Query(value = """
+            SELECT COALESCE(
+                SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)),
+                0
+            )
+            FROM workout_set ws
+            JOIN workout_exercise we
+                ON ws.workout_exercise_id = we.id
+            JOIN exercise e
+                ON we.exercise_id = e.id
+            WHERE ws.user_id = :userId
+              AND e.muscle = :muscle
+              AND ws.performed_at >= COALESCE(
+                  CAST(:from AS timestamp),
+                  CAST('-infinity' AS timestamp)
+              )
+              AND ws.performed_at < COALESCE(
+                  CAST(:to AS timestamp),
+                  CAST('infinity' AS timestamp)
+              )
+            """, nativeQuery = true)
+    Double sumVolumeByMuscleAndDateRange(
+            @Param("userId") Long userId,
+            @Param("muscle") String muscle,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    // Obtener el volumen de un conjunto de ejercicios de un usuario en un rango de
+    // fechas
+    @Query(value = """
+            SELECT COALESCE(
+                SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)),
+                0
+            )
+            FROM workout_set ws
+            JOIN workout_exercise we
+                ON ws.workout_exercise_id = we.id
+            WHERE ws.user_id = :userId
+              AND we.exercise_id IN (:exerciseIds)
+              AND ws.performed_at >= COALESCE(
+                  CAST(:from AS timestamp),
+                  CAST('-infinity' AS timestamp)
+              )
+              AND ws.performed_at < COALESCE(
+                  CAST(:to AS timestamp),
+                  CAST('infinity' AS timestamp)
+              )
+            """, nativeQuery = true)
+    Double sumVolumeByExercisesAndDateRange(
+            @Param("userId") Long userId,
+            @Param("exerciseIds") List<Long> exerciseIds,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    // Obtener el volumen total de todos los usuarios en un rango de fechas
+    @Query(value = """
+            SELECT
+                ws.user_id,
+                COALESCE(
+                    SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)),
+                    0
+                ) AS total_volume
+            FROM workout_set ws
+            WHERE ws.performed_at >= COALESCE(
+                CAST(:from AS timestamp),
+                CAST('-infinity' AS timestamp)
+            )
+              AND ws.performed_at < COALESCE(
+                CAST(:to AS timestamp),
+                CAST('infinity' AS timestamp)
+            )
+            GROUP BY ws.user_id
+            """, nativeQuery = true)
+    List<Object[]> sumTotalVolumeByUserAndDateRangeGrouped(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    // Obtener el volumen de un musculo de todos los usuarios en un rango de fechas
+    @Query(value = """
+            SELECT
+                ws.user_id,
+                COALESCE(
+                    SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)),
+                    0
+                ) AS total_volume
+            FROM workout_set ws
+            JOIN workout_exercise we
+                ON ws.workout_exercise_id = we.id
+            JOIN exercise e
+                ON we.exercise_id = e.id
+            WHERE e.muscle = :muscle
+              AND ws.performed_at >= COALESCE(
+                  CAST(:from AS timestamp),
+                  CAST('-infinity' AS timestamp)
+              )
+              AND ws.performed_at < COALESCE(
+                  CAST(:to AS timestamp),
+                  CAST('infinity' AS timestamp)
+              )
+            GROUP BY ws.user_id
+            """, nativeQuery = true)
+    List<Object[]> sumVolumeByMuscleAndDateRangeGrouped(
+            @Param("muscle") String muscle,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    // Obtener el volumen de un conjunto de ejercicios de todos los usuarios en un
+    // rango de fechas
+    @Query(value = """
+            SELECT
+                ws.user_id,
+                COALESCE(
+                    SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)),
+                    0
+                ) AS total_volume
+            FROM workout_set ws
+            JOIN workout_exercise we
+                ON ws.workout_exercise_id = we.id
+            WHERE we.exercise_id IN (:exerciseIds)
+              AND ws.performed_at >= COALESCE(
+                  CAST(:from AS timestamp),
+                  CAST('-infinity' AS timestamp)
+              )
+              AND ws.performed_at < COALESCE(
+                  CAST(:to AS timestamp),
+                  CAST('infinity' AS timestamp)
+              )
+            GROUP BY ws.user_id
+            """, nativeQuery = true)
+    List<Object[]> sumVolumeByExercisesAndDateRangeGrouped(
+            @Param("exerciseIds") List<Long> exerciseIds,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
     // Eliminar todos los sets de ejercicios incompletos de un dia en progreso
     @Modifying
     @Query(value = """

@@ -7,6 +7,7 @@ import com.gymapp.model.Achievement;
 import com.gymapp.model.AchievementType;
 import com.gymapp.model.Exercise;
 import com.gymapp.model.MuscleType;
+import com.gymapp.model.TimeLimitType;
 import com.gymapp.model.User;
 import com.gymapp.model.UserAchievement;
 import com.gymapp.model.UserLevel;
@@ -15,12 +16,17 @@ import com.gymapp.repository.AchievementRepository;
 import com.gymapp.repository.UserAchievementRepository;
 import com.gymapp.repository.UserRepository;
 import com.gymapp.repository.WorkoutSetRepository;
+import com.gymapp.repository.projection.WorkoutDateProjection;
+import com.gymapp.repository.WorkoutDayRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.DayOfWeek;
+import java.time.YearMonth;
+import java.time.temporal.WeekFields;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,7 +51,15 @@ public class UserAchievementServiceImpl implements UserAchievementService {
     private WorkoutSetRepository workoutSetRepository;
 
     @Autowired
+    private WorkoutDayRepository workoutDayRepository;
+
+    @Autowired
     private UserService userService;
+
+    private record DateRange(
+            LocalDate start,
+            LocalDate end) {
+    }
 
     @Override
     public List<UserAchievementResponse> getAllUserAchievements() {
@@ -118,6 +132,8 @@ public class UserAchievementServiceImpl implements UserAchievementService {
     @Override
     public List<UserAchievementResponse> getUserAchievements(Long userId) {
 
+        probarRango();
+
         // Usuario
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -162,6 +178,9 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                     achievement.getType(),
                     achievement.getRequiredValue(),
                     achievement.getImage(),
+                    achievement.getMinimumDate(),
+                    achievement.getTimeLimit(),
+                    achievement.getTimeLimitType(),
                     achievement.getMuscle(),
                     achievement.getExercises().stream()
                             .map(this::toExerciseResponse)
@@ -175,10 +194,290 @@ public class UserAchievementServiceImpl implements UserAchievementService {
         }).toList();
     }
 
+    // -----------------------------
+    // CALCULO DE PROGRESO DE LOGROS
+    // -----------------------------
+
+    // Obtener rango de ferchas para calcular el progreso de un logro
+
+    private DateRange getAchievementDateRange(Achievement achievement) {
+        LocalDate today = LocalDate.now();
+        LocalDate minimumDate = achievement.getMinimumDate();
+
+        // Sin timeLimit
+        if (achievement.getTimeLimit() == null) {
+            if (minimumDate == null) {
+                // Todo el historial
+                return new DateRange(null, today);
+            }
+
+            // Desde minimumDate exacta hasta hoy
+            return new DateRange(minimumDate, today);
+        }
+
+        LocalDate startByTimeLimit;
+
+        // Calcular el inicio según el límite temporal
+        switch (achievement.getTimeLimitType()) {
+            case WEEK ->
+                startByTimeLimit = today
+                        .with(DayOfWeek.MONDAY)
+                        .minusWeeks(achievement.getTimeLimit() - 1L);
+
+            case MONTH ->
+                startByTimeLimit = today
+                        .withDayOfMonth(1)
+                        .minusMonths(achievement.getTimeLimit() - 1L);
+
+            case YEAR ->
+                startByTimeLimit = today
+                        .withDayOfYear(1)
+                        .minusYears(achievement.getTimeLimit() - 1L);
+
+            default ->
+                throw new IllegalStateException(
+                        "Tipo de límite de tiempo no válido");
+        }
+
+        // Si hay minimumDate, redondearla al inicio de su período
+        if (minimumDate != null) {
+            LocalDate startByMinimumDate;
+
+            switch (achievement.getTimeLimitType()) {
+                case WEEK ->
+                    startByMinimumDate = minimumDate.with(DayOfWeek.MONDAY);
+
+                case MONTH ->
+                    startByMinimumDate = minimumDate.withDayOfMonth(1);
+
+                case YEAR ->
+                    startByMinimumDate = minimumDate.withDayOfYear(1);
+
+                default ->
+                    throw new IllegalStateException(
+                            "Tipo de límite de tiempo no válido");
+            }
+
+            // Elegir el inicio más reciente
+            if (startByMinimumDate.isAfter(startByTimeLimit)) {
+                startByTimeLimit = startByMinimumDate;
+            }
+        }
+
+        return new DateRange(startByTimeLimit, today);
+    }
+
+    public void probarRango() {
+        Achievement achievement = new Achievement();
+        achievement.setTimeLimit(4);
+        achievement.setTimeLimitType(TimeLimitType.MONTH);
+        achievement.setMinimumDate(LocalDate.of(2026, 11, 3));
+
+        DateRange range = getAchievementDateRange(achievement);
+
+        System.out.println("Desde: " + range.start());
+        System.out.println("Hasta: " + range.end());
+    }
+
+    // Calcular el progreso para el volumen
+    private void calculateVolumeProgress(
+            User user,
+            Achievement ach,
+            UserAchievement ua,
+            double currentWorkoutVolume) {
+
+        LocalDate today = LocalDate.now();
+
+        // Si el entrenamiento no corresponde a la fecha mínima, no sumar.
+        if (ach.getMinimumDate() != null &&
+                today.isBefore(ach.getMinimumDate())) {
+            return;
+        }
+
+        // Si no tiene límite temporal, sumar directamente.
+        if (ach.getTimeLimit() == null) {
+            ua.setProgress(ua.getProgress() + currentWorkoutVolume);
+            return;
+        }
+
+        LocalDateTime lastUpdate = ua.getProgressUpdatedAt();
+
+        boolean recalculate = lastUpdate == null;
+
+        if (!recalculate) {
+            LocalDate lastUpdateDate = lastUpdate.toLocalDate();
+
+            switch (ach.getTimeLimitType()) {
+
+                case WEEK -> {
+                    WeekFields weekFields = WeekFields.ISO;
+
+                    int currentWeek = today.get(weekFields.weekOfWeekBasedYear());
+                    int currentWeekYear = today.get(weekFields.weekBasedYear());
+
+                    int previousWeek = lastUpdateDate.get(weekFields.weekOfWeekBasedYear());
+                    int previousWeekYear = lastUpdateDate.get(weekFields.weekBasedYear());
+
+                    recalculate = currentWeek != previousWeek
+                            || currentWeekYear != previousWeekYear;
+                }
+
+                case MONTH -> {
+                    recalculate = !YearMonth.from(today)
+                            .equals(YearMonth.from(lastUpdateDate));
+                }
+
+                case YEAR -> {
+                    recalculate = today.getYear() != lastUpdateDate.getYear();
+                }
+
+                default -> throw new IllegalStateException(
+                        "Tipo de límite de tiempo no válido");
+            }
+        }
+
+        if (recalculate) {
+            double fullProgress = calculateFullVolumeProgress(user, ach);
+
+            ua.setProgress(fullProgress);
+            ua.setProgressUpdatedAt(LocalDateTime.now());
+
+        } else {
+            ua.setProgress(ua.getProgress() + currentWorkoutVolume);
+        }
+    }
+
+    // Calcular el progreso para la consistencia
+    private long calculateConsistencyProgress(
+            User user,
+            Achievement achievement) {
+
+        if (achievement.getMinimumDate() == null && achievement.getTimeLimit() == null) {
+            return user.getTotalWorkoutDays();
+        }
+
+        DateRange range = getAchievementDateRange(achievement);
+
+        List<LocalDate> workoutDates = workoutDayRepository
+                .findWorkoutDatesByUserAndDateRange(
+                        user.getId(),
+                        range.start(),
+                        range.end())
+                .stream()
+                .map(WorkoutDateProjection::getDate)
+                .toList();
+
+        return workoutDates.size();
+    }
+
+    // Calcular el progreso para la racha, no se utiliza el limite de tiempo porque
+    // una racha no puede tener limite de tiempo
+    private long calculateStreakProgress(
+            User user,
+            Achievement achievement) {
+        LocalDate today = LocalDate.now();
+
+        // Si no tiene fecha minima usa directamente la racha actual del usuario
+        if (achievement.getMinimumDate() == null) {
+
+            LocalDate streakStart = user.getStreakStartDate();
+
+            if (streakStart == null || streakStart.isAfter(today)) {
+                return 0;
+            }
+
+            return ChronoUnit.DAYS.between(streakStart, today) + 1;
+        }
+
+        LocalDate startDate = achievement.getMinimumDate();
+
+        // El usuario actualmente no tiene una racha.
+        if (startDate == null) {
+            return 0;
+        }
+
+        // Si por alguna razón la fecha inicial es posterior a hoy.
+        if (startDate.isAfter(today)) {
+            return 0;
+        }
+
+        int requiredDaysPerWeek = user.getGymDaysPerWeek();
+
+        if (requiredDaysPerWeek <= 0) {
+            return 0;
+        }
+
+        List<LocalDate> workoutDates = workoutDayRepository
+                .findWorkoutDatesByUserAndDateRange(
+                        user.getId(),
+                        startDate,
+                        today)
+                .stream()
+                .map(WorkoutDateProjection::getDate)
+                .toList();
+
+        if (workoutDates.isEmpty()) {
+            return 0;
+        }
+
+        // Agrupamos los entrenamientos por semana ISO.
+        WeekFields weekFields = WeekFields.ISO;
+
+        Map<String, Long> workoutsByWeek = workoutDates.stream()
+                .distinct()
+                .collect(Collectors.groupingBy(date -> {
+                    int year = date.get(weekFields.weekBasedYear());
+                    int week = date.get(weekFields.weekOfWeekBasedYear());
+
+                    return year + "-" + week;
+                }, Collectors.counting()));
+
+        LocalDate currentWeekStart = today.with(DayOfWeek.MONDAY);
+
+        LocalDate firstWeekStart = startDate.with(DayOfWeek.MONDAY);
+
+        long progress = 0;
+
+        while (!currentWeekStart.isBefore(firstWeekStart)) {
+
+            int year = currentWeekStart.get(
+                    weekFields.weekBasedYear());
+
+            int week = currentWeekStart.get(
+                    weekFields.weekOfWeekBasedYear());
+
+            String key = year + "-" + week;
+
+            long daysTrained = workoutsByWeek.getOrDefault(key, 0L);
+
+            if (currentWeekStart.equals(today.with(DayOfWeek.MONDAY))) {
+
+                long daysUntilToday = ChronoUnit.DAYS.between(
+                        currentWeekStart,
+                        today) + 1;
+
+                progress += daysUntilToday;
+
+                currentWeekStart = currentWeekStart.minusWeeks(1);
+                continue;
+            }
+
+            if (daysTrained < requiredDaysPerWeek) {
+                break;
+            }
+
+            progress += 7;
+
+            currentWeekStart = currentWeekStart.minusWeeks(1);
+        }
+
+        return progress;
+    }
+
     // Actualizar solo streak cuando se obtiene los logros
     private void updateStreakAchievements(User user) {
 
-        // Traer solo los UA activos (no completados)
+        // Traer los UserAchievement existentes
         List<UserAchievement> existing = userAchievementRepository.findByUserId(user.getId());
 
         Map<Long, UserAchievement> uaMap = existing.stream()
@@ -190,57 +489,42 @@ public class UserAchievementServiceImpl implements UserAchievementService {
         List<Achievement> achievements = achievementRepository.findAvailableStreakAchievements(
                 user.getUserLevel().getId());
 
-        LocalDate today = LocalDate.now();
-
-        double progress = 0.0;
-
-        if (user.getStreakStartDate() != null) {
-            progress = ChronoUnit.DAYS.between(
-                    user.getStreakStartDate(),
-                    today) + 1;
-        }
-
         List<UserAchievement> toSave = new ArrayList<>();
 
         for (Achievement ach : achievements) {
 
             UserAchievement ua = uaMap.get(ach.getId());
 
-            // Crear si no existe
             if (ua == null) {
                 ua = new UserAchievement();
                 ua.setUser(user);
                 ua.setAchievement(ach);
                 ua.setProgress(0.0);
+                ua.setProgressUpdatedAt(LocalDateTime.now());
             }
 
-            boolean changed = false;
+            // Cada achievement calcula su propia racha
+            double progress = calculateStreakProgress(user, ach);
 
-            // Actualizar progress SOLO si cambió
             if (!Objects.equals(ua.getProgress(), progress)) {
                 ua.setProgress(progress);
-                changed = true;
             }
 
-            // Unlock
             if (ua.getUnlockedAt() == null &&
                     progress >= ach.getRequiredValue()) {
 
                 ua.setUnlockedAt(LocalDateTime.now());
-                changed = true;
             }
 
-            if (changed) {
-                toSave.add(ua);
-            }
+            toSave.add(ua);
         }
 
-        // Guardar solo si hay cambios reales
         if (!toSave.isEmpty()) {
             userAchievementRepository.saveAll(toSave);
         }
     }
 
+    // Actualizar los logros de un usuario utilizando los datos de un entrenamiento
     @Override
     public void updateAchievements(User user, Long workoutDayId) {
 
@@ -321,6 +605,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                 ua.setUser(user);
                 ua.setAchievement(ach);
                 ua.setProgress(calculateInitialProgress(user, ach, workoutDayId));
+                ua.setProgressUpdatedAt(LocalDateTime.now());
             }
 
             if (ua.getUnlockedAt() != null) {
@@ -347,25 +632,17 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                         progressToAdd = totalVolume;
                     }
 
-                    ua.setProgress(ua.getProgress() + progressToAdd);
+                    calculateVolumeProgress(user, ach, ua, progressToAdd);
                 }
 
                 case STREAK -> {
-                    if (user.getStreakStartDate() != null) {
-
-                        long days = ChronoUnit.DAYS.between(
-                                user.getStreakStartDate(),
-                                LocalDate.now()) + 1;
-
-                        ua.setProgress((double) days);
-
-                    } else {
-                        ua.setProgress(0.0);
-                    }
+                    ua.setProgress(
+                            (double) calculateStreakProgress(user, ach));
                 }
 
                 case CONSISTENCY -> {
-                    ua.setProgress((double) user.getTotalWorkoutDays());
+                    ua.setProgress(
+                            (double) calculateConsistencyProgress(user, ach));
                 }
             }
 
@@ -388,27 +665,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
         switch (ach.getType()) {
 
             case VOLUME -> {
-
-                if (!ach.getExercises().isEmpty()) {
-
-                    return workoutSetRepository.sumVolumeByExercises(
-                            user.getId(),
-                            ach.getExercises().stream()
-                                    .map(Exercise::getId)
-                                    .toList(),
-                            workoutDayId);
-
-                } else if (ach.getMuscle() != null) {
-                    return workoutSetRepository.sumVolumeByMuscle(
-                            user.getId(),
-                            ach.getMuscle(),
-                            workoutDayId);
-
-                } else {
-                    return workoutSetRepository.sumTotalVolume(
-                            user.getId(),
-                            workoutDayId);
-                }
+                return calculateFullVolumeProgress(user, ach);
             }
 
             case STREAK, CONSISTENCY -> {
@@ -438,32 +695,48 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
         Map<Long, Double> progressByUser = new HashMap<>();
 
-        // Obtener progreso masivo SOLO para VOLUME
+        // Obtener el progreso de los logros de volumen para todos los usuarios
         if (ach.getType() == AchievementType.VOLUME) {
+
+            DateRange range = getAchievementDateRange(ach);
+
+            LocalDateTime from = range.start() != null
+                    ? range.start().atStartOfDay()
+                    : null;
+
+            LocalDateTime to = range.end() != null
+                    ? range.end().plusDays(1).atStartOfDay()
+                    : null;
 
             List<Object[]> rows;
 
             if (!ach.getExercises().isEmpty()) {
 
-                rows = workoutSetRepository.sumVolumeByExercisesGroupedByUser(
-                        ach.getExercises().stream()
-                                .map(Exercise::getId)
-                                .toList());
+                List<Long> exerciseIds = ach.getExercises().stream()
+                        .map(Exercise::getId)
+                        .toList();
+
+                rows = workoutSetRepository
+                        .sumVolumeByExercisesAndDateRangeGrouped(
+                                exerciseIds, from, to);
 
             } else if (ach.getMuscle() != null) {
 
                 rows = workoutSetRepository
-                        .sumVolumeByMuscleGroupedByUser(ach.getMuscle());
+                        .sumVolumeByMuscleAndDateRangeGrouped(
+                                ach.getMuscle().name(), from, to);
 
             } else {
 
-                rows = workoutSetRepository.sumTotalVolumeByUser();
+                rows = workoutSetRepository
+                        .sumTotalVolumeByUserAndDateRangeGrouped(
+                                from, to);
             }
 
             for (Object[] row : rows) {
                 progressByUser.put(
-                        (Long) row[0],
-                        (Double) row[1]);
+                        ((Number) row[0]).longValue(),
+                        ((Number) row[1]).doubleValue());
             }
         }
 
@@ -488,11 +761,13 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                 ua.setUser(user);
                 ua.setAchievement(ach);
                 changed = true;
+                ua.setProgressUpdatedAt(LocalDateTime.now());
             }
 
             // Actualizar progreso
             if (!Objects.equals(ua.getProgress(), progress)) {
                 ua.setProgress(progress);
+                ua.setProgressUpdatedAt(LocalDateTime.now());
                 changed = true;
             }
 
@@ -530,27 +805,68 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
         return switch (ach.getType()) {
 
-            case VOLUME -> {
+            case VOLUME ->
+                progressByUser.getOrDefault(
+                        user.getId(),
+                        0.0);
 
-                yield progressByUser.getOrDefault(user.getId(), 0.0);
-            }
+            case STREAK ->
+                calculateStreakProgress(
+                        user,
+                        ach);
 
-            case STREAK -> {
-
-                if (user.getStreakStartDate() == null)
-                    yield 0;
-
-                yield ChronoUnit.DAYS.between(
-                        user.getStreakStartDate(),
-                        LocalDate.now()) + 1;
-            }
-
-            case CONSISTENCY -> {
-                yield (double) user.getTotalWorkoutDays();
-            }
+            case CONSISTENCY ->
+                calculateConsistencyProgress(
+                        user,
+                        ach);
 
             default -> 0;
         };
+    }
+
+    // Calcular el progreso completo de un logro de volumen para un usuario para
+    // logros con tiempo limite
+    private double calculateFullVolumeProgress(
+            User user,
+            Achievement ach) {
+
+        DateRange range = getAchievementDateRange(ach);
+
+        LocalDateTime from = range.start() != null
+                ? range.start().atStartOfDay()
+                : null;
+
+        LocalDateTime to = range.end() != null
+                ? range.end().plusDays(1).atStartOfDay()
+                : null;
+
+        if (!ach.getExercises().isEmpty()) {
+
+            List<Long> exerciseIds = ach.getExercises().stream()
+                    .map(Exercise::getId)
+                    .toList();
+
+            return workoutSetRepository.sumVolumeByExercisesAndDateRange(
+                    user.getId(),
+                    exerciseIds,
+                    from,
+                    to);
+
+        } else if (ach.getMuscle() != null) {
+
+            return workoutSetRepository.sumVolumeByMuscleAndDateRange(
+                    user.getId(),
+                    ach.getMuscle().name(),
+                    from,
+                    to);
+
+        } else {
+
+            return workoutSetRepository.sumTotalVolumeByUserAndDateRange(
+                    user.getId(),
+                    from,
+                    to);
+        }
     }
 
     private UserAchievementResponse toResponse(UserAchievement userAchievement) {
@@ -562,6 +878,9 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                 a.getType(),
                 a.getRequiredValue(),
                 a.getImage(),
+                a.getMinimumDate(),
+                a.getTimeLimit(),
+                a.getTimeLimitType(),
                 a.getMuscle(),
                 a.getExercises().stream()
                         .map(this::toExerciseResponse)

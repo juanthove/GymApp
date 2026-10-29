@@ -6,6 +6,7 @@ import com.gymapp.service.AchievementService;
 
 import com.gymapp.model.AchievementType;
 import com.gymapp.model.MuscleType;
+import com.gymapp.model.TimeLimitType;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -15,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/achievements")
@@ -39,6 +41,9 @@ public class AchievementController {
             @RequestParam("type") AchievementType type,
             @RequestParam("levelId") Long levelId,
             @RequestParam("requiredValue") Double requiredValue,
+            @RequestParam(value = "minimumDate", required = false) LocalDate minimumDate,
+            @RequestParam(value = "timeLimit", required = false) Integer timeLimit,
+            @RequestParam(value = "timeLimitType", required = false) TimeLimitType timeLimitType,
             @RequestParam(value = "muscle", required = false) MuscleType muscle,
             @RequestParam(value = "exerciseIds", required = false) List<Long> exerciseIds,
             @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
@@ -48,6 +53,9 @@ public class AchievementController {
                 type,
                 levelId,
                 requiredValue,
+                minimumDate,
+                timeLimit,
+                timeLimitType,
                 muscle,
                 exerciseIds);
 
@@ -61,6 +69,9 @@ public class AchievementController {
             @RequestParam("type") AchievementType type,
             @RequestParam("levelId") Long levelId,
             @RequestParam("requiredValue") Double requiredValue,
+            @RequestParam(value = "minimumDate", required = false) LocalDate minimumDate,
+            @RequestParam(value = "timeLimit", required = false) Integer timeLimit,
+            @RequestParam(value = "timeLimitType", required = false) TimeLimitType timeLimitType,
             @RequestParam(value = "muscle", required = false) MuscleType muscle,
             @RequestParam(value = "exerciseIds", required = false) List<Long> exerciseIds,
             @RequestParam(value = "image", required = false) MultipartFile image,
@@ -71,6 +82,9 @@ public class AchievementController {
                 type,
                 levelId,
                 requiredValue,
+                minimumDate,
+                timeLimit,
+                timeLimitType,
                 muscle,
                 exerciseIds);
 
