@@ -4,6 +4,7 @@ import com.gymapp.dto.request.WorkoutFullRequest;
 import com.gymapp.dto.request.WorkoutRequest;
 import com.gymapp.dto.response.WorkoutFullResponse;
 import com.gymapp.dto.response.WorkoutResponse;
+import com.gymapp.dto.response.ExerciseWeightResponse;
 
 import java.util.List;
 
@@ -28,4 +29,6 @@ public interface WorkoutService {
     WorkoutResponse updateFullWorkout(Long id, WorkoutFullRequest request);
 
     void deleteFullWorkout(Long id);
+
+    List<ExerciseWeightResponse> syncWeights(Long userId, List<Long> exerciseIds);
 }

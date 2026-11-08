@@ -2,6 +2,8 @@ package com.gymapp.repository;
 
 import com.gymapp.model.MuscleType;
 import com.gymapp.model.WorkoutSet;
+import com.gymapp.repository.projection.ExerciseWeightProjection;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -441,4 +443,71 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
 
     // ELiminar todos los sets de un ejercicio
     void deleteByWorkoutExerciseId(Long workoutExerciseId);
+
+    // Obtener los pesos de los ejercicios de un usuario utilizando el current
+    // workout y si no los workout sets
+    @Query(value = """
+            WITH current_weights AS (
+                SELECT
+                    we.exercise_id,
+                    MAX(we.weight) AS weight
+                FROM users u
+                JOIN workout_day wd
+                    ON wd.workout_id = u.current_workout_id
+                JOIN workout_exercise we
+                    ON we.workout_day_id = wd.id
+                WHERE u.id = :userId
+                  AND we.exercise_id IN (:exerciseIds)
+                GROUP BY we.exercise_id
+            ),
+
+            historical_by_date AS (
+                SELECT
+                    we.exercise_id,
+                    CAST(ws.performed_at AS date) AS performed_date,
+                    MAX(ws.weight) AS weight
+                FROM workout_set ws
+                JOIN workout_exercise we
+                    ON we.id = ws.workout_exercise_id
+                WHERE ws.user_id = :userId
+                  AND we.exercise_id IN (:exerciseIds)
+                  AND ws.performed_at IS NOT NULL
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM current_weights cw
+                      WHERE cw.exercise_id = we.exercise_id
+                  )
+                GROUP BY
+                    we.exercise_id,
+                    CAST(ws.performed_at AS date)
+            ),
+
+            ranked_history AS (
+                SELECT
+                    exercise_id,
+                    weight,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY exercise_id
+                        ORDER BY performed_date DESC
+                    ) AS rn
+                FROM historical_by_date
+            )
+
+            SELECT
+                e.id AS "exerciseId",
+                CASE
+                    WHEN cw.exercise_id IS NOT NULL THEN cw.weight
+                    ELSE rh.weight
+                END AS weight
+            FROM exercise e
+            LEFT JOIN current_weights cw
+                ON cw.exercise_id = e.id
+            LEFT JOIN ranked_history rh
+                ON rh.exercise_id = e.id
+               AND rh.rn = 1
+            WHERE e.id IN (:exerciseIds)
+            """, nativeQuery = true)
+    List<ExerciseWeightProjection> findWeightsToSync(
+            @Param("userId") Long userId,
+            @Param("exerciseIds") List<Long> exerciseIds);
 }

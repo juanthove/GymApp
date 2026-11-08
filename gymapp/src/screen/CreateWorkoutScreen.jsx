@@ -13,7 +13,7 @@ import {
   getWorkoutTemplateById,
   getWorkoutTemplateDayImageUrl,
 } from "../services/workoutTemplateService";
-import { createWorkout, updateWorkout, getWorkoutById } from "../services/workoutService";
+import { createWorkout, updateWorkout, getWorkoutById, syncWorkoutWeights } from "../services/workoutService";
 import { uploadWorkoutDayImage, getWorkoutDayImageUrl } from "../services/workoutDayService";
 import {
   getWorkoutSaveById,
@@ -51,6 +51,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import FileCopyIcon from "@mui/icons-material/FileCopy";
+import SyncIcon from "@mui/icons-material/Sync";
 
 import BackButton from "../components/BackButton";
 import MuscleChips from "../components/MuscleChips";
@@ -648,6 +649,34 @@ export default function CreateWorkoutScreen() {
     }
   };
 
+  const syncWeights = async () => {
+    try {
+      const exerciseIds = [...new Set(days.flatMap((day) => day.exercises.map((exercise) => exercise.exerciseId)))];
+
+      const weights = await syncWorkoutWeights(Number(selectedUser), exerciseIds);
+
+      setDays((prevDays) =>
+        prevDays.map((day) => ({
+          ...day,
+          exercises: day.exercises.map((exercise) => {
+            const syncedWeight = weights.find((item) => item.exerciseId === exercise.exerciseId);
+
+            if (!syncedWeight || syncedWeight.weight == null) {
+              return exercise;
+            }
+
+            return {
+              ...exercise,
+              weight: syncedWeight.weight,
+            };
+          }),
+        })),
+      );
+    } catch (error) {
+      console.error("Error al sincronizar los pesos:", error);
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -845,6 +874,11 @@ export default function CreateWorkoutScreen() {
                 </Button>
               </Stack>
             )}
+
+            {/* SINCRONIZAR PESOS */}
+            <Button variant="outlined" color="primary" fullWidth startIcon={<SyncIcon />} onClick={syncWeights}>
+              Sincronizar pesos
+            </Button>
 
             {/* DIAS DE LA PLANILLA */}
             {days.map((day, dayIndex) => (

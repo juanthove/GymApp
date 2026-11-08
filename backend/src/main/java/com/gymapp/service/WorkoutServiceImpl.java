@@ -2,6 +2,7 @@ package com.gymapp.service;
 
 import com.gymapp.dto.request.WorkoutFullRequest;
 import com.gymapp.dto.request.WorkoutRequest;
+import com.gymapp.dto.response.ExerciseWeightResponse;
 import com.gymapp.dto.response.WorkoutFullResponse;
 import com.gymapp.dto.response.WorkoutResponse;
 import com.gymapp.exception.ResourceNotFoundException;
@@ -16,6 +17,9 @@ import com.gymapp.repository.WorkoutDayRepository;
 import com.gymapp.repository.WorkoutExerciseRepository;
 import com.gymapp.repository.WorkoutRepository;
 import com.gymapp.repository.templates.WorkoutTemplateDayRepository;
+import com.gymapp.repository.projection.ExerciseWeightProjection;
+import com.gymapp.repository.WorkoutSetRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,6 +55,9 @@ public class WorkoutServiceImpl implements WorkoutService {
 
     @Autowired
     private WorkoutTemplateDayRepository workoutTemplateDayRepository;
+
+    @Autowired
+    private WorkoutSetRepository workoutSetRepository;
 
     @Override
     public List<WorkoutResponse> getAllWorkouts() {
@@ -244,6 +251,33 @@ public class WorkoutServiceImpl implements WorkoutService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public List<ExerciseWeightResponse> syncWeights(
+            Long userId,
+            List<Long> exerciseIds) {
+
+        if (exerciseIds == null || exerciseIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<ExerciseWeightProjection> weights = workoutSetRepository.findWeightsToSync(userId, exerciseIds);
+
+        Map<Long, Double> weightsByExercise = new HashMap<>();
+
+        for (ExerciseWeightProjection weight : weights) {
+            weightsByExercise.put(
+                    weight.getExerciseId(),
+                    weight.getWeight());
+        }
+
+        return exerciseIds.stream()
+                .distinct()
+                .map(id -> new ExerciseWeightResponse(
+                        id,
+                        weightsByExercise.get(id)))
+                .toList();
     }
 
     private WorkoutResponse toResponse(Workout w) {

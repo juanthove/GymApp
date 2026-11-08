@@ -2,6 +2,7 @@ package com.gymapp.controller;
 
 import com.gymapp.dto.request.WorkoutFullRequest;
 import com.gymapp.dto.request.WorkoutRequest;
+import com.gymapp.dto.response.ExerciseWeightResponse;
 import com.gymapp.dto.response.WorkoutFullResponse;
 import com.gymapp.dto.response.WorkoutResponse;
 import com.gymapp.service.WorkoutService;
@@ -67,5 +68,10 @@ public class WorkoutController {
     @DeleteMapping("/full/{id}")
     public void deleteFullWorkout(@PathVariable Long id) {
         workoutService.deleteFullWorkout(id);
+    }
+
+    @GetMapping("/sync-weights")
+    public List<ExerciseWeightResponse> syncWeights(@RequestParam Long userId, @RequestParam List<Long> exerciseIds) {
+        return workoutService.syncWeights(userId, exerciseIds);
     }
 }
