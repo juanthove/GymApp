@@ -82,7 +82,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
     private UserAchievementService userAchievementService;
 
     @Autowired
-    private UserService userService;
+    private UserStatsService userStatsService;
 
     @Autowired
     private UserRepository userRepository;
@@ -258,7 +258,7 @@ public class WorkoutDayServiceImpl implements WorkoutDayService {
         User user = day.getWorkout().getUser();
 
         // Actualizar stats del usuario (streak, totalDays, etc)
-        userService.updateUserStats(user, LocalDate.now());
+        userStatsService.updateUserStats(user, LocalDate.now());
 
         // Actualizar achievements
         userAchievementService.updateAchievements(user, id);

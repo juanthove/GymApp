@@ -24,4 +24,6 @@ public interface UserAchievementService {
     void updateAchievements(User user, Long workoutDayId);
 
     void syncAchievementProgress(Achievement ach);
+
+    void updateOutdatedAchievements(User user);
 }

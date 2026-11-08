@@ -1,6 +1,5 @@
 package com.gymapp.service;
 
-import com.gymapp.model.User;
 import com.gymapp.dto.request.UserRequest;
 import com.gymapp.dto.response.UserResponse;
 import com.gymapp.dto.response.WorkoutResponse;
@@ -9,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.List;
 
 public interface UserService {
@@ -43,10 +41,6 @@ public interface UserService {
     void deleteUser(Long id);
 
     WorkoutResponse getCurrentWorkout(Long id);
-
-    void updateUserStats(User user, LocalDate workoutDate);
-
-    void updateUserStreakState(User user);
 
     UserResponse configRegisterSets(Long id, Boolean registerSets);
 

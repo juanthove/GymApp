@@ -7,7 +7,6 @@ import com.gymapp.model.Achievement;
 import com.gymapp.model.AchievementType;
 import com.gymapp.model.Exercise;
 import com.gymapp.model.MuscleType;
-import com.gymapp.model.TimeLimitType;
 import com.gymapp.model.User;
 import com.gymapp.model.UserAchievement;
 import com.gymapp.model.UserLevel;
@@ -21,6 +20,8 @@ import com.gymapp.repository.WorkoutDayRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -54,7 +55,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
     private WorkoutDayRepository workoutDayRepository;
 
     @Autowired
-    private UserService userService;
+    private UserStatsService userStatsService;
 
     private record DateRange(
             LocalDate start,
@@ -132,14 +133,12 @@ public class UserAchievementServiceImpl implements UserAchievementService {
     @Override
     public List<UserAchievementResponse> getUserAchievements(Long userId) {
 
-        probarRango();
-
         // Usuario
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         // Actualizar stats del usuario
-        userService.updateUserStreakState(user);
+        userStatsService.updateUserStreakState(user);
 
         // Actualizar logros de streak
         updateStreakAchievements(user);
@@ -267,18 +266,6 @@ public class UserAchievementServiceImpl implements UserAchievementService {
         return new DateRange(startByTimeLimit, today);
     }
 
-    public void probarRango() {
-        Achievement achievement = new Achievement();
-        achievement.setTimeLimit(4);
-        achievement.setTimeLimitType(TimeLimitType.MONTH);
-        achievement.setMinimumDate(LocalDate.of(2026, 11, 3));
-
-        DateRange range = getAchievementDateRange(achievement);
-
-        System.out.println("Desde: " + range.start());
-        System.out.println("Hasta: " + range.end());
-    }
-
     // Calcular el progreso para el volumen
     private void calculateVolumeProgress(
             User user,
@@ -300,41 +287,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
             return;
         }
 
-        LocalDateTime lastUpdate = ua.getProgressUpdatedAt();
-
-        boolean recalculate = lastUpdate == null;
-
-        if (!recalculate) {
-            LocalDate lastUpdateDate = lastUpdate.toLocalDate();
-
-            switch (ach.getTimeLimitType()) {
-
-                case WEEK -> {
-                    WeekFields weekFields = WeekFields.ISO;
-
-                    int currentWeek = today.get(weekFields.weekOfWeekBasedYear());
-                    int currentWeekYear = today.get(weekFields.weekBasedYear());
-
-                    int previousWeek = lastUpdateDate.get(weekFields.weekOfWeekBasedYear());
-                    int previousWeekYear = lastUpdateDate.get(weekFields.weekBasedYear());
-
-                    recalculate = currentWeek != previousWeek
-                            || currentWeekYear != previousWeekYear;
-                }
-
-                case MONTH -> {
-                    recalculate = !YearMonth.from(today)
-                            .equals(YearMonth.from(lastUpdateDate));
-                }
-
-                case YEAR -> {
-                    recalculate = today.getYear() != lastUpdateDate.getYear();
-                }
-
-                default -> throw new IllegalStateException(
-                        "Tipo de límite de tiempo no válido");
-            }
-        }
+        boolean recalculate = hasPeriodChanged(ua, ach);
 
         if (recalculate) {
             double fullProgress = calculateFullVolumeProgress(user, ach);
@@ -344,6 +297,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
         } else {
             ua.setProgress(ua.getProgress() + currentWorkoutVolume);
+            ua.setProgressUpdatedAt(LocalDateTime.now());
         }
     }
 
@@ -830,6 +784,11 @@ public class UserAchievementServiceImpl implements UserAchievementService {
             User user,
             Achievement ach) {
 
+        if (ach.getMinimumDate() != null &&
+            ach.getMinimumDate().isAfter(LocalDate.now())) {
+                return 0.0;
+            }
+
         DateRange range = getAchievementDateRange(ach);
 
         LocalDateTime from = range.start() != null
@@ -867,6 +826,106 @@ public class UserAchievementServiceImpl implements UserAchievementService {
                     from,
                     to);
         }
+    }
+
+    //Recalcular el progreso de los logros de un usuario cuando cambia la unidad de tiempo del limite de tiempo al iniciar sesión
+    @Async
+    @Transactional
+    public void updateOutdatedAchievements(User user) {
+
+        List<UserAchievement> userAchievements =
+                userAchievementRepository.findByUserId(user.getId());
+
+        List<UserAchievement> toSave = new ArrayList<>();
+
+        for (UserAchievement ua : userAchievements) {
+
+            // Si el logro ya está desbloqueado, no modificarlo.
+            if (ua.getUnlockedAt() != null) {
+                continue;
+            }
+
+            Achievement achievement = ua.getAchievement();
+
+            if (achievement.getTimeLimit() == null) {
+                continue;
+            }
+
+            if (hasPeriodChanged(ua, achievement)) {
+
+                double progress = calculateFullProgress(user, achievement);
+
+                ua.setProgress(progress);
+                ua.setProgressUpdatedAt(LocalDateTime.now());
+
+                //Desbloqueo
+                if (progress >= achievement.getRequiredValue()) {
+                    ua.setUnlockedAt(LocalDateTime.now());
+                }
+
+                toSave.add(ua);
+            }
+        }
+
+        if (!toSave.isEmpty()) {
+            userAchievementRepository.saveAll(toSave);
+        }
+    }
+
+    private boolean hasPeriodChanged(UserAchievement ua, Achievement achievement) {
+
+        LocalDateTime lastUpdate = ua.getProgressUpdatedAt();
+
+        // Si nunca se actualizó, necesita recalcularse.
+        if (lastUpdate == null) {
+            return true;
+        }
+
+        LocalDate today = LocalDate.now();
+        LocalDate lastUpdateDate = lastUpdate.toLocalDate();
+
+        switch (achievement.getTimeLimitType()) {
+
+            case WEEK -> {
+                WeekFields weekFields = WeekFields.ISO;
+
+                int currentWeek = today.get(weekFields.weekOfWeekBasedYear());
+                int currentWeekYear = today.get(weekFields.weekBasedYear());
+
+                int lastWeek = lastUpdateDate.get(weekFields.weekOfWeekBasedYear());
+                int lastWeekYear = lastUpdateDate.get(weekFields.weekBasedYear());
+
+                return currentWeek != lastWeek || currentWeekYear != lastWeekYear;
+            }
+
+            case MONTH -> {
+                return !YearMonth.from(today).equals(YearMonth.from(lastUpdateDate));
+            }
+
+            case YEAR -> {
+                return today.getYear() != lastUpdateDate.getYear();
+            }
+
+            default -> throw new IllegalStateException(
+                    "Tipo de límite de tiempo no válido");
+        }
+    }
+
+    private double calculateFullProgress(User user, Achievement ach) {
+
+        return switch (ach.getType()) {
+
+            case VOLUME ->
+                calculateFullVolumeProgress(user, ach);
+
+            case STREAK ->
+                calculateStreakProgress(user, ach);
+
+            case CONSISTENCY ->
+                calculateConsistencyProgress(user, ach);
+
+            default -> 0.0;
+        };
     }
 
     private UserAchievementResponse toResponse(UserAchievement userAchievement) {
