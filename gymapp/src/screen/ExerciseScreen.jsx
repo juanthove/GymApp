@@ -8,7 +8,7 @@ import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
 import ImageIcon from "@mui/icons-material/Image";
 
 import backgroundImg from "../assets/gymproIcon.png";
-import { muscleLabels, typeLabels } from "../config/muscleConfig";
+import { muscleLabels, typeLabels, typeOrder } from "../config/muscleConfig";
 import { normalizeText } from "../utils/stringUtils";
 
 import {
@@ -323,19 +323,27 @@ export default function ExerciseScreen() {
     return `${day}/${month}/${year}`;
   };
 
-  const filteredExercises = allExercises.filter((ex) => {
-    if (isAbdominal && ex.type !== "ABDOMINAL") return false;
+  const filteredExercises = allExercises
+    .filter((ex) => {
+      if (isAbdominal && ex.type !== "ABDOMINAL") return false;
 
-    if (filterType !== "ALL" && ex.type !== filterType) return false;
+      if (filterType !== "ALL" && ex.type !== filterType) return false;
 
-    if (filterMuscle !== "ALL" && ex.exerciseMuscle !== filterMuscle) return false;
+      if (filterMuscle !== "ALL" && ex.exerciseMuscle !== filterMuscle) return false;
 
-    if (filterName && !normalizeText(ex.exerciseName ?? ex.exercise?.name).includes(normalizeText(filterName))) {
-      return false;
-    }
+      if (filterName && !normalizeText(ex.exerciseName ?? ex.exercise?.name).includes(normalizeText(filterName))) {
+        return false;
+      }
 
-    return true;
-  });
+      return true;
+    })
+    .sort((a, b) => {
+      const typeDifference = (typeOrder[a.type] ?? 99) - (typeOrder[b.type] ?? 99);
+
+      if (typeDifference !== 0) return typeDifference;
+
+      return (a.order ?? 0) - (b.order ?? 0);
+    });
 
   const toggleSelectedExercise = async (ex) => {
     const isSelected = selectedExerciseIds.includes(ex.id);

@@ -58,6 +58,13 @@ export const typeLabels = {
   ABDOMINAL: "Abdominal",
 };
 
+export const typeOrder = {
+  PRIMARY: 1,
+  SECONDARY: 2,
+  TERTIARY: 3,
+  ABDOMINAL: 4,
+};
+
 export const modeLabels = {
   COMMON: "Común",
   DUMBBEL: "Mancuernas",

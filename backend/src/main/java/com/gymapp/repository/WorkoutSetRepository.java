@@ -450,7 +450,10 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
             WITH current_weights AS (
                 SELECT
                     we.exercise_id,
-                    MAX(we.weight) AS weight
+                    MAX(GREATEST(
+                        COALESCE(we.weight, 0),
+                        COALESCE(we.next_weight, 0)
+                    )) AS weight
                 FROM users u
                 JOIN workout_day wd
                     ON wd.workout_id = u.current_workout_id
