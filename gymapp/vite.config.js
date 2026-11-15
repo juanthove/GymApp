@@ -15,6 +15,20 @@ export default defineConfig({
       includeAssets: ["icon-192.png", "icon-512.png", "icon-1254.png"],
       workbox: {
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => /^\/api\/exercises\/(icon|image)\//.test(url.pathname),
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "exercise-assets",
+              cacheableResponse: { statuses: [200] },
+              expiration: {
+                maxEntries: 300,
+                maxAgeSeconds: 30 * 24 * 60 * 60,
+              },
+            },
+          },
+        ],
       },
       manifest: {
         id: "/",

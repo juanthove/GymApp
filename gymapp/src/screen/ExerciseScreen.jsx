@@ -1929,6 +1929,8 @@ export default function ExerciseScreen() {
                             component="img"
                             src={getExerciseIconUrl(ex.icon)}
                             alt={ex.exerciseName}
+                            loading="lazy"
+                            decoding="async"
                             sx={{
                               width: "100%",
                               height: "100%",
