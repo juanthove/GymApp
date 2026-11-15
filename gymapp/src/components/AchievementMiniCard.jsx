@@ -114,6 +114,8 @@ export default function AchievementMiniCard({ achievement, onClick }) {
             component="img"
             src={achievement.imageUrl}
             alt={achievement.name}
+            loading="lazy"
+            decoding="async"
             sx={{
               maxWidth: "70%",
               maxHeight: "70%",

@@ -112,6 +112,8 @@ export default function PRCard({ row }) {
             component="img"
             src={row.imageUrl}
             alt={row.name}
+            loading="lazy"
+            decoding="async"
             sx={{
               maxHeight: "100%",
               maxWidth: "100%",

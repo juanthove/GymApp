@@ -751,6 +751,8 @@ export default function WorkoutScreen() {
                   src={
                     selectedDay?.muscleImage ? getWorkoutDayImageUrl(selectedDay.muscleImage) : "/body-placeholder.png"
                   }
+                  loading="lazy"
+                  decoding="async"
                   style={{
                     width: "100%",
                     maxWidth: "400px",

@@ -17,10 +17,13 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => /^\/api\/exercises\/(icon|image)\//.test(url.pathname),
+            urlPattern: ({ url }) =>
+              /^\/api\/(exercises\/(icon|image)|achievements\/image|users\/image|workout-days\/muscle-image)\//.test(
+                url.pathname,
+              ),
             handler: "StaleWhileRevalidate",
             options: {
-              cacheName: "exercise-assets",
+              cacheName: "dynamic-assets",
               cacheableResponse: { statuses: [200] },
               expiration: {
                 maxEntries: 300,
