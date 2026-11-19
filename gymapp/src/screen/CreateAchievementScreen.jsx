@@ -331,7 +331,11 @@ export default function CreateAchievementScreen() {
             : "none";
         const muscleKey = ach.muscle ? ach.muscle : "none";
         const requiredValue = Number(ach.requiredValue);
-        const key = `${level.id}-${ach.type}-${exerciseKey}-${muscleKey}-${requiredValue}`;
+        const minimumDate = ach.minimumDate || "none";
+        const timeLimit = ach.timeLimit || "none";
+        const timeLimitType = ach.timeLimitType || "none";
+
+        const key = `${level.id}-${ach.type}-${exerciseKey}-${muscleKey}-${requiredValue}-${minimumDate}-${timeLimit}-${timeLimitType}`;
 
         if (seen.has(key)) {
           return validationError(`Tenés logros duplicados en el nivel "${level.name}"`);

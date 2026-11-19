@@ -1,8 +1,32 @@
-import React, { memo } from "react";
+import React, { memo, useRef, useEffect } from "react";
 import { Card, CardActionArea, Typography, Box } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 
-const UserCard = memo(function UserCard({ title, imageUrl, onClick, sx, darkMode = false }) {
+const UserCard = memo(function UserCard({ title, imageUrl, onClick, onDoubleClick, sx, darkMode = false }) {
+  const clickTimeout = useRef(null);
+  const clickCount = useRef(0);
+
+  useEffect(() => {
+    return () => clearTimeout(clickTimeout.current);
+  }, []);
+
+  const handleClick = () => {
+    clickCount.current += 1;
+
+    if (clickCount.current === 1) {
+      clickTimeout.current = setTimeout(() => {
+        clickCount.current = 0;
+        onClick?.();
+      }, 300);
+    } else if (clickCount.current === 2) {
+      clearTimeout(clickTimeout.current);
+      clickTimeout.current = null;
+      clickCount.current = 0;
+
+      onDoubleClick?.();
+    }
+  };
+
   return (
     <Card
       sx={{
@@ -28,7 +52,7 @@ const UserCard = memo(function UserCard({ title, imageUrl, onClick, sx, darkMode
         ...sx,
       }}
     >
-      <CardActionArea sx={{ height: "100%" }} onClick={onClick}>
+      <CardActionArea sx={{ height: "100%" }} onClick={handleClick}>
         {/* IMAGEN */}
         <Box
           sx={{

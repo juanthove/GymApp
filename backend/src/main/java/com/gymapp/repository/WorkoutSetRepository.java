@@ -35,60 +35,122 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
 
     // Obtener volumen por musculo en un rango de fechas
     @Query(value = """
-                WITH weekly AS (
-                    SELECT
-                        e.muscle,
-                        DATE_TRUNC('week', ws.performed_at) AS week_start,
-                        SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)) AS weekly_volume
-                    FROM workout_set ws
-                    JOIN workout_exercise we ON ws.workout_exercise_id = we.id
-                    JOIN exercise e ON we.exercise_id = e.id
-                    WHERE ws.user_id = :userId
-                        AND ws.performed_at >= COALESCE(CAST(:from AS timestamp), ws.performed_at)
-                        AND ws.performed_at <= COALESCE(CAST(:to AS timestamp), ws.performed_at)
-                    GROUP BY e.muscle, week_start
-                ),
-                with_running_max AS (
-                    SELECT
-                        muscle,
-                        week_start,
-                        weekly_volume,
-                        MAX(weekly_volume) OVER (
-                            PARTITION BY muscle
-                            ORDER BY week_start
-                            ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
-                        ) AS historical_max
-                    FROM weekly
-                )
+            WITH all_weekly AS (
+                SELECT
+                    e.muscle,
+                    DATE_TRUNC('week', ws.performed_at) AS week_start,
+                    SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)) AS weekly_volume
+                FROM workout_set ws
+                JOIN workout_exercise we ON ws.workout_exercise_id = we.id
+                JOIN exercise e ON we.exercise_id = e.id
+                WHERE ws.user_id = :userId
+                GROUP BY e.muscle, week_start
+            ),
+            with_historical_max AS (
                 SELECT
                     muscle,
                     week_start,
                     weekly_volume,
-                    historical_max
-                FROM with_running_max
-                ORDER BY
-                    week_start,
-                    CASE muscle
-                        WHEN 'CHEST' THEN 0
-                        WHEN 'BACK' THEN 1
-                        WHEN 'SHOULDERS' THEN 2
-                        WHEN 'BICEPS' THEN 3
-                        WHEN 'TRICEPS' THEN 4
-                        WHEN 'FOREARMS' THEN 5
-                        WHEN 'QUADRICEPS' THEN 6
-                        WHEN 'GLUTES' THEN 7
-                        WHEN 'HAMSTRINGS' THEN 8
-                        WHEN 'ADDUCTORS' THEN 9
-                        WHEN 'ABDUCTORS' THEN 10
-                        WHEN 'CALVES' THEN 11
-                        WHEN 'ABDOMINALS' THEN 12
-                        ELSE 999
-                    END
+                    MAX(weekly_volume) OVER (
+                        PARTITION BY muscle
+                        ORDER BY week_start
+                        ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+                    ) AS historical_max
+                FROM all_weekly
+            ),
+            filtered_weekly AS (
+                SELECT
+                    e.muscle,
+                    DATE_TRUNC('week', ws.performed_at) AS week_start,
+                    SUM(ws.weight * ws.reps * COALESCE(ws.multiplier, 1)) AS weekly_volume
+                FROM workout_set ws
+                JOIN workout_exercise we ON ws.workout_exercise_id = we.id
+                JOIN exercise e ON we.exercise_id = e.id
+                WHERE ws.user_id = :userId
+                    AND (
+                        CAST(:from AS timestamp) IS NULL
+                        OR ws.performed_at >= CAST(:from AS timestamp)
+                    )
+                    AND (
+                        CAST(:to AS timestamp) IS NULL
+                        OR ws.performed_at <= CAST(:to AS timestamp)
+                    )
+                    AND (
+                        CAST(:muscle AS varchar) IS NULL
+                        OR e.muscle = CAST(:muscle AS varchar)
+                    )
+                GROUP BY e.muscle, week_start
+            ),
+            page_weeks AS (
+                SELECT DISTINCT week_start
+                FROM filtered_weekly
+                ORDER BY week_start DESC
+                LIMIT :size OFFSET :offset
+            )
+            SELECT
+                fw.muscle,
+                fw.week_start,
+                fw.weekly_volume,
+                COALESCE(hm.historical_max, 0) AS historical_max
+            FROM filtered_weekly fw
+            JOIN page_weeks pw ON pw.week_start = fw.week_start
+            LEFT JOIN with_historical_max hm
+                ON hm.muscle = fw.muscle
+                AND hm.week_start = fw.week_start
+            ORDER BY
+                fw.week_start DESC,
+                CASE fw.muscle
+                    WHEN 'CHEST' THEN 0
+                    WHEN 'BACK' THEN 1
+                    WHEN 'SHOULDERS' THEN 2
+                    WHEN 'BICEPS' THEN 3
+                    WHEN 'TRICEPS' THEN 4
+                    WHEN 'FOREARMS' THEN 5
+                    WHEN 'QUADRICEPS' THEN 6
+                    WHEN 'GLUTES' THEN 7
+                    WHEN 'HAMSTRINGS' THEN 8
+                    WHEN 'ADDUCTORS' THEN 9
+                    WHEN 'ABDUCTORS' THEN 10
+                    WHEN 'CALVES' THEN 11
+                    WHEN 'ABDOMINALS' THEN 12
+                    ELSE 999
+                END
             """, nativeQuery = true)
     List<Object[]> findWeeklyVolumeWithHistoricalMax(
             @Param("userId") Long userId,
             @Param("from") LocalDateTime from,
-            @Param("to") LocalDateTime to);
+            @Param("to") LocalDateTime to,
+            @Param("muscle") String muscle,
+            @Param("size") int size,
+            @Param("offset") int offset);
+
+    // Contar semanas totales de entrenamientos
+    @Query(value = """
+            SELECT COUNT(DISTINCT DATE_TRUNC('week', ws.performed_at))
+            FROM workout_set ws
+            JOIN workout_exercise we
+                ON ws.workout_exercise_id = we.id
+            JOIN exercise e
+                ON we.exercise_id = e.id
+            WHERE ws.user_id = :userId
+                AND (
+                    CAST(:from AS timestamp) IS NULL
+                    OR ws.performed_at >= CAST(:from AS timestamp)
+                )
+                AND (
+                    CAST(:to AS timestamp) IS NULL
+                    OR ws.performed_at <= CAST(:to AS timestamp)
+                )
+                AND (
+                    CAST(:muscle AS varchar) IS NULL
+                    OR e.muscle = CAST(:muscle AS varchar)
+                )
+            """, nativeQuery = true)
+    long countWeeklyVolumeByUserAndDateRange(
+            @Param("userId") Long userId,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to,
+            @Param("muscle") String muscle);
 
     // Obtener volumen por musculos de un workoutDay
     @Query(value = """

@@ -57,6 +57,39 @@ export default function AchievementCard({ achievement }) {
     }).format(new Date(dateString));
   };
 
+  // Interpretar YYYY-MM-DD como fecha local
+  const parseLocalDate = (dateString) => {
+    if (!dateString) return null;
+
+    const [year, month, day] = dateString.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const minimumDate = parseLocalDate(achievement.minimumDate);
+
+  const isBeforeMinimumDate = minimumDate && minimumDate > today;
+
+  const formatMinimumDate = (date) =>
+    new Intl.DateTimeFormat("es-UY", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(date);
+
+  // Período del objetivo
+  const timeLimitLabels = {
+    WEEK: achievement.timeLimit === 1 ? "semana" : "semanas",
+    MONTH: achievement.timeLimit === 1 ? "mes" : "meses",
+    YEAR: achievement.timeLimit === 1 ? "año" : "años",
+  };
+
+  const timeLimitLabel = achievement.timeLimit
+    ? `en ${achievement.timeLimit} ${timeLimitLabels[achievement.timeLimitType] ?? achievement.timeLimitType}`
+    : "";
+
   const displayProgress = achievement.requiredValue
     ? Math.min(achievement.progress, achievement.requiredValue)
     : achievement.progress;
@@ -271,55 +304,78 @@ export default function AchievementCard({ achievement }) {
           color: "#fff",
         }}
       >
-        {formatNumber(achievement.requiredValue)} {isVolume ? "kg" : isStreak ? "días seguidos" : "días entrenados"}
+        {formatNumber(achievement.requiredValue)} {isVolume ? "kg" : isStreak ? "días seguidos" : "días entrenados"}{" "}
+        {timeLimitLabel}
       </Typography>
       {/* PROGRESO */}
       <Box sx={{ width: "100%", mt: 1 }}>
-        <LinearProgress
-          variant="determinate"
-          value={progressPercent}
-          sx={{
-            height: 18,
-            borderRadius: 999,
-            overflow: "hidden",
+        {isBeforeMinimumDate ? (
+          <Box
+            sx={{
+              minHeight: 65,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 1,
+              px: 2,
+            }}
+          >
+            <CalendarMonthIcon sx={{ color: "#fff", fontSize: 28 }} />
 
-            backgroundColor: lightenColor(baseColor, 0.7),
+            <Typography
+              sx={{
+                color: "#fff",
+                fontSize: "1.2rem",
+                fontWeight: 700,
+              }}
+            >
+              Disponible a partir del {formatMinimumDate(minimumDate)}
+            </Typography>
+          </Box>
+        ) : (
+          <>
+            <LinearProgress
+              variant="determinate"
+              value={progressPercent}
+              sx={{
+                height: 18,
+                borderRadius: 999,
+                overflow: "hidden",
+                backgroundColor: lightenColor(baseColor, 0.7),
+                boxShadow: `
+                        inset 0 2px 4px rgba(0,0,0,0.5),
+                        inset 0 -1px 2px rgba(255,255,255,0.2)
+                    `,
+                "& .MuiLinearProgress-bar": {
+                  borderRadius: 999,
+                  background: `linear-gradient(
+                            90deg,
+                            ${darkenColor(baseColor, 0.2)} 0%,
+                            ${baseColor} 40%,
+                            ${lightenColor(baseColor, 0.2)} 60%,
+                            ${lightenColor(baseColor, 0.3)} 100%
+                        )`,
+                  boxShadow: `
+                            0 0 10px ${baseColor},
+                            inset 0 2px 3px rgba(255,255,255,0.35),
+                            inset 0 -2px 4px rgba(0,0,0,0.4)
+                        `,
+                },
+              }}
+            />
 
-            boxShadow: `
-              inset 0 2px 4px rgba(0,0,0,0.5),
-              inset 0 -1px 2px rgba(255,255,255,0.2)
-            `,
-
-            "& .MuiLinearProgress-bar": {
-              borderRadius: 999,
-
-              background: `linear-gradient(
-                90deg,
-                ${darkenColor(baseColor, 0.2)} 0%,
-                ${baseColor} 40%,
-                ${lightenColor(baseColor, 0.2)} 60%,
-                ${lightenColor(baseColor, 0.3)} 100%
-              )`,
-
-              boxShadow: `
-                0 0 10px ${baseColor},
-                inset 0 2px 3px rgba(255,255,255,0.35),
-                inset 0 -2px 4px rgba(0,0,0,0.4)
-              `,
-            },
-          }}
-        />
-
-        <Typography
-          sx={{
-            mt: 0.5,
-            fontSize: "1.5rem",
-            fontWeight: 600,
-            color: "#ffffff",
-          }}
-        >
-          {formatNumber(displayProgress ?? 0)} / {formatNumber(achievement.requiredValue)}
-        </Typography>
+            <Typography
+              sx={{
+                mt: 0.5,
+                fontSize: "1.5rem",
+                fontWeight: 600,
+                color: "#ffffff",
+              }}
+            >
+              {formatNumber(displayProgress ?? 0)} / {formatNumber(achievement.requiredValue)}
+            </Typography>
+          </>
+        )}
       </Box>
       {/* COMPLETADO */}
       {isUnlocked && achievement.unlockedAt && (

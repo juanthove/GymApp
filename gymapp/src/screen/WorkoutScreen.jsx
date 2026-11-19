@@ -62,6 +62,37 @@ export default function WorkoutScreen() {
     loadData();
   }, []);
 
+  //Volver a home screen luego de 1 minuto
+  useEffect(() => {
+    let timer;
+
+    const resetTimer = () => {
+      clearTimeout(timer);
+
+      timer = setTimeout(() => {
+        navigate("/home", { replace: true });
+      }, 60 * 1000);
+    };
+
+    // Eventos que cuentan como interacción
+    const events = ["mousedown", "mousemove", "keydown", "touchstart", "touchmove", "click", "scroll"];
+
+    events.forEach((event) => {
+      window.addEventListener(event, resetTimer);
+    });
+
+    // Iniciar el temporizador
+    resetTimer();
+
+    return () => {
+      clearTimeout(timer);
+
+      events.forEach((event) => {
+        window.removeEventListener(event, resetTimer);
+      });
+    };
+  }, [navigate]);
+
   const loadData = async () => {
     const u = await getUserById(userId);
     setUser(u);

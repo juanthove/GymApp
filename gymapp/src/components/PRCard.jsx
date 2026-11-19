@@ -1,32 +1,23 @@
-import { Box, Typography } from "@mui/material";
-import { useCountUp } from "react-countup";
-import { useEffect, useRef } from "react";
+import { Box, Typography, Stack, Divider } from "@mui/material";
 import { useDarkMode } from "../context/DarkModeContext";
 
-import { muscleColors } from "../config/muscleConfig";
-import { lightenColor, darkenColor } from "../utils/colorUtils";
+import MuscleChip from "./MuscleChip";
+
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 
 export default function PRCard({ row }) {
   const { darkMode } = useDarkMode();
-  const countUpRef = useRef(null);
 
-  const baseColor = muscleColors[row.muscle] || "#999";
-  const bgColor = lightenColor(baseColor, 0.6);
-  const bgColorSoft = lightenColor(baseColor, 0.75);
-  const textColor = darkenColor(baseColor, 0.2);
+  const formatDate = (date) => {
+    if (!date) return "";
 
-  const { start } = useCountUp({
-    ref: countUpRef,
-    start: 0,
-    end: row.weight,
-    duration: 1.2,
-    separator: ".",
-    startOnMount: false,
-  });
-
-  useEffect(() => {
-    start();
-  }, [row.weight, start]);
+    return new Date(date).toLocaleDateString("es-UY", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  };
 
   return (
     <Box
@@ -34,129 +25,172 @@ export default function PRCard({ row }) {
         position: "relative",
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
         justifyContent: "space-between",
+        width: "100%",
+        maxWidth: 600,
+        minHeight: { xs: 420, md: 480 },
+        mx: "auto",
+        px: 3,
+        py: 2.5,
+        borderRadius: 3,
 
-        height: {
-          xs: 250,
-          md: 310,
-        },
-        px: 2,
-        py: 2,
-        borderRadius: 4,
+        background: darkMode ? "#17263d" : "#fff",
+        color: darkMode ? "#f8fafc" : "#111",
 
-        gap: 1,
+        border: darkMode ? "1px solid rgba(148,163,184,0.18)" : "1px solid rgba(0,0,0,0.08)",
 
-        background: darkMode
-          ? `linear-gradient(135deg, rgba(51,65,85,0.95), rgba(15,23,42,0.98))`
-          : `linear-gradient(135deg, ${bgColor}, ${bgColorSoft})`,
-        border: darkMode ? "3px solid rgba(148,163,184,0.22)" : "3px solid rgba(255,255,255,0.7)",
-        boxShadow: darkMode ? "0 6px 18px rgba(15,23,42,0.45)" : "0 6px 18px rgba(0,0,0,0.12)",
+        borderBottom: "4px solid #ff2020",
+
+        boxShadow: darkMode ? "0 4px 14px rgba(0,0,0,0.3)" : "0 3px 10px rgba(0,0,0,0.10)",
 
         overflow: "hidden",
-        textAlign: "center",
       }}
     >
-      {/* BRILLO ARRIBA */}
+      {/* Encabezado */}
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{ position: "relative", zIndex: 2 }}
+      >
+        <Typography
+          sx={{
+            fontSize: "0.8rem",
+            fontWeight: 800,
+            letterSpacing: 1,
+            textTransform: "uppercase",
+            color: darkMode ? "#ff8585" : "#d71920",
+          }}
+        >
+          Récord personal
+        </Typography>
+
+        <EmojiEventsIcon sx={{ color: "#e5a000", fontSize: 30 }} />
+      </Stack>
+
+      {/* Imagen */}
+      {row.imageUrl && (
+        <Box
+          component="img"
+          src={row.imageUrl}
+          alt={row.name}
+          loading="lazy"
+          decoding="async"
+          sx={{
+            position: "absolute",
+            right: { xs: 40, md: 50 },
+            top: "43%",
+            transform: "translateY(-50%)",
+            width: { xs: 145, md: 190 },
+            height: { xs: 170, md: 210 },
+            objectFit: "contain",
+            opacity: darkMode ? 0.9 : 1,
+            filter: "drop-shadow(0 3px 5px rgba(0,0,0,0.18))",
+            pointerEvents: "none",
+          }}
+        />
+      )}
+
+      {/* Información principal */}
       <Box
         sx={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "35%",
-          background: "linear-gradient(to bottom, rgba(255,255,255,0.35), transparent)",
-          pointerEvents: "none",
+          position: "relative",
+          zIndex: 1,
+          width: "65%",
+          mt: 3,
+        }}
+      >
+        <Typography
+          sx={{
+            fontWeight: 900,
+            fontSize: { xs: "1.3rem", md: "1.6rem" },
+            lineHeight: 1.2,
+            overflowWrap: "anywhere",
+          }}
+        >
+          {row.name}
+        </Typography>
+
+        <Box sx={{ mt: 2 }}>
+          <MuscleChip
+            muscle={row.muscle}
+            size="small"
+            chipSx={{
+              height: 27,
+              fontSize: "0.8rem",
+              fontWeight: 700,
+              color: darkMode ? "#ff8585" : "#d71920",
+              background: darkMode ? "rgba(255,32,32,0.18)" : "rgba(255,32,32,0.12)",
+              border: "none",
+              boxShadow: "none",
+              "&:hover": { transform: "none" },
+            }}
+          />
+        </Box>
+
+        <Box
+          sx={{
+            mt: 4,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            width: "100%",
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              color: darkMode ? "#aab8ca" : "#666",
+            }}
+          >
+            Mejor marca
+          </Typography>
+
+          <Stack direction="row" alignItems="baseline" spacing={0.7}>
+            <Typography
+              sx={{
+                fontWeight: 900,
+                fontSize: { xs: "3rem", md: "3.8rem" },
+                lineHeight: 1.1,
+              }}
+            >
+              {new Intl.NumberFormat("es-UY").format(row.weight)}
+            </Typography>
+
+            <Typography sx={{ fontWeight: 700, fontSize: "1.2rem" }}>kg</Typography>
+          </Stack>
+        </Box>
+      </Box>
+
+      <Divider
+        sx={{
+          my: 2,
+          borderColor: darkMode ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.1)",
         }}
       />
 
-      {/* NOMBRE */}
-      <Typography
-        sx={{
-          fontWeight: 800,
-          fontSize: {
-            xs: "1.2rem",
-            md: "1.6rem",
-          },
-          color: darkMode ? "#f8fafc" : "#000000",
-          minHeight: {
-            xs: "2.8rem",
-            md: "3.8rem",
-          },
+      {/* Fecha */}
+      <Stack direction="column" alignItems="center" spacing={0.5} sx={{ width: "100%", textAlign: "center" }}>
+        <CalendarMonthIcon
+          sx={{
+            fontSize: 24,
+            color: darkMode ? "#aab8ca" : "#555",
+          }}
+        />
 
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+        <Typography
+          sx={{
+            fontSize: "0.9rem",
+            color: darkMode ? "#aab8ca" : "#777",
+            fontWeight: 600,
+          }}
+        >
+          Conseguido el
+        </Typography>
 
-          lineHeight: 1.2,
-        }}
-      >
-        {row.name}
-      </Typography>
-
-      {/* IMAGEN */}
-      <Box
-        sx={{
-          height: {
-            xs: 90,
-            md: 110,
-          },
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {row.imageUrl && (
-          <Box
-            component="img"
-            src={row.imageUrl}
-            alt={row.name}
-            loading="lazy"
-            decoding="async"
-            sx={{
-              maxHeight: "100%",
-              maxWidth: "100%",
-              objectFit: "contain",
-              filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))",
-            }}
-          />
-        )}
-      </Box>
-
-      {/* PESO */}
-      <Typography
-        sx={{
-          fontWeight: 900,
-          fontSize: {
-            xs: "1.3rem",
-            md: "1.5rem",
-          },
-          color: textColor,
-          textShadow: "0 2px 4px rgba(0,0,0,0.25)",
-        }}
-      >
-        <span ref={countUpRef} /> kg
-      </Typography>
-
-      {/* FECHA */}
-      <Typography
-        sx={{
-          fontSize: {
-            xs: "1.2rem",
-            md: "1.3rem",
-          },
-          color: darkMode ? "#cbd5e1" : "#000000",
-          opacity: 0.8,
-          fontWeight: 500,
-        }}
-      >
-        {new Date(row.date).toLocaleDateString("es-UY", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        })}
-      </Typography>
+        <Typography sx={{ fontSize: "1.2rem", fontWeight: 700 }}>{formatDate(row.date)}</Typography>
+      </Stack>
     </Box>
   );
 }

@@ -126,10 +126,20 @@ export default function HomeScreen() {
     }
   };
 
+  //USER CARD
   const goWorkoutWithUser = (user) => {
     navigate(`/workout/${user.id}`);
   };
 
+  const goToCurrentWorkoutDay = (user) => {
+    if (user.inProgressWorkoutDayId) {
+      navigate(`/exercise/${user.id}/${user.inProgressWorkoutDayId}`);
+    } else {
+      navigate(`/workout/${user.id}`);
+    }
+  };
+
+  //MODAL SELECCION USUARIO
   const goWorkout = async () => {
     try {
       if (!selectedUser) return;
@@ -313,6 +323,7 @@ export default function HomeScreen() {
                 title={`${user.name} ${user.surname}`}
                 imageUrl={user.image ? getUserImageUrl(user.image) : null}
                 onClick={() => goWorkoutWithUser(user)}
+                onDoubleClick={() => goToCurrentWorkoutDay(user)}
                 darkMode={darkMode}
                 sx={{
                   width: {

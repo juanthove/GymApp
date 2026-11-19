@@ -9,5 +9,6 @@ public record UserResponse(
         String image,
         Long currentWorkoutId,
         Long userLevelId,
-        boolean registerSets) {
+        boolean registerSets,
+        Long inProgressWorkoutDayId) {
 }

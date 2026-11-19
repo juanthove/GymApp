@@ -1,5 +1,6 @@
 import { Box, Typography, LinearProgress } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 
 import { achievementColors } from "../config/achievementConfig";
 import { lightenColor, darkenColor } from "../utils/colorUtils";
@@ -25,6 +26,26 @@ export default function AchievementMiniCard({ achievement, onClick }) {
       year: "numeric",
     }).format(new Date(dateString));
   };
+
+  const parseLocalDate = (dateString) => {
+    if (!dateString) return null;
+
+    const [year, month, day] = dateString.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const minimumDate = parseLocalDate(achievement.minimumDate);
+  const isBeforeMinimumDate = minimumDate && minimumDate > today;
+
+  const formatMinimumDate = (date) =>
+    new Intl.DateTimeFormat("es-UY", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(date);
 
   const truncateText = (text, maxLength = 22) => {
     if (!text) return "";
@@ -160,6 +181,7 @@ export default function AchievementMiniCard({ achievement, onClick }) {
       </Box>
 
       {/* CONTENIDO DINÁMICO */}
+      {/* CONTENIDO DINÁMICO */}
       {isUnlocked ? (
         <Typography
           sx={{
@@ -171,6 +193,36 @@ export default function AchievementMiniCard({ achievement, onClick }) {
         >
           {achievement.unlockedAt ? `Completado el ${formatDate(achievement.unlockedAt)}` : "Completado"}
         </Typography>
+      ) : isBeforeMinimumDate ? (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            mt: 1,
+            px: 1,
+          }}
+        >
+          <CalendarMonthIcon
+            sx={{
+              color: "#fff",
+              fontSize: 20,
+              flexShrink: 0,
+            }}
+          />
+
+          <Typography
+            sx={{
+              fontSize: "0.9rem",
+              fontWeight: 700,
+              color: "#fff",
+              textAlign: "center",
+              textShadow: "0 1px 3px rgba(0,0,0,0.7)",
+            }}
+          >
+            Desde {formatMinimumDate(minimumDate)}
+          </Typography>
+        </Box>
       ) : (
         <Box
           sx={{
@@ -189,25 +241,20 @@ export default function AchievementMiniCard({ achievement, onClick }) {
               height: 8,
               borderRadius: 10,
               overflow: "hidden",
-
               backgroundColor: lightenColor(baseColor, 0.85),
-
               boxShadow: "inset 0 1px 2px rgba(0,0,0,0.4)",
-
               "& .MuiLinearProgress-bar": {
                 borderRadius: 10,
-
                 background: `linear-gradient(
-                  90deg,
-                  ${baseColor} 0%,
-                  ${lightenColor(baseColor, 0.2)} 50%,
-                  ${baseColor} 100%
-                )`,
-
+                        90deg,
+                        ${baseColor} 0%,
+                        ${lightenColor(baseColor, 0.2)} 50%,
+                        ${baseColor} 100%
+                    )`,
                 boxShadow: `
-                  inset 0 1px 2px rgba(255,255,255,0.3),
-                  inset 0 -1px 2px rgba(0,0,0,0.3)
-                `,
+                        inset 0 1px 2px rgba(255,255,255,0.3),
+                        inset 0 -1px 2px rgba(0,0,0,0.3)
+                    `,
               },
             }}
           />
@@ -220,7 +267,6 @@ export default function AchievementMiniCard({ achievement, onClick }) {
               fontWeight: 700,
               color: "#fff",
               textAlign: "right",
-
               textShadow: "0 1px 3px rgba(0,0,0,0.7)",
             }}
           >

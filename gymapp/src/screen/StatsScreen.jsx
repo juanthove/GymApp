@@ -31,6 +31,11 @@ import {
   ToggleButtonGroup,
   Divider,
   Skeleton,
+  Pagination,
+  InputAdornment,
+  IconButton,
+  Dialog,
+  DialogContent,
 } from "@mui/material";
 
 import { keyframes } from "@mui/system";
@@ -40,6 +45,10 @@ import { DateCalendar, PickerDay } from "@mui/x-date-pickers";
 
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import SortIcon from "@mui/icons-material/Sort";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ClearIcon from "@mui/icons-material/Clear";
 
 import {
   LineChart,
@@ -56,8 +65,10 @@ import {
 
 import BackButton from "../components/BackButton";
 import MuscleChips from "../components/MuscleChips";
+import PRMiniCard from "../components/PRMiniCard";
 import PRCard from "../components/PRCard";
 import CustomLineTooltip from "../components/CustomLineTooltip";
+import ScrollToTopButton from "../components/ScrollToTopButton";
 
 import { MAIN_RED, RED_GRADIENT } from "../utils/colorUtils";
 
@@ -99,8 +110,15 @@ export default function StatsScreen() {
 
   const [totalVolume, setTotalVolume] = useState(0);
   const [weeklyByMuscle, setWeeklyByMuscle] = useState([]);
+  const [weeklyPage, setWeeklyPage] = useState(0);
+  const [weeklyTotalPages, setWeeklyTotalPages] = useState(0);
+  const [loadingWeekly, setLoadingWeekly] = useState(false);
+
   const [selectedMuscle, setSelectedMuscle] = useState("ALL");
   const [chartData, setChartData] = useState([]);
+
+  const WEEKLY_PAGE_SIZE = 3;
+
   const [frequencyData, setFrequencyData] = useState([]);
   const [volumeGranularity, setVolumeGranularity] = useState(null);
   const [frequencyGranularity, setFrequencyGranularity] = useState(null);
@@ -111,6 +129,10 @@ export default function StatsScreen() {
   const [currentStreak, setCurrentStreak] = useState(0);
 
   const [prs, setPrs] = useState([]);
+  const [prSearch, setPrSearch] = useState("");
+  const [prMuscle, setPrMuscle] = useState("ALL");
+  const [prSortOrder, setPrSortOrder] = useState("DESC");
+  const [selectedPR, setSelectedPR] = useState(null);
 
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -123,118 +145,103 @@ export default function StatsScreen() {
     width: 0,
   });
 
-  const computedTotalVolume = useMemo(() => {
-    if (selectedMuscle === "ALL") return totalVolume;
+  const computedTotalVolume = totalVolume;
 
-    return weeklyByMuscle
-      .filter((item) => item.muscle === selectedMuscle)
-      .reduce((acc, item) => acc + Number(item.volume || 0), 0);
-  }, [selectedMuscle, weeklyByMuscle, totalVolume]);
-
-  const enhancedRows = useMemo(() => {
-    const byWeekAndMuscle = new Map(
-      weeklyByMuscle.map((item) => [`${item.weekStart}|${item.muscle || "SIN_MUSCULO"}`, Number(item.volume || 0)]),
-    );
-
-    const rows = weeklyByMuscle.map((item) => {
-      const muscle = item.muscle || "SIN_MUSCULO";
-
-      const currentVolume = Number(item.volume || 0);
-      const historicalMax = Number(item.historicalMaxBefore || 0);
-
-      const delta = currentVolume - historicalMax;
-
-      const percent = historicalMax > 0 ? (delta / historicalMax) * 100 : null;
-
-      return {
-        ...item,
-        muscle,
-        currentVolume,
-        historicalMax,
-        delta,
-        percent,
-      };
-    });
-
-    const maxVolume = Math.max(...rows.map((r) => r.currentVolume), 0);
-
-    return rows.map((row) => ({
-      ...row,
-      volumeRatio: maxVolume > 0 ? (row.currentVolume / maxVolume) * 100 : 0,
-    }));
-  }, [weeklyByMuscle]);
-
-  const muscleOptions = useMemo(() => {
-    const muscles = new Set(enhancedRows.map((row) => row.muscle));
-    const orderedMuscles = Object.keys(muscleLabels).filter((muscle) => muscles.has(muscle));
-    return ["ALL", ...orderedMuscles];
-  }, [enhancedRows]);
-
-  const filteredRows = useMemo(() => {
-    if (selectedMuscle === "ALL") {
-      return enhancedRows;
-    }
-
-    return enhancedRows.filter((row) => row.muscle === selectedMuscle);
-  }, [enhancedRows, selectedMuscle]);
+  const muscleOptions = useMemo(() => ["ALL", ...Object.keys(muscleLabels)], []);
 
   const weeklyGroups = useMemo(() => {
-    const groups = new Map();
+    return weeklyByMuscle
+      .map((week) => {
+        const rows = week.muscles
+          .filter((item) => selectedMuscle === "ALL" || item.muscle === selectedMuscle)
+          .map((item) => {
+            const currentVolume = Number(item.volume || 0);
+            const historicalMax = Number(item.historicalMaxBefore || 0);
 
-    for (const row of filteredRows) {
-      const key = `${row.weekStart}|${row.weekEnd}`;
+            const delta = currentVolume - historicalMax;
+            const percent = historicalMax > 0 ? (delta / historicalMax) * 100 : null;
 
-      if (!groups.has(key)) {
-        groups.set(key, {
-          weekStart: row.weekStart,
-          weekEnd: row.weekEnd,
-          rows: [],
-          subtotal: 0,
-        });
-      }
+            return {
+              ...item,
+              weekStart: week.weekStart,
+              weekEnd: week.weekEnd,
+              currentVolume,
+              historicalMax,
+              delta,
+              percent,
+            };
+          });
 
-      const group = groups.get(key);
-      group.rows.push(row);
-      group.subtotal += row.currentVolume;
+        const subtotal =
+          selectedMuscle === "ALL"
+            ? Number(week.totalVolume || 0)
+            : rows.reduce((acc, row) => acc + row.currentVolume, 0);
+
+        return {
+          weekStart: week.weekStart,
+          weekEnd: week.weekEnd,
+          subtotal,
+          rows: rows.map((row) => ({
+            ...row,
+            volumeRatio: subtotal > 0 ? (row.currentVolume / subtotal) * 100 : 0,
+          })),
+        };
+      })
+      .filter((week) => week.rows.length > 0);
+  }, [weeklyByMuscle, selectedMuscle]);
+
+  const loadTotalVolume = async () => {
+    try {
+      const totalRes = await getTotalWorkoutVolumeByUserAndDateRange(
+        userId,
+        from,
+        to,
+        selectedMuscle === "ALL" ? null : selectedMuscle,
+      );
+
+      setTotalVolume(totalRes?.totalVolume || 0);
+    } catch (e) {
+      setError(e?.message || "No se pudo cargar el volumen total");
     }
+  };
 
-    const result = Array.from(groups.values());
+  const loadWeeklyStats = async () => {
+    try {
+      setLoadingWeekly(true);
 
-    for (const group of result) {
-      const total = group.subtotal;
+      const weeklyRes = await getWeeklyMuscleVolumeByUserAndDateRange(
+        userId,
+        from,
+        to,
+        weeklyPage,
+        WEEKLY_PAGE_SIZE,
+        selectedMuscle === "ALL" ? null : selectedMuscle,
+      );
 
-      for (const row of group.rows) {
-        row.volumeRatio = total > 0 ? (row.currentVolume / total) * 100 : 0;
-      }
+      setWeeklyByMuscle(weeklyRes?.content || []);
+      setWeeklyTotalPages(weeklyRes?.totalPages || 0);
+    } catch (e) {
+      setError(e?.message || "No se pudieron cargar las estadísticas semanales");
+    } finally {
+      setLoadingWeekly(false);
     }
+  };
 
-    return result;
-  }, [filteredRows]);
-
-  const loadStats = async () => {
+  useEffect(() => {
     if (from && to && from > to) {
       setError("La fecha desde no puede ser mayor que la fecha hasta");
       return;
     }
 
     setError("");
-
-    try {
-      const [totalRes, weeklyRes] = await Promise.all([
-        getTotalWorkoutVolumeByUserAndDateRange(userId, from, to, selectedMuscle === "ALL" ? null : selectedMuscle),
-        getWeeklyMuscleVolumeByUserAndDateRange(userId, from, to),
-      ]);
-
-      setTotalVolume(totalRes?.totalVolume || 0);
-      setWeeklyByMuscle(weeklyRes || []);
-    } catch (e) {
-      setError(e?.message || "No se pudieron cargar las estadísticas");
-    }
-  };
+    loadTotalVolume();
+  }, [from, to, selectedMuscle]);
 
   useEffect(() => {
-    loadStats();
-  }, [from, to, selectedMuscle]);
+    if (from && to && from > to) return;
+
+    loadWeeklyStats();
+  }, [from, to, weeklyPage, selectedMuscle]);
 
   useEffect(() => {
     if (!muscleOptions.includes(selectedMuscle)) {
@@ -358,8 +365,6 @@ export default function StatsScreen() {
         imageUrl: getExerciseIconUrl(pr.icon),
       }));
 
-      formatted.sort((a, b) => new Date(b.date) - new Date(a.date));
-
       setPrs(formatted);
     } catch (e) {
       console.error("Error cargando PRs", e);
@@ -367,6 +372,23 @@ export default function StatsScreen() {
       setLoadingPR(false);
     }
   };
+
+  const filteredPRs = useMemo(() => {
+    return prs
+      .filter((pr) => {
+        const matchesName = pr.name?.toLowerCase().includes(prSearch.trim().toLowerCase());
+
+        const matchesMuscle = prMuscle === "ALL" || pr.muscle === prMuscle;
+
+        return matchesName && matchesMuscle;
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+
+        return prSortOrder === "DESC" ? dateB - dateA : dateA - dateB;
+      });
+  }, [prs, prSearch, prMuscle, prSortOrder]);
 
   useEffect(() => {
     if (activeTab === "volume") {
@@ -392,6 +414,16 @@ export default function StatsScreen() {
   const minWidth = window.innerWidth < 900 ? 500 : 820;
 
   const volumeChartWidth = Math.max(chartData.length * VOLUME_POINT_WIDTH + 80, containerWidth || minWidth);
+
+  //Mover grafica de volumen hacia la derecha
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || activeTab !== "volume") return;
+
+    requestAnimationFrame(() => {
+      el.scrollLeft = el.scrollWidth;
+    });
+  }, [chartData, volumeChartWidth, activeTab]);
 
   //Custom tooltip
   const tooltipTimeoutRef = useRef(null);
@@ -436,12 +468,12 @@ export default function StatsScreen() {
 
   useEffect(() => {
     const el = containerRef.current;
-    if (!el) return;
+    if (!el || activeTab !== "frequency") return;
 
     requestAnimationFrame(() => {
       el.scrollLeft = el.scrollWidth;
     });
-  }, [frequencyData]);
+  }, [frequencyData, activeTab]);
 
   useEffect(() => {
     setShouldAnimate(true);
@@ -687,12 +719,20 @@ export default function StatsScreen() {
                     },
                   },
 
-                  //Botones seleccionados
-                  "& .Mui-selected": {
-                    background: "linear-gradient(135deg, #ff0000, #fd2828)",
+                  // Botones seleccionados
+                  "& .MuiToggleButton-root.Mui-selected": {
+                    background: "linear-gradient(135deg, #ff1744 0%, #e60013 55%, #ff3030 100%) !important",
                     color: "#fff",
                     borderRadius: 3,
-                    boxShadow: "0 0 12px rgba(255, 80, 60, 0.8)",
+                    boxShadow: `
+                      0 0 12px rgba(255, 0, 40, 0.65),
+                      0 0 24px rgba(255, 0, 40, 0.35),
+                      0 3px 8px rgba(180, 0, 20, 0.3)
+                    `,
+                    "&:hover": {
+                      background: "linear-gradient(135deg, #ff3030, #ed0028) !important",
+                      boxShadow: "0 0 18px rgba(255, 0, 40, 0.8)",
+                    },
                   },
                 }}
               >
@@ -743,7 +783,10 @@ export default function StatsScreen() {
                       label="Desde"
                       InputLabelProps={{ shrink: true }}
                       value={from}
-                      onChange={(e) => setFrom(e.target.value)}
+                      onChange={(e) => {
+                        setFrom(e.target.value);
+                        setWeeklyPage(0);
+                      }}
                       sx={{ width: 150 }}
                     />
 
@@ -753,7 +796,10 @@ export default function StatsScreen() {
                       label="Hasta"
                       InputLabelProps={{ shrink: true }}
                       value={to}
-                      onChange={(e) => setTo(e.target.value)}
+                      onChange={(e) => {
+                        setTo(e.target.value);
+                        setWeeklyPage(0);
+                      }}
                       sx={{ width: 150 }}
                     />
 
@@ -763,7 +809,10 @@ export default function StatsScreen() {
                         select
                         label="Músculo"
                         value={selectedMuscle}
-                        onChange={(e) => setSelectedMuscle(e.target.value)}
+                        onChange={(e) => {
+                          setSelectedMuscle(e.target.value);
+                          setWeeklyPage(0);
+                        }}
                         sx={{
                           minWidth: 180,
                           maxWidth: 260,
@@ -805,6 +854,7 @@ export default function StatsScreen() {
                           setFrom("");
                           setTo("");
                           setSelectedMuscle("ALL");
+                          setWeeklyPage(0);
                         }}
                         sx={{
                           height: 40,
@@ -1000,7 +1050,7 @@ export default function StatsScreen() {
                           <Box
                             sx={{
                               position: "absolute",
-                              left: clickedPoint.cx,
+                              left: clickedPoint.cx - (containerRef.current?.scrollLeft || 0),
                               top: clickedPoint.cy - 10,
                               transform: "translate(-50%, -100%)",
                               zIndex: 9999,
@@ -1051,7 +1101,7 @@ export default function StatsScreen() {
                     />
                   </Stack>
 
-                  {loadingVolume ? (
+                  {loadingWeekly ? (
                     <Stack spacing={2}>
                       {[1, 2, 3].map((i) => (
                         <Box
@@ -1073,7 +1123,7 @@ export default function StatsScreen() {
                         </Box>
                       ))}
                     </Stack>
-                  ) : filteredRows.length === 0 ? (
+                  ) : weeklyGroups.length === 0 ? (
                     <Typography color="text.secondary">No hay datos para ese rango.</Typography>
                   ) : (
                     <Stack spacing={2}>
@@ -1196,6 +1246,35 @@ export default function StatsScreen() {
                       ))}
                     </Stack>
                   )}
+                  {weeklyTotalPages > 1 && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        mt: 3,
+                      }}
+                    >
+                      <Pagination
+                        count={weeklyTotalPages}
+                        page={weeklyPage + 1}
+                        onChange={(event, value) => setWeeklyPage(value - 1)}
+                        color="primary"
+                        shape="rounded"
+                        siblingCount={2}
+                        boundaryCount={1}
+                        sx={{
+                          "& .MuiPaginationItem-root": {
+                            color: darkMode ? "#fff" : "#333",
+                            fontWeight: 700,
+                          },
+                          "& .Mui-selected": {
+                            background: `${MAIN_RED} !important`,
+                            color: "#fff",
+                          },
+                        }}
+                      />
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
             </>
@@ -1224,14 +1303,7 @@ export default function StatsScreen() {
                     }}
                   >
                     {[1, 2, 3, 4].map((i) => (
-                      <Box
-                        key={i}
-                        sx={{
-                          p: 2,
-                          borderRadius: 3,
-                          background: "rgba(255,255,255,0.05)",
-                        }}
-                      >
+                      <Box key={i}>
                         <Skeleton variant="rounded" height={120} />
                         <Skeleton width="70%" height={30} sx={{ mt: 1 }} />
                         <Skeleton width="50%" height={25} />
@@ -1241,36 +1313,162 @@ export default function StatsScreen() {
                 ) : prs.length === 0 ? (
                   <Box sx={{ textAlign: "center", py: 4 }}>
                     <Typography fontSize="2.1rem">No hay récords personales todavía 💪</Typography>
-
-                    <Typography fontSize="1.5rem">Registrá tus series para empezar a ver tus records.</Typography>
+                    <Typography fontSize="1.5rem">Registrá tus series para empezar a ver tus récords.</Typography>
                   </Box>
                 ) : (
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: {
-                        xs: "1fr",
-                        sm: "repeat(2, 1fr)",
-                      },
-                      rowGap: 3,
-                      justifyItems: "center",
-                    }}
-                  >
-                    {prs.map((row) => (
-                      <Box
-                        key={row.id}
+                  <>
+                    {/* FILTROS */}
+                    <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
+                      {/* BUSCAR */}
+                      <TextField
+                        fullWidth
+                        label="Buscar ejercicio"
+                        placeholder="Ej. Press banca"
+                        value={prSearch}
+                        onChange={(e) => setPrSearch(e.target.value)}
+                        size="small"
+                        InputProps={{
+                          endAdornment: prSearch && (
+                            <InputAdornment position="end">
+                              <IconButton onClick={() => setPrSearch("")} edge="end">
+                                <ClearIcon sx={{ fontSize: 27 }} />
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
                         sx={{
-                          width: {
-                            xs: "90%",
-                            md: "100%",
+                          flex: 1,
+                          "& .MuiOutlinedInput-root": {
+                            borderRadius: 2,
+                            backgroundColor: darkMode ? "#17263d" : "#fff",
+                            color: darkMode ? "#fff" : "inherit",
+                            "& fieldset": {
+                              borderColor: darkMode ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)",
+                            },
+                            "&:hover fieldset": {
+                              borderColor: "#f16744",
+                            },
+                            "&.Mui-focused fieldset": {
+                              borderColor: "#f16744",
+                            },
                           },
-                          maxWidth: 320,
+                          "& .MuiInputLabel-root": {
+                            color: darkMode ? "#aaa" : "text.secondary",
+                          },
+                          "& .MuiInputLabel-root.Mui-focused": {
+                            color: "#f16744",
+                          },
+                        }}
+                      />
+
+                      {/* MÚSCULO */}
+                      <TextField
+                        select
+                        label="Músculo"
+                        value={prMuscle}
+                        onChange={(e) => setPrMuscle(e.target.value)}
+                        size="small"
+                        sx={{
+                          flex: 1,
+                          "& .MuiOutlinedInput-root": {
+                            borderRadius: 2,
+                            backgroundColor: darkMode ? "#17263d" : "#fff",
+                            color: darkMode ? "#fff" : "inherit",
+                            "& fieldset": {
+                              borderColor: darkMode ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)",
+                            },
+                            "&:hover fieldset": {
+                              borderColor: "#f16744",
+                            },
+                            "&.Mui-focused fieldset": {
+                              borderColor: "#f16744",
+                            },
+                          },
+                          "& .MuiInputLabel-root": {
+                            color: darkMode ? "#aaa" : "text.secondary",
+                          },
+                          "& .MuiInputLabel-root.Mui-focused": {
+                            color: "#f16744",
+                          },
                         }}
                       >
-                        <PRCard row={row} />
+                        {muscleOptions.map((muscle) => (
+                          <MenuItem key={muscle} value={muscle}>
+                            {muscle === "ALL" ? "Todos" : muscleLabels[muscle] || muscle}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+
+                      {/* ORDENAR */}
+                      <Button
+                        variant="contained"
+                        onClick={() => setPrSortOrder((prev) => (prev === "DESC" ? "ASC" : "DESC"))}
+                        startIcon={
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.2 }}>
+                            {prSortOrder === "DESC" ? (
+                              <ArrowUpwardIcon sx={{ fontSize: 20 }} />
+                            ) : (
+                              <ArrowDownwardIcon sx={{ fontSize: 20 }} />
+                            )}
+                            <SortIcon />
+                          </Box>
+                        }
+                        sx={{
+                          minWidth: 140,
+                          height: 40,
+                          borderRadius: 2,
+                          fontSize: "1rem",
+                          whiteSpace: "nowrap",
+                          background: "linear-gradient(135deg, #ff2020, #f16744)",
+                          color: "#fff",
+                          "&:hover": {
+                            background: "linear-gradient(135deg, #e51b1b, #d95738)",
+                          },
+                        }}
+                      >
+                        {prSortOrder === "DESC" ? "Recientes" : "Antiguos"}
+                      </Button>
+                    </Stack>
+
+                    {/* RESULTADOS */}
+                    {filteredPRs.length === 0 ? (
+                      <Box sx={{ textAlign: "center", py: 4 }}>
+                        <Typography fontSize="1.3rem" fontWeight={700}>
+                          No se encontraron récords
+                        </Typography>
+                        <Typography color="text.secondary">Probá cambiando los filtros de búsqueda.</Typography>
                       </Box>
-                    ))}
-                  </Box>
+                    ) : (
+                      <Box
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns: {
+                            xs: "1fr",
+                            sm: "repeat(2, 1fr)",
+                          },
+                          rowGap: 3,
+                          justifyItems: "center",
+                        }}
+                      >
+                        {filteredPRs.map((row) => (
+                          <Box
+                            key={row.id}
+                            onClick={() => setSelectedPR(row)}
+                            sx={{
+                              width: {
+                                xs: "90%",
+                                md: "100%",
+                              },
+                              maxWidth: 320,
+                              cursor: "pointer",
+                            }}
+                          >
+                            <PRMiniCard row={row} />
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -1723,6 +1921,23 @@ export default function StatsScreen() {
             </>
           )}
         </Stack>
+        <Dialog
+          open={Boolean(selectedPR)}
+          onClose={() => setSelectedPR(null)}
+          fullWidth
+          maxWidth="sm"
+          PaperProps={{
+            sx: {
+              background: "transparent",
+              boxShadow: "none",
+              overflow: "visible",
+              m: 2,
+            },
+          }}
+        >
+          <DialogContent sx={{ p: 0, overflow: "visible" }}>{selectedPR && <PRCard row={selectedPR} />}</DialogContent>
+        </Dialog>
+        <ScrollToTopButton bottom={20} right={10} />
       </Container>
     </Box>
   );

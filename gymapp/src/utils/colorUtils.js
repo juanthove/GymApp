@@ -20,4 +20,4 @@ export const darkenColor = (hex, amount = 0.2) => {
 
 export const MAIN_RED = "#ff2020";
 
-export const RED_GRADIENT = "linear-gradient(90deg, #ff2020, #f16744)";
+export const RED_GRADIENT = "linear-gradient(90deg, #fc0202, #e61531)";

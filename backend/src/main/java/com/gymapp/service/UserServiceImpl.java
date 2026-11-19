@@ -8,7 +8,9 @@ import com.gymapp.exception.ResourceNotFoundException;
 import com.gymapp.model.User;
 import com.gymapp.model.UserLevel;
 import com.gymapp.model.Workout;
+import com.gymapp.model.WorkoutDay;
 import com.gymapp.repository.UserRepository;
+import com.gymapp.repository.WorkoutDayRepository;
 import com.gymapp.repository.WorkoutRepository;
 import com.gymapp.repository.UserLevelRepository;
 import com.gymapp.repository.WorkoutSetRepository;
@@ -51,6 +53,9 @@ public class UserServiceImpl implements UserService {
     private WorkoutSetRepository workoutSetRepository;
 
     @Autowired
+    private WorkoutDayRepository workoutDayRepository;
+
+    @Autowired
     private UserAchievementService userAchievementService;
 
     @Override
@@ -67,7 +72,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserResponse> getLoggedUsers() {
-        return userRepository.findByLogged(true).stream().map(this::toResponse).toList();
+        return userRepository.findByLogged(true)
+                .stream()
+                .map(user -> {
+                    Long inProgressWorkoutDayId = null;
+
+                    if (user.getCurrentWorkout() != null) {
+                        inProgressWorkoutDayId = workoutDayRepository
+                                .findFirstByWorkoutIdAndStartedAtIsNotNullAndFinishedAtIsNullOrderByDayOrder(
+                                        user.getCurrentWorkout().getId())
+                                .map(WorkoutDay::getId)
+                                .orElse(null);
+                    }
+
+                    return toResponse(user, inProgressWorkoutDayId);
+                })
+                .toList();
     }
 
     @Override
@@ -257,11 +277,32 @@ public class UserServiceImpl implements UserService {
         return toResponse(userRepository.save(user));
     }
 
+    // ToReponse normal
     private UserResponse toResponse(User user) {
-        Long currentWorkoutId = user.getCurrentWorkout() != null ? user.getCurrentWorkout().getId() : null;
-        Long userLevelId = user.getUserLevel() != null ? user.getUserLevel().getId() : null;
-        return new UserResponse(user.getId(), user.getName(), user.getSurname(), user.isLogged(),
-                user.getGymDaysPerWeek(), user.getImage(), currentWorkoutId, userLevelId, user.isRegisterSets());
+        return toResponse(user, null);
+    }
+
+    // ToResponse para logged users que incluye el id del workout day en progreso
+    private UserResponse toResponse(User user, Long inProgressWorkoutDayId) {
+        Long currentWorkoutId = user.getCurrentWorkout() != null
+                ? user.getCurrentWorkout().getId()
+                : null;
+
+        Long userLevelId = user.getUserLevel() != null
+                ? user.getUserLevel().getId()
+                : null;
+
+        return new UserResponse(
+                user.getId(),
+                user.getName(),
+                user.getSurname(),
+                user.isLogged(),
+                user.getGymDaysPerWeek(),
+                user.getImage(),
+                currentWorkoutId,
+                userLevelId,
+                user.isRegisterSets(),
+                inProgressWorkoutDayId);
     }
 
     private WorkoutResponse toWorkoutResponse(Workout workout) {

@@ -8,13 +8,13 @@ import java.util.List;
 
 public interface AchievementRepository extends JpaRepository<Achievement, Long> {
 
-    List<Achievement> findByLevelIdGreaterThanEqual(Long levelId);
+    List<Achievement> findByLevelLevelOrderGreaterThanEqual(Integer levelOrder);
 
     @Query("""
-        SELECT a
-        FROM Achievement a
-        WHERE a.type = 'STREAK'
-        AND a.level.id >= :levelId
-    """)
-    List<Achievement> findAvailableStreakAchievements(Long levelId);
+                SELECT a
+                FROM Achievement a
+                WHERE a.type = 'STREAK'
+                AND a.level.levelOrder >= :levelOrder
+            """)
+    List<Achievement> findAvailableStreakAchievements(Integer levelOrder);
 }

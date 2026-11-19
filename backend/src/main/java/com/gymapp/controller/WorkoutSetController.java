@@ -3,7 +3,7 @@ package com.gymapp.controller;
 import com.gymapp.dto.request.WorkoutSetRequest;
 import com.gymapp.dto.response.WorkoutSetResponse;
 import com.gymapp.dto.response.WorkoutSetVolumeResponse;
-import com.gymapp.dto.response.WorkoutSetWeeklyMuscleVolumeResponse;
+import com.gymapp.dto.response.WeeklyMuscleVolumePageResponse;
 import com.gymapp.dto.response.WorkoutVolumeResponse;
 import com.gymapp.model.Granularity;
 import com.gymapp.model.MuscleType;
@@ -56,11 +56,15 @@ public class WorkoutSetController {
     }
 
     @GetMapping("/user/{userId}/volume/weekly-by-muscle")
-    public List<WorkoutSetWeeklyMuscleVolumeResponse> getWeeklyMuscleVolumeByUserAndDateRange(
+    public WeeklyMuscleVolumePageResponse getWeeklyMuscleVolumeByUserAndDateRange(
             @PathVariable Long userId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        return workoutSetService.getWeeklyMuscleVolumeByUserAndDateRange(userId, from, to);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "3") int size,
+            @RequestParam(required = false) MuscleType muscle) {
+        return workoutSetService.getWeeklyMuscleVolumeByUserAndDateRange(
+                userId, from, to, page, size, muscle);
     }
 
     @GetMapping("/user/{userId}/volume-series")
@@ -69,8 +73,7 @@ public class WorkoutSetController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(required = false) Granularity granularity,
-            @RequestParam(required = false) MuscleType muscle
-    ) {
+            @RequestParam(required = false) MuscleType muscle) {
         return workoutSetService.getVolumeSeriesByUserAndDateRange(userId, from, to, granularity, muscle);
     }
 

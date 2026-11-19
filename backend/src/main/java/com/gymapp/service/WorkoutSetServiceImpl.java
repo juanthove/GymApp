@@ -1,10 +1,12 @@
 package com.gymapp.service;
 
 import com.gymapp.dto.request.WorkoutSetRequest;
+import com.gymapp.dto.response.MuscleVolumeResponse;
+import com.gymapp.dto.response.WeeklyMuscleVolumePageResponse;
+import com.gymapp.dto.response.WeeklyMuscleVolumeResponse;
 import com.gymapp.dto.response.WorkoutDayMuscleVolumeResponse;
 import com.gymapp.dto.response.WorkoutSetResponse;
 import com.gymapp.dto.response.WorkoutSetVolumeResponse;
-import com.gymapp.dto.response.WorkoutSetWeeklyMuscleVolumeResponse;
 import com.gymapp.dto.response.WorkoutSetVolumePointResponse;
 import com.gymapp.dto.response.WorkoutVolumeResponse;
 import com.gymapp.exception.ResourceNotFoundException;
@@ -26,6 +28,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.sql.Timestamp;
@@ -103,47 +106,123 @@ public class WorkoutSetServiceImpl implements WorkoutSetService {
         return new WorkoutSetVolumeResponse(userId, from, to, totalVolume);
     }
 
+    // Obtiene el volumen semanal por músculo en un rango de fechas junto al maximo
+    // historico de ese músculo
     @Override
-    public List<WorkoutSetWeeklyMuscleVolumeResponse> getWeeklyMuscleVolumeByUserAndDateRange(
+    public WeeklyMuscleVolumePageResponse getWeeklyMuscleVolumeByUserAndDateRange(
             Long userId,
             LocalDate from,
-            LocalDate to) {
+            LocalDate to,
+            int page,
+            int size,
+            MuscleType selectedMuscle) {
 
-        List<Object[]> rows = workoutSetRepository.findWeeklyVolumeWithHistoricalMax(
-                userId,
-                from != null ? from.atStartOfDay() : null,
-                to != null ? to.atTime(LocalTime.MAX) : null);
-
-        List<WorkoutSetWeeklyMuscleVolumeResponse> result = new ArrayList<>();
-
-        for (Object[] row : rows) {
-            String muscleStr = (String) row[0];
-            LocalDateTime weekStart = ((Timestamp) row[1]).toLocalDateTime();
-            Double weeklyVolume = row[2] != null ? ((Number) row[2]).doubleValue() : 0.0;
-            Double historicalMax = row[3] != null ? ((Number) row[3]).doubleValue() : 0.0;
-
-            MuscleType muscle = MuscleType.valueOf(muscleStr);
-
-            result.add(new WorkoutSetWeeklyMuscleVolumeResponse(
-                    weekStart.toLocalDate(),
-                    weekStart.toLocalDate().plusDays(6),
-                    muscle,
-                    weeklyVolume,
-                    historicalMax));
+        if (page < 0 || size <= 0) {
+            throw new IllegalArgumentException("Parámetros de paginación inválidos");
         }
 
-        result.sort((a, b) -> {
-            // Comparar por semana (desc)
-            int cmpWeek = b.weekStart().compareTo(a.weekStart());
-            if (cmpWeek != 0)
-                return cmpWeek;
+        LocalDateTime fromDateTime = from != null
+                ? from.atStartOfDay()
+                : null;
 
-            // Comparar por orden del enum
-            return Integer.compare(
-                    a.muscle().ordinal(),
-                    b.muscle().ordinal());
-        });
-        return result;
+        LocalDateTime toDateTime = to != null
+                ? to.atTime(LocalTime.MAX)
+                : null;
+
+        int offset = page * size;
+
+        // Musculo seleccionado
+        String muscleFilter = selectedMuscle != null
+                ? selectedMuscle.name()
+                : null;
+
+        // Contar únicamente las semanas que tienen registros del músculo seleccionado
+        long totalWeeks = workoutSetRepository.countWeeklyVolumeByUserAndDateRange(
+                userId,
+                fromDateTime,
+                toDateTime,
+                muscleFilter);
+
+        int totalPages = (int) Math.ceil((double) totalWeeks / size);
+
+        // Evitar consultar páginas inexistentes
+        if (page >= totalPages) {
+            return new WeeklyMuscleVolumePageResponse(
+                    List.of(),
+                    page,
+                    size,
+                    totalPages,
+                    totalWeeks);
+        }
+
+        // Obtener los músculos de las semanas correspondientes a la página
+        List<Object[]> rows = workoutSetRepository.findWeeklyVolumeWithHistoricalMax(
+                userId,
+                fromDateTime,
+                toDateTime,
+                muscleFilter,
+                size,
+                offset);
+
+        // Agrupar los músculos por semana
+        Map<LocalDate, List<MuscleVolumeResponse>> weeklyMap = new TreeMap<>(Comparator.reverseOrder());
+
+        for (Object[] row : rows) {
+
+            String muscleStr = (String) row[0];
+
+            LocalDate weekStart = ((Timestamp) row[1])
+                    .toLocalDateTime()
+                    .toLocalDate();
+
+            Double weeklyVolume = row[2] != null
+                    ? ((Number) row[2]).doubleValue()
+                    : 0.0;
+
+            Double historicalMax = row[3] != null
+                    ? ((Number) row[3]).doubleValue()
+                    : 0.0;
+
+            MuscleType muscleType = MuscleType.valueOf(muscleStr);
+
+            weeklyMap.computeIfAbsent(weekStart, key -> new ArrayList<>())
+                    .add(new MuscleVolumeResponse(
+                            muscleType,
+                            weeklyVolume,
+                            historicalMax));
+        }
+
+        // Construir las semanas completas
+        List<WeeklyMuscleVolumeResponse> weeks = new ArrayList<>();
+
+        for (Map.Entry<LocalDate, List<MuscleVolumeResponse>> entry : weeklyMap.entrySet()) {
+
+            LocalDate weekStart = entry.getKey();
+
+            List<MuscleVolumeResponse> muscles = entry.getValue();
+
+            muscles.sort(Comparator.comparingInt(
+                    muscle -> muscle.muscle().ordinal()));
+
+            double totalVolume = muscles.stream()
+                    .mapToDouble(muscle -> muscle.volume() != null
+                            ? muscle.volume()
+                            : 0.0)
+                    .sum();
+
+            weeks.add(new WeeklyMuscleVolumeResponse(
+                    weekStart,
+                    weekStart.plusDays(6),
+                    totalVolume,
+                    muscles));
+        }
+
+        return new WeeklyMuscleVolumePageResponse(
+                weeks,
+                page,
+                size,
+                totalPages,
+                totalWeeks);
     }
 
     private LocalDate resolveDateByGranularity(WorkoutSet set, Granularity granularity) {

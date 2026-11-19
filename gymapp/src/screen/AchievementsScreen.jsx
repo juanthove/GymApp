@@ -47,7 +47,6 @@ export default function AchievementsScreen() {
     if (!user) return [];
 
     return achievements
-      .filter((a) => a.levelId >= user.userLevelId)
       .sort((a, b) => a.levelId - b.levelId)
       .map((a) => ({
         ...a,

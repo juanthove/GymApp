@@ -6,6 +6,7 @@ import { useDarkMode } from "../context/DarkModeContext";
 import ClearIcon from "@mui/icons-material/Clear";
 import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
 import ImageIcon from "@mui/icons-material/Image";
+import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 
 import backgroundImg from "../assets/gymproIcon.png";
 import { muscleLabels, typeLabels, typeOrder } from "../config/muscleConfig";
@@ -50,6 +51,7 @@ import CloseButton from "../components/CloseButton";
 import AnimatedDialog from "../components/AnimatedDialog";
 import AppSnackbar from "../components/AppSnackbar";
 import ExerciseTooltip from "../components/ExerciseTooltip";
+import ScrollToTopButton from "../components/ScrollToTopButton";
 
 import {
   Container,
@@ -144,6 +146,9 @@ export default function ExerciseScreen() {
 
   //REGISTRAR SERIES
   const [registerSets, setRegisterSets] = useState(false);
+
+  //BOTON SCROLL TO TOP
+  const exerciseListRef = useRef(null);
 
   useEffect(() => {
     loadData();
@@ -575,7 +580,7 @@ export default function ExerciseScreen() {
     // Ejercicio normal
     if (updated[setIndex].length <= 1) return;
 
-    updated[setIndex].splice(updated[setIndex].length - 1, 1);
+    updated[setIndex].splice(side, 1);
 
     setSets(updated);
   };
@@ -1229,6 +1234,15 @@ export default function ExerciseScreen() {
                 Repeticiones: <b>{reps ?? "-"}</b>
               </Typography>
 
+              {selectedExercise?.mode === "DUMBBEL" && (
+                <FitnessCenterIcon
+                  sx={{
+                    fontSize: 35,
+                    color: "#474747",
+                  }}
+                />
+              )}
+
               {selectedExercise?.exerciseMuscle && (
                 <MuscleChips
                   muscles={[selectedExercise.exerciseMuscle]}
@@ -1289,15 +1303,24 @@ export default function ExerciseScreen() {
                         />
                       )}
 
-                      <Typography
+                      <Box
                         sx={{
-                          fontSize: "1.4rem",
-                          color: "text.secondary",
+                          height: 28,
                           mt: 0.5,
                         }}
                       >
-                        {savingSets[setIndex] ? "Guardando..." : ""}
-                      </Typography>
+                        {savingSets[setIndex] && (
+                          <Typography
+                            sx={{
+                              fontSize: "1.4rem",
+                              color: "text.secondary",
+                              lineHeight: 1,
+                            }}
+                          >
+                            Guardando...
+                          </Typography>
+                        )}
+                      </Box>
 
                       <Stack spacing={1} mt={1}>
                         {selectedExercise?.mode === "UNILATERAL" ? (
@@ -1772,6 +1795,7 @@ export default function ExerciseScreen() {
             }
           >
             <Box
+              ref={exerciseListRef}
               sx={{
                 maxHeight: "60vh",
                 overflowY: "auto",
@@ -1916,6 +1940,7 @@ export default function ExerciseScreen() {
                         sx={{
                           width: { xs: 80, md: 100 },
                           height: { xs: 80, md: 100 },
+                          alignSelf: "center",
                           objectFit: "contain",
                           borderRadius: 2,
                           p: 0.5,
@@ -2017,6 +2042,7 @@ export default function ExerciseScreen() {
                 })}
               </Stack>
             </Box>
+            <ScrollToTopButton scrollContainerRef={exerciseListRef} bottom={220} right={45} />
           </AnimatedDialog>
 
           {/* DESCRIPCION EJERCICIOS */}
@@ -2227,6 +2253,7 @@ export default function ExerciseScreen() {
               </Button>
             </DialogActions>
           </Dialog>
+          <ScrollToTopButton bottom={85} right={24} />
         </Container>
       </Box>
     </Box>

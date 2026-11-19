@@ -6,6 +6,7 @@ import com.gymapp.repository.projection.WorkoutDateProjection;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.*;
 
@@ -18,6 +19,9 @@ public interface WorkoutDayRepository extends JpaRepository<WorkoutDay, Long> {
     long countByMuscleImageAndIdNot(String muscleImage, Long id);
 
     void deleteByWorkoutId(Long workoutId);
+
+    Optional<WorkoutDay> findFirstByWorkoutIdAndStartedAtIsNotNullAndFinishedAtIsNullOrderByDayOrder(
+            Long workoutId);
 
     @Query("""
                 SELECT

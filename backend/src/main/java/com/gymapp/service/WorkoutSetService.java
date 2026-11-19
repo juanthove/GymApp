@@ -1,10 +1,10 @@
 package com.gymapp.service;
 
 import com.gymapp.dto.request.WorkoutSetRequest;
+import com.gymapp.dto.response.WeeklyMuscleVolumePageResponse;
 import com.gymapp.dto.response.WorkoutDayMuscleVolumeResponse;
 import com.gymapp.dto.response.WorkoutSetResponse;
 import com.gymapp.dto.response.WorkoutSetVolumeResponse;
-import com.gymapp.dto.response.WorkoutSetWeeklyMuscleVolumeResponse;
 import com.gymapp.dto.response.WorkoutVolumeResponse;
 import com.gymapp.model.Granularity;
 import com.gymapp.model.MuscleType;
@@ -22,11 +22,14 @@ public interface WorkoutSetService {
 
     List<WorkoutSetResponse> getWorkoutSetsByUserAndDateRange(Long userId, LocalDate from, LocalDate to);
 
-    WorkoutSetVolumeResponse getTotalVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to, MuscleType muscle);
+    WorkoutSetVolumeResponse getTotalVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to,
+            MuscleType muscle);
 
-    List<WorkoutSetWeeklyMuscleVolumeResponse> getWeeklyMuscleVolumeByUserAndDateRange(Long userId, LocalDate from, LocalDate to);
+    WeeklyMuscleVolumePageResponse getWeeklyMuscleVolumeByUserAndDateRange(Long userId, LocalDate from,
+            LocalDate to, int page, int size, MuscleType muscle);
 
-    WorkoutVolumeResponse getVolumeSeriesByUserAndDateRange(Long userId, LocalDate from, LocalDate to, Granularity granularity, MuscleType muscle);
+    WorkoutVolumeResponse getVolumeSeriesByUserAndDateRange(Long userId, LocalDate from, LocalDate to,
+            Granularity granularity, MuscleType muscle);
 
     Double getTotalVolumeByDay(Long userId, Long dayId);
 
