@@ -12,6 +12,8 @@ import {
   getExerciseIconUrl,
   getExerciseImageUrl,
   getExerciseVideoUrl,
+  getExercisesOrdered,
+  updateExercisesOrder,
 } from "../services/exerciseService";
 
 import {
@@ -26,6 +28,9 @@ import {
   Autocomplete,
   Tabs,
   Tab,
+  Card,
+  CardContent,
+  Checkbox,
 } from "@mui/material";
 
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -35,6 +40,8 @@ import FileUploadField from "../components/FileUploadField";
 import AppSnackbar from "../components/AppSnackbar";
 import ConfirmDialog from "../components/ConfirmDialog";
 import AnimatedDialog from "../components/AnimatedDialog";
+import SortableList from "../components/sortable/SortableList";
+import SortableItem from "../components/sortable/SortableItem";
 
 import { muscleLabels, typeLabels, modeLabels } from "../config/muscleConfig";
 import { normalizeText } from "../utils/stringUtils";
@@ -75,6 +82,10 @@ export default function CreateExerciseScreen() {
   const { message, messageType, showMessage, clearMessage } = useSnackbar();
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+  const [activeTab, setActiveTab] = useState("creation");
+  const [orderedExercises, setOrderedExercises] = useState([]);
+  const [selectedExerciseIds, setSelectedExerciseIds] = useState([]);
 
   useEffect(() => {
     return () => {
@@ -239,6 +250,40 @@ export default function CreateExerciseScreen() {
     }
   };
 
+  //ORDEN
+  const loadOrderedExercises = async () => {
+    try {
+      const data = await getExercisesOrdered();
+      setOrderedExercises(data);
+    } catch (error) {
+      showMessage("Error al cargar el orden de los ejercicios", "error");
+    }
+  };
+
+  const handleReorder = (newItems) => {
+    setOrderedExercises(newItems);
+  };
+
+  const handleSaveOrder = async () => {
+    try {
+      const exerciseIds = orderedExercises.map((exercise) => exercise.id);
+
+      await updateExercisesOrder(exerciseIds);
+
+      await loadOrderedExercises();
+
+      showMessage("Orden actualizado correctamente", "success");
+    } catch (error) {
+      showMessage("Error al guardar el orden", "error");
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "order") {
+      loadOrderedExercises();
+    }
+  }, [activeTab]);
+
   return (
     <Box
       sx={{
@@ -298,148 +343,259 @@ export default function CreateExerciseScreen() {
             </Typography>
           </Box>
 
-          <Stack spacing={3}>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={() => setSelectionModalOpen(true)}
+          <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
+            <Tabs
+              value={activeTab}
+              onChange={(e, newValue) => setActiveTab(newValue)}
+              variant="fullWidth"
               sx={{
-                height: 48,
-                justifyContent: "space-between",
-                px: 2,
-                textTransform: "none",
-                fontSize: "1rem",
-                fontWeight: 400,
-                color: "text.primary",
-                borderColor: "rgba(0,0,0,0.23)",
+                minHeight: 44,
+                "& .MuiTab-root": {
+                  fontWeight: 700,
+                  minHeight: 44,
+                },
+                "& .Mui-selected": {
+                  color: "#e53935 !important",
+                },
+                "& .MuiTabs-indicator": {
+                  backgroundColor: "#e53935",
+                  height: 3,
+                  borderRadius: 2,
+                },
               }}
             >
-              <Typography noWrap>{selectedId === "new" ? "Nuevo ejercicio" : exerciseSearch}</Typography>
+              <Tab label="Creación" value="creation" />
+              <Tab label="Orden" value="order" />
+            </Tabs>
+          </Box>
 
-              <KeyboardArrowDownIcon />
-            </Button>
+          {activeTab === "creation" ? (
+            <Stack spacing={3}>
+              <Button
+                variant="outlined"
+                fullWidth
+                onClick={() => setSelectionModalOpen(true)}
+                sx={{
+                  height: 48,
+                  justifyContent: "space-between",
+                  px: 2,
+                  textTransform: "none",
+                  fontSize: "1rem",
+                  fontWeight: 400,
+                  color: "text.primary",
+                  borderColor: "rgba(0,0,0,0.23)",
+                }}
+              >
+                <Typography noWrap>{selectedId === "new" ? "Nuevo ejercicio" : exerciseSearch}</Typography>
 
-            <TextField label="Nombre" value={name} inputRef={nameInputRef} onChange={(e) => setName(e.target.value)} />
-
-            <TextField
-              label="Descripción"
-              multiline
-              minRows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-
-            <Autocomplete
-              autoHighlight
-              options={muscleOptions}
-              getOptionLabel={(option) => option.label}
-              value={muscleOptions.find((m) => m.value === muscle) || null}
-              onChange={(_, newValue) => {
-                setMuscle(newValue?.value || "");
-              }}
-              filterOptions={(options, state) => {
-                const search = normalizeText(state.inputValue);
-
-                return options.filter((option) => normalizeText(option.label).startsWith(search));
-              }}
-              renderInput={(params) => <TextField {...params} label="Músculo trabajado" />}
-            />
-
-            {/* SELECT TIPO DE EJERCICIO */}
-
-            <Autocomplete
-              autoHighlight
-              autoSelect
-              selectOnFocus
-              clearOnBlur={false}
-              options={typeOptions}
-              getOptionLabel={(option) => option.label}
-              value={typeOptions.find((t) => t.value === type) || null}
-              onChange={(_, newValue) => {
-                setType(newValue?.value || "");
-              }}
-              filterOptions={(options, state) => {
-                const search = normalizeText(state.inputValue);
-
-                return options.filter((option) => normalizeText(option.label).startsWith(search));
-              }}
-              renderInput={(params) => <TextField {...params} label="Tipo de ejercicio" />}
-            />
-
-            {/* SELECT MODO DE EJERCICIO */}
-
-            <Autocomplete
-              autoHighlight
-              autoSelect
-              selectOnFocus
-              clearOnBlur={false}
-              options={modeOptions}
-              getOptionLabel={(option) => option.label}
-              value={
-                mode === null
-                  ? modeOptions.find((m) => m.value === "COMMON")
-                  : modeOptions.find((m) => m.value === mode) || null
-              }
-              onChange={(_, newValue) => {
-                setMode(newValue?.value === "COMMON" ? null : newValue?.value || null);
-              }}
-              renderInput={(params) => <TextField {...params} label="Modo de ejercicio" />}
-            />
-
-            {/* ICON */}
-
-            <FileUploadField
-              label="Icono"
-              accept="image/*"
-              setFile={setIcon}
-              preview={iconPreview}
-              setPreview={setIconPreview}
-              existingUrl={currentExercise?.icon && getExerciseIconUrl(currentExercise.icon)}
-              deleteFlag={deleteIcon}
-              setDeleteFlag={setDeleteIcon}
-              renderPreview={(src) => <img src={src} style={{ maxWidth: "100px", borderRadius: "8px" }} />}
-            />
-
-            {/* IMAGE */}
-
-            <FileUploadField
-              label="Imagen"
-              accept="image/*"
-              setFile={setImage}
-              preview={imagePreview}
-              setPreview={setImagePreview}
-              existingUrl={currentExercise?.image && getExerciseImageUrl(currentExercise.image)}
-              deleteFlag={deleteImage}
-              setDeleteFlag={setDeleteImage}
-              renderPreview={(src) => <img src={src} style={{ maxWidth: "300px", borderRadius: "8px" }} />}
-            />
-
-            {/* VIDEO */}
-
-            <FileUploadField
-              label="Video"
-              accept="video/*"
-              setFile={setVideo}
-              preview={videoPreview}
-              setPreview={setVideoPreview}
-              existingUrl={currentExercise?.video && getExerciseVideoUrl(currentExercise.video)}
-              deleteFlag={deleteVideo}
-              setDeleteFlag={setDeleteVideo}
-              renderPreview={(src) => <video src={src} controls style={{ maxWidth: "400px" }} />}
-            />
-
-            <Stack direction="row" spacing={2}>
-              {selectedId !== "new" && (
-                <Button variant="contained" color="error" onClick={() => setConfirmDeleteOpen(true)}>
-                  Eliminar ejercicio
-                </Button>
-              )}
-
-              <Button variant="contained" color="success" onClick={handleSubmit}>
-                {selectedId === "new" ? "Registrar ejercicio" : "Actualizar ejercicio"}
+                <KeyboardArrowDownIcon />
               </Button>
+
+              <TextField
+                label="Nombre"
+                value={name}
+                inputRef={nameInputRef}
+                onChange={(e) => setName(e.target.value)}
+              />
+
+              <TextField
+                label="Descripción"
+                multiline
+                minRows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+
+              <Autocomplete
+                autoHighlight
+                options={muscleOptions}
+                getOptionLabel={(option) => option.label}
+                value={muscleOptions.find((m) => m.value === muscle) || null}
+                onChange={(_, newValue) => {
+                  setMuscle(newValue?.value || "");
+                }}
+                filterOptions={(options, state) => {
+                  const search = normalizeText(state.inputValue);
+
+                  return options.filter((option) => normalizeText(option.label).startsWith(search));
+                }}
+                renderInput={(params) => <TextField {...params} label="Músculo trabajado" />}
+              />
+
+              {/* SELECT TIPO DE EJERCICIO */}
+
+              <Autocomplete
+                autoHighlight
+                autoSelect
+                selectOnFocus
+                clearOnBlur={false}
+                options={typeOptions}
+                getOptionLabel={(option) => option.label}
+                value={typeOptions.find((t) => t.value === type) || null}
+                onChange={(_, newValue) => {
+                  setType(newValue?.value || "");
+                }}
+                filterOptions={(options, state) => {
+                  const search = normalizeText(state.inputValue);
+
+                  return options.filter((option) => normalizeText(option.label).startsWith(search));
+                }}
+                renderInput={(params) => <TextField {...params} label="Tipo de ejercicio" />}
+              />
+
+              {/* SELECT MODO DE EJERCICIO */}
+
+              <Autocomplete
+                autoHighlight
+                autoSelect
+                selectOnFocus
+                clearOnBlur={false}
+                options={modeOptions}
+                getOptionLabel={(option) => option.label}
+                value={
+                  mode === null
+                    ? modeOptions.find((m) => m.value === "COMMON")
+                    : modeOptions.find((m) => m.value === mode) || null
+                }
+                onChange={(_, newValue) => {
+                  setMode(newValue?.value === "COMMON" ? null : newValue?.value || null);
+                }}
+                renderInput={(params) => <TextField {...params} label="Modo de ejercicio" />}
+              />
+
+              {/* ICON */}
+
+              <FileUploadField
+                label="Icono"
+                accept="image/*"
+                setFile={setIcon}
+                preview={iconPreview}
+                setPreview={setIconPreview}
+                existingUrl={currentExercise?.icon && getExerciseIconUrl(currentExercise.icon)}
+                deleteFlag={deleteIcon}
+                setDeleteFlag={setDeleteIcon}
+                renderPreview={(src) => <img src={src} style={{ maxWidth: "100px", borderRadius: "8px" }} />}
+              />
+
+              {/* IMAGE */}
+
+              <FileUploadField
+                label="Imagen"
+                accept="image/*"
+                setFile={setImage}
+                preview={imagePreview}
+                setPreview={setImagePreview}
+                existingUrl={currentExercise?.image && getExerciseImageUrl(currentExercise.image)}
+                deleteFlag={deleteImage}
+                setDeleteFlag={setDeleteImage}
+                renderPreview={(src) => <img src={src} style={{ maxWidth: "300px", borderRadius: "8px" }} />}
+              />
+
+              {/* VIDEO */}
+
+              <FileUploadField
+                label="Video"
+                accept="video/*"
+                setFile={setVideo}
+                preview={videoPreview}
+                setPreview={setVideoPreview}
+                existingUrl={currentExercise?.video && getExerciseVideoUrl(currentExercise.video)}
+                deleteFlag={deleteVideo}
+                setDeleteFlag={setDeleteVideo}
+                renderPreview={(src) => <video src={src} controls style={{ maxWidth: "400px" }} />}
+              />
+
+              <Stack direction="row" spacing={2}>
+                {selectedId !== "new" && (
+                  <Button variant="contained" color="error" onClick={() => setConfirmDeleteOpen(true)}>
+                    Eliminar ejercicio
+                  </Button>
+                )}
+
+                <Button variant="contained" color="success" onClick={handleSubmit}>
+                  {selectedId === "new" ? "Registrar ejercicio" : "Actualizar ejercicio"}
+                </Button>
+              </Stack>
             </Stack>
-          </Stack>
+          ) : (
+            <Stack spacing={2}>
+              <Typography variant="h6">Orden de ejercicios</Typography>
+
+              <Typography variant="body2" color="text.secondary">
+                Arrastrá los ejercicios para establecer el orden en que aparecerán en la aplicación.
+              </Typography>
+
+              <SortableList
+                items={orderedExercises}
+                getId={(item) => item.id}
+                setItems={handleReorder}
+                selectedIds={selectedExerciseIds}
+                onClearSelection={() => setSelectedExerciseIds([])}
+              >
+                {orderedExercises.map((exercise, index) => (
+                  <SortableItem key={exercise.id} id={exercise.id} dragHandle>
+                    {({ dragHandleProps }) => (
+                      <Card>
+                        <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+                          <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+                            <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography fontWeight={700} sx={{ minWidth: 25 }}>
+                                {index + 1}.
+                              </Typography>
+
+                              <Typography sx={{ flex: 1, minWidth: 0, fontWeight: 600 }}>{exercise.name}</Typography>
+                            </Stack>
+
+                            <Stack direction="row" alignItems="center" spacing={0}>
+                              <Checkbox
+                                size="small"
+                                checked={selectedExerciseIds.includes(exercise.id)}
+                                onChange={(e) => {
+                                  setSelectedExerciseIds((prev) =>
+                                    e.target.checked ? [...prev, exercise.id] : prev.filter((id) => id !== exercise.id),
+                                  );
+                                }}
+                              />
+
+                              <Box
+                                {...dragHandleProps}
+                                sx={{
+                                  display: "grid",
+                                  gridTemplateColumns: "repeat(2, 7px)",
+                                  gap: "5px",
+                                  cursor: "grab",
+                                  p: 1,
+                                  touchAction: "none",
+                                }}
+                              >
+                                {[...Array(6)].map((_, i) => (
+                                  <Box
+                                    key={i}
+                                    sx={{
+                                      width: 7,
+                                      height: 7,
+                                      backgroundColor: "#888",
+                                      borderRadius: "50%",
+                                    }}
+                                  />
+                                ))}
+                              </Box>
+                            </Stack>
+                          </Stack>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </SortableItem>
+                ))}
+              </SortableList>
+
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
+                <Button variant="contained" color="success" onClick={handleSaveOrder}>
+                  Guardar orden
+                </Button>
+              </Box>
+            </Stack>
+          )}
         </Paper>
 
         {/* MODAL DE SELECCIÓN DE EJERCICIOS */}

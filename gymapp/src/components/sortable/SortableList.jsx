@@ -1,17 +1,43 @@
 import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, TouchSensor } from "@dnd-kit/core";
 
-import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
-export default function SortableList({ items, setItems, getId, children }) {
+export default function SortableList({ items, setItems, getId, children, selectedIds = [], onClearSelection }) {
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
     if (!over || active.id === over.id) return;
 
-    const oldIndex = items.findIndex((i) => getId(i) === active.id);
-    const newIndex = items.findIndex((i) => getId(i) === over.id);
+    const activeIndex = items.findIndex((item) => getId(item) === active.id);
 
-    setItems(arrayMove(items, oldIndex, newIndex));
+    const overIndex = items.findIndex((item) => getId(item) === over.id);
+
+    if (activeIndex === -1 || overIndex === -1) return;
+
+    const movingItems = selectedIds.includes(active.id)
+      ? items.filter((item) => selectedIds.includes(getId(item)))
+      : [items[activeIndex]];
+
+    const movingIds = movingItems.map(getId);
+
+    if (movingIds.includes(over.id)) return;
+
+    const remainingItems = items.filter((item) => !movingIds.includes(getId(item)));
+
+    const targetIndex = remainingItems.findIndex((item) => getId(item) === over.id);
+
+    if (targetIndex === -1) return;
+
+    // Si subimos, insertamos antes del destino.
+    // Si bajamos, insertamos después del destino.
+    const insertIndex = activeIndex > overIndex ? targetIndex : targetIndex + 1;
+
+    const newItems = [...remainingItems];
+
+    newItems.splice(insertIndex, 0, ...movingItems);
+
+    setItems(newItems);
+    onClearSelection?.();
   };
 
   const sensors = useSensors(

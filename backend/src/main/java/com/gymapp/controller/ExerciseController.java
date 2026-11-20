@@ -2,6 +2,7 @@ package com.gymapp.controller;
 
 import com.gymapp.dto.response.ExerciseResponse;
 import com.gymapp.model.ExerciseType;
+import com.gymapp.model.Exercise;
 import com.gymapp.model.ExerciseMode;
 import com.gymapp.model.MuscleType;
 import com.gymapp.service.ExerciseService;
@@ -38,10 +39,11 @@ public class ExerciseController {
             @RequestParam("muscle") MuscleType muscle,
             @RequestParam("type") ExerciseType type,
             @RequestParam(value = "mode", required = false) ExerciseMode mode,
+            @RequestParam(value = "exerciseOrder", required = false) Integer exerciseOrder,
             @RequestParam(value = "image", required = false) MultipartFile image,
             @RequestParam(value = "video", required = false) MultipartFile video,
             @RequestParam(value = "icon", required = false) MultipartFile icon) throws IOException {
-        return exerciseService.createExercise(name, description, type, mode, muscle, image, video, icon);
+        return exerciseService.createExercise(name, description, type, mode, muscle, exerciseOrder, image, video, icon);
     }
 
     @PutMapping("/{id}")
@@ -52,13 +54,15 @@ public class ExerciseController {
             @RequestParam("muscle") MuscleType muscle,
             @RequestParam("type") ExerciseType type,
             @RequestParam(value = "mode", required = false) ExerciseMode mode,
+            @RequestParam(value = "exerciseOrder", required = false) Integer exerciseOrder,
             @RequestParam(value = "image", required = false) MultipartFile image,
             @RequestParam(value = "video", required = false) MultipartFile video,
             @RequestParam(value = "icon", required = false) MultipartFile icon,
             @RequestParam(value = "deleteImage", required = false) Boolean deleteImage,
             @RequestParam(value = "deleteVideo", required = false) Boolean deleteVideo,
             @RequestParam(value = "deleteIcon", required = false) Boolean deleteIcon) throws IOException {
-        return exerciseService.updateExercise(id, name, description, type, mode, muscle, image, video, icon,
+        return exerciseService.updateExercise(id, name, description, type, mode, muscle, exerciseOrder, image, video,
+                icon,
                 deleteImage,
                 deleteVideo, deleteIcon);
     }
@@ -81,5 +85,19 @@ public class ExerciseController {
     @GetMapping("/video/{filename}")
     public ResponseEntity<Resource> getExerciseVideo(@PathVariable String filename) throws IOException {
         return exerciseService.getExerciseVideo(filename);
+    }
+
+    @GetMapping("/ordered")
+    public ResponseEntity<List<Exercise>> getAllOrdered() {
+        return ResponseEntity.ok(exerciseService.getAllOrdered());
+    }
+
+    @PutMapping("/order")
+    public ResponseEntity<Void> updateExercisesOrder(
+            @RequestBody List<Long> exerciseIds) {
+
+        exerciseService.updateExercisesOrder(exerciseIds);
+
+        return ResponseEntity.noContent().build();
     }
 }

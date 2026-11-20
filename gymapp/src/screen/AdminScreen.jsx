@@ -15,6 +15,8 @@ import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import SignalCellularAltIcon from "@mui/icons-material/SignalCellularAlt";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 
+import MonitorWeightIcon from "@mui/icons-material/MonitorWeight";
+
 import PrimaryButton from "../components/PrimaryButton";
 
 export default function AdminScreen() {
@@ -33,6 +35,12 @@ export default function AdminScreen() {
       description: "Crear ejercicios",
       icon: <FitnessCenterIcon sx={{ fontSize: 80 }} />,
       route: "/admin/exercises",
+    },
+    {
+      title: "Pesos de Usuarios",
+      description: "Configurar pesos de los ejercicios",
+      icon: <MonitorWeightIcon sx={{ fontSize: 80 }} />,
+      route: "/admin/user-exercises",
     },
     {
       title: "Plantillas",
@@ -187,7 +195,7 @@ export default function AdminScreen() {
                 sx={{
                   width: "100%",
                   height: "100%",
-                  minWidth: 350,
+                  minWidth: 360,
                   borderRadius: 3,
                   transition: "all 0.25s ease",
                   boxShadow: 3,

@@ -14,10 +14,12 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +46,7 @@ public class ExerciseServiceImpl implements ExerciseService {
 
     @Override
     public ExerciseResponse createExercise(String name, String description, ExerciseType type, ExerciseMode mode,
-            MuscleType muscle,
+            MuscleType muscle, Integer exerciseOrder,
             MultipartFile image, MultipartFile video, MultipartFile icon) throws IOException {
         Exercise exercise = new Exercise();
         exercise.setName(name);
@@ -52,6 +54,7 @@ public class ExerciseServiceImpl implements ExerciseService {
         exercise.setType(type);
         exercise.setMode(mode);
         exercise.setMuscle(muscle);
+        exercise.setExerciseOrder(exerciseOrder);
         saveFiles(exercise, name, image, video, icon);
         return toResponse(exerciseRepository.save(exercise));
     }
@@ -60,6 +63,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     public ExerciseResponse updateExercise(Long id, String name, String description, ExerciseType type,
             ExerciseMode mode,
             MuscleType muscle,
+            Integer exerciseOrder,
             MultipartFile image, MultipartFile video, MultipartFile icon,
             Boolean deleteImage, Boolean deleteVideo, Boolean deleteIcon) throws IOException {
 
@@ -74,6 +78,7 @@ public class ExerciseServiceImpl implements ExerciseService {
         exercise.setType(type);
         exercise.setMode(mode);
         exercise.setMuscle(muscle);
+        exercise.setExerciseOrder(exerciseOrder);
 
         Files.createDirectories(imagePath);
         Files.createDirectories(videoPath);
@@ -233,8 +238,33 @@ public class ExerciseServiceImpl implements ExerciseService {
         return fileName.substring(fileName.lastIndexOf(".") + 1);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Exercise> getAllOrdered() {
+        return exerciseRepository.findAllByOrder();
+    }
+
+    @Override
+    @Transactional
+    public void updateExercisesOrder(List<Long> exerciseIds) {
+
+        if (exerciseIds == null || new HashSet<>(exerciseIds).size() != exerciseIds.size()) {
+            throw new IllegalArgumentException("La lista de ejercicios no es válida");
+        }
+
+        for (int i = 0; i < exerciseIds.size(); i++) {
+            Long exerciseId = exerciseIds.get(i);
+
+            Exercise exercise = exerciseRepository.findById(exerciseId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Ejercicio no encontrado"));
+
+            exercise.setExerciseOrder(i + 1);
+        }
+    }
+
     private ExerciseResponse toResponse(Exercise e) {
         return new ExerciseResponse(e.getId(), e.getName(), e.getDescription(), e.getType(), e.getMode(), e.getMuscle(),
+                e.getExerciseOrder(),
                 e.getImage(), e.getVideo(), e.getIcon());
     }
 }

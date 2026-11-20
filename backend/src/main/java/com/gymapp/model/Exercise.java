@@ -32,4 +32,6 @@ public class Exercise {
 
     @Enumerated(EnumType.STRING)
     private ExerciseMode mode;
+
+    private Integer exerciseOrder;
 }

@@ -11,6 +11,7 @@ public record ExerciseResponse(
         ExerciseType type,
         ExerciseMode mode,
         MuscleType muscle,
+        Integer exerciseOrder,
         String image,
         String video,
         String icon) {

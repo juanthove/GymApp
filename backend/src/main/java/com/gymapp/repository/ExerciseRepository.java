@@ -21,4 +21,14 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             e.name
             """)
     List<Exercise> findAllOrdered();
+
+    @Query("""
+            SELECT e
+            FROM Exercise e
+            ORDER BY
+                CASE WHEN e.exerciseOrder IS NULL THEN 1 ELSE 0 END,
+                e.exerciseOrder ASC,
+                e.id ASC
+            """)
+    List<Exercise> findAllByOrder();
 }

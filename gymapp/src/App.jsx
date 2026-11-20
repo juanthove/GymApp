@@ -7,6 +7,7 @@ import DarkModeContext from "./context/DarkModeContext";
 const CreateUserScreen = lazy(() => import("./screen/CreateUserScreen"));
 const CreateSystemUserScreen = lazy(() => import("./screen/CreateSystemUserScreen"));
 const CreateExerciseScreen = lazy(() => import("./screen/CreateExerciseScreen"));
+const CreateUserExerciseScreen = lazy(() => import("./screen/CreateUserExerciseScreen"));
 const CreateWorkoutTemplateScreen = lazy(() => import("./screen/CreateWorkoutTemplateScreen"));
 const CreateWorkoutScreen = lazy(() => import("./screen/CreateWorkoutScreen"));
 const CreatePhraseScreen = lazy(() => import("./screen/CreatePhraseScreen"));
@@ -163,6 +164,14 @@ function App() {
               element={
                 <AdminRoute>
                   <CreateExerciseScreen />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/user-exercises"
+              element={
+                <AdminRoute>
+                  <CreateUserExerciseScreen />
                 </AdminRoute>
               }
             />

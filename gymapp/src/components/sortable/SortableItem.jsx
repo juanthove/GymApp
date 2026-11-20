@@ -1,18 +1,19 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-export default function SortableItem({ id, children }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition
-  } = useSortable({ id });
+export default function SortableItem({ id, children, dragHandle = false }) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition
+    transition,
+    touchAction: "none",
+  };
+
+  const dragHandleProps = {
+    ref: setActivatorNodeRef,
+    ...attributes,
+    ...listeners,
   };
 
   return (
@@ -20,13 +21,12 @@ export default function SortableItem({ id, children }) {
       ref={setNodeRef}
       style={{
         ...style,
-        touchAction: "none",
-        cursor: "grab"
+        cursor: dragHandle ? "default" : "grab",
       }}
-      {...attributes}
-      {...listeners}
+      {...(!dragHandle ? attributes : {})}
+      {...(!dragHandle ? listeners : {})}
     >
-      {children}
+      {dragHandle && typeof children === "function" ? children({ dragHandleProps }) : children}
     </div>
   );
 }

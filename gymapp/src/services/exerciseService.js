@@ -96,3 +96,17 @@ export function getExerciseIconUrl(filename) {
   if (!filename) return null;
   return buildAuthorizedAssetUrl(`/api/exercises/icon/${filename}`);
 }
+
+// Obtener ejercicios ordenados
+export async function getExercisesOrdered() {
+  return apiRequest("/api/exercises/ordered");
+}
+
+// Actualizar orden de ejercicios
+export async function updateExercisesOrder(exerciseIds) {
+  return apiRequest("/api/exercises/order", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(exerciseIds),
+  });
+}
