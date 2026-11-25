@@ -15,6 +15,9 @@ export default defineConfig({
       includeAssets: ["icon-192.png", "icon-512.png", "icon-1254.png"],
       workbox: {
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
         runtimeCaching: [
           {
             urlPattern: ({ url }) =>
